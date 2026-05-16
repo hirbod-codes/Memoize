@@ -1,0 +1,48 @@
+{
+    "name": "memoize",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "tsc -b && vite build && vite",
+        "build": "tsc -b && vite build",
+        "lint": "eslint .",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "clsx": "^2.1.1",
+        "colorthief": "^3.3.1",
+        "framer-motion": "^12.38.0",
+        "jwt-decode": "^4.0.0",
+        "node-vibrant": "^4.0.4",
+        "react": "^19.2.5",
+        "react-dom": "^19.2.5",
+        "tailwind-merge": "^3.5.0",
+        "tailwindcss-animate": "^1.0.7",
+        "tailwindcss-ripple": "^0.7.1"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.29.0",
+        "@eslint/js": "^10.0.1",
+        "@material/material-color-utilities": "^0.4.0",
+        "@rolldown/plugin-babel": "^0.2.3",
+        "@tailwindcss/vite": "^4.2.4",
+        "@types/babel__core": "^7.20.5",
+        "@types/jwt-decode": "^2.2.1",
+        "@types/node": "^24.12.2",
+        "@types/react": "^19.2.14",
+        "@types/react-dom": "^19.2.3",
+        "@vitejs/plugin-react": "^6.0.1",
+        "autoprefixer": "^10.5.0",
+        "babel-plugin-react-compiler": "^1.0.0",
+        "eslint": "^10.2.1",
+        "eslint-plugin-react-hooks": "^7.1.1",
+        "eslint-plugin-react-refresh": "^0.5.2",
+        "globals": "^17.5.0",
+        "postcss": "^8.5.12",
+        "tailwindcss": "^3.4.19",
+        "typescript": "~6.0.2",
+        "typescript-eslint": "^8.58.2",
+        "vite": "^8.0.10"
+    }
+}
