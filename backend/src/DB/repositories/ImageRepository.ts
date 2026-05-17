@@ -46,21 +46,24 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
         return ImageRepository.bucket!.openUploadStream(fileName, { metadata })
     }
 
-    async uploadFile(metadata: ImageMetadata, file: { fileName: string; bytes: Buffer | Uint8Array; contentType?: string }, temporary: boolean = true): Promise<string | undefined> {
-        const result = await (() => new Promise<string | undefined>(async (res, rej) => {
-            const upload = await this.getWriteStream(file.fileName, metadata)
-            upload
-                .on('close', () => { res(upload.id.toString()) })
-                .write(file.bytes, (e) => {
-                    if (e) {
-                        console.error(e)
-                        res(undefined)
-                    } else
-                        upload.end()
-                })
-        }))()
-
-        return result
+    async upload(metadata: ImageMetadata, file: { fileName: string; bytes: Buffer | Uint8Array; }): Promise<string | false> {
+        try {
+            return await (() => new Promise<string>(async (res, rej) => {
+                const upload = await this.getWriteStream(file.fileName, metadata)
+                upload
+                    .on('close', () => { res(upload.id.toString()) })
+                    .write(file.bytes, (e) => {
+                        if (e) {
+                            console.error(e)
+                            rej(e)
+                        } else
+                            upload.end()
+                    })
+            }))()
+        } catch (error) {
+            console.error(error);
+            return false
+        }
     }
 
     async getFile(fileId: string): Promise<GridFSFile | undefined> {

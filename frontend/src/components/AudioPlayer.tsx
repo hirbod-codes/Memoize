@@ -27,7 +27,7 @@ import { Ellipsis } from "../assets/icons/Ellipsis";
 import { audioManager } from "../audio/AudioManager";
 import ProgressBar from "./ProgressBar";
 import { Equalizer } from "./Equalizer";
-import { Slide } from "./Slide";
+import { Slide } from "./new/Slide";
 import { Bookmark } from "../assets/icons/Bookmark";
 import { X } from "../assets/icons/X";
 import { SquareMinus } from "../assets/icons/SquareMinus";

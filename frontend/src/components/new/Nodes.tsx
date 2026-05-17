@@ -3,7 +3,7 @@ import { useAuth } from "../../contexts/AuthContext"
 import { useNotification } from "../../contexts/NotificationContext"
 import { Ripple } from "../Ripple"
 import { ChevronLeft } from "../../assets/icons/ChevronLeft"
-import { Slide } from "../Slide"
+import { Slide } from "./Slide"
 import { PresentLeaf } from "./PresentLeaf"
 
 export function Nodes() {

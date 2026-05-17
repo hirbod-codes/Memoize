@@ -1,5 +1,5 @@
 import { createContext, useState } from "react";
-import { Slide } from "../components/Slide";
+import { Slide } from "../components/new/Slide";
 import { ArtistPresenter } from "../components/ArtistPresenter";
 
 export const ArtistContext = createContext<{

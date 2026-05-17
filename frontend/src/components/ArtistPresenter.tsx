@@ -5,7 +5,7 @@ import { useNotification } from "../contexts/NotificationContext";
 import { Ripple } from "./Ripple";
 import { jwtDecode } from "jwt-decode";
 import { Pencil } from "../assets/icons/Pencil";
-import { Slide } from "./Slide";
+import { Slide } from "./new/Slide";
 import { AvatarUpload } from "./AvatarUpload";
 import { AudioContext } from "../contexts/AudioContext";
 

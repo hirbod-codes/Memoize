@@ -1,5 +1,5 @@
 import { createContext, useEffect, useState } from "react";
-import { Slide } from "../components/Slide";
+import { Slide } from "../components/new/Slide";
 import { AudioPlayer } from "../components/AudioPlayer";
 
 export const AudioContext = createContext<{

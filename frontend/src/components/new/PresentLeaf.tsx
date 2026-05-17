@@ -28,10 +28,10 @@ export function PresentLeaf({ leaf }: { leaf?: Leaf }) {
                     {
                         showingTerm
                             ? leaf.termContent.map((m, i: number) =>
-                                <Content key={i} type={m.type} content={m.value} />
+                                <Content key={i} type={m.type} values={m.value} />
                             )
                             : leaf.definitionContent.map((m, i: number) =>
-                                <Content key={i} type={m.type} content={m.value} />
+                                <Content key={i} type={m.type} values={m.value} />
                             )
                     }
                 </div>

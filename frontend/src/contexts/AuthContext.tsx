@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Auth } from "../components/Auth/Auth";
-import { Slide } from "../components/Slide";
+import { Slide } from "../components/new/Slide";
 
 type ContextType = {
     open: (state: boolean) => void

@@ -10,7 +10,7 @@ import { generalRateLimiter } from './middlewares/rateLimiting';
 import { authRoutes } from './routes/auth';
 import { InvalidTokensRepository } from './DB/repositories/InvalidTokensRepository';
 import { userRoutes } from './routes/user';
-import { AudioRepository } from './DB/repositories/AudioRepository';
+import { AudioFileRepository } from './DB/repositories/AudioFileRepository';
 import { AvatarRepository } from './DB/repositories/AvatarRepository';
 import { ImageRepository } from './DB/repositories/ImageRepository';
 import LeafRepository from './DB/repositories/LeafRepository';
@@ -18,6 +18,7 @@ import TreeNodeRepository from './DB/repositories/TreeNodeRepository';
 import { VideoRepository } from './DB/repositories/VideoRepository';
 import { leafRoutes } from './routes/leaf';
 import { treeNodeRoutes } from './routes/treeNode';
+import { audioRoutes } from './routes/audio';
 
 dotenv.config({ debug: process.env.DEBUG !== undefined ? Boolean(process.env.DEBUG) : undefined })
 
@@ -52,7 +53,7 @@ export const dbConfig = {
         db.addRepository(new UserRepository())
         db.addRepository(new InvalidTokensRepository())
         db.addRepository(new AvatarRepository())
-        db.addRepository(new AudioRepository())
+        db.addRepository(new AudioFileRepository())
         db.addRepository(new ImageRepository())
         db.addRepository(new VideoRepository())
         db.addRepository(new LeafRepository())
@@ -118,6 +119,7 @@ export const dbConfig = {
     app.use('/api/user', userRoutes);
     app.use('/api/leaf', leafRoutes);
     app.use('/api/treeNode', treeNodeRoutes);
+    app.use('/api/audio', audioRoutes);
 
     // 404 For unknown URLs
     app.use((_req, res) => { res.sendStatus(404) })
