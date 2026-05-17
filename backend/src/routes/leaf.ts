@@ -3,6 +3,7 @@ import { likeObjectId } from '../DB/common_schemas';
 import { auth } from '../middlewares/auth';
 import { Leaf, leafValidationSchema } from '../DB/models/Leaf';
 import LeafRepository from '../DB/repositories/LeafRepository';
+import { array } from 'yup';
 
 const router = express.Router();
 
@@ -43,22 +44,29 @@ router.get('/', async (req, res) => {
         console.log('/api/leaf')
 
         console.log('Validation...')
-        let id: string | undefined
+        let leafIds: string[] | undefined
         try {
-            id = req.query.id?.toString()
-            if (!likeObjectId.required().isValidSync(id)) {
-                res.status(400).json({ message: 'Invalid artist id' });
+            let temp = req.query.leafIds?.toString()
+            if (!likeObjectId.required().isValidSync(temp)) {
+                res.status(400).json({ message: 'Invalid artist leafIds' });
+                return
+            }
+
+            leafIds = temp.split(',')
+
+            if (!array().min(1).of(likeObjectId.required()).required().isValidSync(leafIds)) {
+                res.status(400).json({ message: 'Invalid Tree node ids' });
                 return
             }
         } catch (err) {
-            res.status(400).json({ message: 'Invalid artist id' });
+            res.status(400).json({ message: 'Invalid artist leafIds' });
             return
         }
-        console.log({ id, name });
+        console.log({ leafIds, name });
 
         console.log("Downloading avatar...");
         const leafRepository = new LeafRepository()
-        const leaf = await leafRepository.get(id)
+        const leaf = await leafRepository.getManyForUser(leafIds, (req as any).user.userId)
         if (!leaf) {
             res.status(404).send()
             return

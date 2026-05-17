@@ -1,17 +1,15 @@
 import { useState } from 'react'
-import { AudioUpload } from './components/AudioUpload'
 import { ThemeContextProvider } from './contexts/ThemeOptionsContext'
-import { Search } from './components/Search'
 import { NotificationProvider } from './contexts/NotificationContext'
 import { AuthProvider } from './contexts/AuthContext'
 import { TopBar } from './components/TopBar'
 import { AudioContextProvider } from './contexts/AudioContext'
 import { NavBar } from './components/NavBar'
 import { ArtistContextProvider } from './contexts/ArtistContext'
-import { Playlists } from './components/Playlists'
+import { Nodes } from './components/new/Nodes'
 
 function App() {
-    const [content, setContent] = useState('search')
+    const [content, setContent] = useState('nodes')
 
     return (
         <ThemeContextProvider>
@@ -23,9 +21,7 @@ function App() {
                                 <TopBar />
 
                                 <div className="grow overflow-auto">
-                                    {content === 'search' && <Search />}
-                                    {content === 'upload' && <AudioUpload />}
-                                    {content === 'playlists' && <Playlists />}
+                                    {content === 'nodes' && <Nodes />}
                                 </div>
 
                                 <NavBar content={content} onChange={(v) => setContent(v)} />

@@ -31,6 +31,9 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
 
         const indexes = await db.collection(collectionName).indexes()
 
+        if (indexes.find(i => i.name === 'title') === undefined)
+            await db.createIndex(collectionName, { title: 1 }, { unique: true, name: 'title' })
+
         if (indexes.find(i => i.name === 'userId') === undefined)
             await db.createIndex(collectionName, { userId: 1 }, { name: 'userId' })
 
@@ -58,16 +61,32 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
         return (await TreeNodeRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
-    async getByUserId(userId: string) {
+    async getRootsForUser(userId: string, isRoot: boolean = true): Promise<TreeNode[]> {
+        return await TreeNodeRepository.collection!.find({ userId: ObjectId.createFromHexString(userId), root: isRoot }, { session: this.session }).toArray()
+    }
+
+    async getManyForUser(treeNodeIds: string[], userId: string): Promise<TreeNode[]> {
+        return await TreeNodeRepository.collection!.find({ _id: { $in: treeNodeIds.map(m => ObjectId.createFromHexString(m)) }, userId: ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
+    }
+
+    async getForUser(treeNodeId: string, userId: string): Promise<TreeNode> {
+        return (await TreeNodeRepository.collection!.find({ _id: ObjectId.createFromHexString(treeNodeId), userId: ObjectId.createFromHexString(userId) }, { session: this.session }).toArray())[0]
+    }
+
+    async getByUserId(userId: string): Promise<TreeNode[]> {
         return await TreeNodeRepository.collection!.find({ userId: ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
     }
 
-    async getByRoot(isRoot: boolean) {
+    async getByRoot(isRoot: boolean): Promise<TreeNode[]> {
         return await TreeNodeRepository.collection!.find({ root: isRoot }, { session: this.session }).toArray()
     }
 
     async delete(id: string): Promise<DeleteResult> {
         return await TreeNodeRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id) }, { session: this.session })
+    }
+
+    async deleteForUser(id: string, userId: string): Promise<DeleteResult> {
+        return await TreeNodeRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id), userId: ObjectId.createFromHexString(userId) }, { session: this.session })
     }
 }
 

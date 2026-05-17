@@ -1,9 +1,12 @@
-import { InferType, number, object, string } from 'yup';
+import { array, InferType, number, object, string } from 'yup';
 import { likeObjectId } from '../common_schemas';
 
 export const collectionName = 'leaf'
 
 export const schemaVersion = 'v1.0.0'
+
+const contentSchema = object().shape({ type: string().optional().oneOf(['string', 'imageId', 'videoId', 'audioId']), value: array().of(string().required()).required().min(1) })
+const contentsSchema = array().of(contentSchema.required())
 
 export const leafValidationSchema = object().shape({
     schemaVersion: string().optional().min(6).max(20),
@@ -11,11 +14,10 @@ export const leafValidationSchema = object().shape({
 
     userId: likeObjectId.required(),
 
-    term: string().optional(),
-    termType: string().optional().oneOf(['string', 'imageId', 'videoId', 'audioId']),
+    title: string().required(),
 
-    definition: string().optional(),
-    definitionType: string().optional().oneOf(['string', 'imageId', 'videoId', 'audioId']),
+    termContents: contentsSchema.required().min(0),
+    definitionContents: contentsSchema.required().min(0),
 
     createdAt: number().optional(),
     updatedAt: number().optional(),

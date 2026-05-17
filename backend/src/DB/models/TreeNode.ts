@@ -13,6 +13,8 @@ export const treeNodeValidationSchema = object().shape({
 
     root: boolean().required(),
 
+    title: string().required(),
+
     treeNodeIds: array().of(likeObjectId.required()).required().min(0),
     leafIds: array().of(likeObjectId.required()).required().min(0),
 

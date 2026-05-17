@@ -31,6 +31,9 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
 
         const indexes = await db.collection(collectionName).indexes()
 
+        if (indexes.find(i => i.name === 'title') === undefined)
+            await db.createIndex(collectionName, { title: 1 }, { unique: true, name: 'title' })
+
         if (indexes.find(i => i.name === 'userId') === undefined)
             await db.createIndex(collectionName, { userId: 1 }, { name: 'userId' })
 
@@ -55,12 +58,24 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
         return (await LeafRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
+    async getForUser(leafId: string, userId: string): Promise<Leaf> {
+        return (await LeafRepository.collection!.find({ _id: ObjectId.createFromHexString(leafId), userId: ObjectId.createFromHexString(userId) }, { session: this.session }).toArray())[0]
+    }
+
+    async getManyForUser(leafIds: string[], userId: string): Promise<Leaf[]> {
+        return await LeafRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId: ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
+    }
+
     async getByUserId(userId: string) {
         return await LeafRepository.collection!.find({ userId: ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
     }
 
     async delete(id: string): Promise<DeleteResult> {
         return await LeafRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id) }, { session: this.session })
+    }
+
+    async deleteForUser(id: string, userId: string): Promise<DeleteResult> {
+        return await LeafRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id), userId: ObjectId.createFromHexString(userId) }, { session: this.session })
     }
 }
 
