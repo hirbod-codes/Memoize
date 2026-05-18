@@ -70,6 +70,10 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
         return await LeafRepository.collection!.find({ userId: ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
     }
 
+    async replace(leaf: Leaf) {
+        return await LeafRepository.collection!.replaceOne({ _id: ObjectId.createFromHexString(leaf._id!.toString()) }, leaf)
+    }
+
     async delete(id: string): Promise<DeleteResult> {
         return await LeafRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id) }, { session: this.session })
     }

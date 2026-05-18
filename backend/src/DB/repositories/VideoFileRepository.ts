@@ -189,14 +189,12 @@ export class VideoFileRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
-    async deleteFilesByUserId(userId: string) {
+    async deleteFilesByUserId(userId: string): Promise<boolean> {
         try {
-            let files = await VideoFileRepository.filesCollection!.find({ 'metadata.userId': userId }, { session: this.session }).toArray()
-            if (files.length === 0)
-                return true
+            const cursor = VideoFileRepository.filesCollection!.find({ 'metadata.userId': userId }, { session: this.session })
 
-            for (const file of files)
-                if (!await this.deleteFile(file._id.toString()))
+            for await (const c of cursor)
+                if (!await this.deleteFile(c._id.toString()))
                     return false
 
             return true
@@ -206,31 +204,12 @@ export class VideoFileRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
-    async deleteFilesByTermId(termId: string): Promise<boolean> {
+    async deleteFileForUserByVideoId(videoId: string, userId: string): Promise<boolean> {
         try {
-            let files = await VideoFileRepository.filesCollection!.find({ 'metadata.leafTermId': termId }, { session: this.session }).toArray()
-            if (files.length === 0)
-                return true
+            const cursor = VideoFileRepository.filesCollection!.find({ 'metadata.videoId': ObjectId.createFromHexString(videoId), 'metadata.userId': userId }, { session: this.session })
 
-            for (const file of files)
-                if (!await this.deleteFile(file._id.toString()))
-                    return false
-
-            return true
-        } catch (e) {
-            console.error(e)
-            return false
-        }
-    }
-
-    async deleteFilesByDefinition(definition: string): Promise<boolean> {
-        try {
-            let files = await VideoFileRepository.filesCollection!.find({ 'metadata.leafDefinition': definition }, { session: this.session }).toArray()
-            if (files.length === 0)
-                return true
-
-            for (const file of files)
-                if (!await this.deleteFile(file._id.toString()))
+            for await (const c of cursor)
+                if (!await this.deleteFile(c._id.toString()))
                     return false
 
             return true

@@ -29,7 +29,7 @@ import { Equalizer } from "./Equalizer";
 import { SquareMinus } from "../../../../assets/icons/SquareMinus";
 import { Trash2 } from "../../../../assets/icons/Trash2";
 
-export function Audio({ audioIds, removeAudio, removeAllAudios }: { audioIds: string[], removeAudio?: (audioId: string) => void, removeAllAudios?: () => void }) {
+export function Audio({ audioIds, editing, onLeafChange, removeAudio, removeAllAudios }: { audioIds: string[], editing: boolean, onLeafChange?: (audioIds: string[]) => void, removeAudio?: (audioId: string) => void, removeAllAudios?: () => void }) {
     const { jsonAuthFetch } = useAuth()
     const { notify } = useNotification()
 
@@ -366,22 +366,27 @@ export function Audio({ audioIds, removeAudio, removeAllAudios }: { audioIds: st
                     {
                         showPlaylist &&
                         <div>
-                            <div className="flex flex-row justify-end text-on-surface rounded-full p-2">
-                                <Ripple>
-                                    <button onClick={() => removeAllAudios?.()}>
-                                        <Trash2 className="text-error" />
-                                    </button>
-                                </Ripple>
-                            </div>
+                            {editing &&
+                                <div className="flex flex-row justify-end text-on-surface rounded-full p-2">
+                                    <Ripple>
+                                        <button onClick={() => removeAllAudios?.()}>
+                                            <Trash2 className="text-error" />
+                                        </button>
+                                    </Ripple>
+                                </div>
+                            }
+
                             {
                                 audioIds.map((v, i) =>
                                     <div key={i} className={i < audioIds.length ? 'w-full border-b border-outline' : 'w-full'}>
                                         <AudioCard audioId={v} clicked={() => { audio.jumpTo(i) }}>
-                                            <Ripple>
-                                                <button onClick={() => { removeAudio?.(v) }}>
-                                                    <SquareMinus className="text-error" />
-                                                </button>
-                                            </Ripple>
+                                            {editing &&
+                                                <Ripple>
+                                                    <button onClick={() => { removeAudio?.(v) }}>
+                                                        <SquareMinus className="text-error" />
+                                                    </button>
+                                                </Ripple>
+                                            }
                                         </AudioCard>
                                     </div>
                                 )

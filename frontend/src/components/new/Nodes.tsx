@@ -4,20 +4,19 @@ import { useNotification } from "../../contexts/NotificationContext"
 import { Ripple } from "../Ripple"
 import { ChevronLeft } from "../../assets/icons/ChevronLeft"
 import { Slide } from "./Slide"
-import { PresentLeaf } from "./PresentLeaf"
+import { LeafManager } from "./PresentLeaf"
 import { SquarePen } from "../../assets/icons/SquarePen"
 import { Eye } from "../../assets/icons/Eye"
 import { Trash2 } from "../../assets/icons/Trash2"
 import { Plus } from "../../assets/icons/Plus"
 import { X } from "../../assets/icons/X"
-import { CreateLeaf } from "./CreateLeaf"
 import { FolderPlus } from "../../assets/icons/FolderPlus"
 
 export function Nodes() {
     const { jsonAuthFetch } = useAuth()
     const { notify } = useNotification()
 
-    const [editMode, setEditMode] = useState<boolean>(false)
+    const [editing, setEditing] = useState<boolean>(false)
 
     const [locationQueue, setLocationQueue] = useState<string[]>(['root'])
 
@@ -214,9 +213,9 @@ export function Nodes() {
 
                     {/* Switch edit mode button */}
                     <Ripple className="rounded-full">
-                        <button onClick={() => setEditMode(!editMode)}>
+                        <button onClick={() => setEditing(!editing)}>
                             {
-                                editMode
+                                editing
                                     ? <Eye />
                                     : <SquarePen />
                             }
@@ -236,8 +235,9 @@ export function Nodes() {
                         records.map((r: any, i: number) => {
                             return (
                                 <div key={i} className="w-full rounded-lg border border-outline relative">
+                                    {/* Delete button */}
                                     {
-                                        editMode &&
+                                        editing &&
                                         <div className="absolute top-0 right-0">
                                             <Ripple className="rounded-full bg-error text-on-error">
                                                 <button onClick={async () => { if (await removeTreeNode(r._id)) setRecords(records.filter(f => f._id !== r._id)); }}>
@@ -247,6 +247,7 @@ export function Nodes() {
                                         </div>
                                     }
 
+                                    {/* Title */}
                                     <div className="w-full" onClick={async () => {
                                         let treeNodes = await getTreeNodes(r.treeNodeIds)
                                         if (treeNodes === false)
@@ -291,7 +292,7 @@ export function Nodes() {
 
                 {/* Add buttons */}
                 {
-                    editMode &&
+                    editing &&
                     <div className="absolute bottom-0 right-0 flex flex-row items-center gap-2">
                         {/* Add tree node button */}
                         <Ripple className="rounded-full bg-success text-on-success">
@@ -341,12 +342,13 @@ export function Nodes() {
                     </div>
                 </Slide>
 
-                <Slide open={showAddLeafModal && locationQueue[locationQueue.length - 1] !== 'root'} className="pointer-events-auto rounded-t-3xl bg-surface shadow-2xl" style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
-                    <CreateLeaf treeNodeId={locationQueue[locationQueue.length - 1]} />
-                </Slide>
-
                 <Slide open={showingLeaf !== undefined} className="pointer-events-auto rounded-t-3xl bg-surface shadow-2xl" style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
-                    <PresentLeaf leaf={showingLeaf !== undefined ? leafs[showingLeaf] : undefined} />
+                    <LeafManager
+                        leaf={showingLeaf !== undefined ? leafs[showingLeaf] : undefined}
+                        onClose={() => setShowingLeaf(undefined)}
+                        onLeafChange={l => { leafs[showingLeaf!] = l; setLeafs(leafs) }}
+                        onRemove={() => setLeafs([...leafs.filter((_, i) => i !== showingLeaf)])}
+                    />
                 </Slide>
             </div>
     )

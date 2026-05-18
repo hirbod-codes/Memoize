@@ -146,14 +146,27 @@ export class AudioFileRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    async deleteFileForUserByAudioId(audioId: string, userId: string): Promise<boolean> {
+        try {
+            const cursor = AudioFileRepository.filesCollection!.find({ 'metadata.audioId': ObjectId.createFromHexString(audioId), 'metadata.userId': userId }, { session: this.session })
+
+            for await (const c of cursor)
+                if (!await this.deleteFile(c._id.toString()))
+                    return false
+
+            return true
+        } catch (e) {
+            console.error(e)
+            return false
+        }
+    }
+
     async deleteFilesByUserId(userId: string) {
         try {
-            let files = await AudioFileRepository.filesCollection!.find({ 'metadata.userId': typeof userId === 'string' ? ObjectId.createFromHexString(userId) : userId }, { session: this.session }).toArray()
-            if (files.length === 0)
-                return true
+            const cursor = AudioFileRepository.filesCollection!.find({ 'metadata.userId': userId }, { session: this.session })
 
-            for (const file of files)
-                if (!await this.deleteFile(file._id.toString()))
+            for await (const c of cursor)
+                if (!await this.deleteFile(c._id.toString()))
                     return false
 
             return true

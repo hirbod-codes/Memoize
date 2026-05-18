@@ -16,7 +16,7 @@ router.post('/upload', auth, authorization, async (req, res) => {
         let fileName: string | undefined,
             fileBuffer: Buffer
         try {
-            fileName = req.query.name?.toString()
+            fileName = req.query.fileName?.toString()
             console.log({ fileName })
 
             if (!string().required().isValidSync(fileName))

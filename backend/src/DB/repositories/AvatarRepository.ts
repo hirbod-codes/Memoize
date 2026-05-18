@@ -135,9 +135,26 @@ export class AvatarRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    async deleteFileForUserId(avatarId: string, userId: string): Promise<boolean> {
+        try {
+            let files = await AvatarRepository.filesCollection!.find({ _id: ObjectId.createFromHexString(avatarId), 'metadata.userId': userId }, { session: this.session }).toArray()
+            if (files.length === 0)
+                return true
+
+            for (const file of files)
+                if (!await this.deleteFile(file._id.toString()))
+                    return false
+
+            return true
+        } catch (e) {
+            console.error(e)
+            return false
+        }
+    }
+
     async deleteFilesByUserId(userId: string): Promise<boolean> {
         try {
-            let files = await AvatarRepository.filesCollection!.find({ 'metadata.userId': ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
+            let files = await AvatarRepository.filesCollection!.find({ 'metadata.userId': userId }, { session: this.session }).toArray()
             if (files.length === 0)
                 return true
 

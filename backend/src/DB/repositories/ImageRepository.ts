@@ -166,48 +166,27 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    async deleteFileForUserId(imageId: string, userId: string) {
+        try {
+            const cursor = ImageRepository.filesCollection!.find({ _id: ObjectId.createFromHexString(imageId), 'metadata.userId': userId }, { session: this.session })
+
+            for await (const c of cursor)
+                if (!await this.deleteFile(c._id.toString()))
+                    return false
+
+            return true
+        } catch (e) {
+            console.error(e)
+            return false
+        }
+    }
+
     async deleteFilesByUserId(userId: string) {
         try {
-            let files = await ImageRepository.filesCollection!.find({ 'metadata.userId': typeof userId === 'string' ? ObjectId.createFromHexString(userId) : userId }, { session: this.session }).toArray()
-            if (files.length === 0)
-                return true
+            const cursor = ImageRepository.filesCollection!.find({ 'metadata.userId': userId }, { session: this.session })
 
-            for (const file of files)
-                if (!await this.deleteFile(file._id.toString()))
-                    return false
-
-            return true
-        } catch (e) {
-            console.error(e)
-            return false
-        }
-    }
-
-    async deleteFilesByTermId(termId: string): Promise<boolean> {
-        try {
-            let files = await ImageRepository.filesCollection!.find({ 'metadata.leafTermId': typeof termId === 'string' ? ObjectId.createFromHexString(termId) : termId }, { session: this.session }).toArray()
-            if (files.length === 0)
-                return true
-
-            for (const file of files)
-                if (!await this.deleteFile(file._id.toString()))
-                    return false
-
-            return true
-        } catch (e) {
-            console.error(e)
-            return false
-        }
-    }
-
-    async deleteFilesByDefinition(definition: string): Promise<boolean> {
-        try {
-            let files = await ImageRepository.filesCollection!.find({ 'metadata.leafDefinition': typeof definition === 'string' ? ObjectId.createFromHexString(definition) : definition }, { session: this.session }).toArray()
-            if (files.length === 0)
-                return true
-
-            for (const file of files)
-                if (!await this.deleteFile(file._id.toString()))
+            for await (const c of cursor)
+                if (!await this.deleteFile(c._id.toString()))
                     return false
 
             return true
@@ -253,13 +232,13 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async deleteTemporaryFiles(): Promise<boolean> {
         try {
-            let r = await ImageRepository.chunksCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
-            if (!r.acknowledged)
-                return false
+            const cursor = ImageRepository.chunksCollection!.find({ 'metadata.temporary': true }, { session: this.session })
 
-            r = await ImageRepository.filesCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
-            if (!r.acknowledged)
-                return false
+            for await (const c of cursor) {
+                let r = await this.deleteFile(c._id.toString())
+                if (!r)
+                    return false
+            }
 
             return true
         } catch (e) {

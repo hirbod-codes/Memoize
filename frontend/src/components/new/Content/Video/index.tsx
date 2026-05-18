@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react"
 import Hls from 'hls.js'
 
-export function Video({ videoIds }: { videoIds: string[] }) {
+// { type, values, onRemove, onRemoveAll }: { type: Types, values: string[], onRemove?: (v: string) => void, onRemoveAll?: () => void }
+export function Video({ videoIds, editing, onLeafChange, onRemove, onRemoveAll }: { videoIds: string[], editing: boolean, onLeafChange?: (videoIds: string[]) => void, onRemove?: (v: string) => void, onRemoveAll?: () => void }) {
     const [selected, setSelected] = useState<string | undefined>(undefined)
 
     const videoRef = useRef<HTMLVideoElement>(null)

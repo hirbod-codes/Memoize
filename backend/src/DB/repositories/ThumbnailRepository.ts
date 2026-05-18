@@ -164,12 +164,10 @@ export class ThumbnailRepository implements IRepository, ISeedable, IDropable {
 
     async deleteFilesByUserId(userId: string): Promise<boolean> {
         try {
-            let files = await ThumbnailRepository.filesCollection!.find({ 'metadata.userId': ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
-            if (files.length === 0)
-                return true
+            const cursor = ThumbnailRepository.filesCollection!.find({ 'metadata.userId': userId }, { session: this.session })
 
-            for (const file of files)
-                if (!await this.deleteFile(file._id.toString()))
+            for await (const c of cursor)
+                if (!await this.deleteFile(c._id.toString()))
                     return false
 
             return true
@@ -179,15 +177,28 @@ export class ThumbnailRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
-    async deleteFileByAudioId(audioId: string): Promise<boolean> {
+    async deleteFileForUserByVideoId(videoId: string, userId: string): Promise<boolean> {
         try {
-            let r = await ThumbnailRepository.chunksCollection!.deleteMany({ 'metadata.audioId': ObjectId.createFromHexString(audioId) }, { session: this.session })
-            if (!r.acknowledged)
-                return false
+            const cursor = ThumbnailRepository.filesCollection!.find({ 'metadata.videoId': videoId, 'metadata.userId': userId }, { session: this.session })
 
-            r = await ThumbnailRepository.filesCollection!.deleteMany({ _id: ObjectId.createFromHexString(audioId) }, { session: this.session })
-            if (!r.acknowledged)
-                return false
+            for await (const c of cursor)
+                if (!await this.deleteFile(c._id.toString()))
+                    return false
+
+            return true
+        } catch (e) {
+            console.error(e)
+            return false
+        }
+    }
+
+    async deleteFileByVideoId(videoId: string): Promise<boolean> {
+        try {
+            const cursor = ThumbnailRepository.filesCollection!.find({ 'metadata.videoId': videoId }, { session: this.session })
+
+            for await (const c of cursor)
+                if (!await this.deleteFile(c._id.toString()))
+                    return false
 
             return true
         } catch (e) {

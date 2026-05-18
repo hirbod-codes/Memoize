@@ -1,7 +1,7 @@
 import express from 'express';
 import { likeObjectId } from '../DB/common_schemas';
 import { auth } from '../middlewares/auth';
-import { Content, Leaf, leafValidationSchema } from '../DB/models/Leaf';
+import { Content, ContentTypes, Leaf, leafValidationSchema } from '../DB/models/Leaf';
 import LeafRepository from '../DB/repositories/LeafRepository';
 import { array, string } from 'yup';
 import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
@@ -76,9 +76,6 @@ router.post('/', async (req, res) => {
         const videoRepo = new VideoRepository()
         videoRepo.setTransactionSession(session)
 
-        const audioRepo = new AudioFileRepository()
-        audioRepo.setTransactionSession(session)
-
         const audioFileRepo = new AudioFileRepository()
         audioFileRepo.setTransactionSession(session)
 
@@ -125,11 +122,6 @@ router.post('/', async (req, res) => {
 
                 case 'audioId':
                     for (const id of content.value) {
-                        const audioMakePermanentResult = await audioRepo.makePermanent(id)
-                        if (audioMakePermanentResult === false || !audioMakePermanentResult.acknowledged) {
-                            await db?.abortTransaction()
-                            return res.status(500).send()
-                        }
                         const audioFileMakePermanentResult = await audioFileRepo.makePermanentByAudioId(id)
                         if (audioFileMakePermanentResult === false || !audioFileMakePermanentResult.acknowledged) {
                             await db?.abortTransaction()
@@ -149,10 +141,10 @@ router.post('/', async (req, res) => {
         }
 
         for (const content of leaf.termContents)
-            makePermanent(content)
+            await makePermanent(content)
 
         for (const content of leaf.definitionContents)
-            makePermanent(content)
+            await makePermanent(content)
 
         await db.commitTransaction()
 
@@ -201,6 +193,227 @@ router.get('/', async (req, res) => {
         console.log('------------end------------')
     } catch (err) {
         console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+})
+
+router.patch('/', async (req, res) => {
+    let db: MongoDB | undefined = undefined
+    try {
+        console.log('/api/leaf')
+
+        console.log('Validation...')
+        let leaf: Leaf
+        try {
+            leaf = req.body.leaf
+            if (!leafValidationSchema.required().isValidSync(leaf) || !likeObjectId.required().isValidSync(leaf._id)) {
+                res.status(400).json({ message: 'Invalid artist leafIds' });
+                return
+            }
+        } catch (err) {
+            res.status(400).json({ message: 'Invalid artist leafIds' });
+            return
+        }
+        console.log({ leaf });
+
+        const userId = (req as any).user.userId
+
+        console.log("Downloading avatar...");
+        const leafRepository = new LeafRepository()
+        let originalLeaf: Leaf = await leafRepository.getForUser(leaf._id.toString(), userId)
+        if (!originalLeaf)
+            return res.status(404).send()
+
+        const searchContents = (type: ContentTypes, value: string, contents: Content[]) => {
+            for (const content of contents)
+                if (content.type !== type)
+                    continue
+                else if (content.value.find(f => f === value) !== undefined)
+                    return true
+
+            return false
+        }
+        const findRemovedContent = (content: Content) => {
+            const removedContents: string[] = []
+
+            switch (content.type) {
+                case 'imageId':
+                    for (const v of content.value)
+                        if (!searchContents('imageId', v, leaf.termContents))
+                            removedContents.push(v)
+                    break;
+
+                case 'audioId':
+                    for (const v of content.value)
+                        if (!searchContents('audioId', v, leaf.termContents))
+                            removedContents.push(v)
+                    break;
+
+                case 'videoId':
+                    for (const v of content.value)
+                        if (!searchContents('videoId', v, leaf.termContents))
+                            removedContents.push(v)
+                    break;
+
+                default:
+                    break;
+            }
+
+            return removedContents
+        }
+
+        console.log('Finding removed content...')
+        const removedContents: { imageId: string[], videoId: string[], audioId: string[] } = { imageId: [], videoId: [], audioId: [] }
+
+        for (const content of originalLeaf.termContents)
+            if (content.type === 'richText' || content.type === 'string')
+                continue
+            else
+                removedContents[content.type].push(...findRemovedContent(content))
+
+        for (const content of originalLeaf.definitionContents)
+            if (content.type === 'richText' || content.type === 'string')
+                continue
+            else
+                removedContents[content.type].push(...findRemovedContent(content))
+
+        console.log("Removing found contents...")
+
+        db = MongoDB.getDbInstance()
+        const session = await db.startTransaction()
+
+        const videoFileRepo = new VideoFileRepository()
+        videoFileRepo.setTransactionSession(session)
+
+        const thumbnailRepo = new ThumbnailRepository()
+        thumbnailRepo.setTransactionSession(session)
+
+        const videoRepo = new VideoRepository()
+        videoRepo.setTransactionSession(session)
+
+        const audioFileRepo = new AudioFileRepository()
+        audioFileRepo.setTransactionSession(session)
+
+        const coverArtRepo = new CoverArtRepository()
+        coverArtRepo.setTransactionSession(session)
+
+        const imageRepo = new ImageRepository()
+        imageRepo.setTransactionSession(session)
+
+        const avatarRepo = new AvatarRepository()
+        avatarRepo.setTransactionSession(session)
+
+        for (const v of removedContents.videoId) {
+            const videoRepoResult = await videoRepo.deleteForUser(v, userId)
+            if (!videoRepoResult.acknowledged) {
+                await db.abortTransaction()
+                return res.status(500).send()
+            }
+            const videoFileRepoResult = await videoFileRepo.deleteFileForUserByVideoId(v, userId)
+            if (videoFileRepoResult === false) {
+                await db.abortTransaction()
+                return res.status(500).send()
+            }
+            const thumbnailRepoResult = await thumbnailRepo.deleteFileForUserByVideoId(v, userId)
+            if (thumbnailRepoResult === false) {
+                await db.abortTransaction()
+                return res.status(500).send()
+            }
+        }
+
+        for (const v of removedContents.audioId) {
+            const audioFileRepoResult = await audioFileRepo.deleteFileForUserByAudioId(v, userId)
+            if (audioFileRepoResult === false) {
+                await db.abortTransaction()
+                return res.status(500).send()
+            }
+            const coverArtRepoResult = await coverArtRepo.deleteFileForUserByAudioId(v, userId)
+            if (coverArtRepoResult === false) {
+                await db.abortTransaction()
+                return res.status(500).send()
+            }
+        }
+
+        for (const v of removedContents.imageId) {
+            const imageRepoResult = await imageRepo.deleteFileForUserId(v, userId)
+            if (imageRepoResult === false) {
+                await db.abortTransaction()
+                return res.status(500).send()
+            }
+        }
+
+        originalLeaf = leaf
+
+        const updateResult = await leafRepository.replace(originalLeaf)
+        console.log({ updateResult })
+        if (!updateResult.acknowledged)
+            return res.status(500).send()
+
+        const makePermanent = async (content: Content) => {
+            switch (content.type) {
+                case 'imageId':
+                    for (const id of content.value) {
+                        const imageMakePermanentResult = await imageRepo.makePermanent(id)
+                        if (imageMakePermanentResult === false || !imageMakePermanentResult.acknowledged) {
+                            await db?.abortTransaction()
+                            return res.status(500).send()
+                        }
+                    }
+                    break;
+
+                case 'videoId':
+                    for (const id of content.value) {
+                        const videoMakePermanentResult = await videoRepo.makePermanent(id)
+                        if (!videoMakePermanentResult.acknowledged) {
+                            await db?.abortTransaction()
+                            return res.status(500).send()
+                        }
+                        const videoFileMakePermanentResult = await videoFileRepo.makePermanentByVideoId(id)
+                        if (videoFileMakePermanentResult === false || !videoFileMakePermanentResult.acknowledged) {
+                            await db?.abortTransaction()
+                            return res.status(500).send()
+                        }
+                        const thumbnailMakePermanentResult = await thumbnailRepo.makePermanentByVideoId(id)
+                        if (thumbnailMakePermanentResult === false || !thumbnailMakePermanentResult.acknowledged) {
+                            await db?.abortTransaction()
+                            return res.status(500).send()
+                        }
+                    }
+                    break;
+
+                case 'audioId':
+                    for (const id of content.value) {
+                        const audioFileMakePermanentResult = await audioFileRepo.makePermanentByAudioId(id)
+                        if (audioFileMakePermanentResult === false || !audioFileMakePermanentResult.acknowledged) {
+                            await db?.abortTransaction()
+                            return res.status(500).send()
+                        }
+                        const coverArtMakePermanentResult = await coverArtRepo.makePermanentByAudioId(id)
+                        if (coverArtMakePermanentResult === false || !coverArtMakePermanentResult.acknowledged) {
+                            await db?.abortTransaction()
+                            return res.status(500).send()
+                        }
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        for (const content of leaf.termContents)
+            await makePermanent(content)
+
+        for (const content of leaf.definitionContents)
+            await makePermanent(content)
+
+        await db.commitTransaction()
+
+        res.status(200).send()
+        console.log('------------end------------')
+    } catch (err) {
+        console.error(err);
+        await db?.abortTransaction()
         res.status(500).json({ message: 'Internal server error' });
     }
 })
