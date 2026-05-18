@@ -25,11 +25,25 @@ export const videoCollectionName = "videoFile"
 export const videoSchema = object().shape({
     userId: likeObjectId.required(),
 
+    videoId: likeObjectId.required(),
+
     temporary: boolean().required(),
 
     contentType: string().optional(),
 })
 export type VideoMetadata = InferType<typeof videoSchema>
+
+export const thumbnailCollectionName = "thumbnailFile"
+export const thumbnailSchema = object().shape({
+    userId: likeObjectId.required(),
+
+    videoId: likeObjectId.required(),
+
+    temporary: boolean().required(),
+
+    contentType: string().optional(),
+})
+export type ThumbnailMetadata = InferType<typeof thumbnailSchema>
 
 export const audioCollectionName = "audioFile"
 export const audioSchema = object().shape({

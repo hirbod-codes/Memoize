@@ -1,11 +1,13 @@
 import { ClientSession, Collection, Db, GridFSBucket, GridFSBucketReadStream, GridFSBucketWriteStream, GridFSFile, ObjectId } from "mongodb";
 import { MongoDB } from '../mongodb';
-import { imageCollectionName as collectionName, ImageMetadata } from "../models/Files";
+import { videoCollectionName as collectionName, VideoMetadata } from "../models/Files";
 import { ISeedable } from '../ISeedable';
 import { IDropable } from "../IDropable";
 import { IRepository } from "../IRepository";
+import { ReadStream } from "fs";
+import { pipeline } from "stream";
 
-export class ImageRepository implements IRepository, ISeedable, IDropable {
+export class VideoFileRepository implements IRepository, ISeedable, IDropable {
     IDropable: 'IDropable' = 'IDropable';
     IRepository: 'IRepository' = 'IRepository';
     ISeedable: 'ISeedable' = 'ISeedable';
@@ -24,9 +26,9 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
     }
 
     async addCollection(db: Db): Promise<void> {
-        ImageRepository.bucket = new GridFSBucket(await MongoDB.getDb(), { bucketName: collectionName });
-        ImageRepository.filesCollection = (await MongoDB.getDb()).collection(`${collectionName}.files`);
-        ImageRepository.chunksCollection = (await MongoDB.getDb()).collection(`${collectionName}.chunks`);
+        VideoFileRepository.bucket = new GridFSBucket(await MongoDB.getDb(), { bucketName: collectionName });
+        VideoFileRepository.filesCollection = (await MongoDB.getDb()).collection(`${collectionName}.files`);
+        VideoFileRepository.chunksCollection = (await MongoDB.getDb()).collection(`${collectionName}.chunks`);
     }
 
     async dropCollection(db: Db): Promise<void> {
@@ -38,27 +40,30 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
         // throw new Error("Method not implemented.");
     }
 
-    private async getReadStream(fileId: string | ObjectId): Promise<GridFSBucketReadStream> {
-        return ImageRepository.bucket!.openDownloadStream(typeof fileId === 'string' ? ObjectId.createFromHexString(fileId) : fileId)
+    private async getReadStream(fileId: string | ObjectId, range: number[] | undefined): Promise<GridFSBucketReadStream> {
+        return VideoFileRepository.bucket!.openDownloadStream(typeof fileId === 'string' ? ObjectId.createFromHexString(fileId) : fileId, !range ? undefined : { start: range[0], end: range[1] + 1 })
     }
 
-    private async getWriteStream(fileName: string, metadata: ImageMetadata): Promise<GridFSBucketWriteStream> {
-        return ImageRepository.bucket!.openUploadStream(fileName, { metadata })
+    private async getWriteStream(fileName: string, metadata: VideoMetadata): Promise<GridFSBucketWriteStream> {
+        return VideoFileRepository.bucket!.openUploadStream(fileName, { metadata, chunkSizeBytes: 1024 * 1024 })
     }
 
-    async upload(metadata: ImageMetadata, file: { fileName: string; bytes: Buffer | Uint8Array; }): Promise<string | false> {
+    async upload(metadata: VideoMetadata, file: { fileName: string; bytes: Buffer | Uint8Array | ReadStream; }): Promise<string | false> {
         try {
             return await (() => new Promise<string>(async (res, rej) => {
                 const upload = await this.getWriteStream(file.fileName, metadata)
-                upload
-                    .on('close', () => { res(upload.id.toString()) })
-                    .write(file.bytes, (e) => {
-                        if (e) {
-                            console.error(e)
-                            rej(e)
-                        } else
-                            upload.end()
-                    })
+                if (file.bytes instanceof ReadStream)
+                    pipeline<ReadStream, GridFSBucketWriteStream>(file.bytes, upload, (e) => { if (e) rej(e); else res(upload.id.toString()) })
+                else
+                    upload
+                        .on('close', () => { res(upload.id.toString()) })
+                        .write(file.bytes, (e) => {
+                            if (e) {
+                                console.error(e)
+                                rej(e)
+                            } else
+                                upload.end()
+                        })
             }))()
         } catch (error) {
             console.error(error);
@@ -68,7 +73,16 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async getFile(fileId: string): Promise<GridFSFile | undefined> {
         try {
-            return (await ImageRepository.bucket!.find({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session }).toArray())[0];
+            return (await VideoFileRepository.bucket!.find({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session }).toArray())[0];
+        } catch (e) {
+            console.error(e)
+            return undefined
+        }
+    }
+
+    async getFileByVideoId(videoId: string, fileName: string): Promise<GridFSFile | undefined> {
+        try {
+            return (await VideoFileRepository.bucket!.find({ 'metadata.videoId': videoId, filename: fileName }, { session: this.session }).toArray())[0];
         } catch (e) {
             console.error(e)
             return undefined
@@ -77,7 +91,7 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async getFiles(fileIds: string[]): Promise<GridFSFile[]> {
         try {
-            return await ImageRepository.bucket!.find({ _id: { $in: fileIds.map(id => ObjectId.createFromHexString(id)) } }, { session: this.session }).toArray();
+            return await VideoFileRepository.bucket!.find({ _id: { $in: fileIds.map(id => ObjectId.createFromHexString(id)) } }, { session: this.session }).toArray();
         } catch (e) {
             console.error(e)
             return []
@@ -86,7 +100,7 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async getFileByTermId(termId: string): Promise<GridFSFile | undefined> {
         try {
-            return (await ImageRepository.bucket!.find({ 'metadata.leafTermId': ObjectId.createFromHexString(termId) }, { session: this.session }).toArray())[0];
+            return (await VideoFileRepository.bucket!.find({ 'metadata.leafTermId': termId }, { session: this.session }).toArray())[0];
         } catch (e) {
             console.error(e)
             return undefined
@@ -95,7 +109,7 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async getFilesByTermId(termIds: string[]): Promise<GridFSFile[]> {
         try {
-            return await ImageRepository.bucket!.find({ 'metadata.leafTermId': { $in: termIds.map(id => ObjectId.createFromHexString(id)) } }, { session: this.session }).toArray();
+            return await VideoFileRepository.bucket!.find({ 'metadata.leafTermId': { $in: termIds } }, { session: this.session }).toArray();
         } catch (e) {
             console.error(e)
             return []
@@ -104,7 +118,7 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async getFileByDefinitionId(definitionId: string): Promise<GridFSFile | undefined> {
         try {
-            const results = await ImageRepository.bucket!.find({ 'metadata.leafDefinitionId': ObjectId.createFromHexString(definitionId) }, { session: this.session }).toArray()
+            const results = await VideoFileRepository.bucket!.find({ 'metadata.leafDefinitionId': definitionId }, { session: this.session }).toArray()
             return results.length > 0 ? results[0] : undefined;
         } catch (e) {
             console.error(e)
@@ -114,7 +128,7 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async getFilesByDefinitionId(definitionIds: string[]): Promise<GridFSFile[]> {
         try {
-            return await ImageRepository.bucket!.find({ 'metadata.leafDefinitionId': { $in: definitionIds.map(id => ObjectId.createFromHexString(id)) } }, { session: this.session }).toArray();
+            return await VideoFileRepository.bucket!.find({ 'metadata.leafDefinitionId': { $in: definitionIds } }, { session: this.session }).toArray();
         } catch (e) {
             console.error(e)
             return []
@@ -123,7 +137,7 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async getFileByUserId(userId: string): Promise<GridFSFile | undefined> {
         try {
-            const results = await ImageRepository.bucket!.find({ 'metadata.userId': ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
+            const results = await VideoFileRepository.bucket!.find({ 'metadata.userId': userId }, { session: this.session }).toArray()
             return results.length > 0 ? results[0] : undefined;
         } catch (e) {
             console.error(e)
@@ -133,18 +147,18 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async getFilesByUserId(userIds: string[]): Promise<GridFSFile[]> {
         try {
-            return await ImageRepository.bucket!.find({ 'metadata.userId': { $in: userIds.map(id => ObjectId.createFromHexString(id)) } }, { session: this.session }).toArray();
+            return await VideoFileRepository.bucket!.find({ 'metadata.userId': { $in: userIds } }, { session: this.session }).toArray();
         } catch (e) {
             console.error(e)
             return []
         }
     }
 
-    async downloadFile(writeStream: NodeJS.WritableStream, fileId: string): Promise<boolean> {
+    async downloadFile(writeStream: NodeJS.WritableStream, fileId: string, range?: number[] | undefined): Promise<boolean> {
         console.log('downloading file...');
 
         return new Promise<boolean>(async (resolve, reject) => {
-            const readStream = await this.getReadStream(fileId)
+            const readStream = await this.getReadStream(fileId, range)
 
             readStream
                 .on('close', async () => {
@@ -157,9 +171,18 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
         })
     }
 
+    async makePermanentByVideoId(videoId: string) {
+        try {
+            return await VideoFileRepository.filesCollection!.updateOne({ 'metadata.videoId': ObjectId.createFromHexString(videoId) }, { 'metadata.temporary': false }, { session: this.session })
+        } catch (error) {
+            console.log(error)
+            return false
+        }
+    }
+
     async makePermanent(fileId: string) {
         try {
-            return await ImageRepository.filesCollection!.updateOne({ _id: ObjectId.createFromHexString(fileId) }, { 'metadata.temporary': false }, { session: this.session })
+            return await VideoFileRepository.filesCollection!.updateOne({ _id: ObjectId.createFromHexString(fileId) }, { 'metadata.temporary': false }, { session: this.session })
         } catch (error) {
             console.log(error)
             return false
@@ -168,7 +191,7 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async deleteFilesByUserId(userId: string) {
         try {
-            let files = await ImageRepository.filesCollection!.find({ 'metadata.userId': typeof userId === 'string' ? ObjectId.createFromHexString(userId) : userId }, { session: this.session }).toArray()
+            let files = await VideoFileRepository.filesCollection!.find({ 'metadata.userId': userId }, { session: this.session }).toArray()
             if (files.length === 0)
                 return true
 
@@ -185,7 +208,7 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async deleteFilesByTermId(termId: string): Promise<boolean> {
         try {
-            let files = await ImageRepository.filesCollection!.find({ 'metadata.leafTermId': typeof termId === 'string' ? ObjectId.createFromHexString(termId) : termId }, { session: this.session }).toArray()
+            let files = await VideoFileRepository.filesCollection!.find({ 'metadata.leafTermId': termId }, { session: this.session }).toArray()
             if (files.length === 0)
                 return true
 
@@ -202,7 +225,7 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async deleteFilesByDefinition(definition: string): Promise<boolean> {
         try {
-            let files = await ImageRepository.filesCollection!.find({ 'metadata.leafDefinition': typeof definition === 'string' ? ObjectId.createFromHexString(definition) : definition }, { session: this.session }).toArray()
+            let files = await VideoFileRepository.filesCollection!.find({ 'metadata.leafDefinition': definition }, { session: this.session }).toArray()
             if (files.length === 0)
                 return true
 
@@ -219,11 +242,11 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async deleteFiles(fileIds: string[]): Promise<boolean> {
         try {
-            let r = await ImageRepository.chunksCollection!.deleteMany({ files_id: { $in: fileIds.map(m => ObjectId.createFromHexString(m)) } }, { session: this.session })
+            let r = await VideoFileRepository.chunksCollection!.deleteMany({ files_id: { $in: fileIds.map(m => ObjectId.createFromHexString(m)) } }, { session: this.session })
             if (!r.acknowledged)
                 return false
 
-            r = await ImageRepository.filesCollection!.deleteMany({ _id: { $in: fileIds.map(m => ObjectId.createFromHexString(m)) } }, { session: this.session })
+            r = await VideoFileRepository.filesCollection!.deleteMany({ _id: { $in: fileIds.map(m => ObjectId.createFromHexString(m)) } }, { session: this.session })
             if (!r.acknowledged)
                 return false
 
@@ -236,11 +259,11 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async deleteFile(fileId: string): Promise<boolean> {
         try {
-            let r = await ImageRepository.chunksCollection!.deleteMany({ files_id: ObjectId.createFromHexString(fileId) }, { session: this.session })
+            let r = await VideoFileRepository.chunksCollection!.deleteMany({ files_id: ObjectId.createFromHexString(fileId) }, { session: this.session })
             if (!r.acknowledged)
                 return false
 
-            r = await ImageRepository.filesCollection!.deleteMany({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session })
+            r = await VideoFileRepository.filesCollection!.deleteMany({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session })
             if (!r.acknowledged)
                 return false
 
@@ -253,11 +276,11 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async deleteTemporaryFiles(): Promise<boolean> {
         try {
-            let r = await ImageRepository.chunksCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
+            let r = await VideoFileRepository.chunksCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
             if (!r.acknowledged)
                 return false
 
-            r = await ImageRepository.filesCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
+            r = await VideoFileRepository.filesCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
             if (!r.acknowledged)
                 return false
 

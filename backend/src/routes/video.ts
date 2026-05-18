@@ -1,31 +1,37 @@
+import fs from 'fs'
 import express from 'express';
-import { Readable } from 'stream';
-import { streamToBuffer } from '../utils';
 import { likeObjectId } from '../DB/common_schemas';
-import { string } from 'yup';
+import { array, number, string } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
-import { VideoRepository } from '../DB/repositories/VideoRepository';
+import { VideoFileRepository } from '../DB/repositories/VideoFileRepository';
+import { ThumbnailRepository } from '../DB/repositories/ThumbnailRepository';
+import path from 'path';
+import { decodeVideoToDisk } from '../ffmpeg';
+import VideoRepository from '../DB/repositories/VideoRepository';
 
 const router = express.Router();
 
 router.post('/upload', auth, authorization, async (req, res) => {
+    let tempDir
     try {
         console.log('/upload')
 
         console.log('Validating...')
         let fileName: string | undefined,
-            fileBuffer: Buffer
+            fileBuffer: Buffer,
+            title: string | undefined
         try {
-            fileName = req.query.name?.toString()
-            console.log({ fileName })
+            title = req.query.title?.toString()
+            fileName = req.query.fileName?.toString()
+            console.log({ fileName, title })
 
             if (!string().required().isValidSync(fileName))
                 return res.status(400).json({ message: 'Invalid file name' });
 
-            console.log({ fileName })
+            if (!string().required().isValidSync(title))
+                return res.status(400).json({ message: 'Invalid title' });
 
-            const fileStream = Readable.from(req);
-            fileBuffer = await streamToBuffer(fileStream)
+            console.log({ fileName, title })
         } catch (err) {
             console.error(err)
             res.status(400).json({ message: 'Invalid file' });
@@ -33,18 +39,50 @@ router.post('/upload', auth, authorization, async (req, res) => {
         }
 
         const videoRepository = new VideoRepository()
+        const videoFileRepository = new VideoFileRepository()
 
-        console.log("Inserting video file...");
-        const videoFileId = await videoRepository.upload({ temporary: false, userId: (req as any).user.userId, contentType: req.headers['content-type'] }, { fileName: fileName, bytes: fileBuffer })
-        console.log("Upload video file result", videoFileId);
-        if (videoFileId === false || !videoFileId)
+        console.log('Inserting video info...');
+        const videoInsertResult = await videoRepository.insert({ title: fileName, userId: (req as any).user.userId, temporary: true })
+        if (!videoInsertResult.acknowledged)
             return res.status(500).send()
+        const videoId = videoInsertResult.insertedId.toString()
 
-        res.status(201).send();
+        tempDir = path.join('temp', 'videos', videoId)
+
+        await decodeVideoToDisk(req, tempDir)
+
+        const files = fs.readdirSync(tempDir)
+
+        const uploaded = []
+
+        console.log("Uploading video file segments...");
+        for (const file of files) {
+            const filePath = path.join(tempDir, file)
+            const readStream = fs.createReadStream(filePath)
+
+            const contentType = file.endsWith('.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/mp2t'
+
+            // Will be permanent after user created corresponding leaf
+            const videoFileId = await videoFileRepository.upload({ videoId, temporary: true, userId: (req as any).user.userId, contentType }, { fileName: file, bytes: readStream })
+            console.log("Upload video file result", videoFileId);
+            if (videoFileId === false || !videoFileId)
+                return res.status(500).send()
+
+            uploaded.push({ file, id: videoFileId })
+        }
+        console.log(JSON.stringify(uploaded, undefined, 4))
+
+        fs.rmSync(tempDir, { force: true, recursive: true })
+
+        res.status(201).json({ videoId });
 
         console.log('------------end------------')
     } catch (err) {
         console.error(err)
+
+        if (tempDir)
+            fs.rmSync(tempDir, { force: true, recursive: true })
+
         res.status(500).json({ message: 'Error uploading video file' });
     }
 })
@@ -69,7 +107,7 @@ router.get('/info/', auth, async (req, res) => {
         }
         console.log({ videoId })
 
-        const videoRepository = new VideoRepository()
+        const videoRepository = new VideoFileRepository()
 
         let result = await videoRepository.getFile(videoId)
 
@@ -83,9 +121,51 @@ router.get('/info/', auth, async (req, res) => {
     }
 });
 
-router.get('/file/:videoId', auth, async (req, res) => {
+router.get('/file/:videoId/:fileName', auth, async (req, res) => {
     try {
-        console.log('/file')
+        console.log('/api/video/file/:videoId')
+
+        console.log('Validation...')
+        let videoId: string | undefined, fileName: string | undefined
+        try {
+            videoId = req.params.videoId.toString()
+            fileName = req.params.fileName.toString()
+            console.log({ videoId, fileName })
+
+            if (!likeObjectId.isValidSync(videoId))
+                return res.status(400).json({ message: 'Invalid video id' });
+
+            if (!likeObjectId.isValidSync(fileName))
+                return res.status(400).json({ message: 'Invalid video id' });
+        } catch (err) {
+            console.error(err);
+            return res.status(400).send()
+        }
+
+        const videoFileRepository = new VideoFileRepository()
+
+        const file = await videoFileRepository.getFileByVideoId(videoId, fileName)
+        if (!file) {
+            res.status(404).json({ message: 'video file not found' });
+            return
+        }
+        console.log('file', file)
+
+        res.setHeader("Content-Type", file.metadata?.contentType)
+        res.setHeader("Cache-Control", 'no-cache')
+
+        console.log('streaming...')
+        videoFileRepository.downloadFile(res, file._id.toString())
+
+        console.log('------------end------------')
+    } catch (err) {
+        res.status(500).json({ message: 'Error getting audio file' });
+    }
+});
+
+router.get('/thumbnail/:videoId', auth, async (req, res) => {
+    try {
+        console.log('/api/video/thumbnail/:videoId')
 
         const videoId = req.params.videoId
         if (!likeObjectId.isValidSync(videoId)) {
@@ -94,8 +174,8 @@ router.get('/file/:videoId', auth, async (req, res) => {
         }
         console.log('videoId', videoId)
 
-        const videoRepository = new VideoRepository()
-        const file = await videoRepository.getFile(videoId)
+        const thumbnailRepository = new ThumbnailRepository()
+        const file = await thumbnailRepository.getFile(videoId)
         if (!file) {
             res.status(404).json({ message: 'video file not found' });
             return
@@ -103,7 +183,7 @@ router.get('/file/:videoId', auth, async (req, res) => {
         console.log('file', file)
 
         console.log('downloading...')
-        videoRepository.downloadFile(res, file._id.toString())
+        thumbnailRepository.downloadFile(res, file._id.toString())
 
         console.log('------------end------------')
     } catch (err) {
@@ -119,7 +199,7 @@ router.delete('/:videoId', auth, authorization, async (req, res) => {
             return res.status(400).json({ message: 'Error uploading video file' });
         console.log({ videoId });
 
-        const videoRepository = new VideoRepository()
+        const videoRepository = new VideoFileRepository()
 
         const video = await videoRepository.getFile(videoId)
         if (!video)

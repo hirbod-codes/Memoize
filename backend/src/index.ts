@@ -15,10 +15,11 @@ import { AvatarRepository } from './DB/repositories/AvatarRepository';
 import { ImageRepository } from './DB/repositories/ImageRepository';
 import LeafRepository from './DB/repositories/LeafRepository';
 import TreeNodeRepository from './DB/repositories/TreeNodeRepository';
-import { VideoRepository } from './DB/repositories/VideoRepository';
+import { VideoFileRepository } from './DB/repositories/VideoFileRepository';
 import { leafRoutes } from './routes/leaf';
 import { treeNodeRoutes } from './routes/treeNode';
 import { audioRoutes } from './routes/audio';
+import { runCronjobs } from './cronjobs';
 
 dotenv.config({ debug: process.env.DEBUG !== undefined ? Boolean(process.env.DEBUG) : undefined })
 
@@ -55,7 +56,7 @@ export const dbConfig = {
         db.addRepository(new AvatarRepository())
         db.addRepository(new AudioFileRepository())
         db.addRepository(new ImageRepository())
-        db.addRepository(new VideoRepository())
+        db.addRepository(new VideoFileRepository())
         db.addRepository(new LeafRepository())
         db.addRepository(new TreeNodeRepository())
 
@@ -133,4 +134,6 @@ export const dbConfig = {
     else
         // Server is behind NginX proxy
         app.listen(hostPort, hostName, () => console.log(`listening on ${hostName}:${hostPort}...`))
+
+    runCronjobs()
 })()

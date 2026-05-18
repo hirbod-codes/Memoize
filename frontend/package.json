@@ -13,6 +13,7 @@
         "clsx": "^2.1.1",
         "colorthief": "^3.3.1",
         "framer-motion": "^12.38.0",
+        "hls.js": "file:hls.js-1.6.13.tgz",
         "jwt-decode": "^4.0.0",
         "node-vibrant": "^4.0.4",
         "react": "^19.2.5",

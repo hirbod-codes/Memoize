@@ -1,6 +1,6 @@
 import { ClientSession, Collection, Db, GridFSBucket, GridFSBucketReadStream, GridFSBucketWriteStream, GridFSFile, ObjectId } from "mongodb";
 import { MongoDB } from '../mongodb';
-import { CoverArtMetadata, avatarCollectionName as collectionName } from "../models/Files";
+import { CoverArtMetadata, coverArtCollectionName as collectionName } from "../models/Files";
 import { ISeedable } from '../ISeedable';
 import { IDropable } from "../IDropable";
 import { IRepository } from "../IRepository";
@@ -27,6 +27,7 @@ export class CoverArtRepository implements IRepository, ISeedable, IDropable {
     async addCollection(db: Db): Promise<void> {
         CoverArtRepository.bucket = new GridFSBucket(await MongoDB.getDb(), { bucketName: collectionName });
         CoverArtRepository.filesCollection = (await MongoDB.getDb()).collection(`${collectionName}.files`);
+        CoverArtRepository.filesCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
         CoverArtRepository.chunksCollection = (await MongoDB.getDb()).collection(`${collectionName}.chunks`);
     }
 
@@ -153,6 +154,15 @@ export class CoverArtRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    async makePermanentByAudioId(audioId: string) {
+        try {
+            return await CoverArtRepository.filesCollection!.updateOne({ 'metadata.audioId': ObjectId.createFromHexString(audioId) }, { 'metadata.temporary': false }, { session: this.session })
+        } catch (error) {
+            console.log(error)
+            return false
+        }
+    }
+
     async deleteFilesByUserId(userId: string): Promise<boolean> {
         try {
             let files = await CoverArtRepository.filesCollection!.find({ 'metadata.userId': ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
@@ -211,6 +221,23 @@ export class CoverArtRepository implements IRepository, ISeedable, IDropable {
                 return false
 
             r = await CoverArtRepository.filesCollection!.deleteMany({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session })
+            if (!r.acknowledged)
+                return false
+
+            return true
+        } catch (e) {
+            console.error(e)
+            return false
+        }
+    }
+
+    async deleteTemporaryFiles(): Promise<boolean> {
+        try {
+            let r = await CoverArtRepository.chunksCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
+            if (!r.acknowledged)
+                return false
+
+            r = await CoverArtRepository.filesCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
             if (!r.acknowledged)
                 return false
 

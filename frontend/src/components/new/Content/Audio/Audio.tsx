@@ -26,9 +26,6 @@ import { Ellipsis } from "../../../../assets/icons/Ellipsis";
 import { audioManager } from "../../../../audio/AudioManager";
 import ProgressBar from "./ProgressBar";
 import { Equalizer } from "./Equalizer";
-import { Slide } from "../../Slide";
-import { Bookmark } from "../../../../assets/icons/Bookmark";
-import { X } from "../../../../assets/icons/X";
 import { SquareMinus } from "../../../../assets/icons/SquareMinus";
 import { Trash2 } from "../../../../assets/icons/Trash2";
 
@@ -40,10 +37,7 @@ export function Audio({ audioIds, removeAudio, removeAllAudios }: { audioIds: st
     const [showEQ, setShowEQ] = useState(false)
     const [showPlaylist, setShowPlaylist] = useState(false)
     const [showLyrics, setShowLyrics] = useState(false)
-    const [openSaveAs, setOpenSaveAs] = useState(false)
 
-    const [saveAsName, setSaveAsName] = useState('')
-    const [savingAs, setSavingAs] = useState(false)
     const [audioInfo, setAudioInfo] = useState<any | undefined>(undefined)
 
     // The dominant color
@@ -134,49 +128,6 @@ export function Audio({ audioIds, removeAudio, removeAllAudios }: { audioIds: st
         setShowLyrics(false)
         setShowEQ(false)
         setShowDetails(false)
-    }
-
-    const addNewPlaylist = async () => {
-        if (!saveAsName)
-            return
-
-        try {
-            setSavingAs(true)
-
-            const audios: any[] = []
-            const audiosPromises: Promise<Response | false>[] = []
-            for (const id of audioIds)
-                audiosPromises.push(jsonAuthFetch(`/api/audio/info?audioId=${id}`))
-
-            let results
-            try {
-                results = await Promise.all(audiosPromises)
-            } catch (err) {
-                console.error(err)
-                setSavingAs(false)
-                return notify('failed to add to a new playlist', 3000, 'error')
-            }
-
-            for (const r of results)
-                if (r === false || !r.ok)
-                    return notify('failed to add to a new playlist', 3000, 'error')
-                else {
-                    let audioData = await r.json()
-                    audios.push({ audioId: audioData._id, trackNumber: audioData?.metadata?.trackNumber, title: audioData.title })
-                }
-
-            let r = await jsonAuthFetch('/api/user/add-playlist', { method: 'POST', body: JSON.stringify({ name: saveAsName, audios }) })
-            setSavingAs(false)
-            if (r === false || !r.ok)
-                return notify('failed to add to a new playlist', 3000, 'error')
-            else
-                notify('successful', 3000, 'success')
-
-            setOpenSaveAs(false)
-        } catch (err) {
-            console.error(err);
-            notify('failed to add to a new playlist', 3000, 'error')
-        }
     }
 
     return (
@@ -421,14 +372,6 @@ export function Audio({ audioIds, removeAudio, removeAllAudios }: { audioIds: st
                                         <Trash2 className="text-error" />
                                     </button>
                                 </Ripple>
-
-                                <div className="grow" />
-
-                                <Ripple>
-                                    <button onClick={() => setOpenSaveAs(true)}>
-                                        <Bookmark />
-                                    </button>
-                                </Ripple>
                             </div>
                             {
                                 audioIds.map((v, i) =>
@@ -445,38 +388,6 @@ export function Audio({ audioIds, removeAudio, removeAllAudios }: { audioIds: st
                             }
                         </div>
                     }
-
-                    {/* Save current as a playlist */}
-                    <div className="pointer-events-none absolute z-50 w-full top-0 left-0 overflow-hidden">
-                        <Slide open={openSaveAs} className="pointer-events-auto rounded-3xl bg-surface-variant shadow-2xl p-4 text-on-surface" style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
-                            <div className="flex flex-col gap-2">
-                                <div className="flex flex-row justify-end">
-                                    <Ripple>
-                                        <button onClick={() => setOpenSaveAs(false)}>
-                                            <X />
-                                        </button>
-                                    </Ripple>
-                                </div>
-                                <input
-                                    value={saveAsName}
-                                    onChange={(e) => setSaveAsName(e.target.value)}
-                                    className="bg-surface rounded p-1 w-full shadow-2xl"
-                                />
-
-                                <Ripple className="w-full border border-outline rounded">
-                                    <button className="w-full" onClick={addNewPlaylist}>
-                                        {
-                                            savingAs
-                                                ? <div className="absolute top-0 left-0 size-full flex flex-col items-center justify-center">
-                                                    <div className="size-5 border-2 border-on-surface border-t-primary rounded-full animate-spin" />
-                                                </div>
-                                                : 'done'
-                                        }
-                                    </button>
-                                </Ripple>
-                            </div>
-                        </Slide>
-                    </div >
 
                     {
                         showLyrics && audioInfo &&

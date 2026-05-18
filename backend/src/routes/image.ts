@@ -35,12 +35,13 @@ router.post('/upload', auth, authorization, async (req, res) => {
         const imageRepository = new ImageRepository()
 
         console.log("Inserting image file...");
-        const imageFileId = await imageRepository.upload({ temporary: false, userId: (req as any).user.userId, contentType: req.headers['content-type'] }, { fileName: fileName, bytes: fileBuffer })
+        // Will be permanent after user created corresponding leaf
+        const imageFileId = await imageRepository.upload({ temporary: true, userId: (req as any).user.userId, contentType: req.headers['content-type'] }, { fileName: fileName, bytes: fileBuffer })
         console.log("Upload image file result", imageFileId);
         if (imageFileId === false || !imageFileId)
             return res.status(500).send()
 
-        res.status(201).send();
+        res.status(201).json({ imageFileId });
 
         console.log('------------end------------')
     } catch (err) {

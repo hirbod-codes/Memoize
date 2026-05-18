@@ -81,6 +81,14 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
         return await TreeNodeRepository.collection!.find({ root: isRoot }, { session: this.session }).toArray()
     }
 
+    async addLeaf(treeNodeId: string, leafId: string) {
+        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(treeNodeId) }, { $push: { leafIds: leafId } })
+    }
+
+    async addTreeNode(treeNodeId: string, addedTreeNodeId: string) {
+        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(treeNodeId) }, { $push: { treeNodeIds: addedTreeNodeId } })
+    }
+
     async delete(id: string): Promise<DeleteResult> {
         return await TreeNodeRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id) }, { session: this.session })
     }

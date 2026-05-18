@@ -226,25 +226,9 @@ router.post('/upload', auth, authorization, async (req, res) => {
                 return res.status(500).send()
         }
 
-        db = MongoDB.getDbInstance()
-        const session = await db.startTransaction()
+        console.log({ coverArtId, audioFileId })
 
-        audioFileRepository.setTransactionSession(session)
-        coverArtRepository.setTransactionSession(session)
-
-        const audioFileUpdateResult = await audioFileRepository.makePermanent(audioFileId)
-        console.log({ audioFileUpdateResult })
-        if (audioFileUpdateResult === false || !audioFileUpdateResult.acknowledged)
-            return res.status(500).send()
-
-        const coverArtFileUpdateResult = await coverArtRepository.makePermanent(coverArtId!)
-        console.log({ coverArtFileUpdateResult })
-        if (coverArtFileUpdateResult === false || !coverArtFileUpdateResult.acknowledged)
-            return res.status(500).send()
-
-        await db.commitTransaction()
-
-        res.status(201).send();
+        res.status(201).json({ coverArtId, audioFileId });
 
         console.log('------------end------------')
     } catch (err) {

@@ -1,12 +1,12 @@
 import { ClientSession, Collection, Db, GridFSBucket, GridFSBucketReadStream, GridFSBucketWriteStream, GridFSFile, ObjectId } from "mongodb";
 import { MongoDB } from '../mongodb';
-import { AvatarMetadata, avatarCollectionName as collectionName } from "../models/Files";
+import { ThumbnailMetadata, thumbnailCollectionName as collectionName } from "../models/Files";
 import { ISeedable } from '../ISeedable';
 import { IDropable } from "../IDropable";
 import { IRepository } from "../IRepository";
 import { Readable } from "node:stream";
 
-export class AvatarRepository implements IRepository, ISeedable, IDropable {
+export class ThumbnailRepository implements IRepository, ISeedable, IDropable {
     IDropable: 'IDropable' = 'IDropable';
     IRepository: 'IRepository' = 'IRepository';
     ISeedable: 'ISeedable' = 'ISeedable';
@@ -25,9 +25,9 @@ export class AvatarRepository implements IRepository, ISeedable, IDropable {
     }
 
     async addCollection(db: Db): Promise<void> {
-        AvatarRepository.bucket = new GridFSBucket(await MongoDB.getDb(), { bucketName: collectionName });
-        AvatarRepository.filesCollection = (await MongoDB.getDb()).collection(`${collectionName}.files`);
-        AvatarRepository.chunksCollection = (await MongoDB.getDb()).collection(`${collectionName}.chunks`);
+        ThumbnailRepository.bucket = new GridFSBucket(await MongoDB.getDb(), { bucketName: collectionName });
+        ThumbnailRepository.filesCollection = (await MongoDB.getDb()).collection(`${collectionName}.files`);
+        ThumbnailRepository.chunksCollection = (await MongoDB.getDb()).collection(`${collectionName}.chunks`);
     }
 
     async dropCollection(db: Db): Promise<void> {
@@ -40,14 +40,14 @@ export class AvatarRepository implements IRepository, ISeedable, IDropable {
     }
 
     private async getReadStream(fileId: string | ObjectId): Promise<GridFSBucketReadStream> {
-        return AvatarRepository.bucket!.openDownloadStream(typeof fileId === 'string' ? ObjectId.createFromHexString(fileId) : fileId)
+        return ThumbnailRepository.bucket!.openDownloadStream(typeof fileId === 'string' ? ObjectId.createFromHexString(fileId) : fileId)
     }
 
-    private async getWriteStream(fileName: string, metadata: AvatarMetadata): Promise<GridFSBucketWriteStream> {
-        return AvatarRepository.bucket!.openUploadStream(fileName, { metadata })
+    private async getWriteStream(fileName: string, metadata: ThumbnailMetadata): Promise<GridFSBucketWriteStream> {
+        return ThumbnailRepository.bucket!.openUploadStream(fileName, { metadata })
     }
 
-    async uploadAvatar(metadata: AvatarMetadata, file: { fileName: string; bytes: Readable | Buffer | Uint8Array; contentType?: string }, temporary: boolean = true): Promise<string | false> {
+    async upload(metadata: ThumbnailMetadata, file: { fileName: string; bytes: Readable | Buffer | Uint8Array; contentType?: string }, temporary: boolean = true): Promise<string | false> {
         try {
             if (file.bytes instanceof Readable && file.bytes.pipe !== undefined)
                 return await (() => new Promise<any>(async (res, rej) => {
@@ -82,9 +82,27 @@ export class AvatarRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    async getFileByAudioId(audioId: string): Promise<GridFSFile | undefined> {
+        try {
+            return (await ThumbnailRepository.bucket!.find({ 'metadata.audioId': ObjectId.createFromHexString(audioId) }, { session: this.session }).toArray())[0];
+        } catch (e) {
+            console.error(e)
+            return undefined
+        }
+    }
+
+    async getFilesByUserId(userId: string): Promise<GridFSFile | undefined> {
+        try {
+            return (await ThumbnailRepository.bucket!.find({ 'metadata.userId': ObjectId.createFromHexString(userId) }, { session: this.session }).toArray())[0];
+        } catch (e) {
+            console.error(e)
+            return undefined
+        }
+    }
+
     async getFile(fileId: string): Promise<GridFSFile | undefined> {
         try {
-            return (await AvatarRepository.bucket!.find({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session }).toArray())[0];
+            return (await ThumbnailRepository.bucket!.find({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session }).toArray())[0];
         } catch (e) {
             console.error(e)
             return undefined
@@ -93,7 +111,7 @@ export class AvatarRepository implements IRepository, ISeedable, IDropable {
 
     async getFiles(fileIds: string[]): Promise<GridFSFile[]> {
         try {
-            return await AvatarRepository.bucket!.find({ _id: { $in: fileIds.map(id => ObjectId.createFromHexString(id)) } }, { session: this.session }).toArray();
+            return await ThumbnailRepository.bucket!.find({ _id: { $in: fileIds.map(id => ObjectId.createFromHexString(id)) } }, { session: this.session }).toArray();
         } catch (e) {
             console.error(e)
             return []
@@ -102,7 +120,7 @@ export class AvatarRepository implements IRepository, ISeedable, IDropable {
 
     async getFileByUserId(userId: string): Promise<GridFSFile | false> {
         try {
-            return (await AvatarRepository.bucket!.find({ 'metadata.userId': ObjectId.createFromHexString(userId) }, { session: this.session }).toArray())[0];
+            return (await ThumbnailRepository.bucket!.find({ 'metadata.userId': ObjectId.createFromHexString(userId) }, { session: this.session }).toArray())[0];
         } catch (e) {
             console.error(e)
             return false
@@ -128,7 +146,16 @@ export class AvatarRepository implements IRepository, ISeedable, IDropable {
 
     async makePermanent(fileId: string) {
         try {
-            return await AvatarRepository.filesCollection!.updateOne({ _id: ObjectId.createFromHexString(fileId) }, { 'metadata.temporary': false }, { session: this.session })
+            return await ThumbnailRepository.filesCollection!.updateOne({ _id: ObjectId.createFromHexString(fileId) }, { 'metadata.temporary': false }, { session: this.session })
+        } catch (error) {
+            console.log(error)
+            return false
+        }
+    }
+
+    async makePermanentByVideoId(videoId: string) {
+        try {
+            return await ThumbnailRepository.filesCollection!.updateOne({ 'metadata.videoId': ObjectId.createFromHexString(videoId) }, { 'metadata.temporary': false }, { session: this.session })
         } catch (error) {
             console.log(error)
             return false
@@ -137,7 +164,7 @@ export class AvatarRepository implements IRepository, ISeedable, IDropable {
 
     async deleteFilesByUserId(userId: string): Promise<boolean> {
         try {
-            let files = await AvatarRepository.filesCollection!.find({ 'metadata.userId': ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
+            let files = await ThumbnailRepository.filesCollection!.find({ 'metadata.userId': ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
             if (files.length === 0)
                 return true
 
@@ -152,13 +179,30 @@ export class AvatarRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
-    async deleteFiles(fileIds: string[]): Promise<boolean> {
+    async deleteFileByAudioId(audioId: string): Promise<boolean> {
         try {
-            let r = await AvatarRepository.chunksCollection!.deleteMany({ files_id: { $in: fileIds.map(m => ObjectId.createFromHexString(m)) } }, { session: this.session })
+            let r = await ThumbnailRepository.chunksCollection!.deleteMany({ 'metadata.audioId': ObjectId.createFromHexString(audioId) }, { session: this.session })
             if (!r.acknowledged)
                 return false
 
-            r = await AvatarRepository.filesCollection!.deleteMany({ _id: { $in: fileIds.map(m => ObjectId.createFromHexString(m)) } }, { session: this.session })
+            r = await ThumbnailRepository.filesCollection!.deleteMany({ _id: ObjectId.createFromHexString(audioId) }, { session: this.session })
+            if (!r.acknowledged)
+                return false
+
+            return true
+        } catch (e) {
+            console.error(e)
+            return false
+        }
+    }
+
+    async deleteFiles(fileIds: string[]): Promise<boolean> {
+        try {
+            let r = await ThumbnailRepository.chunksCollection!.deleteMany({ files_id: { $in: fileIds.map(m => ObjectId.createFromHexString(m)) } }, { session: this.session })
+            if (!r.acknowledged)
+                return false
+
+            r = await ThumbnailRepository.filesCollection!.deleteMany({ _id: { $in: fileIds.map(m => ObjectId.createFromHexString(m)) } }, { session: this.session })
             if (!r.acknowledged)
                 return false
 
@@ -171,11 +215,11 @@ export class AvatarRepository implements IRepository, ISeedable, IDropable {
 
     async deleteFile(fileId: string): Promise<boolean> {
         try {
-            let r = await AvatarRepository.chunksCollection!.deleteMany({ files_id: ObjectId.createFromHexString(fileId) }, { session: this.session })
+            let r = await ThumbnailRepository.chunksCollection!.deleteMany({ files_id: ObjectId.createFromHexString(fileId) }, { session: this.session })
             if (!r.acknowledged)
                 return false
 
-            r = await AvatarRepository.filesCollection!.deleteMany({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session })
+            r = await ThumbnailRepository.filesCollection!.deleteMany({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session })
             if (!r.acknowledged)
                 return false
 
@@ -188,11 +232,11 @@ export class AvatarRepository implements IRepository, ISeedable, IDropable {
 
     async deleteTemporaryFiles(): Promise<boolean> {
         try {
-            let r = await AvatarRepository.chunksCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
+            let r = await ThumbnailRepository.chunksCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
             if (!r.acknowledged)
                 return false
 
-            r = await AvatarRepository.filesCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
+            r = await ThumbnailRepository.filesCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
             if (!r.acknowledged)
                 return false
 

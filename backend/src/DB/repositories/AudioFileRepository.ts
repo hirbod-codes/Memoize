@@ -137,6 +137,15 @@ export class AudioFileRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    async makePermanentByAudioId(audioId: string) {
+        try {
+            return await AudioFileRepository.filesCollection!.updateOne({ 'metadata.audioId': ObjectId.createFromHexString(audioId) }, { 'metadata.temporary': false }, { session: this.session })
+        } catch (error) {
+            console.log(error)
+            return false
+        }
+    }
+
     async deleteFilesByUserId(userId: string) {
         try {
             let files = await AudioFileRepository.filesCollection!.find({ 'metadata.userId': typeof userId === 'string' ? ObjectId.createFromHexString(userId) : userId }, { session: this.session }).toArray()
@@ -178,6 +187,23 @@ export class AudioFileRepository implements IRepository, ISeedable, IDropable {
                 return false
 
             r = await AudioFileRepository.filesCollection!.deleteMany({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session })
+            if (!r.acknowledged)
+                return false
+
+            return true
+        } catch (e) {
+            console.error(e)
+            return false
+        }
+    }
+
+    async deleteTemporaryFiles(): Promise<boolean> {
+        try {
+            let r = await AudioFileRepository.chunksCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
+            if (!r.acknowledged)
+                return false
+
+            r = await AudioFileRepository.filesCollection!.deleteMany({ 'metadata.temporary': true }, { session: this.session })
             if (!r.acknowledged)
                 return false
 
