@@ -1,4 +1,4 @@
-import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId } from 'mongodb';
+import { AnyBulkWriteOperation, BulkWriteResult, ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId } from 'mongodb';
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
@@ -51,7 +51,7 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
     }
 
     async insert(video: Video): Promise<InsertOneResult> {
-        return await VideoRepository.collection!.insertOne(video, { session: this.session })
+        return await VideoRepository.collection!.insertOne({ ...video, updatedAt: Date.now(), createdAt: Date.now() }, { session: this.session })
     }
 
     async get(id: string): Promise<Video> {
@@ -71,11 +71,16 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
     }
 
     async makePermanent(videoId: string) {
-        return await VideoRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(videoId) }, { $set: { temporary: true } }, { session: this.session })
+        return await VideoRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(videoId) }, { $set: { temporary: true, updatedAt: Date.now() } }, { session: this.session })
     }
 
     async delete(id: string): Promise<DeleteResult> {
         return await VideoRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id) }, { session: this.session })
+    }
+
+    async deleteBulk(ids: string[]): Promise<BulkWriteResult> {
+        const bulkWrites: AnyBulkWriteOperation<any>[] = ids.map(id => ({ deleteOne: { filter: { _id: ObjectId.createFromHexString(id) } } }))
+        return await VideoRepository.collection!.bulkWrite(bulkWrites, { session: this.session })
     }
 
     async deleteForUser(id: string, userId: string): Promise<DeleteResult> {

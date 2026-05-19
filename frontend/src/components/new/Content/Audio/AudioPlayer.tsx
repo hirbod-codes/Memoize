@@ -16,9 +16,7 @@ import { ThemeContext } from "../../../../contexts/ThemeOptionsContext";
 import { Vibrant } from "node-vibrant/browser";
 import { useAudio } from "../../../../audio/useAudio";
 import { Ripple } from "../../../Ripple";
-import { ListVideo } from "../../../../assets/icons/ListVideo";
 import { ChevronUp } from "../../../../assets/icons/ChevronUp";
-import { AudioCard } from "./AudioCard";
 import { ReceiptText } from "../../../../assets/icons/ReceiptText";
 import { useAuth } from "../../../../contexts/AuthContext";
 import { useNotification } from "../../../../contexts/NotificationContext";
@@ -26,10 +24,8 @@ import { Ellipsis } from "../../../../assets/icons/Ellipsis";
 import { audioManager } from "../../../../audio/AudioManager";
 import ProgressBar from "./ProgressBar";
 import { Equalizer } from "./Equalizer";
-import { SquareMinus } from "../../../../assets/icons/SquareMinus";
-import { Trash2 } from "../../../../assets/icons/Trash2";
 
-export function Audio({ audioIds, editing, onLeafChange, removeAudio, removeAllAudios }: { audioIds: string[], editing: boolean, onLeafChange?: (audioIds: string[]) => void, removeAudio?: (audioId: string) => void, removeAllAudios?: () => void }) {
+export function AudioPlayer({ audioId }: { audioId: string }) {
     const { jsonAuthFetch } = useAuth()
     const { notify } = useNotification()
 
@@ -77,9 +73,9 @@ export function Audio({ audioIds, editing, onLeafChange, removeAudio, removeAllA
     const isSeekingProgressRef = useRef<boolean>(false);
 
     useEffect(() => {
-        if (audioIds.length !== 0)
-            audio.setPlaylist(audioIds);
-    }, [audioIds]);
+        if (audioId.length !== 0)
+            audio.setPlaylist([audioId]);
+    }, [audioId]);
 
     useEffect(() => {
         if (!isSeekingProgressRef.current)
@@ -143,14 +139,14 @@ export function Audio({ audioIds, editing, onLeafChange, removeAudio, removeAllA
                 className={'flex flex-col gap-1 size-full items-center absolute'}
             >
                 <div className="w-[80%] max-w-[10cm] aspect-square">
-                    <CoverArt audioId={audioIds[audio.index]} onLoaded={prepareDominantColor} className='rounded-2xl shadow-2xl' coverArtRef={coverArtRef} />
+                    <CoverArt audioId={audioId[audio.index]} onLoaded={prepareDominantColor} className='rounded-2xl shadow-2xl' coverArtRef={coverArtRef} />
                 </div>
 
                 {/* Separator */}
                 <div className="grow" />
 
                 <div className="flex flex-col text-center w-full">
-                    <AudioTitle audioId={audioIds[audio.index]} />
+                    <AudioTitle audioId={audioId[audio.index]} />
                 </div>
 
                 {/* Separator */}
@@ -327,12 +323,6 @@ export function Audio({ audioIds, editing, onLeafChange, removeAudio, removeAllA
                     </Ripple>
 
                     <Ripple>
-                        <button className="cursor-pointer" onClick={() => setShowPlaylist(true)}>
-                            <ListVideo strokeWidth={1} className="text-on-surface size-5" />
-                        </button>
-                    </Ripple>
-
-                    <Ripple>
                         <button className={`cursor-pointer`} onClick={() => setShowEQ(true)}>
                             <AdjustmentsHorizontal strokeWidth={1} className={`${audioManager.state.equalizer.enabled ? 'text-success' : 'text-on-surface'} size-5`} />
                         </button>
@@ -363,37 +353,6 @@ export function Audio({ audioIds, editing, onLeafChange, removeAudio, removeAllA
                 </Ripple>
 
                 <div className="grow overflow-auto w-full">
-                    {
-                        showPlaylist &&
-                        <div>
-                            {editing &&
-                                <div className="flex flex-row justify-end text-on-surface rounded-full p-2">
-                                    <Ripple>
-                                        <button onClick={() => removeAllAudios?.()}>
-                                            <Trash2 className="text-error" />
-                                        </button>
-                                    </Ripple>
-                                </div>
-                            }
-
-                            {
-                                audioIds.map((v, i) =>
-                                    <div key={i} className={i < audioIds.length ? 'w-full border-b border-outline' : 'w-full'}>
-                                        <AudioCard audioId={v} clicked={() => { audio.jumpTo(i) }}>
-                                            {editing &&
-                                                <Ripple>
-                                                    <button onClick={() => { removeAudio?.(v) }}>
-                                                        <SquareMinus className="text-error" />
-                                                    </button>
-                                                </Ripple>
-                                            }
-                                        </AudioCard>
-                                    </div>
-                                )
-                            }
-                        </div>
-                    }
-
                     {
                         showLyrics && audioInfo &&
                         <div className="text-on-surface text-center p-2">

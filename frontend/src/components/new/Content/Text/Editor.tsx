@@ -8,7 +8,7 @@ import CharacterCount from '@tiptap/extension-character-count'
 import TextAlign from '@tiptap/extension-text-align'
 import { Toolbar } from './Toolbar'
 
-export function Editor({ editable, limit }: { editable: boolean, limit?: number }) {
+export function Editor({ content, editable, onLeafChange, limit }: { content: any, editable: boolean, onLeafChange?: (jsonContent: string) => void, limit?: number }) {
     const editor = useEditor({
         editable,
         extensions: [
@@ -40,12 +40,7 @@ export function Editor({ editable, limit }: { editable: boolean, limit?: number 
             }),
         ],
 
-        content: `
-            <h2>Welcome</h2>
-            <p>
-                This is a customized Tiptap editor.
-            </p>
-        `,
+        content,
 
         editorProps: {
             attributes: {

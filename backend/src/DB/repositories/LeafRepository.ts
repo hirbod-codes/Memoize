@@ -3,7 +3,7 @@ import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
-import { collectionName, Leaf } from '../models/Leaf';
+import { collectionName, Leaf, schemaVersion } from '../models/Leaf';
 
 class LeafRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -51,7 +51,11 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
     }
 
     async insert(leaf: Leaf): Promise<InsertOneResult> {
-        return await LeafRepository.collection!.insertOne(leaf, { session: this.session })
+        return await LeafRepository.collection!.insertOne({ ...leaf, schemaVersion, updatedAt: Date.now(), createdAt: Date.now() }, { session: this.session })
+    }
+
+    getFromCursor(from: number) {
+        return LeafRepository.collection!.find({ updatedAt: { $gte: from } }, { session: this.session })
     }
 
     async get(id: string): Promise<Leaf> {
@@ -71,7 +75,7 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
     }
 
     async replace(leaf: Leaf) {
-        return await LeafRepository.collection!.replaceOne({ _id: ObjectId.createFromHexString(leaf._id!.toString()) }, leaf)
+        return await LeafRepository.collection!.replaceOne({ _id: ObjectId.createFromHexString(leaf._id!.toString()) }, { ...leaf, updatedAt: Date.now() })
     }
 
     async delete(id: string): Promise<DeleteResult> {

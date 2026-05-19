@@ -14,6 +14,7 @@ export const leafValidationSchema = object().shape({
     _id: likeObjectId.optional(),
 
     userId: likeObjectId.required(),
+    treeNodeId: likeObjectId.required(),
 
     title: string().required(),
 

@@ -1,24 +1,21 @@
-import { useState } from "react";
 import { Plus } from "../../../../assets/icons/Plus";
 import { SquareMinus } from "../../../../assets/icons/SquareMinus";
 import { Trash2 } from "../../../../assets/icons/Trash2";
 import { Ripple } from "../../../Ripple";
-import { Slide } from "../../Slide";
-import { Upload } from "../Upload";
+import { Editor } from "./Editor";
 
-export function Image({ imageIds, editing, onLeafChange, onRemove, onRemoveAll }: { imageIds: string[], editing: boolean, onLeafChange?: (imageIds: string[]) => void, onRemove?: (v: string) => void, onRemoveAll?: () => void }) {
-    const [openImageUploadModal, setOpenImageUploadModal] = useState(false)
 
+export default function Text({ jsonContents, editing, onLeafChange, onRemove, onRemoveAll }: { jsonContents: string[], editing: boolean, onLeafChange?: (jsonContents: string[]) => void, onRemove?: (v: string) => void, onRemoveAll?: () => void }) {
     return (
-        !imageIds || imageIds.length === 0
-            ? 'No images!'
-            : <div className="size-full flex flex-col gap-4 p-2 border overflow-x-auto">
+        !jsonContents || jsonContents.length === 0
+            ? 'No content!'
+            : <div className="size-full flex flex-col gap-4 p-2 border">
                 {
                     editing &&
-                    <div className="absolute top-0 right-0 flex flex-row gap-1 p-1">
+                    <div className="absolute top-0 right-0 flex flex-row items-center gap-1 p-1">
                         {/* Add button */}
                         <Ripple className="rounded-full bg-error text-on-error">
-                            <button onClick={async () => setOpenImageUploadModal(true)}>
+                            <button onClick={async () => onLeafChange?.([...jsonContents, ''])}>
                                 <Plus />
                             </button>
                         </Ripple>
@@ -32,9 +29,9 @@ export function Image({ imageIds, editing, onLeafChange, onRemove, onRemoveAll }
                     </div>
                 }
 
-                <div className="size-auto p-2 flex flex-row items-center border">
+                <div className="size-auto p-2 flex flex-col gap-4 border">
                     {
-                        imageIds.map((m, i) =>
+                        jsonContents.map((m, i) =>
                             <div key={i} className="w-[4cm] rounded-lg border border-outline">
                                 {/* Remove button */}
                                 {
@@ -48,15 +45,11 @@ export function Image({ imageIds, editing, onLeafChange, onRemove, onRemoveAll }
                                     </div>
                                 }
 
-                                <img src={`/api/image/file/${m}`} crossOrigin="use-credentials" />
+                                <Editor content={JSON.parse(m)} editable={editing} onLeafChange={(c) => onLeafChange?.([...jsonContents, c])} />
                             </div>
                         )
                     }
                 </div>
-
-                <Slide open={openImageUploadModal} className="pointer-events-auto rounded-t-3xl bg-surface shadow-2xl" style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
-                    <Upload type='imageId' onClose={() => setOpenImageUploadModal(false)} onUpload={(ids) => onLeafChange?.([...imageIds, ...ids])} />
-                </Slide>
             </div>
     )
 }

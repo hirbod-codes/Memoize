@@ -1,24 +1,25 @@
-import { useState } from "react";
-import { Plus } from "../../../../assets/icons/Plus";
-import { SquareMinus } from "../../../../assets/icons/SquareMinus";
-import { Trash2 } from "../../../../assets/icons/Trash2";
-import { Ripple } from "../../../Ripple";
-import { Slide } from "../../Slide";
-import { Upload } from "../Upload";
+import { useState } from "react"
+import { SquareMinus } from "../../../../assets/icons/SquareMinus"
+import { Ripple } from "../../../Ripple"
+import { Slide } from "../../Slide"
+import { Upload } from "../Upload"
+import { Plus } from "../../../../assets/icons/Plus"
+import { Trash2 } from "../../../../assets/icons/Trash2"
+import { AudioPlayer } from "./AudioPlayer"
 
-export function Image({ imageIds, editing, onLeafChange, onRemove, onRemoveAll }: { imageIds: string[], editing: boolean, onLeafChange?: (imageIds: string[]) => void, onRemove?: (v: string) => void, onRemoveAll?: () => void }) {
-    const [openImageUploadModal, setOpenImageUploadModal] = useState(false)
+export function Audio({ audioIds, editing, onLeafChange, onRemove, onRemoveAll }: { audioIds: string[], editing: boolean, onLeafChange?: (audioIds: string[]) => void, onRemove?: (audioId: string) => void, onRemoveAll?: () => void }) {
+    const [openAudioUploadModal, setOpenAudioUploadModal] = useState(false)
 
     return (
-        !imageIds || imageIds.length === 0
-            ? 'No images!'
+        !audioIds || audioIds.length === 0
+            ? 'No Audios!'
             : <div className="size-full flex flex-col gap-4 p-2 border overflow-x-auto">
                 {
                     editing &&
                     <div className="absolute top-0 right-0 flex flex-row gap-1 p-1">
                         {/* Add button */}
                         <Ripple className="rounded-full bg-error text-on-error">
-                            <button onClick={async () => setOpenImageUploadModal(true)}>
+                            <button onClick={async () => setOpenAudioUploadModal(true)}>
                                 <Plus />
                             </button>
                         </Ripple>
@@ -34,7 +35,7 @@ export function Image({ imageIds, editing, onLeafChange, onRemove, onRemoveAll }
 
                 <div className="size-auto p-2 flex flex-row items-center border">
                     {
-                        imageIds.map((m, i) =>
+                        audioIds.map((m, i) =>
                             <div key={i} className="w-[4cm] rounded-lg border border-outline">
                                 {/* Remove button */}
                                 {
@@ -48,14 +49,14 @@ export function Image({ imageIds, editing, onLeafChange, onRemove, onRemoveAll }
                                     </div>
                                 }
 
-                                <img src={`/api/image/file/${m}`} crossOrigin="use-credentials" />
+                                <AudioPlayer audioId={m} />
                             </div>
                         )
                     }
                 </div>
 
-                <Slide open={openImageUploadModal} className="pointer-events-auto rounded-t-3xl bg-surface shadow-2xl" style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
-                    <Upload type='imageId' onClose={() => setOpenImageUploadModal(false)} onUpload={(ids) => onLeafChange?.([...imageIds, ...ids])} />
+                <Slide open={openAudioUploadModal} className="pointer-events-auto rounded-t-3xl bg-surface shadow-2xl" style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
+                    <Upload type='audioId' onClose={() => setOpenAudioUploadModal(false)} onUpload={(ids) => onLeafChange?.([...audioIds, ...ids])} />
                 </Slide>
             </div>
     )

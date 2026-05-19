@@ -1,4 +1,4 @@
-import { ClientSession, Collection, Db, GridFSBucket, GridFSBucketReadStream, GridFSBucketWriteStream, GridFSFile, ObjectId } from "mongodb";
+import { AnyBulkWriteOperation, ClientSession, Collection, Db, GridFSBucket, GridFSBucketReadStream, GridFSBucketWriteStream, GridFSFile, ObjectId } from "mongodb";
 import { MongoDB } from '../mongodb';
 import { audioCollectionName as collectionName, AudioMetadata } from "../models/Files";
 import { ISeedable } from '../ISeedable';
@@ -43,7 +43,7 @@ export class AudioFileRepository implements IRepository, ISeedable, IDropable {
     }
 
     private async getWriteStream(fileName: string, metadata: AudioMetadata): Promise<GridFSBucketWriteStream> {
-        return AudioFileRepository.bucket!.openUploadStream(fileName, { metadata })
+        return AudioFileRepository.bucket!.openUploadStream(fileName, { metadata: { ...metadata, createdAt: Date.now(), updatedAt: Date.now() } })
     }
 
     async upload(metadata: AudioMetadata, file: { fileName: string; bytes: Buffer | Uint8Array; }): Promise<string | false> {
@@ -130,16 +130,23 @@ export class AudioFileRepository implements IRepository, ISeedable, IDropable {
 
     async makePermanent(fileId: string) {
         try {
-            return await AudioFileRepository.filesCollection!.updateOne({ _id: ObjectId.createFromHexString(fileId) }, { 'metadata.temporary': false }, { session: this.session })
+            return await AudioFileRepository.filesCollection!.updateOne({ _id: ObjectId.createFromHexString(fileId) }, { $set: { 'metadata.temporary': false, 'metadata.updatedAt': Date.now() } }, { session: this.session })
         } catch (error) {
             console.log(error)
             return false
         }
     }
 
-    async makePermanentByAudioId(audioId: string) {
+    async makePermanentBulk(fileIds: string[]) {
         try {
-            return await AudioFileRepository.filesCollection!.updateOne({ 'metadata.audioId': ObjectId.createFromHexString(audioId) }, { 'metadata.temporary': false }, { session: this.session })
+            const bulkWrites = fileIds.map(id => ({
+                updateOne: {
+                    filter: { _id: ObjectId.createFromHexString(id) },
+                    update: { $set: { 'metadata.temporary': false } }
+                }
+            }))
+
+            return await AudioFileRepository.filesCollection!.bulkWrite(bulkWrites, { session: this.session })
         } catch (error) {
             console.log(error)
             return false
@@ -149,6 +156,21 @@ export class AudioFileRepository implements IRepository, ISeedable, IDropable {
     async deleteFileForUserByAudioId(audioId: string, userId: string): Promise<boolean> {
         try {
             const cursor = AudioFileRepository.filesCollection!.find({ 'metadata.audioId': ObjectId.createFromHexString(audioId), 'metadata.userId': userId }, { session: this.session })
+
+            for await (const c of cursor)
+                if (!await this.deleteFile(c._id.toString()))
+                    return false
+
+            return true
+        } catch (e) {
+            console.error(e)
+            return false
+        }
+    }
+
+    async deleteFileByAudioId(audioId: string): Promise<boolean> {
+        try {
+            const cursor = AudioFileRepository.filesCollection!.find({ 'metadata.audioId': ObjectId.createFromHexString(audioId) }, { session: this.session })
 
             for await (const c of cursor)
                 if (!await this.deleteFile(c._id.toString()))
@@ -189,6 +211,34 @@ export class AudioFileRepository implements IRepository, ISeedable, IDropable {
             return true
         } catch (e) {
             console.error(e)
+            return false
+        }
+    }
+
+    async deleteFileBulk(fileIds: string[]) {
+        try {
+            const chunksBulkWrites: AnyBulkWriteOperation<any>[] = fileIds.map(id => ({
+                deleteMany: {
+                    filter: { files_id: ObjectId.createFromHexString(id) },
+                }
+            }))
+            const filesBulkWrites: AnyBulkWriteOperation<any>[] = fileIds.map(id => ({
+                deleteMany: {
+                    filter: { _id: ObjectId.createFromHexString(id) },
+                }
+            }))
+
+            let r = await AudioFileRepository.chunksCollection!.bulkWrite(chunksBulkWrites, { session: this.session })
+            if (!r.ok)
+                return false
+
+            r = await AudioFileRepository.filesCollection!.bulkWrite(filesBulkWrites, { session: this.session })
+            if (!r.ok)
+                return false
+
+            return true
+        } catch (error) {
+            console.log(error)
             return false
         }
     }

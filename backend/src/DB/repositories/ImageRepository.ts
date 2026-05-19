@@ -1,4 +1,4 @@
-import { ClientSession, Collection, Db, GridFSBucket, GridFSBucketReadStream, GridFSBucketWriteStream, GridFSFile, ObjectId } from "mongodb";
+import { AnyBulkWriteOperation, ClientSession, Collection, Db, GridFSBucket, GridFSBucketReadStream, GridFSBucketWriteStream, GridFSFile, ObjectId } from "mongodb";
 import { MongoDB } from '../mongodb';
 import { imageCollectionName as collectionName, ImageMetadata } from "../models/Files";
 import { ISeedable } from '../ISeedable';
@@ -43,7 +43,7 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
     }
 
     private async getWriteStream(fileName: string, metadata: ImageMetadata): Promise<GridFSBucketWriteStream> {
-        return ImageRepository.bucket!.openUploadStream(fileName, { metadata })
+        return ImageRepository.bucket!.openUploadStream(fileName, { metadata: { ...metadata, createdAt: Date.now(), updatedAt: Date.now() } })
     }
 
     async upload(metadata: ImageMetadata, file: { fileName: string; bytes: Buffer | Uint8Array; }): Promise<string | false> {
@@ -159,7 +159,23 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
 
     async makePermanent(fileId: string) {
         try {
-            return await ImageRepository.filesCollection!.updateOne({ _id: ObjectId.createFromHexString(fileId) }, { 'metadata.temporary': false }, { session: this.session })
+            return await ImageRepository.filesCollection!.updateOne({ _id: ObjectId.createFromHexString(fileId) }, { $set: { 'metadata.temporary': false, 'metadata.updatedAt': Date.now() } }, { session: this.session })
+        } catch (error) {
+            console.log(error)
+            return false
+        }
+    }
+
+    async makePermanentBulk(fileIds: string[]) {
+        try {
+            const bulkWrites = fileIds.map(id => ({
+                updateOne: {
+                    filter: { _id: ObjectId.createFromHexString(id) },
+                    update: { $set: { 'metadata.temporary': false } }
+                }
+            }))
+
+            return await ImageRepository.filesCollection!.bulkWrite(bulkWrites, { session: this.session })
         } catch (error) {
             console.log(error)
             return false
@@ -209,6 +225,34 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
             return true
         } catch (e) {
             console.error(e)
+            return false
+        }
+    }
+
+    async deleteFileBulk(fileIds: string[]) {
+        try {
+            const chunksBulkWrites: AnyBulkWriteOperation<any>[] = fileIds.map(id => ({
+                deleteMany: {
+                    filter: { files_id: ObjectId.createFromHexString(id) },
+                }
+            }))
+            const filesBulkWrites: AnyBulkWriteOperation<any>[] = fileIds.map(id => ({
+                deleteMany: {
+                    filter: { _id: ObjectId.createFromHexString(id) },
+                }
+            }))
+
+            let r = await ImageRepository.chunksCollection!.bulkWrite(chunksBulkWrites, { session: this.session })
+            if (!r.ok)
+                return false
+
+            r = await ImageRepository.filesCollection!.bulkWrite(filesBulkWrites, { session: this.session })
+            if (!r.ok)
+                return false
+
+            return true
+        } catch (error) {
+            console.log(error)
             return false
         }
     }

@@ -5,8 +5,10 @@ import { Trash2 } from "../../assets/icons/Trash2"
 import { useNotification } from "../../contexts/NotificationContext"
 import { useAuth } from "../../contexts/AuthContext"
 import { X } from "../../assets/icons/X"
+import { Eye } from "../../assets/icons/Eye"
+import { SquarePen } from "../../assets/icons/SquarePen"
 
-export type Types = 'string' | 'imageId' | 'videoId' | 'audioId'
+export type Types = 'string' | 'imageId' | 'videoId' | 'audioId' | 'richText'
 
 export type Content = { type: Types, value: string[] }
 
@@ -21,31 +23,43 @@ export type Leaf = {
     definitionContents: Content[],
 }
 
-export function LeafManager({ leaf: inputLeaf, onLeafChange, onRemove, onClose }: { leaf?: Leaf, onLeafChange?: (leaf: Leaf) => void, onRemove?: () => void, onClose?: () => void }) {
+export function LeafManager({ leaf, treeNodeId, onLeafChange, onRemove, onClose }: { leaf: Leaf, treeNodeId: string, onLeafChange?: (leaf: Leaf) => void, onRemove?: () => void, onClose?: () => void }) {
     const { notify } = useNotification()
     const { jsonAuthFetch } = useAuth()
 
     const [showingTerm, setShowingTerm] = useState<boolean>(false)
     const [editing, setEditing] = useState<boolean>(false)
 
-    const [leaf, setLeaf] = useState(inputLeaf)
-    const [updating, setUpdating] = useState(false)
+    const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState(false)
 
-    useEffect(() => { setLeaf(inputLeaf) }, [inputLeaf])
-
-    const updateLeaf = async (l: Leaf) => {
+    const save = async (l: Leaf) => {
         try {
-            setUpdating(true)
-            let r = await jsonAuthFetch(`/api/leaf`, { method: 'PATCH', body: JSON.stringify(l) })
-            setUpdating(false)
-            if (r === false || !r.ok) {
-                notify("Failed to update", 3000, 'error')
-                return false
+            let r
+            if (l._id.includes('toBeCreated')) {
+                setSaving(true)
+                r = await jsonAuthFetch(`/api/leaf`, { method: 'POST', body: JSON.stringify({ treeNodeId, leaf: l }) })
+                setSaving(false)
+                if (r === false || !r.ok) {
+                    notify("Failed to update", 3000, 'error')
+                    return false
+                }
+            } else {
+                setSaving(true)
+                r = await jsonAuthFetch(`/api/leaf`, { method: 'PATCH', body: JSON.stringify(l) })
+                setSaving(false)
+                if (r === false || !r.ok) {
+                    notify("Failed to update", 3000, 'error')
+                    return false
+                }
             }
 
             notify("Successfully updated", 3000, 'success')
 
+            const data = await r.json()
+            console.log(data)
+
+            l._id = data.id
             onLeafChange?.(l)
 
             return true
@@ -62,8 +76,8 @@ export function LeafManager({ leaf: inputLeaf, onLeafChange, onRemove, onClose }
 
         leaf[showingTerm ? 'termContents' : 'definitionContents'] = leaf[showingTerm ? 'termContents' : 'definitionContents'].filter((_f, fi) => fi !== i)
 
-        if (await updateLeaf(leaf))
-            setLeaf(leaf)
+        if (await save(leaf))
+            onLeafChange?.(leaf)
     }
 
     const removeContent = async (i: number, v: string) => {
@@ -72,8 +86,8 @@ export function LeafManager({ leaf: inputLeaf, onLeafChange, onRemove, onClose }
 
         leaf[showingTerm ? 'termContents' : 'definitionContents'][i].value = leaf[showingTerm ? 'termContents' : 'definitionContents'][i].value.filter(f => f !== v)
 
-        if (await updateLeaf(leaf))
-            setLeaf(leaf)
+        if (await save(leaf))
+            onLeafChange?.(leaf)
     }
 
     const removeLeaf = async () => {
@@ -102,6 +116,16 @@ export function LeafManager({ leaf: inputLeaf, onLeafChange, onRemove, onClose }
             ? 'nothing'
             :
             <div className="flex flex-col items-start gap-2 p-2" onClick={() => setShowingTerm(!showingTerm)}>
+                {/* Switch edit mode button */}
+                <Ripple className="rounded-full">
+                    <button onClick={() => setEditing(!editing)}>
+                        {
+                            editing
+                                ? <Eye />
+                                : <SquarePen />
+                        }
+                    </button>
+                </Ripple>
 
                 {editing &&
                     <div className="flex flex-row items-center justify-between">
@@ -154,7 +178,7 @@ export function LeafManager({ leaf: inputLeaf, onLeafChange, onRemove, onClose }
                 </div>
 
                 <Ripple>
-                    <button onClick={() => { updateLeaf(leaf); }} className="p-1 rounded w-full border border-outline">
+                    <button onClick={() => { save(leaf); }} className="p-1 rounded w-full border border-outline">
                         update
                     </button>
                 </Ripple>

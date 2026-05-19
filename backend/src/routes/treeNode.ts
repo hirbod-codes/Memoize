@@ -23,8 +23,9 @@ router.post('/', async (req, res) => {
             if (!treeNodeValidationSchema.required().isValidSync(treeNode))
                 return res.status(400).json({ message: 'Invalid Tree node' });
 
-            if (!string().required().isValidSync(parentTreeNodeId))
-                return res.status(400).json({ message: 'Invalid Parent tree node id' });
+            if (!treeNode.root)
+                if (!string().required().isValidSync(parentTreeNodeId))
+                    return res.status(400).json({ message: 'Invalid Parent tree node id' });
         } catch (err) {
             res.status(400).json({ message: 'Invalid Tree node' });
             return
@@ -39,11 +40,13 @@ router.post('/', async (req, res) => {
         if (!insertTreeNodeResult.acknowledged)
             return res.status(500).send()
 
-        console.log("Adding new treeNode to parent treeNode...");
-        const addTreeNodeResult = await treeNodeRepository.addTreeNode(parentTreeNodeId, insertTreeNodeResult.insertedId.toString())
-        console.log("add result", addTreeNodeResult);
-        if (!addTreeNodeResult.acknowledged || addTreeNodeResult.matchedCount === 0)
-            return res.status(500).send()
+        if (!treeNode.root) {
+            console.log("Adding new treeNode to parent treeNode...");
+            const addTreeNodeResult = await treeNodeRepository.addTreeNode(parentTreeNodeId!, insertTreeNodeResult.insertedId.toString())
+            console.log("add result", addTreeNodeResult);
+            if (!addTreeNodeResult.acknowledged || addTreeNodeResult.matchedCount === 0)
+                return res.status(500).send()
+        }
 
         res.status(201).json({ id: insertTreeNodeResult.insertedId.toString() })
         console.log('------------end------------')
@@ -112,6 +115,39 @@ router.get('/root', async (req, res) => {
     }
 })
 
+router.put('/', async (req, res) => {
+    try {
+        console.log('/api/treeNode', 'PUT')
+
+        console.log('Validation...')
+        let treeNode: TreeNode
+        try {
+            treeNode = req.body.treeNode
+
+            treeNode.userId = (req as any).user.userId
+            if (!treeNodeValidationSchema.required().isValidSync(treeNode) || !treeNode._id)
+                return res.status(400).json({ message: 'Invalid Tree node' });
+        } catch (err) {
+            res.status(400).json({ message: 'Invalid Tree node' });
+            return
+        }
+        console.log({ treeNode });
+
+        const treeNodeRepository = new TreeNodeRepository()
+
+        console.log("Replacing new treeNode...");
+        const insertTreeNodeResult = await treeNodeRepository.replace(treeNode)
+        console.log("Insert result", insertTreeNodeResult);
+        if (!insertTreeNodeResult.acknowledged)
+            return res.status(500).send()
+
+        res.status(201).json({ id: treeNode._id!.toString() })
+        console.log('------------end------------')
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+})
+
 router.delete('/', async (req, res) => {
     try {
         console.log('/api/treeNode')
@@ -130,13 +166,13 @@ router.delete('/', async (req, res) => {
         }
         console.log({ treeNodeId, name });
 
-        console.log("Downloading avatar...");
+        console.log("Deleting tree node...");
         const treeNodeRepository = new TreeNodeRepository()
         const treeNode = await treeNodeRepository.deleteForUser(treeNodeId, (req as any).user.userId)
         if (!treeNode.acknowledged)
             return res.status(500).send()
 
-        res.status(200).json(treeNode)
+        res.status(200).send()
         console.log('------------end------------')
     } catch (err) {
         console.error(err);

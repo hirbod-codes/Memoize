@@ -3,7 +3,7 @@ import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
-import { collectionName, TreeNode } from '../models/TreeNode';
+import { collectionName, schemaVersion, TreeNode } from '../models/TreeNode';
 
 class TreeNodeRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -54,11 +54,15 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
     }
 
     async insert(treeNode: TreeNode): Promise<InsertOneResult> {
-        return await TreeNodeRepository.collection!.insertOne(treeNode, { session: this.session })
+        return await TreeNodeRepository.collection!.insertOne({ ...treeNode, schemaVersion, updatedAt: Date.now(), createdAt: Date.now() }, { session: this.session })
     }
 
     async get(id: string): Promise<TreeNode> {
         return (await TreeNodeRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
+    }
+
+    async hasParent(treeNodeId: string) {
+        return (await TreeNodeRepository.collection!.countDocuments({ treeNodeIds: { $in: [treeNodeId] } })) > 0
     }
 
     async getRootsForUser(userId: string, isRoot: boolean = true): Promise<TreeNode[]> {
@@ -81,12 +85,24 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
         return await TreeNodeRepository.collection!.find({ root: isRoot }, { session: this.session }).toArray()
     }
 
+    getFromCursor(from: number) {
+        return TreeNodeRepository.collection!.find({ updatedAt: { $gte: from } }, { session: this.session })
+    }
+
+    async hasLeaf(treeNodeId: string, leafId: string) {
+        return (await TreeNodeRepository.collection!.countDocuments({ _id: ObjectId.createFromHexString(treeNodeId), leafIds: { $in: [leafId] } }, { session: this.session })) > 0
+    }
+
+    async replace(treeNode: TreeNode) {
+        return await TreeNodeRepository.collection!.replaceOne({ _id: ObjectId.createFromHexString(treeNode._id!.toString()) }, { ...treeNode, updatedAt: Date.now() })
+    }
+
     async addLeaf(treeNodeId: string, leafId: string) {
-        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(treeNodeId) }, { $push: { leafIds: leafId } })
+        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(treeNodeId) }, { $push: { leafIds: leafId }, $set: { updatedAt: Date.now() } })
     }
 
     async addTreeNode(treeNodeId: string, addedTreeNodeId: string) {
-        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(treeNodeId) }, { $push: { treeNodeIds: addedTreeNodeId } })
+        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(treeNodeId) }, { $push: { treeNodeIds: addedTreeNodeId }, $set: { updatedAt: Date.now() } })
     }
 
     async delete(id: string): Promise<DeleteResult> {
