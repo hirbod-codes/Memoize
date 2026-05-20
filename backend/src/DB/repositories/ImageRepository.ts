@@ -66,6 +66,10 @@ export class ImageRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    getFromCursor(fromTsMs: number) {
+        return ImageRepository.filesCollection!.find({ 'metadata.updatedAt': { $gte: fromTsMs } })
+    }
+
     async getFile(fileId: string): Promise<GridFSFile | undefined> {
         try {
             return (await ImageRepository.bucket!.find({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session }).toArray())[0];

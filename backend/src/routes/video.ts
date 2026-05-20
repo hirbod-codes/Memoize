@@ -8,17 +8,60 @@ import { ThumbnailRepository } from '../DB/repositories/ThumbnailRepository';
 import path from 'path';
 import { decodeVideoToDisk } from '../ffmpeg';
 import VideoRepository from '../DB/repositories/VideoRepository';
+import { MongoDB } from '../DB/mongodb';
 
 const router = express.Router();
 
-router.post('/upload', auth, authorization, async (req, res) => {
+router.post('/upload/thumbnail', auth, authorization, async (req, res) => {
     let tempDir
+    try {
+        console.log('/upload/thumbnail')
+
+        console.log('Validating...')
+        let videoId: string | undefined, fileName: string | undefined
+        try {
+            videoId = req.query.videoId?.toString()
+            fileName = req.query.fileName?.toString()
+            console.log({ videoId, fileName })
+
+            if (!string().required().isValidSync(videoId))
+                return res.status(400).json({ message: 'Invalid video id' });
+
+            if (!string().required().isValidSync(fileName))
+                return res.status(400).json({ message: 'Invalid file name' });
+        } catch (err) {
+            console.error(err)
+            res.status(400).json({ message: 'Invalid file' });
+            return
+        }
+
+        const userId = (req as any).user.userId
+
+        const thumbnailRepository = new ThumbnailRepository()
+        const id = await thumbnailRepository.upload({ temporary: false, userId, videoId, contentType: req.headers['content-type'] }, { fileName, bytes: req, contentType: req.headers['content-type'] })
+        if (id === false || !id)
+            return res.status(500).send()
+
+        res.status(201).json({ videoId });
+
+        console.log('------------end------------')
+    } catch (err) {
+        console.error(err)
+
+        if (tempDir)
+            fs.rmSync(tempDir, { force: true, recursive: true })
+
+        res.status(500).json({ message: 'Error uploading video file' });
+    }
+})
+
+router.post('/upload', auth, authorization, async (req, res) => {
+    let db: MongoDB, tempDir
     try {
         console.log('/upload')
 
         console.log('Validating...')
         let fileName: string | undefined,
-            fileBuffer: Buffer,
             title: string | undefined
         try {
             title = req.query.title?.toString()
@@ -38,8 +81,14 @@ router.post('/upload', auth, authorization, async (req, res) => {
             return
         }
 
+        db = MongoDB.getDbInstance()
+        const session = await db.startTransaction()
+
         const videoRepository = new VideoRepository()
+        videoRepository.setTransactionSession(session)
+
         const videoFileRepository = new VideoFileRepository()
+        videoFileRepository.setTransactionSession(session)
 
         console.log('Inserting video info...');
         const videoInsertResult = await videoRepository.insert({ title: fileName, userId: (req as any).user.userId, temporary: true })
@@ -73,6 +122,10 @@ router.post('/upload', auth, authorization, async (req, res) => {
         console.log(JSON.stringify(uploaded, undefined, 4))
 
         fs.rmSync(tempDir, { force: true, recursive: true })
+
+        const makePermanentResult = await videoFileRepository.makePermanentByVideoId(videoId)
+        if (makePermanentResult === false || !makePermanentResult.acknowledged)
+            return res.status(500).send()
 
         res.status(201).json({ videoId });
 

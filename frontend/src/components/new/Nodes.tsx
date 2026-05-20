@@ -38,15 +38,16 @@ export function Nodes() {
     const [showAddTreeNodeModal, setShowAddTreeNodeModal] = useState<boolean>(false)
     const [newTreeNodeTitle, setNewTreeNodeTitle] = useState<string>('')
 
-    const [creatingLeaf, setCreatingLeaf] = useState(false)
     const [showAddLeafModal, setShowAddLeafModal] = useState<boolean>(false)
     const [newLeafTitle, setNewLeafTitle] = useState<string>('')
 
-    const addNewTreeNode = async () => {
+    const [changingTreeNode, setChangingTreeNode] = useState<boolean>(false)
+
+    const createTreeNode = async () => {
         try {
-            setFetching(true)
+            setChangingTreeNode(true)
             const r = await jsonAuthFetch(`/api/treeNode`, { method: 'POST', body: JSON.stringify({ treeNode: { root: false, title: newTreeNodeTitle, treeNodeIds: [], leafIds: [] } }) })
-            setFetching(false)
+            setChangingTreeNode(false)
             if (r === false || !r.ok)
                 return notify('failed to load folders', 3000, 'error')
 
@@ -131,9 +132,9 @@ export function Nodes() {
 
     const removeTreeNode = async (id: string) => {
         try {
-            setFetching(true)
+            setChangingTreeNode(true)
             const r = await jsonAuthFetch(`/api/treeNode/?treeNodeIds=${id}`, { method: 'DELETE' })
-            setFetching(false)
+            setChangingTreeNode(false)
             if (r === false || !r.ok)
                 return notify('failed to load folders', 3000, 'error')
 
@@ -147,9 +148,9 @@ export function Nodes() {
 
     const createLeaf = async (treeNodeId: string, title: string): Promise<string | false> => {
         try {
-            setCreatingLeaf(true)
+            setChangingTreeNode(true)
             let r = await jsonAuthFetch(`/api/leaf`, { method: 'POST', body: JSON.stringify({ treeNodeId, leaf: { title, termContents: [], definitionContents: [] } }) })
-            setCreatingLeaf(false)
+            setChangingTreeNode(false)
             if (r === false || !r.ok) {
                 notify('Failed to create new card', 3000, 'error')
                 return false
@@ -167,11 +168,22 @@ export function Nodes() {
         }
     }
 
-    const save = async () => {
+    const updateTreeNode = async (treeNode: TreeNode) => {
         try {
+            setChangingTreeNode(true)
+            let r = await jsonAuthFetch(`/api/treeNode`, { method: 'PUT', body: JSON.stringify(treeNode) })
+            setChangingTreeNode(false)
+            if (r === false || !r.ok) {
+                notify('Failed to update folder', 3000, 'error')
+                return false
+            }
 
+            notify('Successfully updated folder', 3000, 'error')
 
-            return true
+            const data = await r.json()
+            console.log({ data })
+
+            return data.id
         } catch (error) {
             console.error(error);
             return false
@@ -252,11 +264,22 @@ export function Nodes() {
                     {!editing && parentTreeNode && parentTreeNode.title}
 
                     {editing && parentTreeNode &&
-                        <input
-                            value={parentTreeNode.title ?? ''}
-                            onChange={(e) => setParentTreeNode({ ...parentTreeNode, title: e.target.value.trim() })}
-                            className="w-full rounded p-2 border border-outline bg-surface-variant text-on-surface-variant"
-                        />
+                        <div className="flex flex-row items-center gap-2">
+                            <input
+                                value={parentTreeNode.title ?? ''}
+                                onChange={(e) => setParentTreeNode({ ...parentTreeNode, title: e.target.value.trim() })}
+                                className="grow rounded p-2 border border-outline bg-surface-variant text-on-surface-variant"
+                            />
+                            <Ripple className="rounded border border-outline p-2">
+                                <button disabled={changingTreeNode} onClick={() => updateTreeNode(parentTreeNode)}>
+                                    {
+                                        changingTreeNode
+                                            ? 'updating...'
+                                            : 'Save'
+                                    }
+                                </button>
+                            </Ripple>
+                        </div>
                     }
                 </h1>
 
@@ -273,15 +296,19 @@ export function Nodes() {
                                         editing &&
                                         <div className="absolute top-0 right-0">
                                             <Ripple className="rounded-full bg-error text-on-error">
-                                                <button onClick={async () => { if (await removeTreeNode(r._id)) setTreeNodes(treeNodes.filter(f => f._id !== r._id)); }}>
-                                                    <Trash2 />
+                                                <button disabled={changingTreeNode} onClick={async () => { if (await removeTreeNode(r._id)) setTreeNodes(treeNodes.filter(f => f._id !== r._id)); }}>
+                                                    {
+                                                        changingTreeNode
+                                                            ? 'updating...'
+                                                            : <Trash2 />
+                                                    }
                                                 </button>
                                             </Ripple>
                                         </div>
                                     }
 
                                     {/* Title */}
-                                    <div className="w-full" onClick={async () => {
+                                    <div className="w-full border border-outline" onClick={async () => {
                                         let treeNodes = await getTreeNodes(r.treeNodeIds)
                                         if (treeNodes === false)
                                             return
@@ -323,21 +350,6 @@ export function Nodes() {
                     }
                 </div>
 
-                {/* Save button */}
-                {
-                    editing &&
-                    {
-                        ...[
-                            <div className="border-b border-outline" />,
-                            <Ripple className="w-full">
-                                <button className="w-full border border-outline rounded bg-primary text-on-primary" onClick={save}>
-                                    Save
-                                </button>
-                            </Ripple>
-                        ]
-                    }
-                }
-
                 {/* Add buttons */}
                 {
                     editing &&
@@ -350,7 +362,8 @@ export function Nodes() {
                         </Ripple>
 
                         {/* Add leaf button */}
-                        {locationQueue[locationQueue.length - 1] !== 'root' &&
+                        {
+                            locationQueue[locationQueue.length - 1] !== 'root' &&
                             <Ripple className="rounded-full bg-success text-on-success">
                                 <button onClick={async () => setShowAddLeafModal(true)}>
                                     <Plus />
@@ -419,7 +432,11 @@ export function Nodes() {
 
                         <Ripple className="rounded-full w-full bg-success text-on-success">
                             <button onClick={async () => {
-                                setTreeNodes([...treeNodes, { _id: treeNodes.length + 'toBeCreated', leafIds: [], root: locationQueue[locationQueue.length - 1] === 'root', title: newTreeNodeTitle, treeNodeIds: [] }])
+                                const result = await createTreeNode()
+                                if (result === false)
+                                    return
+
+                                setTreeNodes([...treeNodes, { _id: result, leafIds: [], root: locationQueue[locationQueue.length - 1] === 'root', title: newTreeNodeTitle, treeNodeIds: [] }])
 
                                 setNewTreeNodeTitle('')
                                 setShowAddTreeNodeModal(false)
@@ -434,9 +451,10 @@ export function Nodes() {
                 {/* Leaf manager */}
                 <Slide open={showingLeaf !== undefined} className="pointer-events-auto rounded-t-3xl bg-surface shadow-2xl" style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
                     <LeafManager
+                        treeNodeId={parentTreeNode?._id}
                         leaf={leafs[showingLeaf!]}
                         onClose={() => setShowingLeaf(undefined)}
-                        onLeafChange={l => { leafs[showingLeaf!] = l; setLeafs(leafs) }}
+                        onLeafChange={l => { leafs[showingLeaf!] = l; setLeafs([...leafs]) }}
                         onRemove={() => setLeafs([...leafs.filter((_, i) => i !== showingLeaf)])}
                     />
                 </Slide>

@@ -23,43 +23,36 @@ export type Leaf = {
     definitionContents: Content[],
 }
 
-export function LeafManager({ leaf, treeNodeId, onLeafChange, onRemove, onClose }: { leaf: Leaf, treeNodeId: string, onLeafChange?: (leaf: Leaf) => void, onRemove?: () => void, onClose?: () => void }) {
+export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }: { leaf: Leaf, treeNodeId?: string, onLeafChange?: (leaf: Leaf) => void, onRemove?: () => void, onClose?: () => void }) {
     const { notify } = useNotification()
     const { jsonAuthFetch } = useAuth()
+
+    const [leaf, setLeaf] = useState(initLeaf)
 
     const [showingTerm, setShowingTerm] = useState<boolean>(false)
     const [editing, setEditing] = useState<boolean>(false)
 
+    const [hasSaved, setHasSaved] = useState(false)
     const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState(false)
 
     const save = async (l: Leaf) => {
         try {
-            let r
-            if (l._id.includes('toBeCreated')) {
-                setSaving(true)
-                r = await jsonAuthFetch(`/api/leaf`, { method: 'POST', body: JSON.stringify({ treeNodeId, leaf: l }) })
-                setSaving(false)
-                if (r === false || !r.ok) {
-                    notify("Failed to update", 3000, 'error')
-                    return false
-                }
-            } else {
-                setSaving(true)
-                r = await jsonAuthFetch(`/api/leaf`, { method: 'PATCH', body: JSON.stringify(l) })
-                setSaving(false)
-                if (r === false || !r.ok) {
-                    notify("Failed to update", 3000, 'error')
-                    return false
-                }
+            setSaving(true)
+            let r = await jsonAuthFetch(`/api/leaf`, { method: 'PATCH', body: JSON.stringify(l) })
+            setSaving(false)
+            if (r === false || !r.ok) {
+                notify("Failed to update", 3000, 'error')
+                return false
             }
 
             notify("Successfully updated", 3000, 'success')
 
+            setHasSaved(true)
+
             const data = await r.json()
             console.log(data)
 
-            l._id = data.id
             onLeafChange?.(l)
 
             return true
@@ -76,8 +69,7 @@ export function LeafManager({ leaf, treeNodeId, onLeafChange, onRemove, onClose 
 
         leaf[showingTerm ? 'termContents' : 'definitionContents'] = leaf[showingTerm ? 'termContents' : 'definitionContents'].filter((_f, fi) => fi !== i)
 
-        if (await save(leaf))
-            onLeafChange?.(leaf)
+        setLeaf(leaf)
     }
 
     const removeContent = async (i: number, v: string) => {
@@ -86,8 +78,7 @@ export function LeafManager({ leaf, treeNodeId, onLeafChange, onRemove, onClose 
 
         leaf[showingTerm ? 'termContents' : 'definitionContents'][i].value = leaf[showingTerm ? 'termContents' : 'definitionContents'][i].value.filter(f => f !== v)
 
-        if (await save(leaf))
-            onLeafChange?.(leaf)
+        setLeaf(leaf)
     }
 
     const removeLeaf = async () => {
@@ -110,6 +101,14 @@ export function LeafManager({ leaf, treeNodeId, onLeafChange, onRemove, onClose 
             return false
         }
     }
+
+    useEffect(() => {
+        if (!editing)
+            if (!hasSaved)
+                setLeaf(initLeaf)
+            else
+                setHasSaved(false)
+    }, [editing])
 
     return (
         leaf === undefined
@@ -178,8 +177,8 @@ export function LeafManager({ leaf, treeNodeId, onLeafChange, onRemove, onClose 
                 </div>
 
                 <Ripple>
-                    <button onClick={() => { save(leaf); }} className="p-1 rounded w-full border border-outline">
-                        update
+                    <button onClick={async () => save(leaf)} className="p-1 rounded w-full border border-outline">
+                        Save
                     </button>
                 </Ripple>
             </div >

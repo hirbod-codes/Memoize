@@ -5,16 +5,25 @@ export const collectionName = 'treeNode'
 
 export const schemaVersion = 'v1.0.0'
 
-export const treeNodeValidationSchema = object().shape({
+const data = {
+    title: string().required(),
+}
+const treeNodeCreate = {
+    userId: likeObjectId.required(),
+    parentId: likeObjectId.optional(),
+    ...data
+}
+export const treeNodeCreateSchema = object().required().shape(treeNodeCreate)
+export const treeNodeUpdateSchema = object().required().shape({ ...data, _id: likeObjectId.required() })
+
+export const treeNodeSchema = object().required().shape(treeNodeCreate).shape({
     schemaVersion: string().optional().min(6).max(20),
     _id: likeObjectId.optional(),
-
-    userId: likeObjectId.required(),
-    title: string().required(),
-    parentId: likeObjectId.optional(),
 
     createdAt: number().optional(),
     updatedAt: number().optional(),
 });
 
-export type TreeNode = InferType<typeof treeNodeValidationSchema>
+export type TreeNodeUpdate = InferType<typeof treeNodeUpdateSchema>
+export type TreeNodeCreate = InferType<typeof treeNodeCreateSchema>
+export type TreeNode = InferType<typeof treeNodeSchema>

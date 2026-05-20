@@ -1,7 +1,7 @@
 import express from 'express';
 import { likeObjectId } from '../DB/common_schemas';
 import { auth } from '../middlewares/auth';
-import { Leaf, leafValidationSchema } from '../DB/models/Leaf';
+import { LeafCreate, leafCreateSchema, leafSchema, LeafUpdate, leafUpdateSchema } from '../DB/models/Leaf';
 import LeafRepository from '../DB/repositories/LeafRepository';
 import { array, string } from 'yup';
 import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
@@ -17,22 +17,19 @@ router.post('/', async (req, res) => {
         console.log('/api/leaf', 'POST')
 
         console.log('Validation...')
-        let leaf: Leaf, treeNodeId: string | undefined
+        let leaf: LeafCreate
         try {
             leaf = req.body.leaf
-            treeNodeId = req.body.treeNodeId
 
-            leaf.userId = (req as any).user.userId
-            if (!leafValidationSchema.required().isValidSync(leaf))
-                return res.status(400).json({ message: 'Invalid leaf' });
-
-            if (!string().required().isValidSync(treeNodeId))
-                return res.status(400).json({ message: 'Invalid leaf' });
+            if (!leafCreateSchema.required().isValidSync(leaf))
+                return res.status(400).json({ message: 'Invalid title' });
+        
+            leaf = leafCreateSchema.cast(leaf, { stripUnknown: true })
         } catch (err) {
             res.status(400).json({ message: 'Invalid artist id' });
             return
         }
-        console.log({ leaf });
+        console.log({ leaf })
 
         db = MongoDB.getDbInstance()
         const session = await db.startTransaction()
@@ -43,21 +40,16 @@ router.post('/', async (req, res) => {
         const treeNodeRepository = new TreeNodeRepository()
         treeNodeRepository.setTransactionSession(session)
 
-        console.log("Fetching the tree node...");
-        const treeNode = await treeNodeRepository.get(treeNodeId)
+        console.log("Authorize...")
+        const userId = (req as any).user.userId
+        const treeNode = await treeNodeRepository.getForUser(leaf.treeNodeId.toString(), userId)
         if (!treeNode)
-            return res.status(404).send()
+            return res.status(403).send()
 
-        console.log("Inserting new leaf...");
+        console.log("Inserting new leaf...")
         const insertLeafResult = await leafRepository.insert(leaf)
-        console.log("Insert result", insertLeafResult);
+        console.log("Insert result", insertLeafResult)
         if (!insertLeafResult.acknowledged)
-            return res.status(500).send()
-
-        console.log("Add new leaf to tree node...");
-        const addToTreeNodeResult = await treeNodeRepository.addLeaf(treeNodeId, insertLeafResult.insertedId.toString())
-        console.log("add result", addToTreeNodeResult);
-        if (!addToTreeNodeResult.acknowledged)
             return res.status(500).send()
 
         await db.commitTransaction()
@@ -116,13 +108,15 @@ router.patch('/', async (req, res) => {
         console.log('/api/leaf')
 
         console.log('Validation...')
-        let leaf: Leaf
+        let leaf: LeafUpdate
         try {
             leaf = req.body.leaf
-            if (!leafValidationSchema.required().isValidSync(leaf) || !likeObjectId.required().isValidSync(leaf._id)) {
+            if (!leafUpdateSchema.required().isValidSync(leaf)) {
                 res.status(400).json({ message: 'Invalid artist leafIds' });
                 return
             }
+
+            leaf = leafUpdateSchema.cast(leaf, { stripUnknown: true })
         } catch (err) {
             res.status(400).json({ message: 'Invalid artist leafIds' });
             return
@@ -130,15 +124,15 @@ router.patch('/', async (req, res) => {
         console.log({ leaf });
 
         const userId = (req as any).user.userId
-        if (leaf.userId !== userId)
-            return res.status(403).send()
 
         console.log('Replacing updated leaf...')
         const leafRepository = new LeafRepository()
-        const updateResult = await leafRepository.replace(leaf)
+        const updateResult = await leafRepository.replaceForUser(leaf, userId)
         console.log({ updateResult })
         if (!updateResult.acknowledged)
             return res.status(500).send()
+        if (updateResult.acknowledged && updateResult.matchedCount === 0)
+            return res.status(403).send()
 
         res.status(200).send()
         console.log('------------end------------')

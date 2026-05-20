@@ -66,6 +66,10 @@ export class AudioFileRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    getFromCursor(fromTsMs: number) {
+        return AudioFileRepository.filesCollection!.find({ 'metadata.updatedAt': { $gte: fromTsMs } })
+    }
+
     async getFile(fileId: string): Promise<GridFSFile | undefined> {
         try {
             return (await AudioFileRepository.bucket!.find({ _id: ObjectId.createFromHexString(fileId) }, { session: this.session }).toArray())[0];

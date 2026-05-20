@@ -127,6 +127,10 @@ export class ThumbnailRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    getFromCursor(fromTsMs: number) {
+        return ThumbnailRepository.filesCollection!.find({ 'metadata.updatedAt': { $gte: fromTsMs } })
+    }
+
     async downloadFile(writeStream: NodeJS.WritableStream, fileId: string): Promise<boolean> {
         console.log('downloading file...');
 

@@ -3,7 +3,7 @@ import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
-import { collectionName, Leaf, schemaVersion } from '../models/Leaf';
+import { collectionName, Leaf, LeafUpdate, schemaVersion } from '../models/Leaf';
 
 class LeafRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -74,8 +74,24 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
         return await LeafRepository.collection!.find({ userId: ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
     }
 
-    async replace(leaf: Leaf) {
-        return await LeafRepository.collection!.replaceOne({ _id: ObjectId.createFromHexString(leaf._id!.toString()) }, { ...leaf, updatedAt: Date.now() })
+    async videoIdExistsFrom(videoId: string, fromTsMs: number) {
+        return (await LeafRepository.collection!.countDocuments({ $or: [{ definitionContents: { $elemMatch: { type: 'videoId', value: videoId } }, updatedAt: { $gte: fromTsMs } }, { termContents: { $elemMatch: { type: 'videoId', value: videoId } }, updatedAt: { $gte: fromTsMs } }] })) > 0
+    }
+
+    async imageIdExistsFrom(imageId: string, fromTsMs: number) {
+        return (await LeafRepository.collection!.countDocuments({ $or: [{ definitionContents: { $elemMatch: { type: 'imageId', value: imageId } }, updatedAt: { $gte: fromTsMs } }, { termContents: { $elemMatch: { type: 'imageId', value: imageId } }, updatedAt: { $gte: fromTsMs } }] })) > 0
+    }
+
+    async audioIdExistsFrom(audioId: string, fromTsMs: number) {
+        return (await LeafRepository.collection!.countDocuments({ $or: [{ definitionContents: { $elemMatch: { type: 'audioId', value: audioId } }, updatedAt: { $gte: fromTsMs } }, { termContents: { $elemMatch: { type: 'audioId', value: audioId } }, updatedAt: { $gte: fromTsMs } }] })) > 0
+    }
+
+    async replace(leaf: LeafUpdate) {
+        return await LeafRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(leaf._id!.toString()) }, { $set: { ...leaf, updatedAt: Date.now() } })
+    }
+
+    async replaceForUser(leaf: LeafUpdate, userId: string) {
+        return await LeafRepository.collection!.updateOne({ userId, _id: ObjectId.createFromHexString(leaf._id!.toString()) }, { $set: { ...leaf, updatedAt: Date.now() } })
     }
 
     async delete(id: string): Promise<DeleteResult> {
