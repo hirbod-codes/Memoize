@@ -6,8 +6,7 @@ import { CoverArtRepository } from '../DB/repositories/CoverArtRepository';
 import { decodeToPCM } from '../ffmpeg';
 import { analyzeAudio } from '../essentia';
 import { streamToBuffer } from '../utils';
-import { likeObjectId } from '../DB/common_schemas';
-import { array, number, string } from 'yup';
+import { array, number, string, ValidationError } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
 import { MongoDB } from '../DB/mongodb';
 import { AudioMetadata, audioSchema } from '../DB/models/Files';
@@ -21,11 +20,7 @@ router.post('/analysis', auth, async (req, res) => {
         console.log('Validating...')
         let fileName: string | undefined, rawAudioProperties: IAudioMetadata, audioProperties: any, fileBuffer: Buffer
         try {
-            fileName = req.query.name?.toString()
-            if (!string().required().isValidSync(fileName)) {
-                res.status(400).json({ message: 'Invalid file name' });
-                return
-            }
+            fileName = await string().required().label('File name').validate(req.query.name?.toString())
             console.log('fileName', fileName)
 
             const fileStream = Readable.from(req);
@@ -110,7 +105,6 @@ router.post('/analysis', auth, async (req, res) => {
 })
 
 router.post('/upload', auth, authorization, async (req, res) => {
-    let db: MongoDB | undefined = undefined
     try {
         console.log('/upload')
 
@@ -120,12 +114,7 @@ router.post('/upload', auth, authorization, async (req, res) => {
             audioProperties: AudioMetadata,
             fileBuffer: Buffer
         try {
-            fileName = req.query.name?.toString()
-            console.log({ fileName })
-
-            if (!string().required().isValidSync(fileName))
-                return res.status(400).json({ message: 'Invalid file name' });
-
+            fileName = await string().required().label('File name').validate(req.query.name?.toString())
             console.log({ fileName })
 
             const fileStream = Readable.from(req);
@@ -185,8 +174,9 @@ router.post('/upload', auth, authorization, async (req, res) => {
             console.log('audioProperties', audioProperties)
         } catch (err) {
             console.error(err)
-            res.status(400).json({ message: 'Invalid file' });
-            return
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
 
         console.log('Decoding to PCM...')
@@ -245,18 +235,8 @@ router.get('/info/', auth, async (req, res) => {
         let audioId: string | undefined = undefined
         let title: string | undefined = undefined
         try {
-            audioId = req.query.audioId?.toString()
-            title = req.query.title?.toString()
-
-            if (!likeObjectId.optional().isValidSync(audioId)) {
-                res.status(400).json({ message: 'Invalid audio id' });
-                return
-            }
-
-            if (!string().optional().isValidSync(title)) {
-                res.status(400).json({ message: 'Invalid title' });
-                return
-            }
+            audioId = await string().objectIdString().optional().label('Audio id').validate(req.query.audioId?.toString())
+            title = await string().optional().label('Title').validate(req.query.title?.toString())
 
             if (audioId === undefined && title === undefined) {
                 res.status(400).json({ message: 'Invalid parameters' });
@@ -291,12 +271,17 @@ router.get('/file/:audioId', auth, async (req, res) => {
     try {
         console.log('/file')
 
-        const audioId = req.params.audioId
-        if (!likeObjectId.isValidSync(audioId)) {
-            res.status(400).json({ message: 'Invalid audio id' });
-            return
+        console.log('Validation...')
+        let audioId: string | undefined = undefined
+        try {
+            audioId = await string().objectIdString().required().label('Audio id').validate(req.params.audioId?.toString())
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
-        console.log('audioId', audioId)
+        console.log({ audioId })
 
         let range: number[] | undefined = undefined
         const rangeHeader = req.headers.range;
@@ -354,11 +339,17 @@ router.get('/coverArt/:audioId', auth, async (req, res) => {
     try {
         console.log('/coverArt')
 
-        const audioId = req.params.audioId
-        if (!likeObjectId.isValidSync(audioId)) {
-            res.status(400).json({ message: 'Invalid audio id' });
-            return
+        console.log('Validation...')
+        let audioId: string | undefined = undefined
+        try {
+            audioId = await string().objectIdString().required().label('Audio id').validate(req.params.audioId?.toString())
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
+        console.log({ audioId })
 
         console.log('Fetching cover art info...')
         const coverArtRepository = new CoverArtRepository()
@@ -385,11 +376,17 @@ router.get('/coverArt/:audioId', auth, async (req, res) => {
 router.delete('/:audioId', auth, authorization, async (req, res) => {
     let db: MongoDB | undefined = undefined
     try {
-        console.log('Validation...');
-        const audioId = req.params.audioId
-        if (!likeObjectId.isValidSync(audioId))
-            return res.status(400).json({ message: 'Error uploading audio file' });
-        console.log({ audioId });
+        console.log('Validation...')
+        let audioId: string | undefined = undefined
+        try {
+            audioId = await string().objectIdString().required().label('Audio id').validate(req.params.audioId?.toString())
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
+        }
+        console.log({ audioId })
 
         db = MongoDB.getDbInstance()
         const session = await db.startTransaction()

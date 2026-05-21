@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
-import type { AudioManager } from "../audio/AudioManager";
-import { EQ_PRESETS, FREQUENCIES } from "../audio/EQPresets";
-import { Ripple } from "./Ripple";
-import { Select } from "./Select";
+import { Ripple } from "../../Ripple";
+import { Select } from "../../Select";
 import ProgressBar from "./ProgressBar";
+import { EQ_PRESETS, FREQUENCIES } from "../../../audio/EQPresets";
+import type { AudioManager } from "../../../audio/AudioManager";
 
 export function Equalizer({ audioManager }: { audioManager: AudioManager }) {
     const [enabled, setEnabled] = useState(audioManager.state.equalizer.enabled);

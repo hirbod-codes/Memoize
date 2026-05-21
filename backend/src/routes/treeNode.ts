@@ -1,9 +1,8 @@
 import express from 'express';
-import { likeObjectId } from '../DB/common_schemas';
 import { auth } from '../middlewares/auth';
-import { TreeNode, TreeNodeCreate, treeNodeCreateSchema, treeNodeSchema, TreeNodeUpdate, treeNodeUpdateSchema } from '../DB/models/TreeNode';
+import { TreeNodePost, treeNodePostSchema, TreeNodeUpdate, treeNodeUpdateSchema } from '../DB/models/TreeNode';
 import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
-import { array, string } from 'yup';
+import { array, string, ValidationError } from 'yup';
 
 const router = express.Router();
 
@@ -14,24 +13,23 @@ router.post('/', async (req, res) => {
         console.log('/api/treeNode', 'POST')
 
         console.log('Validation...')
-        let treeNode: TreeNodeCreate
+        let treeNode: TreeNodePost
         try {
-            treeNode = req.body.treeNode
-
-            if (!treeNodeCreateSchema.required().isValidSync(treeNode))
-                return res.status(400).json({ message: 'Invalid Tree node' });
-            
-            treeNode = treeNodeCreateSchema.cast(treeNode, { stripUnknown: true })
+            treeNode = await treeNodePostSchema.required().stripNull().stripUndefined().validate(req.body.treeNode, { stripUnknown: true })
         } catch (err) {
-            res.status(400).json({ message: 'Invalid Tree node' });
-            return
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
         console.log({ treeNode });
 
         const treeNodeRepository = new TreeNodeRepository()
 
+        const userId = (req as any).user.userId
+
         console.log("Inserting new treeNode...");
-        const insertTreeNodeResult = await treeNodeRepository.insert(treeNode)
+        const insertTreeNodeResult = await treeNodeRepository.insert({ ...treeNode, userId, leafIds: [], treeNodeIds: [] })
         console.log("Insert result", insertTreeNodeResult);
         if (!insertTreeNodeResult.acknowledged)
             return res.status(500).send()
@@ -39,6 +37,7 @@ router.post('/', async (req, res) => {
         res.status(201).json({ id: insertTreeNodeResult.insertedId.toString() })
         console.log('------------end------------')
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: 'Internal server error' });
     }
 })
@@ -50,20 +49,14 @@ router.get('/', async (req, res) => {
         console.log('Validation...')
         let treeNodeIds: string[] | undefined
         try {
-            let temp = req.query.treeNodeIds?.toString()
-            if (!string().required().isValidSync(temp)) {
-                res.status(400).json({ message: 'Invalid Tree node ids' });
-                return
-            }
-            treeNodeIds = temp.split(',').map(m => m.trim())
+            let temp = await string().required().label('Tree node id').validate(req.query.treeNodeIds?.toString())
 
-            if (!array().min(1).of(likeObjectId.required()).required().isValidSync(treeNodeIds)) {
-                res.status(400).json({ message: 'Invalid Tree node ids' });
-                return
-            }
+            treeNodeIds = await array().min(1).of(string().required().objectIdString()).required().validate(temp.split(',').map(m => m.trim()))
         } catch (err) {
-            res.status(400).json({ message: 'Invalid Tree node ids' });
-            return
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
         console.log({ treeNodeIds });
 
@@ -90,20 +83,18 @@ router.get('/children', async (req, res) => {
         console.log('Validation...')
         let parentTreeNodeId: string | undefined
         try {
-            let parentTreeNodeId = req.query.parentTreeNodeId?.toString()
-            if (!likeObjectId.required().isValidSync(parentTreeNodeId)) {
-                res.status(400).json({ message: 'Invalid Tree node ids' });
-                return
-            }
+            parentTreeNodeId = await string().required().objectIdString().validate(req.query.parentTreeNodeId?.toString())
         } catch (err) {
-            res.status(400).json({ message: 'Invalid Tree node ids' });
-            return
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node ids' });
         }
         console.log({ parentTreeNodeId });
 
         console.log("fetching...");
         const treeNodeRepository = new TreeNodeRepository()
-        const treeNode = await treeNodeRepository.getByParentIdForUser(parentTreeNodeId!, (req as any).user.userId)
+        const treeNode = await treeNodeRepository.getByParentIdForUser(parentTreeNodeId, (req as any).user.userId)
         if (!treeNode)
             return res.status(404).send()
 
@@ -135,24 +126,21 @@ router.get('/root', async (req, res) => {
     }
 })
 
-router.put('/', async (req, res) => {
+router.patch('/', async (req, res) => {
     try {
-        console.log('/api/treeNode', 'PUT')
+        console.log('/api/treeNode', 'PATCH')
 
         console.log('Validation...')
         let treeNode: TreeNodeUpdate
         try {
-            treeNode = req.body.treeNode
-
-            if (!treeNodeUpdateSchema.required().isValidSync(treeNode) || !treeNode._id)
-                return res.status(400).json({ message: 'Invalid Tree node' });
-
-            treeNode = treeNodeUpdateSchema.cast(treeNode, { stripUnknown: true })
+            treeNode = await treeNodeUpdateSchema.required().validate(req.body.treeNode, { stripUnknown: true })
+            console.log({ treeNode });
         } catch (err) {
-            res.status(400).json({ message: 'Invalid Tree node' });
-            return
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
-        console.log({ treeNode });
 
         const treeNodeRepository = new TreeNodeRepository()
 
@@ -166,9 +154,10 @@ router.put('/', async (req, res) => {
         if (insertTreeNodeResult.acknowledged && insertTreeNodeResult.matchedCount === 0)
             return res.status(403).send()
 
-        res.status(201).json({ id: treeNode._id!.toString() })
+        res.status(200).json({ id: treeNode._id!.toString() })
         console.log('------------end------------')
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: 'Internal server error' });
     }
 })
@@ -176,20 +165,17 @@ router.put('/', async (req, res) => {
 router.delete('/', async (req, res) => {
     try {
         console.log('/api/treeNode')
-
         console.log('Validation...')
         let treeNodeId: string | undefined
         try {
-            treeNodeId = req.query.treeNodeId?.toString()
-            if (!likeObjectId.required().isValidSync(treeNodeId)) {
-                res.status(400).json({ message: 'Invalid id' });
-                return
-            }
+            treeNodeId = await string().required().objectIdString().validate(req.query.treeNodeId?.toString())
         } catch (err) {
-            res.status(400).json({ message: 'Invalid Tree node id' });
-            return
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node id' });
         }
-        console.log({ treeNodeId, name });
+        console.log({ treeNodeId });
 
         console.log("Deleting tree node...");
         const treeNodeRepository = new TreeNodeRepository()

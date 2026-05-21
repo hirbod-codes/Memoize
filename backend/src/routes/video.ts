@@ -1,7 +1,6 @@
 import fs from 'fs'
 import express from 'express';
-import { likeObjectId } from '../DB/common_schemas';
-import { array, number, string } from 'yup';
+import { string, ValidationError } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
 import { VideoFileRepository } from '../DB/repositories/VideoFileRepository';
 import { ThumbnailRepository } from '../DB/repositories/ThumbnailRepository';
@@ -20,20 +19,15 @@ router.post('/upload/thumbnail', auth, authorization, async (req, res) => {
         console.log('Validating...')
         let videoId: string | undefined, fileName: string | undefined
         try {
-            videoId = req.query.videoId?.toString()
-            fileName = req.query.fileName?.toString()
-            console.log({ videoId, fileName })
-
-            if (!string().required().isValidSync(videoId))
-                return res.status(400).json({ message: 'Invalid video id' });
-
-            if (!string().required().isValidSync(fileName))
-                return res.status(400).json({ message: 'Invalid file name' });
+            videoId = await string().objectIdString().required().label('Video').validate(req.query.videoId?.toString())
+            fileName = await string().required().label('File name').validate(req.query.fileName?.toString())
         } catch (err) {
             console.error(err)
-            res.status(400).json({ message: 'Invalid file' });
-            return
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
+        console.log({ videoId, fileName })
 
         const userId = (req as any).user.userId
 
@@ -64,22 +58,15 @@ router.post('/upload', auth, authorization, async (req, res) => {
         let fileName: string | undefined,
             title: string | undefined
         try {
-            title = req.query.title?.toString()
-            fileName = req.query.fileName?.toString()
-            console.log({ fileName, title })
-
-            if (!string().required().isValidSync(fileName))
-                return res.status(400).json({ message: 'Invalid file name' });
-
-            if (!string().required().isValidSync(title))
-                return res.status(400).json({ message: 'Invalid title' });
-
-            console.log({ fileName, title })
+            title = await string().required().label('Title').validate(req.query.title?.toString())
+            fileName = await string().required().label('File name').validate(req.query.fileName?.toString())
         } catch (err) {
             console.error(err)
-            res.status(400).json({ message: 'Invalid file' });
-            return
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
+        console.log({ fileName, title })
 
         db = MongoDB.getDbInstance()
         const session = await db.startTransaction()
@@ -147,16 +134,12 @@ router.get('/info/', auth, async (req, res) => {
         console.log('Validation...')
         let videoId: string | undefined = undefined
         try {
-            videoId = req.query.videoId?.toString()
-
-            if (!likeObjectId.required().isValidSync(videoId)) {
-                res.status(400).json({ message: 'Invalid video id' });
-                return
-            }
+            videoId = await string().objectIdString().required().label('Video id').validate(req.query.videoId?.toString())
         } catch (err) {
             console.error(err)
-            res.status(400).json({ message: 'Invalid parameters' });
-            return
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
         console.log({ videoId })
 
@@ -181,19 +164,15 @@ router.get('/file/:videoId/:fileName', auth, async (req, res) => {
         console.log('Validation...')
         let videoId: string | undefined, fileName: string | undefined
         try {
-            videoId = req.params.videoId.toString()
-            fileName = req.params.fileName.toString()
-            console.log({ videoId, fileName })
-
-            if (!likeObjectId.isValidSync(videoId))
-                return res.status(400).json({ message: 'Invalid video id' });
-
-            if (!likeObjectId.isValidSync(fileName))
-                return res.status(400).json({ message: 'Invalid video id' });
+            videoId = await string().objectIdString().required().label('Video id').validate(req.params.videoId.toString())
+            fileName = await string().objectIdString().required().label('File name').validate(req.params.fileName.toString())
         } catch (err) {
-            console.error(err);
-            return res.status(400).send()
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
+        console.log({ videoId, fileName })
 
         const videoFileRepository = new VideoFileRepository()
 
@@ -220,10 +199,14 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
     try {
         console.log('/api/video/thumbnail/:videoId')
 
-        const videoId = req.params.videoId
-        if (!likeObjectId.isValidSync(videoId)) {
-            res.status(400).json({ message: 'Invalid video id' });
-            return
+        let videoId: string
+        try {
+            videoId = await string().objectIdString().required().label('Video id').validate(req.params.videoId)
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
         console.log('videoId', videoId)
 
@@ -246,10 +229,16 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
 
 router.delete('/:videoId', auth, authorization, async (req, res) => {
     try {
-        console.log('Validation...');
-        const videoId = req.params.videoId
-        if (!likeObjectId.isValidSync(videoId))
-            return res.status(400).json({ message: 'Error uploading video file' });
+        console.log('Validation...')
+        let videoId: string
+        try {
+            videoId = await string().required().objectIdString().label('Video id').validate(req.params.videoId)
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
+        }
         console.log({ videoId });
 
         const videoRepository = new VideoFileRepository()

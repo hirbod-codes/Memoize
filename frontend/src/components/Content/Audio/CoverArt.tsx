@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { cn } from "../lib/utils";
-import { useNotification } from "../contexts/NotificationContext";
-import { useAuth } from "../contexts/AuthContext";
+import { cn } from "../../../lib/utils";
+import { useNotification } from "../../../contexts/NotificationContext";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export function CoverArt({ audioId, onLoaded, className, coverArtRef }: { audioId: string, onLoaded: () => void, className?: string, coverArtRef: React.Ref<HTMLImageElement> }) {
     const { jsonAuthFetch } = useAuth();

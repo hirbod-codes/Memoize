@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
-import { MicVocal } from "../assets/icons/MicVocal"
-import { LibraryBig } from "../assets/icons/LibraryBig"
-import { useNotification } from "../contexts/NotificationContext"
-import { useAuth } from "../contexts/AuthContext"
+import { MicVocal } from "../../../assets/icons/MicVocal"
+import { LibraryBig } from "../../../assets/icons/LibraryBig"
+import { useNotification } from "../../../contexts/NotificationContext"
+import { useAuth } from "../../../contexts/AuthContext"
 
 export function AudioTitle({ audioId }: { audioId: string }) {
     const { jsonAuthFetch } = useAuth();

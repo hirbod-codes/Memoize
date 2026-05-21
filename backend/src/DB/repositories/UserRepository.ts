@@ -2,7 +2,7 @@ import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId,
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
-import { collectionName, Playlist, User } from '../models/User';
+import { collectionName, User } from '../models/User';
 import { MongoDB } from '../mongodb';
 
 export class UserRepository implements IRepository, ISeedable, IDropable {
@@ -105,17 +105,5 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
             console.error(err)
             return false
         }
-    }
-
-    async updatePlaylists(userId: string, playlists: Playlist[]): Promise<UpdateResult> {
-        return await UserRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(userId) }, { $set: { playlists: playlists } })
-    }
-
-    async addPlaylist(userId: string, playlist: Playlist) {
-        return await UserRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(userId) }, { $push: { playlists: playlist } })
-    }
-
-    async deletePlaylists(userId: string): Promise<DeleteResult> {
-        return await UserRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(userId) })
     }
 }

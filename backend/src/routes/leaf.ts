@@ -1,9 +1,9 @@
 import express from 'express';
 import { likeObjectId } from '../DB/common_schemas';
 import { auth } from '../middlewares/auth';
-import { LeafCreate, leafCreateSchema, leafSchema, LeafUpdate, leafUpdateSchema } from '../DB/models/Leaf';
+import { Leaf, LeafPost, leafPostSchema, LeafUpdate, leafUpdateSchema } from '../DB/models/Leaf';
 import LeafRepository from '../DB/repositories/LeafRepository';
-import { array, string } from 'yup';
+import { array, string, ValidationError } from 'yup';
 import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
 import { MongoDB } from '../DB/mongodb';
 
@@ -17,17 +17,14 @@ router.post('/', async (req, res) => {
         console.log('/api/leaf', 'POST')
 
         console.log('Validation...')
-        let leaf: LeafCreate
+        let leaf: LeafPost
         try {
-            leaf = req.body.leaf
-
-            if (!leafCreateSchema.required().isValidSync(leaf))
-                return res.status(400).json({ message: 'Invalid title' });
-        
-            leaf = leafCreateSchema.cast(leaf, { stripUnknown: true })
+            leaf = await leafPostSchema.required().validate(req.body.leaf, { stripUnknown: true })
         } catch (err) {
-            res.status(400).json({ message: 'Invalid artist id' });
-            return
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
         console.log({ leaf })
 
@@ -47,7 +44,7 @@ router.post('/', async (req, res) => {
             return res.status(403).send()
 
         console.log("Inserting new leaf...")
-        const insertLeafResult = await leafRepository.insert(leaf)
+        const insertLeafResult = await leafRepository.insert({ ...leaf, userId })
         console.log("Insert result", insertLeafResult)
         if (!insertLeafResult.acknowledged)
             return res.status(500).send()
@@ -67,35 +64,37 @@ router.get('/', async (req, res) => {
         console.log('/api/leaf')
 
         console.log('Validation...')
-        let leafIds: string[] | undefined
+        let leafIds: string[] | undefined, parentTreeNodeId: string | undefined
         try {
-            let temp = req.query.leafIds?.toString()
-            if (!likeObjectId.required().isValidSync(temp)) {
-                res.status(400).json({ message: 'Invalid artist leafIds' });
-                return
-            }
+            parentTreeNodeId = await string().optional().label('Parent tree node id').validate(req.query.parentTreeNodeId?.toString())
+            let temp = await string().optional().label('Tree node id').validate(req.query.leafIds?.toString())
 
-            leafIds = temp.split(',')
+            if (!parentTreeNodeId && !temp)
+                return res.status(400).json({ errors: ['Invalid data provided'] })
 
-            if (!array().min(1).of(likeObjectId.required()).required().isValidSync(leafIds)) {
-                res.status(400).json({ message: 'Invalid Tree node ids' });
-                return
-            }
+            if (temp)
+                leafIds = await array().min(1).of(string().required().objectIdString()).required().validate(temp.split(',').map(m => m.trim()))
         } catch (err) {
-            res.status(400).json({ message: 'Invalid artist leafIds' });
-            return
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
-        console.log({ leafIds, name });
+        console.log({ leafIds });
 
         console.log("Fetching leafs...");
         const leafRepository = new LeafRepository()
-        const leaf = await leafRepository.getManyForUser(leafIds, (req as any).user.userId)
-        if (!leaf) {
+        let leafs: Leaf[]
+        if (leafIds)
+            leafs = await leafRepository.getManyForUser(leafIds, (req as any).user.userId)
+        else
+            leafs = await leafRepository.getForUserByParentTreeNode(parentTreeNodeId!, (req as any).user.userId)
+        if (!leafs) {
             res.status(404).send()
             return
         }
 
-        res.status(200).json(leaf)
+        res.status(200).json(leafs)
         console.log('------------end------------')
     } catch (err) {
         console.error(err);
@@ -110,18 +109,13 @@ router.patch('/', async (req, res) => {
         console.log('Validation...')
         let leaf: LeafUpdate
         try {
-            leaf = req.body.leaf
-            if (!leafUpdateSchema.required().isValidSync(leaf)) {
-                res.status(400).json({ message: 'Invalid artist leafIds' });
-                return
-            }
-
-            leaf = leafUpdateSchema.cast(leaf, { stripUnknown: true })
+            leaf = await leafUpdateSchema.required().validate(req.body.leaf)
         } catch (err) {
-            res.status(400).json({ message: 'Invalid artist leafIds' });
-            return
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
-        console.log({ leaf });
 
         const userId = (req as any).user.userId
 

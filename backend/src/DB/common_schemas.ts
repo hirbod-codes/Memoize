@@ -1,5 +1,49 @@
 import { ObjectId } from "mongodb";
-import { mixed, number, string } from "yup";
+import { addMethod, AnyObject, Flags, Maybe, mixed, number, object, string } from "yup";
+
+declare module 'yup' {
+    interface ObjectSchema<
+        TIn extends Maybe<AnyObject>,
+        TContext = AnyObject,
+        TDefault = any,
+        TFlags extends Flags = ''
+    > {
+        stripUndefined(): this;
+        stripNull(): this;
+    }
+
+    interface StringSchema {
+        objectIdString(): this;
+    }
+}
+
+export const addYupMethods = () => {
+    addMethod(object as any, 'stripUndefined', function (obj) {
+        return this.transform((obj: any) => {
+            if (!obj || typeof obj !== 'object')
+                return obj
+
+            return Object.fromEntries(
+                Object.entries(obj).filter(f => f[1] !== undefined)
+            )
+        })
+    })
+
+    addMethod(object as any, 'stripNull', function (obj) {
+        return this.transform((obj: any) => {
+            if (!obj || typeof obj !== 'object')
+                return obj
+
+            return Object.fromEntries(
+                Object.entries(obj).filter(f => f[1] !== null)
+            )
+        })
+    })
+
+    addMethod(string as any, 'objectIdString', function (message = 'Invalid id provided') {
+        return this.test('object-id', message, (v: any) => v === null || v === undefined || ObjectId.isValid(v)).label('Id')
+    })
+}
 
 export const likeObjectId = mixed((v): v is (ObjectId | string) => v instanceof ObjectId || ObjectId.isValid(v))
 

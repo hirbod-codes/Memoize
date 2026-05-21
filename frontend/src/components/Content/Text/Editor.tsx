@@ -7,8 +7,19 @@ import Underline from '@tiptap/extension-underline'
 import CharacterCount from '@tiptap/extension-character-count'
 import TextAlign from '@tiptap/extension-text-align'
 import { Toolbar } from './Toolbar'
+import { useAuth } from '../../../contexts/AuthContext'
+import { useNotification } from '../../../contexts/NotificationContext'
+import type { Content, Leaf } from '../../LeafManager'
 
-export function Editor({ content, editable, onLeafChange, limit }: { content: any, editable: boolean, onLeafChange?: (jsonContent: string) => void, limit?: number }) {
+export function Editor({ leaf, contentIndex, isTerm, valueIndex, editable, onLeafChange, limit }: { leaf: Leaf, contentIndex: number, isTerm: boolean, valueIndex: number, editable: boolean, onLeafChange?: (jsonContent: string) => void, limit?: number }) {
+    const { notify } = useNotification()
+    const { jsonAuthFetch } = useAuth()
+
+    const content: Content = leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex]
+
+    if (!content || content.type !== 'richText')
+        return null
+
     const editor = useEditor({
         editable,
         extensions: [
@@ -40,7 +51,7 @@ export function Editor({ content, editable, onLeafChange, limit }: { content: an
             }),
         ],
 
-        content,
+        content: JSON.parse(content.value[valueIndex]),
 
         editorProps: {
             attributes: {
@@ -48,12 +59,19 @@ export function Editor({ content, editable, onLeafChange, limit }: { content: an
             },
         },
 
-        onUpdate({ editor }) {
+        onUpdate: async ({ editor }) => {
             const json = editor.getJSON()
+            const jsonString = JSON.stringify(json)
 
             console.log(json)
 
-            // Save to backend here
+            leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value[valueIndex] = jsonString
+
+            let r = await jsonAuthFetch('/api/leaf', { method: 'PUT', body: JSON.stringify(leaf) })
+            if (r === false || !r.ok)
+                return notify('Failed to update', 3000, 'error')
+
+            onLeafChange?.(jsonString)
         },
     })
 

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import Hls from 'hls.js';
-import { Plus } from "../../../../assets/icons/Plus";
-import { SquareMinus } from "../../../../assets/icons/SquareMinus";
-import { Trash2 } from "../../../../assets/icons/Trash2";
-import { Ripple } from "../../../Ripple";
+import { Plus } from "../../../assets/icons/Plus";
+import { SquareMinus } from "../../../assets/icons/SquareMinus";
+import { Trash2 } from "../../../assets/icons/Trash2";
+import { Ripple } from "../../Ripple";
 import { Slide } from "../../Slide";
 import { Upload } from "../Upload";
 

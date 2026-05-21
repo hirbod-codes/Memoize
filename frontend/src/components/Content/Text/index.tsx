@@ -1,11 +1,12 @@
-import { Plus } from "../../../../assets/icons/Plus";
-import { SquareMinus } from "../../../../assets/icons/SquareMinus";
-import { Trash2 } from "../../../../assets/icons/Trash2";
-import { Ripple } from "../../../Ripple";
+import { Plus } from "../../../assets/icons/Plus";
+import { SquareMinus } from "../../../assets/icons/SquareMinus";
+import { Trash2 } from "../../../assets/icons/Trash2";
+import type { Leaf } from "../../LeafManager";
+import { Ripple } from "../../Ripple";
 import { Editor } from "./Editor";
 
 
-export default function Text({ jsonContents, editing, onLeafChange, onRemove, onRemoveAll }: { jsonContents: string[], editing: boolean, onLeafChange?: (jsonContents: string[]) => void, onRemove?: (v: string) => void, onRemoveAll?: () => void }) {
+export default function Text({ leaf, contentIndex, jsonContents, editing, onLeafChange, onRemove, onRemoveAll }: { leaf: Leaf, contentIndex: number, jsonContents: string[], editing: boolean, onLeafChange?: (jsonContents: string[]) => void, onRemove?: (v: string) => void, onRemoveAll?: () => void }) {
     return (
         !jsonContents || jsonContents.length === 0
             ? 'No content!'
@@ -45,7 +46,7 @@ export default function Text({ jsonContents, editing, onLeafChange, onRemove, on
                                     </div>
                                 }
 
-                                <Editor content={JSON.parse(m)} editable={editing} onLeafChange={(c) => onLeafChange?.([...jsonContents, c])} />
+                                <Editor leaf={leaf} isTerm contentIndex={contentIndex} valueIndex={i} editable={editing} onLeafChange={(c) => onLeafChange?.([...jsonContents, c])} />
                             </div>
                         )
                     }

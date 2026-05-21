@@ -1,10 +1,10 @@
 import { useState } from "react"
-import { SquareMinus } from "../../../../assets/icons/SquareMinus"
-import { Ripple } from "../../../Ripple"
+import { SquareMinus } from "../../../assets/icons/SquareMinus"
+import { Ripple } from "../../Ripple"
 import { Slide } from "../../Slide"
 import { Upload } from "../Upload"
-import { Plus } from "../../../../assets/icons/Plus"
-import { Trash2 } from "../../../../assets/icons/Trash2"
+import { Plus } from "../../../assets/icons/Plus"
+import { Trash2 } from "../../../assets/icons/Trash2"
 import { AudioPlayer } from "./AudioPlayer"
 
 export function Audio({ audioIds, editing, onLeafChange, onRemove, onRemoveAll }: { audioIds: string[], editing: boolean, onLeafChange?: (audioIds: string[]) => void, onRemove?: (audioId: string) => void, onRemoveAll?: () => void }) {

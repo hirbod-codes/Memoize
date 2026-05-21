@@ -5,7 +5,7 @@ import { UserRepository } from '../DB/repositories/UserRepository';
 import { User } from '../DB/models/User';
 import { Auth, Payload } from '../auth';
 import { InvalidTokensRepository } from '../DB/repositories/InvalidTokensRepository';
-import { auth, unAuth } from '../middlewares/auth';
+import { unAuth } from '../middlewares/auth';
 import { accessTokenSecret } from '..';
 import jwt from 'jsonwebtoken'
 
@@ -188,8 +188,7 @@ router.post('/register', unAuth, authRateLimiter, async (req, res) => {
             email,
             phoneNumber,
             password: hashedPassword,
-            role: 'default',
-            playlists: []
+            role: 'default'
         })
         if (createResult === false || !createResult.acknowledged) {
             res.status(500).send()

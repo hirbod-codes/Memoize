@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Ripple } from "../Ripple";
-import { useAuth } from "../../contexts/AuthContext";
+import { Ripple } from "../../Ripple";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export function AudioCard({ title, audioId, clicked, children }: { title?: string, audioId?: string, clicked?: () => void, children?: React.ReactNode }) {
     const { jsonAuthFetch } = useAuth();

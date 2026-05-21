@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, type HTMLMotionProps, type MotionStyle } from "framer-motion";
-import { cn } from "../../lib/utils";
+import { cn } from "../lib/utils";
 import { useState } from "react";
 
 export function Slide({ open = false, motionProps, children, className, style, position = '0vh' }: { open?: boolean, motionProps?: HTMLMotionProps<"div">, children?: React.ReactNode, className?: string, style?: MotionStyle, position?: string }) {
@@ -17,17 +17,11 @@ export function Slide({ open = false, motionProps, children, className, style, p
                         ease: [0, 1, 0.5, 1],
                     }}
                     {...motionProps}
-                    className={cn("size-full", className)}
+                    className={cn("absolute size-full top-0 left-0 pointer-events-auto z-10 p-2", className)}
                     style={style}
                     onAnimationComplete={() => setAnimationComplete(true)}
                 >
-                    {
-                        animationComplete
-                            ? children
-                            : <div className="grow flex items-center justify-center size-full">
-                                <div className="size-20 border-4 border-on-surface border-t-primary rounded-full animate-spin" />
-                            </div>
-                    }
+                    {animationComplete && children}
                 </motion.div>
             }
         </AnimatePresence>

@@ -3,7 +3,7 @@ import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
-import { collectionName, schemaVersion, TreeNode, TreeNodeUpdate } from '../models/TreeNode';
+import { collectionName, schemaVersion, TreeNode, TreeNodeCreate, TreeNodeUpdate } from '../models/TreeNode';
 
 class TreeNodeRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -53,7 +53,7 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
         await db.dropCollection(collectionName)
     }
 
-    async insert(treeNode: TreeNode): Promise<InsertOneResult> {
+    async insert(treeNode: TreeNodeCreate): Promise<InsertOneResult> {
         return await TreeNodeRepository.collection!.insertOne({ ...treeNode, schemaVersion, updatedAt: Date.now(), createdAt: Date.now() }, { session: this.session })
     }
 
@@ -97,12 +97,14 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
         return (await TreeNodeRepository.collection!.countDocuments({ _id: ObjectId.createFromHexString(treeNodeId), leafIds: { $in: [leafId] } }, { session: this.session })) > 0
     }
 
-    async replace(treeNode: TreeNodeUpdate) {
-        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(treeNode._id!.toString()) }, { ...treeNode, updatedAt: Date.now() })
+    async replace(treeNodeArg: TreeNodeUpdate) {
+        const { _id, ...treeNode } = treeNodeArg
+        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(_id!.toString()) }, { ...treeNode, updatedAt: Date.now() })
     }
 
-    async replaceForUser(treeNode: TreeNodeUpdate, userId: string) {
-        return await TreeNodeRepository.collection!.updateOne({ userId, _id: ObjectId.createFromHexString(treeNode._id!.toString()) }, { $set: { ...treeNode, updatedAt: Date.now() } })
+    async replaceForUser(treeNodeArg: TreeNodeUpdate, userId: string) {
+        const { _id, ...treeNode } = treeNodeArg
+        return await TreeNodeRepository.collection!.updateOne({ userId, _id: ObjectId.createFromHexString(_id!.toString()) }, { $set: { ...treeNode, updatedAt: Date.now() } })
     }
 
     async addLeaf(treeNodeId: string, leafId: string) {

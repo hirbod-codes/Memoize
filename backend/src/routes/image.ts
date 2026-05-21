@@ -1,8 +1,7 @@
 import express from 'express';
 import { Readable } from 'stream';
 import { streamToBuffer } from '../utils';
-import { likeObjectId } from '../DB/common_schemas';
-import { string } from 'yup';
+import { string, ValidationError } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
 import { ImageRepository } from '../DB/repositories/ImageRepository';
 
@@ -16,21 +15,16 @@ router.post('/upload', auth, authorization, async (req, res) => {
         let fileName: string | undefined,
             fileBuffer: Buffer
         try {
-            fileName = req.query.fileName?.toString()
-            console.log({ fileName })
-
-            if (!string().required().isValidSync(fileName))
-                return res.status(400).json({ message: 'Invalid file name' });
-
-            console.log({ fileName })
-
+            fileName = await string().required().label('File name').validate(req.query.fileName?.toString())
             const fileStream = Readable.from(req);
             fileBuffer = await streamToBuffer(fileStream)
         } catch (err) {
             console.error(err)
-            res.status(400).json({ message: 'Invalid file' });
-            return
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
+        console.log({ fileName })
 
         const imageRepository = new ImageRepository()
 
@@ -57,16 +51,12 @@ router.get('/info/', auth, async (req, res) => {
         console.log('Validation...')
         let imageId: string | undefined = undefined
         try {
-            imageId = req.query.imageId?.toString()
-
-            if (!likeObjectId.required().isValidSync(imageId)) {
-                res.status(400).json({ message: 'Invalid image id' });
-                return
-            }
+            imageId = await string().objectIdString().required().label('Image id').validate(req.query.imageId?.toString())
         } catch (err) {
             console.error(err)
-            res.status(400).json({ message: 'Invalid parameters' });
-            return
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
         console.log({ imageId })
 
@@ -88,12 +78,17 @@ router.get('/file/:imageId', auth, async (req, res) => {
     try {
         console.log('/file')
 
-        const imageId = req.params.imageId
-        if (!likeObjectId.isValidSync(imageId)) {
-            res.status(400).json({ message: 'Invalid image id' });
-            return
+        console.log('Validation...')
+        let imageId: string | undefined = undefined
+        try {
+            imageId = await string().objectIdString().required().label('Image id').validate(req.params.imageId?.toString())
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
         }
-        console.log('imageId', imageId)
+        console.log({ imageId })
 
         const imageRepository = new ImageRepository()
         const file = await imageRepository.getFile(imageId)
@@ -114,11 +109,17 @@ router.get('/file/:imageId', auth, async (req, res) => {
 
 router.delete('/:imageId', auth, authorization, async (req, res) => {
     try {
-        console.log('Validation...');
-        const imageId = req.params.imageId
-        if (!likeObjectId.isValidSync(imageId))
-            return res.status(400).json({ message: 'Error uploading image file' });
-        console.log({ imageId });
+        console.log('Validation...')
+        let imageId: string | undefined = undefined
+        try {
+            imageId = await string().objectIdString().required().label('Image id').validate(req.params.imageId?.toString())
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
+        }
+        console.log({ imageId })
 
         const imageRepository = new ImageRepository()
 

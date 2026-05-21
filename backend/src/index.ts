@@ -1,3 +1,7 @@
+// Must be imported before models
+import { addYupMethods } from './DB/common_schemas';
+addYupMethods();
+
 import express from 'express';
 import https from 'https'
 import fs from 'fs'

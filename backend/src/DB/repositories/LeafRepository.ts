@@ -3,7 +3,7 @@ import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
-import { collectionName, Leaf, LeafUpdate, schemaVersion } from '../models/Leaf';
+import { collectionName, Leaf, LeafCreate, LeafUpdate, schemaVersion } from '../models/Leaf';
 
 class LeafRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -50,7 +50,7 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
         await db.dropCollection(collectionName)
     }
 
-    async insert(leaf: Leaf): Promise<InsertOneResult> {
+    async insert(leaf: LeafCreate): Promise<InsertOneResult> {
         return await LeafRepository.collection!.insertOne({ ...leaf, schemaVersion, updatedAt: Date.now(), createdAt: Date.now() }, { session: this.session })
     }
 
@@ -63,15 +63,19 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
     }
 
     async getForUser(leafId: string, userId: string): Promise<Leaf> {
-        return (await LeafRepository.collection!.find({ _id: ObjectId.createFromHexString(leafId), userId: ObjectId.createFromHexString(userId) }, { session: this.session }).toArray())[0]
+        return (await LeafRepository.collection!.find({ _id: ObjectId.createFromHexString(leafId), userId }, { session: this.session }).toArray())[0]
     }
 
     async getManyForUser(leafIds: string[], userId: string): Promise<Leaf[]> {
-        return await LeafRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId: ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
+        return await LeafRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
+    }
+
+    async getForUserByParentTreeNode(parentTreeNodeId: string, userId: string) {
+        return await LeafRepository.collection!.find({ treeNodeId: parentTreeNodeId, userId }, { session: this.session }).toArray()
     }
 
     async getByUserId(userId: string) {
-        return await LeafRepository.collection!.find({ userId: ObjectId.createFromHexString(userId) }, { session: this.session }).toArray()
+        return await LeafRepository.collection!.find({ userId }, { session: this.session }).toArray()
     }
 
     async videoIdExistsFrom(videoId: string, fromTsMs: number) {
@@ -86,12 +90,14 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
         return (await LeafRepository.collection!.countDocuments({ $or: [{ definitionContents: { $elemMatch: { type: 'audioId', value: audioId } }, updatedAt: { $gte: fromTsMs } }, { termContents: { $elemMatch: { type: 'audioId', value: audioId } }, updatedAt: { $gte: fromTsMs } }] })) > 0
     }
 
-    async replace(leaf: LeafUpdate) {
-        return await LeafRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(leaf._id!.toString()) }, { $set: { ...leaf, updatedAt: Date.now() } })
+    async replace(leafArg: LeafUpdate) {
+        const { _id, ...leaf } = leafArg
+        return await LeafRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(_id!.toString()) }, { $set: { ...leaf, updatedAt: Date.now() } })
     }
 
-    async replaceForUser(leaf: LeafUpdate, userId: string) {
-        return await LeafRepository.collection!.updateOne({ userId, _id: ObjectId.createFromHexString(leaf._id!.toString()) }, { $set: { ...leaf, updatedAt: Date.now() } })
+    async replaceForUser(leafArg: LeafUpdate, userId: string) {
+        const { _id, ...leaf } = leafArg
+        return await LeafRepository.collection!.updateOne({ userId, _id: ObjectId.createFromHexString(_id!.toString()) }, { $set: { ...leaf, updatedAt: Date.now() } })
     }
 
     async delete(id: string): Promise<DeleteResult> {
@@ -99,7 +105,7 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
     }
 
     async deleteForUser(id: string, userId: string): Promise<DeleteResult> {
-        return await LeafRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id), userId: ObjectId.createFromHexString(userId) }, { session: this.session })
+        return await LeafRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id), userId }, { session: this.session })
     }
 }
 

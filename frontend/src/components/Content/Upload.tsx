@@ -1,8 +1,8 @@
-import { Ripple } from "../../Ripple";
+import { Ripple } from "../Ripple";
 import { useState } from "react";
-import { useAuth } from "../../../contexts/AuthContext";
-import { useNotification } from "../../../contexts/NotificationContext";
-import { Trash2 } from "../../../assets/icons/Trash2";
+import { useAuth } from "../../contexts/AuthContext";
+import { useNotification } from "../../contexts/NotificationContext";
+import { Trash2 } from "../../assets/icons/Trash2";
 import type { Types } from "../LeafManager";
 
 export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (imageIds: string[]) => void, onClose?: () => void }) {
