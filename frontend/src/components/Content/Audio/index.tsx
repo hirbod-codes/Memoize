@@ -6,8 +6,9 @@ import { Upload } from "../Upload"
 import { Plus } from "../../../assets/icons/Plus"
 import { Trash2 } from "../../../assets/icons/Trash2"
 import { AudioPlayer } from "./AudioPlayer"
+import type { Leaf } from "../../LeafManager"
 
-export function Audio({ audioIds, editing, onLeafChange, onRemove, onRemoveAll }: { audioIds: string[], editing: boolean, onLeafChange?: (audioIds: string[]) => void, onRemove?: (audioId: string) => void, onRemoveAll?: () => void }) {
+export function Audio({ contentIndex }: { contentIndex: number }) {
     const [openAudioUploadModal, setOpenAudioUploadModal] = useState(false)
 
     return (

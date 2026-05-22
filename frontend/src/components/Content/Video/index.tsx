@@ -6,8 +6,9 @@ import { Trash2 } from "../../../assets/icons/Trash2";
 import { Ripple } from "../../Ripple";
 import { Slide } from "../../Slide";
 import { Upload } from "../Upload";
+import type { Leaf } from "../../LeafManager";
 
-export function Video({ videoIds, editing, onLeafChange, onRemove, onRemoveAll }: { videoIds: string[], editing: boolean, onLeafChange?: (videoIds: string[]) => void, onRemove?: (v: string) => void, onRemoveAll?: () => void }) {
+export function Video({ contentIndex }: { contentIndex: number }) {
     const [selected, setSelected] = useState<string | undefined>(undefined)
     const [openVideoUploadModal, setOpenVideoUploadModal] = useState(false)
 

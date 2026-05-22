@@ -5,8 +5,9 @@ import { Trash2 } from "../../../assets/icons/Trash2";
 import { Ripple } from "../../Ripple";
 import { Slide } from "../../Slide";
 import { Upload } from "../Upload";
+import type { Leaf } from "../../LeafManager";
 
-export function Image({ imageIds, editing, onLeafChange, onRemove, onRemoveAll }: { imageIds: string[], editing: boolean, onLeafChange?: (imageIds: string[]) => void, onRemove?: (v: string) => void, onRemoveAll?: () => void }) {
+export function Image({ contentIndex }: { contentIndex: number }) {
     const [openImageUploadModal, setOpenImageUploadModal] = useState(false)
 
     return (

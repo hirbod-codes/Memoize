@@ -5,12 +5,14 @@ import { Trash2 } from "../assets/icons/Trash2"
 import { useNotification } from "../contexts/NotificationContext"
 import { useAuth } from "../contexts/AuthContext"
 import { X } from "../assets/icons/X"
+import { Upload as UploadIcon } from "../assets/icons/Upload"
 import { Eye } from "../assets/icons/Eye"
 import { SquarePen } from "../assets/icons/SquarePen"
 import { Slide } from "./Slide"
 import { Upload } from "./Content/Upload"
 import { Plus } from "../assets/icons/Plus"
 import { Select } from "./Select"
+import Text from "./Content/Text"
 
 export type Types = 'string' | 'imageId' | 'videoId' | 'audioId' | 'richText'
 
@@ -27,9 +29,18 @@ export type Leaf = {
     definitionContents: Content[],
 }
 
-export const LeafContext = createContext<{ leaf: Leaf, updateLeaf: (leaf: Leaf) => Promise<boolean>, removeLeaf: (id: string) => Promise<boolean> } | undefined>(undefined)
+export const LeafContext = createContext<{
+    leaf: Leaf,
+    isTerm: boolean
+    editing: boolean
+    updateLeaf: (leaf: Leaf) => Promise<boolean>,
+    removeLeaf: () => Promise<boolean>
+    removeContent: (i: number, v: string) => Promise<boolean>
+    removeContents: (i: number) => Promise<boolean>
+    onLeafChange: (leaf: Leaf) => void
+} | undefined>(undefined)
 
-export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }: { leaf: Leaf, treeNodeId?: string, onLeafChange?: (leaf: Leaf) => void, onRemove?: () => void, onClose?: () => void }) {
+export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }: { leaf: Leaf, treeNodeId?: string, onLeafChange: (leaf: Leaf) => void, onRemove?: () => void, onClose?: () => void }) {
     const { notify } = useNotification()
     const { jsonAuthFetch } = useAuth()
 
@@ -42,14 +53,12 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
     const [newContent, setNewContent] = useState<{ type: Types, value: string[] }>()
     const [openUpload, setOpenUpload] = useState<Types | undefined>(undefined)
 
-    const [hasSaved, setHasSaved] = useState(false)
     const [saving, setSaving] = useState(false)
-    const [_deleting, setDeleting] = useState(false)
 
     const save = async (l: Leaf) => {
         try {
             if (saving)
-                return
+                return false
 
             setSaving(true)
             let r = await jsonAuthFetch(`/api/leaf`, { method: 'PATCH', body: JSON.stringify({ leaf: l }) })
@@ -61,8 +70,6 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
 
             notify("Successfully updated", 3000, 'success')
 
-            setHasSaved(true)
-
             onLeafChange?.(l)
 
             return true
@@ -73,34 +80,68 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
         }
     }
 
-    const removeAllContent = async (i: number) => {
-        if (leaf === undefined)
-            return
+    const removeContents = async (i: number) => {
+        try {
+            if (leaf === undefined || saving)
+                return false
 
-        leaf[isTerm ? 'termContents' : 'definitionContents'] = leaf[isTerm ? 'termContents' : 'definitionContents'].filter((_f, fi) => fi !== i)
+            leaf[isTerm ? 'termContents' : 'definitionContents'] = leaf[isTerm ? 'termContents' : 'definitionContents'].filter((_f, fi) => fi !== i)
 
-        setLeaf(leaf)
+            setSaving(true)
+            let r = await jsonAuthFetch(`/api/leaf`, { method: 'PATCH', body: JSON.stringify({ leaf }) })
+            setSaving(false)
+            if (r === false || !r.ok) {
+                notify("Failed to update", 3000, 'error')
+                return false
+            }
+
+            notify("Successfully updated", 3000, 'success')
+
+            onLeafChange?.({ ...leaf })
+
+            return true
+        } catch (err) {
+            console.error(err);
+            return false
+        }
     }
 
     const removeContent = async (i: number, v: string) => {
         if (leaf === undefined)
-            return
+            return false
 
         leaf[isTerm ? 'termContents' : 'definitionContents'][i].value = leaf[isTerm ? 'termContents' : 'definitionContents'][i].value.filter(f => f !== v)
 
-        setLeaf({ ...leaf })
+        if (leaf[isTerm ? 'termContents' : 'definitionContents'][i].value.length === 0)
+            leaf[isTerm ? 'termContents' : 'definitionContents'] = leaf[isTerm ? 'termContents' : 'definitionContents'].filter((_f, fi) => fi !== i)
+
+        setSaving(true)
+        let r = await jsonAuthFetch(`/api/leaf`, { method: 'PATCH', body: JSON.stringify({ leaf }) })
+        setSaving(false)
+        if (r === false || !r.ok) {
+            notify("Failed to update", 3000, 'error')
+            return false
+        }
+
+        notify("Successfully updated", 3000, 'success')
+
+        onLeafChange?.({ ...leaf })
+
+        return true
     }
 
     const removeLeaf = async () => {
         try {
             if (!leaf || !leaf._id)
-                return
+                return false
 
-            setDeleting(true)
+            setSaving(true)
             let r = await jsonAuthFetch(`/api/leaf/?id=${leaf._id}`, { method: 'DELETE' })
-            setDeleting(false)
-            if (r === false || !r.ok)
-                return notify('Removing card failed', 3000, 'error')
+            setSaving(false)
+            if (r === false || !r.ok) {
+                notify('Removing card failed', 3000, 'error')
+                return false
+            }
 
             onRemove?.()
 
@@ -113,21 +154,26 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
     }
 
     useEffect(() => {
-        if (!editing)
-            if (!hasSaved)
-                setLeaf({ ...initLeaf })
-            else
-                setHasSaved(false)
-    }, [editing])
+        setLeaf(initLeaf)
+    }, [initLeaf])
 
     useEffect(() => {
         setNewTitle(leaf.title)
     }, [leaf])
 
-    console.log({ initLeaf, leaf, isTerm, newContent, hasSaved });
+    console.log({ initLeaf, leaf, isTerm, newContent });
 
     return (
-        <LeafContext.Provider value={undefined}>
+        <LeafContext.Provider value={{
+            leaf,
+            isTerm,
+            editing,
+            updateLeaf: save,
+            onLeafChange,
+            removeLeaf,
+            removeContent,
+            removeContents,
+        }}>
             {
                 leaf === undefined
                     ? 'nothing'
@@ -207,19 +253,9 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                         <div className="flex flex-col items-start gap-2 p-2 w-full">
                             {
                                 leaf[isTerm ? 'termContents' : 'definitionContents']
-                                    .map((content, i: number, arr) =>
-                                        <div className="flex flex-col gap-1 w-full">
-                                            <Content
-                                                key={i}
-                                                type={content.type}
-                                                values={[...content.value]}
-                                                editing={editing}
-                                                onRemoveAll={() => removeAllContent(i)}
-                                                onRemove={(v) => removeContent(i, v)}
-                                                onLeafChange={(value) => { leaf[isTerm ? 'termContents' : 'definitionContents'][i].value = value; setLeaf(leaf); }}
-                                                leaf={leaf}
-                                                contentIndex={i}
-                                            />
+                                    .map((_content, i: number, arr) =>
+                                        <div key={i} className="flex flex-col gap-1 w-full">
+                                            <Content contentIndex={i} />
 
                                             {i !== arr.length - 1 && <div className="w-full border-b border-outline" />}
                                         </div>
@@ -242,11 +278,11 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                                         className: 'bg-surface text-on-surface rounded-lg p-1'
                                     }}
                                 >
-                                    <option className="string">string</option>
-                                    <option className="richText">Rich text</option>
-                                    <option className="imageId">Image</option>
-                                    <option className="audioId">Audio</option>
-                                    <option className="videoId">Video</option>
+                                    <option className="string" value='string'>string</option>
+                                    <option className="richText" value='richText'>Rich text</option>
+                                    <option className="imageId" value='imageId'>Image</option>
+                                    <option className="audioId" value='audioId'>Audio</option>
+                                    <option className="videoId" value='videoId'>Video</option>
                                 </Select>
 
                                 {
@@ -257,6 +293,30 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                                         className="p-2 rounded-lg bg-surface-variant border border-outline w-full"
                                         placeholder="Your content..."
                                     />
+                                }
+
+                                {
+                                    newContent.type === 'richText' &&
+                                    <button className="border border-outline rounded-lg w-full p-1" onClick={async () => {
+                                        leaf[isTerm ? 'termContents' : 'definitionContents'].push({ type: 'richText', value: [''] })
+
+                                        setSaving(true)
+                                        const result = await save(leaf)
+                                        setSaving(true)
+                                        if (result === false)
+                                            return
+
+                                        onLeafChange?.({ ...leaf })
+                                    }}>
+                                        <Plus className="inline" /> Add
+                                    </button>
+                                }
+
+                                {
+                                    newContent.type !== 'string' && newContent.type !== 'richText' &&
+                                    <button className="border border-outline rounded-lg w-full p-1" onClick={() => setOpenUpload(newContent.type)}>
+                                        <UploadIcon className='inline' /> Upload
+                                    </button>
                                 }
 
                                 <Ripple>
@@ -294,16 +354,6 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                                     </button>
                                 </Ripple>
                             </div>
-                        }
-
-                        {/* Save button */}
-                        {
-                            editing &&
-                            <Ripple className="p-1 rounded w-full border border-outline">
-                                <button onClick={async () => save(leaf)}>
-                                    Save
-                                </button>
-                            </Ripple>
                         }
 
                         <Slide open={openUpload !== undefined} style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>

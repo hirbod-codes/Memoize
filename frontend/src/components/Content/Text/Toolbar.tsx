@@ -29,7 +29,7 @@ export function Toolbar({ editor }: Props) {
     }
 
     return (
-        <div className="toolbar">
+        <div className="*:border *:border-outline *:p-1 *:rounded-lg border border-outline p-2 rounded-lg flex flex-row flex-wrap gap-1 w-full">
             <button
                 onClick={() =>
                     editor

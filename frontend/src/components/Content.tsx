@@ -1,24 +1,55 @@
+import { useContext, useState } from "react";
 import { SquareMinus } from "../assets/icons/SquareMinus";
 import { Audio } from "./Content/Audio";
 import { Image } from "./Content/Image";
 import Text from "./Content/Text";
 import { Video } from "./Content/Video";
-import type { Leaf, Types } from "./LeafManager";
+import { LeafContext } from "./LeafManager";
 import { Ripple } from "./Ripple";
+import { Trash2 } from "../assets/icons/Trash2";
+import { Plus } from "../assets/icons/Plus";
 
-export function Content({ leaf, type, values, contentIndex, editing, onLeafChange, onRemove, onRemoveAll }: { leaf: Leaf, type: Types, values: string[], contentIndex: number, editing: boolean, onLeafChange?: (value: string[]) => void, onRemove?: (v: string) => void, onRemoveAll?: () => void }) {
+export function Content({ contentIndex }: { contentIndex: number }) {
+    const leafContext = useContext(LeafContext)
+    if (!leafContext)
+        return null
+
+    const isTerm = leafContext.isTerm
+    const editing = leafContext.editing
+    const leaf = leafContext.leaf
+    const contents = leaf[isTerm ? 'termContents' : 'definitionContents']
+    const content = contents[contentIndex]
+    const type = content.type
+    const values = content.value
+
+    const [newStringContent, setNewStringContent] = useState('')
+
     return (
-        type === 'audioId' ? <Audio audioIds={values} onLeafChange={onLeafChange} editing={editing} onRemove={onRemove} onRemoveAll={onRemoveAll} /> :
+        type === 'audioId' ? <Audio contentIndex={contentIndex} /> :
             (
-                type === 'imageId' ? <Image imageIds={values} onLeafChange={onLeafChange} editing={editing} onRemove={onRemove} onRemoveAll={onRemoveAll} /> :
+                type === 'imageId' ? <Image contentIndex={contentIndex} /> :
                     (
-                        type === 'videoId' ? <Video videoIds={values} onLeafChange={onLeafChange} editing={editing} onRemove={onRemove} onRemoveAll={onRemoveAll} /> :
+                        type === 'videoId' ? <Video contentIndex={contentIndex} /> :
                             (
                                 type === 'richText'
-                                    ? <Text leaf={leaf} contentIndex={contentIndex} jsonContents={values} onLeafChange={onLeafChange} editing={editing} onRemove={onRemove} onRemoveAll={onRemoveAll} />
+                                    ? <Text contentIndex={contentIndex} />
                                     : (
                                         type === 'string'
-                                            ? <div className="flex flex-col gap-2 p-2 w-full">
+                                            ? <div className="flex flex-col gap-2 p-2 w-full border border-outline rounded-lg">
+                                                <div className="flex flex-row items-center gap-2 p-2 w-full">
+                                                    {/* Delete button */}
+                                                    {
+                                                        editing &&
+                                                        <Ripple className="rounded-full text-error">
+                                                            <button onClick={async () => leafContext?.removeContents(contentIndex)}>
+                                                                <Trash2 />
+                                                            </button>
+                                                        </Ripple>
+                                                    }
+
+                                                    <div className="grow" />
+                                                </div>
+
                                                 {
                                                     values.map((v, i) =>
                                                         <div key={i} className="rounded-lg border border-outline p-2 flex flex-row items-center">
@@ -28,13 +59,40 @@ export function Content({ leaf, type, values, contentIndex, editing, onLeafChang
                                                             {
                                                                 editing &&
                                                                 <Ripple className="rounded-full text-error p-1">
-                                                                    <button onClick={async () => onRemove?.(v)}>
+                                                                    <button onClick={async () => leafContext?.removeContent(contentIndex, v)}>
                                                                         <SquareMinus />
                                                                     </button>
                                                                 </Ripple>
                                                             }
                                                         </div>
                                                     )
+                                                }
+
+                                                {/* Create content */}
+                                                {
+                                                    editing &&
+                                                    <div key={values.length} className="flex flex-row items-center gap-2 p-1">
+                                                        <input
+                                                            className="bg-surface rounded-lg border border-outline p-2"
+                                                            value={newStringContent}
+                                                            onChange={(e) => setNewStringContent(e.target.value)}
+                                                        />
+
+                                                        <Ripple className="rounded-full text-success">
+                                                            <button onClick={async () => {
+                                                                let l = { ...leaf }
+                                                                l[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value.push(newStringContent)
+
+                                                                const result = await leafContext?.updateLeaf(l)
+                                                                if (result === false)
+                                                                    return
+
+                                                                leafContext.onLeafChange(l)
+                                                            }}>
+                                                                <Plus />
+                                                            </button>
+                                                        </Ripple>
+                                                    </div>
                                                 }
                                             </div>
                                             : 'error'

@@ -26,104 +26,47 @@ export const runCronjobs = async () => {
         const treeNodeRepo = new TreeNodeRepository()
         const leafRepo = new LeafRepository()
 
-        const formateRemovableIds = (leaf: Leaf) => {
-            const formatted: { imageId: string[], audioId: string[], videoId: string[] } = { imageId: [], audioId: [], videoId: [] }
-
-            for (const content of leaf.termContents)
-                for (const v of content.value)
-                    if (content.type === 'string' || content.type === 'richText')
-                        continue
-                    else
-                        switch (content.type) {
-                            case 'audioId':
-                                formatted.audioId.push(v)
-                                break;
-
-                            case 'imageId':
-                                formatted.imageId.push(v)
-                                break;
-
-                            case 'videoId':
-                                formatted.videoId.push(v)
-                                break;
-
-                            default:
-                                break;
-                        }
-
-            return formatted
-        }
-
-        const runDeleteLeafPromises = (leaf: Leaf) => {
-            const formatted = formateRemovableIds(leaf)
-
-            imageRepo.deleteFileBulk(formatted.imageId)
-                .then(imageResult => console.log('imageResult', imageResult))
-                .catch(e => console.error(e))
-
-            audioFileRepo.deleteFileBulk(formatted.audioId)
-                .then(audioFileResult => console.log('audioFileResult', audioFileResult))
-                .catch(e => console.error(e))
-
-            for (const id of formatted.audioId)
-                coverArtRepo.deleteFileByAudioId(id)
-                    .then(coverArtResult => console.log('coverArtResult', coverArtResult))
-                    .catch(e => console.error(e))
-
-            videoRepo.deleteBulk(formatted.videoId)
-                .then(videoResult => console.log('videoResult', videoResult))
-                .catch(e => console.error(e))
-
-            for (const id of formatted.videoId) {
-                videoFileRepo.deleteFileByVideoId(id)
-                    .then(videoFileResult => console.log('videoFileResult', videoFileResult))
-                    .catch(e => console.error(e))
-
-                thumbnailRepo.deleteFileByVideoId(id)
-                    .then(thumbnailResult => console.log('thumbnailResult', thumbnailResult))
-                    .catch(e => console.error(e))
-            }
-        }
 
         const makeContentPermanent = async (content: Content) => {
             if (content.type === 'richText' || content.type === 'string')
                 return
 
             for (const v of content.value)
-                switch (content.type) {
-                    case 'audioId':
-                        audioFileRepo.makePermanent(v)
-                            .then(coverArtResult => console.log('coverArtResult', coverArtResult))
-                            .catch(e => console.error(e))
+                if (v)
+                    switch (content.type) {
+                        case 'audioId':
+                            audioFileRepo.makePermanent(v)
+                                .then(coverArtResult => console.log('coverArtResult', coverArtResult))
+                                .catch(e => console.error(e))
 
-                        coverArtRepo.makePermanentByAudioId(v)
-                            .then(coverArtResult => console.log('coverArtResult', coverArtResult))
-                            .catch(e => console.error(e))
-                        break;
+                            coverArtRepo.makePermanentByAudioId(v)
+                                .then(coverArtResult => console.log('coverArtResult', coverArtResult))
+                                .catch(e => console.error(e))
+                            break;
 
-                    case 'videoId':
-                        videoRepo.makePermanent(v)
-                            .then(coverArtResult => console.log('coverArtResult', coverArtResult))
-                            .catch(e => console.error(e))
+                        case 'videoId':
+                            videoRepo.makePermanent(v)
+                                .then(coverArtResult => console.log('coverArtResult', coverArtResult))
+                                .catch(e => console.error(e))
 
-                        videoFileRepo.makePermanentByVideoId(v)
-                            .then(coverArtResult => console.log('coverArtResult', coverArtResult))
-                            .catch(e => console.error(e))
+                            videoFileRepo.makePermanentByVideoId(v)
+                                .then(coverArtResult => console.log('coverArtResult', coverArtResult))
+                                .catch(e => console.error(e))
 
-                        thumbnailRepo.makePermanentByVideoId(v)
-                            .then(coverArtResult => console.log('coverArtResult', coverArtResult))
-                            .catch(e => console.error(e))
-                        break;
+                            thumbnailRepo.makePermanentByVideoId(v)
+                                .then(coverArtResult => console.log('coverArtResult', coverArtResult))
+                                .catch(e => console.error(e))
+                            break;
 
-                    case 'imageId':
-                        imageRepo.makePermanent(v)
-                            .then(coverArtResult => console.log('coverArtResult', coverArtResult))
-                            .catch(e => console.error(e))
-                        break;
+                        case 'imageId':
+                            imageRepo.makePermanent(v)
+                                .then(coverArtResult => console.log('coverArtResult', coverArtResult))
+                                .catch(e => console.error(e))
+                            break;
 
-                    default:
-                        break;
-                }
+                        default:
+                            break;
+                    }
         }
 
         // To do: delete dangling contents

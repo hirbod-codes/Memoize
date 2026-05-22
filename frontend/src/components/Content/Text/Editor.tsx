@@ -9,12 +9,20 @@ import TextAlign from '@tiptap/extension-text-align'
 import { Toolbar } from './Toolbar'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useNotification } from '../../../contexts/NotificationContext'
-import type { Content, Leaf } from '../../LeafManager'
+import { LeafContext, type Content, type Leaf } from '../../LeafManager'
+import { useContext } from 'react'
 
-export function Editor({ leaf, contentIndex, isTerm, valueIndex, editable, onLeafChange, limit }: { leaf: Leaf, contentIndex: number, isTerm: boolean, valueIndex: number, editable: boolean, onLeafChange?: (jsonContent: string) => void, limit?: number }) {
+export function Editor({ contentIndex, valueIndex, limit }: { contentIndex: number, valueIndex: number, limit?: number }) {
     const { notify } = useNotification()
     const { jsonAuthFetch } = useAuth()
 
+    const leafContext = useContext(LeafContext)
+    if (!leafContext)
+        return null
+
+    const leaf = leafContext.leaf
+    const isTerm = leafContext.isTerm
+    const editable = leafContext.editing
     const content: Content = leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex]
 
     if (!content || content.type !== 'richText')
@@ -24,9 +32,19 @@ export function Editor({ leaf, contentIndex, isTerm, valueIndex, editable, onLea
         editable,
         extensions: [
             StarterKit.configure({
+                bold: {
+                    HTMLAttributes: {
+                        class: 'border border-red-500'
+                    }
+                },
+                blockquote: {
+                    HTMLAttributes: {
+                        class: 'border border-red-500'
+                    }
+                },
                 codeBlock: {
                     HTMLAttributes: {
-                        class: 'editor-code-block',
+                        class: 'border border-red-500',
                     },
                 },
             }),
@@ -51,7 +69,7 @@ export function Editor({ leaf, contentIndex, isTerm, valueIndex, editable, onLea
             }),
         ],
 
-        content: JSON.parse(content.value[valueIndex]),
+        content: content.value[valueIndex] ? JSON.parse(content.value[valueIndex]) : '',
 
         editorProps: {
             attributes: {
@@ -67,11 +85,11 @@ export function Editor({ leaf, contentIndex, isTerm, valueIndex, editable, onLea
 
             leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value[valueIndex] = jsonString
 
-            let r = await jsonAuthFetch('/api/leaf', { method: 'PUT', body: JSON.stringify(leaf) })
-            if (r === false || !r.ok)
-                return notify('Failed to update', 3000, 'error')
+            const result = await leafContext.updateLeaf(leaf)
+            if (result === false)
+                return false
 
-            onLeafChange?.(jsonString)
+            leafContext.onLeafChange(leaf)
         },
     })
 
@@ -79,12 +97,12 @@ export function Editor({ leaf, contentIndex, isTerm, valueIndex, editable, onLea
         return null
 
     return (
-        <div className="editor-shell">
+        <div className="w-full p-2 flex flex-col gap-1">
             <Toolbar editor={editor} />
 
-            <EditorContent editor={editor} />
+            <EditorContent className='border border-outline rounded-lg p-2' editor={editor} />
 
-            <div className="editor-footer">
+            <div className="border border-outline rounded-lg p-2">
                 Character count:{' '}
                 {editor.storage.characterCount.characters()}
             </div>

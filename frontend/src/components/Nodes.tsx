@@ -110,32 +110,6 @@ export function Nodes() {
         }
     }
 
-    const getTreeNodes = async (ids: string[]) => {
-        try {
-            if (!ids)
-                return false
-
-            if (ids.length === 0)
-                return []
-
-            setFetching(true)
-            const r = await jsonAuthFetch(`/api/treeNode/?treeNodeIds=${ids.join(',')}`)
-            setFetching(false)
-            if (r === false || !r.ok)
-                return notify('failed to load folders', 3000, 'error')
-
-            const data = await r.json()
-
-            console.log({ data })
-
-            return data
-        } catch (error) {
-            console.error(error);
-            notify('failed to load folders', 3000, 'error')
-            return false
-        }
-    }
-
     const getRoots = async () => {
         try {
             setFetching(true)
@@ -404,7 +378,7 @@ export function Nodes() {
                         })
                     }
 
-                    {leafs.length !== 0 && <div className="border-b border-outline w-full mt-8" />}
+                    {leafs.length !== 0 && <div className="border-b border-outline w-full m-8" />}
 
                     {/* Leafs */}
                     {
