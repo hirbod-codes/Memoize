@@ -5,9 +5,11 @@ import { auth, authorization } from '../middlewares/auth';
 import { VideoFileRepository } from '../DB/repositories/VideoFileRepository';
 import { ThumbnailRepository } from '../DB/repositories/ThumbnailRepository';
 import path from 'path';
-import { decodeVideoToDisk } from '../ffmpeg';
+import { decodeVideoFileToDisk, decodeVideoStreamToDisk, generateThumbnailFromVideoFileToDisk } from '../ffmpeg';
 import VideoRepository from '../DB/repositories/VideoRepository';
 import { MongoDB } from '../DB/mongodb';
+import { streamToBuffer } from '../utils';
+import { Readable } from 'stream';
 
 const router = express.Router();
 
@@ -50,7 +52,7 @@ router.post('/thumbnail', auth, authorization, async (req, res) => {
 })
 
 router.post('/', auth, authorization, async (req, res) => {
-    let db: MongoDB, tempDir
+    let db: MongoDB | undefined = undefined, tempDir
     try {
         console.log('/upload')
 
@@ -76,6 +78,9 @@ router.post('/', auth, authorization, async (req, res) => {
         const videoFileRepository = new VideoFileRepository()
         videoFileRepository.setTransactionSession(session)
 
+        const thumbnailRepository = new ThumbnailRepository()
+        thumbnailRepository.setTransactionSession(session)
+
         console.log('Inserting video info...');
         const videoInsertResult = await videoRepository.insert({ title, userId: (req as any).user.userId, temporary: true })
         if (!videoInsertResult.acknowledged)
@@ -83,11 +88,48 @@ router.post('/', auth, authorization, async (req, res) => {
         const videoId = videoInsertResult.insertedId.toString()
 
         tempDir = path.join('temp', 'videos', videoId)
+        fs.mkdirSync(tempDir, { recursive: true })
 
-        await decodeVideoToDisk(req, tempDir)
+        console.log('Checking file size...')
+        const MAX_BYTES = 10 * 1024 * 1024 * 1024;
+        const contentLength = Number(req.headers["content-length"]);
+        if (contentLength > MAX_BYTES)
+            return res.status(413).send("File too large");
+
+        let total = 0;
+        req.on("data", (chunk) => {
+            total += chunk.length;
+
+            if (total > MAX_BYTES) {
+                req.destroy(new Error("File too large"));
+                return;
+            }
+        });
+
+        const file = path.join(tempDir, fileName)
+        const writeStream = fs.createWriteStream(file)
+
+        req.on("data", (chunk) => {
+            total += chunk.length;
+
+            if (total > MAX_BYTES) {
+                res.statusCode = 413;
+                res.end("File too large");
+
+                req.destroy();
+                writeStream.destroy();
+
+                fs.unlink(file, (e) => { if (e) console.error(e) });
+            }
+        });
+        req.pipe(writeStream)
+
+        await decodeVideoFileToDisk(file, tempDir)
+        await generateThumbnailFromVideoFileToDisk(file, tempDir)
 
         const files = fs.readdirSync(tempDir)
 
+        let uploadedThumbnailId: string | undefined = undefined
         const uploaded = []
 
         console.log("Uploading video file segments...");
@@ -95,34 +137,58 @@ router.post('/', auth, authorization, async (req, res) => {
             const filePath = path.join(tempDir, file)
             const readStream = fs.createReadStream(filePath)
 
-            const contentType = file.endsWith('.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/mp2t'
+            if (file.includes('thumbnail')) {
+                const contentType = 'image/jpeg'
 
-            // Will be permanent after user created corresponding leaf
-            const videoFileId = await videoFileRepository.upload({ videoId, temporary: true, userId: (req as any).user.userId, contentType }, { fileName: file, bytes: readStream })
-            console.log("Upload video file result", videoFileId);
-            if (videoFileId === false || !videoFileId)
-                return res.status(500).send()
+                const thumbnailId = await thumbnailRepository.upload({ userId: (req as any).user.userId, temporary: false, videoId, contentType }, { fileName: file, bytes: readStream })
+                console.log("Upload thumbnail result", thumbnailId);
+                if (thumbnailId === false || !thumbnailId)
+                    return res.status(500).send()
 
-            uploaded.push({ file, id: videoFileId })
+                uploadedThumbnailId = thumbnailId
+            } else {
+                const contentType = file.endsWith('.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/mp2t'
+
+                // Will be permanent after user created corresponding leaf
+                const videoFileId = await videoFileRepository.upload({ videoId, temporary: true, userId: (req as any).user.userId, contentType }, { fileName: file, bytes: readStream })
+                console.log("Upload video file result", videoFileId);
+                if (videoFileId === false || !videoFileId)
+                    return res.status(500).send()
+
+                uploaded.push({ file, id: videoFileId })
+            }
         }
         console.log(JSON.stringify(uploaded, undefined, 4))
 
         fs.rmSync(tempDir, { force: true, recursive: true })
 
-        const makePermanentResult = await videoFileRepository.makePermanentByVideoId(videoId)
+        let makePermanentResult = await videoFileRepository.makePermanentByVideoId(videoId)
         if (makePermanentResult === false || !makePermanentResult.acknowledged)
             return res.status(500).send()
 
-        res.status(201).json({ id: videoId });
+        makePermanentResult = await thumbnailRepository.makePermanentByVideoId(videoId)
+        if (makePermanentResult === false || !makePermanentResult.acknowledged)
+            return res.status(500).send()
+
+        await db.commitTransaction()
+
+        res.status(201).json({ id: videoId, thumbnailId: uploadedThumbnailId });
 
         console.log('------------end------------')
     } catch (err) {
         console.error(err)
 
+        if (tempDir && fs.existsSync(tempDir))
+            fs.rmSync(tempDir, { force: true, recursive: true })
+
+        if (db)
+            await db.abortTransaction()
+
+        res.status(500).json({ message: 'Error uploading video file' });
+    } finally {
         if (tempDir)
             fs.rmSync(tempDir, { force: true, recursive: true })
 
-        res.status(500).json({ message: 'Error uploading video file' });
     }
 })
 
@@ -142,9 +208,9 @@ router.get('/info', auth, async (req, res) => {
         }
         console.log({ videoId })
 
-        const videoRepository = new VideoFileRepository()
+        const videoRepository = new VideoRepository()
 
-        let result = await videoRepository.getFile(videoId)
+        let result = (await videoRepository.getForUser(videoId, (req as any).user.userId))
 
         console.log({ result })
 
@@ -190,13 +256,13 @@ router.patch('/', auth, async (req, res) => {
 
 router.get('/file/:videoId/:fileName', auth, async (req, res) => {
     try {
-        console.log('/api/video/file/:videoId')
+        console.log('/api/video/file/:videoId/:fileName')
 
         console.log('Validation...')
         let videoId: string | undefined, fileName: string | undefined
         try {
             videoId = await string().objectIdString().required().label('Video id').validate(req.params.videoId.toString())
-            fileName = await string().objectIdString().required().label('File name').validate(req.params.fileName.toString())
+            fileName = await string().required().label('File name').validate(req.params.fileName.toString())
         } catch (err) {
             console.error(err)
             if (err instanceof ValidationError)
@@ -207,7 +273,7 @@ router.get('/file/:videoId/:fileName', auth, async (req, res) => {
 
         const videoFileRepository = new VideoFileRepository()
 
-        const file = await videoFileRepository.getFileByVideoId(videoId, fileName)
+        const file = await videoFileRepository.getFileForUserByVideoId(videoId, fileName, (req as any).user.userId)
         if (!file) {
             res.status(404).json({ message: 'video file not found' });
             return
@@ -242,7 +308,7 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
         console.log('videoId', videoId)
 
         const thumbnailRepository = new ThumbnailRepository()
-        const file = await thumbnailRepository.getFile(videoId)
+        const file = await thumbnailRepository.getFileByVideoId(videoId)
         if (!file) {
             res.status(404).json({ message: 'video file not found' });
             return

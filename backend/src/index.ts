@@ -26,6 +26,9 @@ import { audioRoutes } from './routes/audio';
 import { runCronjobs } from './cronjobs';
 import { imageRoutes } from './routes/image';
 import { videoRoutes } from './routes/video';
+import VideoRepository from './DB/repositories/VideoRepository';
+import { ThumbnailRepository } from './DB/repositories/ThumbnailRepository';
+import { CoverArtRepository } from './DB/repositories/CoverArtRepository';
 
 dotenv.config({ debug: process.env.DEBUG !== undefined ? Boolean(process.env.DEBUG) : undefined })
 
@@ -57,12 +60,15 @@ export const dbConfig = {
 
         await db.reset();
 
-        db.addRepository(new AudioFileRepository())
         db.addRepository(new UserRepository())
         db.addRepository(new InvalidTokensRepository())
         db.addRepository(new AvatarRepository())
         db.addRepository(new ImageRepository())
+        db.addRepository(new VideoRepository())
         db.addRepository(new VideoFileRepository())
+        db.addRepository(new ThumbnailRepository())
+        db.addRepository(new AudioFileRepository())
+        db.addRepository(new CoverArtRepository())
         db.addRepository(new LeafRepository())
         db.addRepository(new TreeNodeRepository())
 

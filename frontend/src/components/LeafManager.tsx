@@ -347,7 +347,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                         {/* Add Content button */}
                         {
                             editing &&
-                            <div className="flex flex-row items-center sjustify-center w-full">
+                            <div className="flex flex-row items-center justify-center w-full">
                                 <Ripple>
                                     <button onClick={async () => setNewContent({ type: 'string', value: [''] })} className="p-1 rounded-full w-full bg-success text-on-success">
                                         <Plus className='inline' />

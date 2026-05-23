@@ -80,6 +80,15 @@ export class VideoFileRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    async getFileForUserByVideoId(videoId: string, fileName: string, userId: string): Promise<GridFSFile | undefined> {
+        try {
+            return (await VideoFileRepository.bucket!.find({ 'metadata.videoId': videoId, 'metadata.userId': userId, filename: fileName }, { session: this.session }).toArray())[0];
+        } catch (e) {
+            console.error(e)
+            return undefined
+        }
+    }
+
     async getFileByVideoId(videoId: string, fileName: string): Promise<GridFSFile | undefined> {
         try {
             return (await VideoFileRepository.bucket!.find({ 'metadata.videoId': videoId, filename: fileName }, { session: this.session }).toArray())[0];
@@ -173,7 +182,7 @@ export class VideoFileRepository implements IRepository, ISeedable, IDropable {
 
     async makePermanentByVideoId(videoId: string) {
         try {
-            return await VideoFileRepository.filesCollection!.updateOne({ 'metadata.videoId': ObjectId.createFromHexString(videoId) }, { 'metadata.temporary': false }, { session: this.session })
+            return await VideoFileRepository.filesCollection!.updateOne({ 'metadata.videoId': ObjectId.createFromHexString(videoId) }, { $set: { 'metadata.temporary': false } }, { session: this.session })
         } catch (error) {
             console.log(error)
             return false

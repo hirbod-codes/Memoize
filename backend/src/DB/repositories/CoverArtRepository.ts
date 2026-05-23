@@ -172,7 +172,7 @@ export class CoverArtRepository implements IRepository, ISeedable, IDropable {
 
     async makePermanentByAudioId(audioId: string) {
         try {
-            return await CoverArtRepository.filesCollection!.updateOne({ 'metadata.audioId': ObjectId.createFromHexString(audioId) }, { 'metadata.temporary': false }, { session: this.session })
+            return await CoverArtRepository.filesCollection!.updateOne({ 'metadata.audioId': ObjectId.createFromHexString(audioId) }, { $set: { 'metadata.temporary': false } }, { session: this.session })
         } catch (error) {
             console.log(error)
             return false

@@ -82,9 +82,9 @@ export class ThumbnailRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
-    async getFileByAudioId(audioId: string): Promise<GridFSFile | undefined> {
+    async getFileByVideoId(videoId: string): Promise<GridFSFile | undefined> {
         try {
-            return (await ThumbnailRepository.bucket!.find({ 'metadata.audioId': ObjectId.createFromHexString(audioId) }, { session: this.session }).toArray())[0];
+            return (await ThumbnailRepository.bucket!.find({ 'metadata.videoId': videoId }, { session: this.session }).toArray())[0];
         } catch (e) {
             console.error(e)
             return undefined
@@ -93,7 +93,7 @@ export class ThumbnailRepository implements IRepository, ISeedable, IDropable {
 
     async getFilesByUserId(userId: string): Promise<GridFSFile | undefined> {
         try {
-            return (await ThumbnailRepository.bucket!.find({ 'metadata.userId': ObjectId.createFromHexString(userId) }, { session: this.session }).toArray())[0];
+            return (await ThumbnailRepository.bucket!.find({ 'metadata.userId': userId }, { session: this.session }).toArray())[0];
         } catch (e) {
             console.error(e)
             return undefined
@@ -120,7 +120,7 @@ export class ThumbnailRepository implements IRepository, ISeedable, IDropable {
 
     async getFileByUserId(userId: string): Promise<GridFSFile | false> {
         try {
-            return (await ThumbnailRepository.bucket!.find({ 'metadata.userId': ObjectId.createFromHexString(userId) }, { session: this.session }).toArray())[0];
+            return (await ThumbnailRepository.bucket!.find({ 'metadata.userId': userId }, { session: this.session }).toArray())[0];
         } catch (e) {
             console.error(e)
             return false
@@ -175,7 +175,7 @@ export class ThumbnailRepository implements IRepository, ISeedable, IDropable {
 
     async makePermanentByVideoId(videoId: string) {
         try {
-            return await ThumbnailRepository.filesCollection!.updateOne({ 'metadata.videoId': ObjectId.createFromHexString(videoId) }, { 'metadata.temporary': false }, { session: this.session })
+            return await ThumbnailRepository.filesCollection!.updateOne({ 'metadata.videoId': videoId }, { $set: { 'metadata.temporary': false } }, { session: this.session })
         } catch (error) {
             console.log(error)
             return false
