@@ -211,8 +211,10 @@ router.get('/info', auth, async (req, res) => {
         const videoRepository = new VideoRepository()
 
         let result = (await videoRepository.getForUser(videoId, (req as any).user.userId))
-
         console.log({ result })
+        if (!result)
+            return res.status(404).send()
+
 
         res.status(200).json(result)
 

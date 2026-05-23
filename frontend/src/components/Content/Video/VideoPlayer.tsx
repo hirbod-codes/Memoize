@@ -1,13 +1,11 @@
-import { useContext, useEffect, useRef, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { useAuth } from "../../../contexts/AuthContext"
 import { useNotification } from "../../../contexts/NotificationContext"
 import { LeafContext } from "../../LeafManager"
 import { Ripple } from "../../Ripple"
 import { SquareMinus } from "../../../assets/icons/SquareMinus"
-import Hls from "hls.js"
-import { X } from "../../../assets/icons/X"
 
-export function VideoPlayer({ videoId, contentIndex }: { videoId: string, contentIndex: number }) {
+export function VideoPlayer({ videoId, contentIndex, onSelect }: { videoId: string, contentIndex: number, onSelect: (id: string) => void }) {
     if (!videoId)
         return null
 
@@ -21,34 +19,6 @@ export function VideoPlayer({ videoId, contentIndex }: { videoId: string, conten
     const { notify } = useNotification()
 
     const [video, setVideo] = useState<any>()
-    const [selected, setSelected] = useState<string | undefined>(undefined)
-    const videoRef = useRef<HTMLVideoElement>(null)
-
-    useEffect(() => {
-        if (!videoRef.current || !selected)
-            return
-
-        const src = `/api/video/file/${selected}/index.m3u8`
-
-        if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-            videoRef.current.src = src
-            return
-        }
-
-        if (Hls.isSupported()) {
-            const hls = new Hls()
-
-            hls.loadSource(src)
-            hls.attachMedia(videoRef.current)
-
-            hls.on(Hls.Events.ERROR, (_, data) => {
-                console.error('[HLS]: ', data)
-            })
-            return () => {
-                hls.destroy()
-            }
-        }
-    }, [selected])
 
     const getVideoInfo = async () => {
         try {
@@ -92,27 +62,12 @@ export function VideoPlayer({ videoId, contentIndex }: { videoId: string, conten
                 </div>
             }
 
-            <img src={`/api/video/thumbnail/${videoId}`} crossOrigin="use-credentials" onClick={() => setSelected(videoId)} className="w-full object-contain rounded-lg" />
+            <img src={`/api/video/thumbnail/${videoId}`} crossOrigin="use-credentials" onClick={() => onSelect(videoId)} className="w-full object-contain rounded-lg" />
 
             {/* Title */}
             {video &&
-                <div className="text-lg border border-outline rounded-lg">
+                <div className="text-lg border border-outline rounded-lg p-2 text-wrap w-full overflow-hidden">
                     {video.title}
-                </div>
-            }
-
-            {/* Video player */}
-            {
-                selected &&
-                <div className="w-full h-96 relative">
-                    <div className="absolute top-0 right-0">
-                        <Ripple className="rounded-full bg-surface text-on-surface">
-                            <button onClick={async () => setSelected(undefined)}>
-                                <X />
-                            </button>
-                        </Ripple>
-                    </div>
-                    <video ref={videoRef} controls autoPlay={true} className="w-[auto] h-96" crossOrigin="use-credentials" />
                 </div>
             }
         </div>

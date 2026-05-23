@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Plus } from "../../../assets/icons/Plus";
 import { Trash2 } from "../../../assets/icons/Trash2";
 import { Ripple } from "../../Ripple";
@@ -6,6 +6,8 @@ import { Slide } from "../../Slide";
 import { Upload } from "../Upload";
 import { LeafContext } from "../../LeafManager";
 import { VideoPlayer } from "./VideoPlayer";
+import Hls from "hls.js";
+import { X } from "../../../assets/icons/X";
 
 export function Video({ contentIndex }: { contentIndex: number }) {
     const leafContext = useContext(LeafContext)
@@ -18,6 +20,36 @@ export function Video({ contentIndex }: { contentIndex: number }) {
     const videoIds = leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value
 
     const [openVideoUploadModal, setOpenVideoUploadModal] = useState(false)
+
+    const [selected, setSelected] = useState<string | undefined>(undefined)
+    const videoRef = useRef<HTMLVideoElement>(null)
+
+    useEffect(() => {
+        if (!videoRef.current || !selected)
+            return
+
+        const src = `/api/video/file/${selected}/index.m3u8`
+
+        if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+            videoRef.current.src = src
+            return
+        }
+
+        if (Hls.isSupported()) {
+            const hls = new Hls()
+
+            hls.loadSource(src)
+            hls.attachMedia(videoRef.current)
+
+            hls.on(Hls.Events.ERROR, (_, data) => {
+                console.error('[HLS]: ', data)
+            })
+            return () => {
+                hls.destroy()
+            }
+        }
+    }, [selected])
+
 
     return (
         !videoIds || videoIds.length === 0
@@ -44,7 +76,21 @@ export function Video({ contentIndex }: { contentIndex: number }) {
 
                 <div className="w-full overflow-x-auto">
                     <div className="w-fit p-2 flex flex-row items-center gap-2">
-                        {videoIds.map((m, i) => <VideoPlayer key={i} contentIndex={contentIndex} videoId={m} />)}
+                        {videoIds.map((m, i) => <VideoPlayer key={i} contentIndex={contentIndex} videoId={m} onSelect={(id) => setSelected(id)} />)}
+                    </div>
+                    <div className="flex flex-row items-center justify-center relative">
+                        {
+                            selected &&
+                            <div className="absolute top-0 right-0">
+                                <Ripple className="rounded-full bg-surface text-on-surface">
+                                    <button onClick={async () => setSelected(undefined)}>
+                                        <X />
+                                    </button>
+                                </Ripple>
+                            </div>
+                        }
+                        {/* Video player */}
+                        {selected && <video ref={videoRef} controls autoPlay={true} className="w-[auto] h-96" crossOrigin="use-credentials" />}
                     </div>
                 </div>
 
