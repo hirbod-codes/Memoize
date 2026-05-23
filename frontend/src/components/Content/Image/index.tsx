@@ -44,7 +44,7 @@ export function Image({ contentIndex }: { contentIndex: number }) {
                 }
 
                 {/* Images */}
-                <div className="w-full overflow-x-auto border border-outline rounded-lg">
+                <div className="w-full overflow-x-auto">
                     <div className="w-fit p-2 flex flex-row items-center gap-2">
                         {
                             imageIds.map((m, i) =>

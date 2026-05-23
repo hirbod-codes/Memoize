@@ -186,7 +186,7 @@ router.post('/', auth, authorization, async (req, res) => {
 
         res.status(500).json({ message: 'Error uploading video file' });
     } finally {
-        if (tempDir)
+        if (tempDir && fs.existsSync(tempDir))
             fs.rmSync(tempDir, { force: true, recursive: true })
 
     }

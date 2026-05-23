@@ -250,14 +250,12 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                         </h1>
 
                         {/* Contents */}
-                        <div className="flex flex-col items-start gap-2 p-2 w-full">
+                        <div className="flex flex-col items-start gap-4 p-2 w-full">
                             {
                                 leaf[isTerm ? 'termContents' : 'definitionContents']
                                     .map((_content, i: number, arr) =>
                                         <div key={i} className="flex flex-col gap-1 w-full">
                                             <Content contentIndex={i} />
-
-                                            {i !== arr.length - 1 && <div className="w-full border-b border-outline" />}
                                         </div>
                                     )
                             }

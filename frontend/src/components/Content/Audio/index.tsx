@@ -23,7 +23,7 @@ export function Audio({ contentIndex }: { contentIndex: number }) {
     return (
         !audioIds || audioIds.length === 0
             ? 'No Audios!'
-            : <div className="size-full flex flex-col gap-4 p-2">
+            : <div className="size-full flex flex-col gap-4 p-2 border border-outline rounded-lg">
                 {
                     editing &&
                     <div className="flex flex-row items-center justify-between gap-2 p-2 *:p-2">
@@ -43,7 +43,7 @@ export function Audio({ contentIndex }: { contentIndex: number }) {
                     </div>
                 }
 
-                <div className="w-full overflow-x-auto border border-outline rounded-lg">
+                <div className="w-full overflow-x-auto">
                     <div className="w-fit p-2 flex flex-row items-center gap-2">
                         {
                             audioIds.map((m, i) =>

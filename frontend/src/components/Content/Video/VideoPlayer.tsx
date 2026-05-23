@@ -79,7 +79,7 @@ export function VideoPlayer({ videoId, contentIndex }: { videoId: string, conten
     }, [videoId])
 
     return (
-        <div className="w-[4cm] rounded-lg border border-outline relative flex flex-col gap-2">
+        <div className="w-[4cm] rounded-lg border border-outline relative flex flex-col gap-2 overflow-hidden p-2">
             {/* Remove button */}
             {
                 editing &&
@@ -92,7 +92,7 @@ export function VideoPlayer({ videoId, contentIndex }: { videoId: string, conten
                 </div>
             }
 
-            <img src={`/api/video/thumbnail/${videoId}`} crossOrigin="use-credentials" onClick={() => setSelected(videoId)} className="w-[4cm] min-h-32 border" />
+            <img src={`/api/video/thumbnail/${videoId}`} crossOrigin="use-credentials" onClick={() => setSelected(videoId)} className="w-full object-contain rounded-lg" />
 
             {/* Title */}
             {video &&

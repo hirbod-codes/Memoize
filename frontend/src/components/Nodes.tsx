@@ -245,7 +245,7 @@ export function Nodes() {
         fetching
             ? 'loading...'
             : <div className="size-full relative">
-                <div className="size-full flex flex-col gap-2 items-center p-2">
+                <div className="size-full flex flex-col gap-2 items-center p-2 overflow-y-auto">
 
                     <div className="w-full flex flex-row items-center justify-between">
                         {/* Go back button */}
@@ -378,7 +378,7 @@ export function Nodes() {
                         })
                     }
 
-                    {leafs.length !== 0 && <div className="border-b border-outline w-full m-8" />}
+                    {leafs.length !== 0 && <div className="border-b border-outline w-full my-8" />}
 
                     {/* Leafs */}
                     {

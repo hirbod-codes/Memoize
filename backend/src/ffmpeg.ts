@@ -224,14 +224,6 @@ export function decodeVideoFileToDisk(input: string, outputDirectory: string): P
             path.join(outputDirectory, 'index.m3u8')
         ]);
 
-        spawn(filePath, [
-            "-i", input,
-            "-ss", "00:00:00.5",
-            "-frames:v", "1",
-            "-q:v", "2",
-            path.join(outputDirectory, 'thumbnail.jpg')
-        ]);
-
         const chunks: Buffer[] = [];
 
         ffmpeg.stdout.on("data", (chunk) => {

@@ -4,7 +4,8 @@ import { ThumbnailMetadata, thumbnailCollectionName as collectionName } from "..
 import { ISeedable } from '../ISeedable';
 import { IDropable } from "../IDropable";
 import { IRepository } from "../IRepository";
-import { Readable } from "node:stream";
+import { pipeline, Readable } from "node:stream";
+import { ReadStream } from "node:fs";
 
 export class ThumbnailRepository implements IRepository, ISeedable, IDropable {
     IDropable: 'IDropable' = 'IDropable';
@@ -47,25 +48,13 @@ export class ThumbnailRepository implements IRepository, ISeedable, IDropable {
         return ThumbnailRepository.bucket!.openUploadStream(fileName, { metadata })
     }
 
-    async upload(metadata: ThumbnailMetadata, file: { fileName: string; bytes: Readable | Buffer | Uint8Array; contentType?: string }, temporary: boolean = true): Promise<string | false> {
+    async upload(metadata: ThumbnailMetadata, file: { fileName: string; bytes: Readable | Buffer | Uint8Array; contentType?: string }): Promise<string | false> {
         try {
-            if (file.bytes instanceof Readable && file.bytes.pipe !== undefined)
-                return await (() => new Promise<any>(async (res, rej) => {
-                    const upload = await this.getWriteStream(file.fileName, metadata);
-
-                    (file.bytes as Readable).pipe(upload)
-
-                    upload.on('finish', (f) => {
-                        res(f)
-                    })
-
-                    upload.on('error', (e) => {
-                        rej(e)
-                    });
-                }))()
-            else
-                return await (() => new Promise<string>(async (res, rej) => {
-                    const upload = await this.getWriteStream(file.fileName, metadata);
+            return await (() => new Promise<string>(async (res, rej) => {
+                const upload = await this.getWriteStream(file.fileName, metadata)
+                if (file.bytes instanceof ReadStream)
+                    pipeline<ReadStream, GridFSBucketWriteStream>(file.bytes, upload, (e) => { if (e) rej(e); else res(upload.id.toString()) })
+                else
                     upload
                         .on('close', () => { res(upload.id.toString()) })
                         .write(file.bytes, (e) => {
@@ -75,7 +64,7 @@ export class ThumbnailRepository implements IRepository, ISeedable, IDropable {
                             } else
                                 upload.end()
                         })
-                }))()
+            }))()
         } catch (error) {
             console.error(error);
             return false

@@ -22,7 +22,7 @@ export function Video({ contentIndex }: { contentIndex: number }) {
     return (
         !videoIds || videoIds.length === 0
             ? 'No videos!'
-            : <div className="size-full flex flex-col gap-4 p-2 border overflow-x-auto">
+            : <div className="size-full flex flex-col gap-4 p-2 border border-outline rounded-lg overflow-x-auto">
                 {
                     editing &&
                     <div className="flex flex-row justify-between gap-1 p-2 *:p-2">
@@ -42,11 +42,13 @@ export function Video({ contentIndex }: { contentIndex: number }) {
                     </div>
                 }
 
-                <div className="size-auto p-2 flex flex-row items-center border">
-                    {videoIds.map((m, i) => <VideoPlayer key={i} contentIndex={contentIndex} videoId={m} />)}
+                <div className="w-full overflow-x-auto">
+                    <div className="w-fit p-2 flex flex-row items-center gap-2">
+                        {videoIds.map((m, i) => <VideoPlayer key={i} contentIndex={contentIndex} videoId={m} />)}
+                    </div>
                 </div>
 
-                <Slide open={openVideoUploadModal} className="pointer-events-auto rounded-t-3xl bg-surface shadow-2xl" style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
+                <Slide open={openVideoUploadModal} className="pointer-events-auto rounded-t-3xl bg-surface shadow-lg" style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
                     <Upload type='videoId' onClose={() => setOpenVideoUploadModal(false)} onUpload={async (ids) => {
                         leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value.push(...ids)
 
