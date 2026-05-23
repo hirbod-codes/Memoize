@@ -5,14 +5,14 @@
 run (with production env values):
 
 ```bash
-docker build --target production --tag MediaPlayer/backend:latest .
+docker build --target production --tag Memoize/backend:latest .
 
 docker run -d \
     -e NODE_ENV=development \
     -e HOST=0.0.0.0 \
     -e PORT=3000 \
     -e ALLOWED_ORIGINS=https://localhost:443 \
-    -e DB_DATABASE_NAME=MediaPlayer \
+    -e DB_DATABASE_NAME=Memoize \
     -e DB_SUPPORTS_TRANSACTION=false \
     -e DB_URL=mongodb://localhost:27017 \
     -e MONGODB_USERNAME=user \
@@ -21,14 +21,14 @@ docker run -d \
     -e ACCESS_TOKEN_SECRET=very_secret \
     -e REFRESH_TOKEN_SECRET=very_secret \
     --network backend_net \
-    --name MediaPlayer_backend MediaPlayer/backend-dev:latest
+    --name memoize_backend Memoize/backend-dev:latest
 
 docker run -d \
     -e NODE_ENV=production \
     -e HOST=0.0.0.0 \
     -e PORT=3000 \
     -e ALLOWED_ORIGINS=https://domain.tld \
-    -e DB_DATABASE_NAME=MediaPlayer \
+    -e DB_DATABASE_NAME=Memoize \
     -e DB_SUPPORTS_TRANSACTION=false \
     -e DB_URL=mongodb://mongo:27017 \
     -e MONGODB_USERNAME=user \
@@ -38,7 +38,7 @@ docker run -d \
     -e REFRESH_TOKEN_SECRET=very_secret \
     --network backend_net \
     --network db_net \
-    --name MediaPlayer_backend MediaPlayer/backend:latest
+    --name memoize_backend Memoize/backend:latest
 ```
 
 ## for HTTPS (necessary for development too, because of modern browsers cookie restrictions)
