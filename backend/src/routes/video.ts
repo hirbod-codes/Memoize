@@ -11,7 +11,7 @@ import { MongoDB } from '../DB/mongodb';
 
 const router = express.Router();
 
-router.post('/upload/thumbnail', auth, authorization, async (req, res) => {
+router.post('/thumbnail', auth, authorization, async (req, res) => {
     let tempDir
     try {
         console.log('/upload/thumbnail')
@@ -49,14 +49,13 @@ router.post('/upload/thumbnail', auth, authorization, async (req, res) => {
     }
 })
 
-router.post('/upload', auth, authorization, async (req, res) => {
+router.post('/', auth, authorization, async (req, res) => {
     let db: MongoDB, tempDir
     try {
         console.log('/upload')
 
         console.log('Validating...')
-        let fileName: string | undefined,
-            title: string | undefined
+        let fileName: string | undefined, title: string | undefined
         try {
             title = await string().required().label('Title').validate(req.query.title?.toString())
             fileName = await string().required().label('File name').validate(req.query.fileName?.toString())
@@ -78,7 +77,7 @@ router.post('/upload', auth, authorization, async (req, res) => {
         videoFileRepository.setTransactionSession(session)
 
         console.log('Inserting video info...');
-        const videoInsertResult = await videoRepository.insert({ title: fileName, userId: (req as any).user.userId, temporary: true })
+        const videoInsertResult = await videoRepository.insert({ title, userId: (req as any).user.userId, temporary: true })
         if (!videoInsertResult.acknowledged)
             return res.status(500).send()
         const videoId = videoInsertResult.insertedId.toString()
@@ -114,7 +113,7 @@ router.post('/upload', auth, authorization, async (req, res) => {
         if (makePermanentResult === false || !makePermanentResult.acknowledged)
             return res.status(500).send()
 
-        res.status(201).json({ videoId });
+        res.status(201).json({ id: videoId });
 
         console.log('------------end------------')
     } catch (err) {
@@ -127,7 +126,7 @@ router.post('/upload', auth, authorization, async (req, res) => {
     }
 })
 
-router.get('/info/', auth, async (req, res) => {
+router.get('/info', auth, async (req, res) => {
     try {
         console.log('/info')
 
@@ -150,6 +149,38 @@ router.get('/info/', auth, async (req, res) => {
         console.log({ result })
 
         res.status(200).json(result)
+
+        console.log('------------end------------')
+    } catch (err) {
+        res.status(500).json({ message: 'Error getting audio' });
+    }
+});
+
+router.patch('/', auth, async (req, res) => {
+    try {
+        console.log('/', 'PATCH')
+
+        console.log('Validation...')
+        let videoId: string | undefined = undefined, title: string | undefined
+        try {
+            title = await string().required().label('Title').validate(req.query.title?.toString())
+            videoId = await string().objectIdString().required().label('Video id').validate(req.query.videoId?.toString())
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node' });
+        }
+        console.log({ videoId, title })
+
+        const videoRepository = new VideoRepository()
+
+        let result = await videoRepository.updateTitle(videoId, title)
+        if (!result.acknowledged)
+            return res.status(500).send()
+        console.log({ result })
+
+        res.status(200).send()
 
         console.log('------------end------------')
     } catch (err) {

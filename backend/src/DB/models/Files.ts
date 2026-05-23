@@ -15,6 +15,7 @@ export const imageCollectionName = "imageFile"
 export const imageSchema = object().shape({
     userId: likeObjectId.required(),
 
+    title: string().required(),
     temporary: boolean().required(),
 
     contentType: string().optional(),

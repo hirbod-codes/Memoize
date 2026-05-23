@@ -29,9 +29,10 @@ export function ThemeContextProvider({ children }: { children: React.ReactNode }
         }
         const setCssVar = (k: string, v: string, isColor = false) => document.documentElement.style.setProperty(`--${k}`, isColor ? stringifyColorForTailwind(v) : v)
         setCssVar('radius', options.radius)
-        setCssVar('scrollbar-width', options['scrollbar-width'])
-        setCssVar('scrollbar-height', options['scrollbar-height'])
-        setCssVar('scrollbar-border-radius', options['scrollbar-border-radius']);
+        setCssVar('scrollbarWidth', options['scrollbarWidth'])
+        setCssVar('scrollbarHeight', options['scrollbarHeight'])
+        setCssVar('scrollbarBorderRadius', options['scrollbarBorderRadius']);
+        setCssVar('scrollbarThumbRounded', options['scrollbarThumbRounded']);
 
         Object.keys(colors[mode]).forEach((k) => { document.documentElement.style.setProperty(`--${k}`, (colors[mode] as any)[k]) });
     }

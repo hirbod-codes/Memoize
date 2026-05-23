@@ -104,73 +104,119 @@ router.post('/analysis', auth, async (req, res) => {
     }
 })
 
-router.post('/upload', auth, authorization, async (req, res) => {
+router.post('/', auth, authorization, async (req, res) => {
     try {
         console.log('/upload')
 
         console.log('Validating...')
-        let fileName: string | undefined,
-            rawAudioProperties: IAudioMetadata,
-            audioProperties: AudioMetadata,
-            fileBuffer: Buffer
+        let fileName: string | undefined, fileBuffer: Buffer, title: string | undefined,
+            rawAudioProperties: IAudioMetadata = {
+                common: {
+                    picture: [],
+                    track: {
+                        no: null,
+                        of: null
+                    },
+                    disk: {
+                        no: null,
+                        of: null
+                    },
+                    movementIndex: {
+                        no: null,
+                        of: null
+                    }
+                },
+                format: {
+                    trackInfo: [],
+                    tagTypes: []
+                },
+                native: {},
+                quality: {
+                    warnings: []
+                }
+            },
+            audioProperties: AudioMetadata = {
+                title: '',
+                userId: (req as any).user.userId,
+                temporary: true,
+                contentType: req.headers['content-type'],
+                file: {
+                    format: '',
+                    size: 0,
+                    bitrate: 0,
+                    duration: 0,
+                    sampleRate: 0,
+                    channels: 0,
+                    compressed: false,
+                    audioCodec: '',
+                    bitDepth: 0
+                },
+                musical: {},
+                metadata: {
+                    title: ''
+                }
+            };
         try {
-            fileName = await string().required().label('File name').validate(req.query.name?.toString())
+            title = await string().required().label('Title').validate(req.query.title?.toString())
+            fileName = await string().required().label('File name').validate(req.query.fileName?.toString())
             console.log({ fileName })
 
             const fileStream = Readable.from(req);
             fileBuffer = await streamToBuffer(fileStream)
 
-            rawAudioProperties = await parseBuffer(fileBuffer);
-            audioProperties = {
-                userId: (req as any).user.userId,
-                temporary: true,
-                contentType: req.headers['content-type'],
-                title: rawAudioProperties.common.title!,
-                file: {
-                    format: rawAudioProperties.format.container!,
-                    audioCodec: rawAudioProperties.format.codec!,
-                    bitDepth: rawAudioProperties.format.bitsPerSample!,
-                    bitrate: rawAudioProperties.format.bitrate!,
-                    sampleRate: rawAudioProperties.format.sampleRate!,
-                    size: fileBuffer.byteLength,
-                    channels: rawAudioProperties.format.numberOfChannels!,
-                    compressed: !rawAudioProperties.format.lossless!,
-                    duration: rawAudioProperties.format.duration!,
-                },
-                musical: {
-                    tempo: undefined,
-                    key: undefined,
-                    timeSignature: undefined,
-                    pitch: undefined,
-                    harmony: undefined,
-                    melody: undefined,
-                    instrumentations: undefined,
-                    timbre: undefined,
-                    loudness: undefined,
-                    dynamicRange: undefined,
-                    keySignature: undefined,
-                },
-                metadata: {
-                    title: rawAudioProperties.common.title!,
-                    album: rawAudioProperties.common.album,
-                    artists: rawAudioProperties.common.artists!,
-                    bpm: 0,
-                    composer: rawAudioProperties.common.composer,
-                    copyright: rawAudioProperties.common.copyright,
-                    genre: rawAudioProperties.common.genre!,
-                    language: rawAudioProperties.common.language,
-                    lyricist: rawAudioProperties.common.lyricist,
-                    lyrics: rawAudioProperties.common.lyrics,
-                    moodOrEmotion: rawAudioProperties.common.mood,
-                    publisher: rawAudioProperties.common.publisher,
-                    trackNumber: rawAudioProperties.common.track.no!,
-                    year: rawAudioProperties.common.year!,
-                },
-            }
-            if (!audioSchema.isValidSync(audioProperties)) {
-                res.status(400).json({ message: 'Invalid audio data' });
-                return
-            }
+            audioProperties.title = title
+            audioProperties.metadata.title = title
+            // rawAudioProperties = await parseBuffer(fileBuffer);
+            // audioProperties = {
+            //     userId: (req as any).user.userId,
+            //     temporary: true,
+            //     contentType: req.headers['content-type'],
+            //     title: rawAudioProperties.common.title!,
+            //     file: {
+            //         format: rawAudioProperties.format.container!,
+            //         audioCodec: rawAudioProperties.format.codec!,
+            //         bitDepth: rawAudioProperties.format.bitsPerSample!,
+            //         bitrate: rawAudioProperties.format.bitrate!,
+            //         sampleRate: rawAudioProperties.format.sampleRate!,
+            //         size: fileBuffer.byteLength,
+            //         channels: rawAudioProperties.format.numberOfChannels!,
+            //         compressed: !rawAudioProperties.format.lossless!,
+            //         duration: rawAudioProperties.format.duration!,
+            //     },
+            //     musical: {
+            //         tempo: undefined,
+            //         key: undefined,
+            //         timeSignature: undefined,
+            //         pitch: undefined,
+            //         harmony: undefined,
+            //         melody: undefined,
+            //         instrumentations: undefined,
+            //         timbre: undefined,
+            //         loudness: undefined,
+            //         dynamicRange: undefined,
+            //         keySignature: undefined,
+            //     },
+            //     metadata: {
+            //         title: rawAudioProperties.common.title!,
+            //         album: rawAudioProperties.common.album,
+            //         artists: rawAudioProperties.common.artists!,
+            //         bpm: 0,
+            //         composer: rawAudioProperties.common.composer,
+            //         copyright: rawAudioProperties.common.copyright,
+            //         genre: rawAudioProperties.common.genre!,
+            //         language: rawAudioProperties.common.language,
+            //         lyricist: rawAudioProperties.common.lyricist,
+            //         lyrics: rawAudioProperties.common.lyrics,
+            //         moodOrEmotion: rawAudioProperties.common.mood,
+            //         publisher: rawAudioProperties.common.publisher,
+            //         trackNumber: rawAudioProperties.common.track.no!,
+            //         year: rawAudioProperties.common.year!,
+            //     },
+            // }
+            // if (!audioSchema.isValidSync(audioProperties)) {
+            //     res.status(400).json({ message: 'Invalid audio data' });
+            //     return
+            // }
             console.log('audioProperties', audioProperties)
         } catch (err) {
             console.error(err)
@@ -179,23 +225,23 @@ router.post('/upload', auth, authorization, async (req, res) => {
             return res.status(400).json({ message: 'Invalid Tree node' });
         }
 
-        console.log('Decoding to PCM...')
-        const pcm = await decodeToPCM(fileBuffer);
-        const pcmFloat = new Float32Array(pcm);
+        // console.log('Decoding to PCM...')
+        // const pcm = await decodeToPCM(fileBuffer);
+        // const pcmFloat = new Float32Array(pcm);
 
-        console.log('Analyzing PCM data...')
-        const features = await analyzeAudio(pcmFloat);
-        audioProperties.metadata.bpm = features.bpm
-        audioProperties.musical = {
-            ...audioProperties.musical,
-            tempo: features.bpm,
-            key: `${features.key} ${features.scale}`,
-            keySignature: `${features.key} ${features.scale}`,
-            loudness: features.loudness,
-        }
+        // console.log('Analyzing PCM data...')
+        // const features = await analyzeAudio(pcmFloat);
+        // audioProperties.metadata.bpm = features.bpm
+        // audioProperties.musical = {
+        //     ...audioProperties.musical,
+        //     tempo: features.bpm,
+        //     key: `${features.key} ${features.scale}`,
+        //     keySignature: `${features.key} ${features.scale}`,
+        //     loudness: features.loudness,
+        // }
 
-        console.log('Analysis', { ...features, beats: [] })
-        console.log('audioProperties', audioProperties)
+        // console.log('Analysis', { ...features, beats: [] })
+        // console.log('audioProperties', audioProperties)
 
         const coverArtRepository = new CoverArtRepository()
         const audioFileRepository = new AudioFileRepository()
@@ -207,7 +253,7 @@ router.post('/upload', auth, authorization, async (req, res) => {
             return res.status(500).send()
 
         let coverArtId
-        if (rawAudioProperties.common && rawAudioProperties.common.picture && rawAudioProperties.common.picture.length >= 0 && rawAudioProperties.common.picture[0].data) {
+        if (rawAudioProperties.common && rawAudioProperties.common.picture && rawAudioProperties.common.picture.length >= 0 && rawAudioProperties.common.picture[0] && rawAudioProperties.common.picture[0].data) {
             console.log("Inserting cover art...");
             const buffer = Buffer.from(rawAudioProperties.common.picture[0].data);
             coverArtId = await coverArtRepository.upload({ userId: (req as any).user.userId, audioId: audioFileId, temporary: true, contentType: req.headers['content-type'] }, { fileName, bytes: buffer })
@@ -218,7 +264,7 @@ router.post('/upload', auth, authorization, async (req, res) => {
 
         console.log({ coverArtId, audioFileId })
 
-        res.status(201).json({ coverArtId, audioFileId });
+        res.status(201).json({ coverArtId, id: audioFileId });
 
         console.log('------------end------------')
     } catch (err) {
@@ -340,7 +386,7 @@ router.get('/coverArt/:audioId', auth, async (req, res) => {
         console.log('/coverArt')
 
         console.log('Validation...')
-        let audioId: string | undefined = undefined
+        let audioId: string | undefined = undefined, title: string | undefined
         try {
             audioId = await string().objectIdString().required().label('Audio id').validate(req.params.audioId?.toString())
         } catch (err) {

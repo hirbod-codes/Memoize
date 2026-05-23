@@ -74,6 +74,10 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
         return VideoRepository.collection!.find({ updatedAt: { $gte: fromTsMs } })
     }
 
+    async updateTitle(videoId: string, title: string) {
+        return await VideoRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(videoId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
+    }
+
     async makePermanent(videoId: string) {
         return await VideoRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(videoId) }, { $set: { temporary: true, updatedAt: Date.now() } }, { session: this.session })
     }

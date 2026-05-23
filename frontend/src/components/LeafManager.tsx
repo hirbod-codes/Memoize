@@ -12,7 +12,6 @@ import { Slide } from "./Slide"
 import { Upload } from "./Content/Upload"
 import { Plus } from "../assets/icons/Plus"
 import { Select } from "./Select"
-import Text from "./Content/Text"
 
 export type Types = 'string' | 'imageId' | 'videoId' | 'audioId' | 'richText'
 
@@ -35,8 +34,8 @@ export const LeafContext = createContext<{
     editing: boolean
     updateLeaf: (leaf: Leaf) => Promise<boolean>,
     removeLeaf: () => Promise<boolean>
-    removeContent: (i: number, v: string) => Promise<boolean>
-    removeContents: (i: number) => Promise<boolean>
+    removeContent: (i: number, v: string) => Promise<false | Leaf>
+    removeContents: (i: number) => Promise<false | Leaf>
     onLeafChange: (leaf: Leaf) => void
 } | undefined>(undefined)
 
@@ -57,8 +56,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
 
     const save = async (l: Leaf) => {
         try {
-            if (saving)
-                return false
+            console.log('save called', saving);
 
             setSaving(true)
             let r = await jsonAuthFetch(`/api/leaf`, { method: 'PATCH', body: JSON.stringify({ leaf: l }) })
@@ -70,10 +68,9 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
 
             notify("Successfully updated", 3000, 'success')
 
-            onLeafChange?.(l)
-
             return true
         } catch (error) {
+            setSaving(false)
             console.error(error);
             notify("Failed to update", 3000, 'error')
             return false
@@ -85,49 +82,51 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
             if (leaf === undefined || saving)
                 return false
 
-            leaf[isTerm ? 'termContents' : 'definitionContents'] = leaf[isTerm ? 'termContents' : 'definitionContents'].filter((_f, fi) => fi !== i)
+            let l = { ...leaf }
 
-            setSaving(true)
-            let r = await jsonAuthFetch(`/api/leaf`, { method: 'PATCH', body: JSON.stringify({ leaf }) })
-            setSaving(false)
-            if (r === false || !r.ok) {
+            l[isTerm ? 'termContents' : 'definitionContents'] = l[isTerm ? 'termContents' : 'definitionContents'].filter((_f, fi) => fi !== i)
+
+            let r = await save(l)
+            if (r === false) {
                 notify("Failed to update", 3000, 'error')
                 return false
             }
 
             notify("Successfully updated", 3000, 'success')
 
-            onLeafChange?.({ ...leaf })
-
-            return true
+            return l
         } catch (err) {
+            setSaving(false)
             console.error(err);
             return false
         }
     }
 
     const removeContent = async (i: number, v: string) => {
-        if (leaf === undefined)
-            return false
+        try {
+            if (leaf === undefined)
+                return false
 
-        leaf[isTerm ? 'termContents' : 'definitionContents'][i].value = leaf[isTerm ? 'termContents' : 'definitionContents'][i].value.filter(f => f !== v)
+            let l = { ...leaf }
+            l[isTerm ? 'termContents' : 'definitionContents'][i].value = l[isTerm ? 'termContents' : 'definitionContents'][i].value.filter(f => f !== v)
 
-        if (leaf[isTerm ? 'termContents' : 'definitionContents'][i].value.length === 0)
-            leaf[isTerm ? 'termContents' : 'definitionContents'] = leaf[isTerm ? 'termContents' : 'definitionContents'].filter((_f, fi) => fi !== i)
+            if (l[isTerm ? 'termContents' : 'definitionContents'][i].value.length === 0)
+                l[isTerm ? 'termContents' : 'definitionContents'] = l[isTerm ? 'termContents' : 'definitionContents'].filter((_f, fi) => fi !== i)
 
-        setSaving(true)
-        let r = await jsonAuthFetch(`/api/leaf`, { method: 'PATCH', body: JSON.stringify({ leaf }) })
-        setSaving(false)
-        if (r === false || !r.ok) {
-            notify("Failed to update", 3000, 'error')
+            let r = await save(l)
+            if (r === false) {
+                notify("Failed to update", 3000, 'error')
+                return false
+            }
+
+            notify("Successfully updated", 3000, 'success')
+
+            return l
+        } catch (err) {
+            setSaving(false)
+            console.error(err);
             return false
         }
-
-        notify("Successfully updated", 3000, 'success')
-
-        onLeafChange?.({ ...leaf })
-
-        return true
     }
 
     const removeLeaf = async () => {
@@ -147,6 +146,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
 
             return true
         } catch (error) {
+            setSaving(false)
             console.error(error);
             notify('Removing card failed', 3000, 'error')
             return false
@@ -178,7 +178,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                 leaf === undefined
                     ? 'nothing'
                     :
-                    <div className="flex flex-col items-start gap-2 p-2 bg-surface-variant text-on-surface-variant rounded-lg overflow-auto max-h-full" onClick={() => (!isTerm)}>
+                    <div className="flex flex-col items-start gap-2 p-2 bg-surface text-on-surface rounded-lg overflow-auto max-h-full" onClick={() => (!isTerm)}>
                         {/* Close button */}
                         <div className="flex flex-row w-full items-center p-2">
                             <div className="grow" />
@@ -302,7 +302,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
 
                                         setSaving(true)
                                         const result = await save(leaf)
-                                        setSaving(true)
+                                        setSaving(false)
                                         if (result === false)
                                             return
 
@@ -347,7 +347,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                         {/* Add Content button */}
                         {
                             editing &&
-                            <div className="flex flex-row items-center justify-end w-full">
+                            <div className="flex flex-row items-center sjustify-center w-full">
                                 <Ripple>
                                     <button onClick={async () => setNewContent({ type: 'string', value: [''] })} className="p-1 rounded-full w-full bg-success text-on-success">
                                         <Plus className='inline' />
@@ -360,7 +360,15 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                             <Upload
                                 type={openUpload!}
                                 onClose={() => setOpenUpload(undefined)}
-                                onUpload={() => { }}
+                                onUpload={async (ids) => {
+                                    leaf[isTerm ? 'termContents' : 'definitionContents'].push({ type: openUpload!, value: ids })
+
+                                    const result = await save(leaf)
+                                    if (result === false)
+                                        return
+
+                                    onLeafChange({ ...leaf })
+                                }}
                             />
                         </Slide>
                     </div >

@@ -1,63 +1,89 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Plus } from "../../../assets/icons/Plus";
 import { SquareMinus } from "../../../assets/icons/SquareMinus";
 import { Trash2 } from "../../../assets/icons/Trash2";
 import { Ripple } from "../../Ripple";
 import { Slide } from "../../Slide";
 import { Upload } from "../Upload";
-import type { Leaf } from "../../LeafManager";
+import { LeafContext } from "../../LeafManager";
 
 export function Image({ contentIndex }: { contentIndex: number }) {
+    const leafContext = useContext(LeafContext)
+    if (!leafContext)
+        return null
+
+    const leaf = leafContext.leaf
+    const isTerm = leafContext.isTerm
+    const editing = leafContext.editing
+    const imageIds = leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value
+
     const [openImageUploadModal, setOpenImageUploadModal] = useState(false)
+    const [showFullscreen, setShowFullscreen] = useState<string | undefined>(undefined)
 
     return (
         !imageIds || imageIds.length === 0
             ? 'No images!'
-            : <div className="size-full flex flex-col gap-4 p-2 border overflow-x-auto">
+            : <div className="size-full flex flex-col gap-4 p-2 border border-outline rounded-lg">
                 {
                     editing &&
-                    <div className="absolute top-0 right-0 flex flex-row gap-1 p-1">
-                        {/* Add button */}
+                    <div className="w-full flex flex-row items-center justify-between gap-2 p-2 *:p-2">
+                        {/* Remove button */}
                         <Ripple className="rounded-full bg-error text-on-error">
-                            <button onClick={async () => setOpenImageUploadModal(true)}>
-                                <Plus />
+                            <button onClick={() => leafContext.removeContents(contentIndex)}>
+                                <Trash2 />
                             </button>
                         </Ripple>
 
-                        {/* Remove button */}
-                        <Ripple className="rounded-full bg-error text-on-error">
-                            <button onClick={() => onRemoveAll?.()}>
-                                <Trash2 />
+                        {/* Add button */}
+                        <Ripple className="rounded-full bg-success text-on-success">
+                            <button onClick={async () => setOpenImageUploadModal(true)}>
+                                <Plus />
                             </button>
                         </Ripple>
                     </div>
                 }
 
-                <div className="size-auto p-2 flex flex-row items-center border">
-                    {
-                        imageIds.map((m, i) =>
-                            <div key={i} className="w-[4cm] rounded-lg border border-outline">
-                                {/* Remove button */}
-                                {
-                                    editing &&
-                                    <div className="absolute top-0 right-0">
-                                        <Ripple className="rounded-full bg-error text-on-error">
-                                            <button onClick={async () => onRemove?.(m)}>
-                                                <SquareMinus />
+                {/* Images */}
+                <div className="w-full overflow-x-auto border border-outline rounded-lg">
+                    <div className="w-fit p-2 flex flex-row items-center gap-2">
+                        {
+                            imageIds.map((m, i) =>
+                                <div key={i} className="w-[4cm] rounded-lg overflow-hidden relative">
+                                    {/* Remove button */}
+                                    {
+                                        editing &&
+                                        <Ripple className="absolute top-0 right-0 p-1 rounded-full bg-error text-on-error">
+                                            <button onClick={async () => leafContext.removeContent(contentIndex, m)}>
+                                                <SquareMinus className="size-4" />
                                             </button>
                                         </Ripple>
-                                    </div>
-                                }
+                                    }
 
-                                <img src={`/api/image/file/${m}`} crossOrigin="use-credentials" />
-                            </div>
-                        )
-                    }
+                                    <img src={`/api/image/file/${m}`} crossOrigin="use-credentials" className="w-[4cm]" onClick={() => setShowFullscreen(`/api/image/file/${m}`)} />
+                                </div>
+                            )
+                        }
+                    </div>
                 </div>
 
+                {/* Fullscreen image */}
+                {showFullscreen !== undefined &&
+                    < div className="absolute top-0 left-0 size-full bg-surface">
+                        <img src={showFullscreen} crossOrigin="use-credentials" className="size-full object-contain" onClick={() => setShowFullscreen(undefined)} />
+                    </div>
+                }
+
                 <Slide open={openImageUploadModal} className="pointer-events-auto rounded-t-3xl bg-surface shadow-2xl" style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
-                    <Upload type='imageId' onClose={() => setOpenImageUploadModal(false)} onUpload={(ids) => onLeafChange?.([...imageIds, ...ids])} />
+                    <Upload type='imageId' onClose={() => setOpenImageUploadModal(false)} onUpload={async (ids) => {
+                        leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value.push(...ids)
+
+                        const result = await leafContext.updateLeaf(leaf)
+                        if (result === false)
+                            return
+
+                        leafContext.onLeafChange(leaf);
+                    }} />
                 </Slide>
-            </div>
+            </div >
     )
 }

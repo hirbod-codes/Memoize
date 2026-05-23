@@ -1,4 +1,4 @@
-import { EditorContent, useEditor, } from '@tiptap/react'
+import { Editor as EditorType, EditorContent, useEditor, } from '@tiptap/react'
 
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -7,15 +7,11 @@ import Underline from '@tiptap/extension-underline'
 import CharacterCount from '@tiptap/extension-character-count'
 import TextAlign from '@tiptap/extension-text-align'
 import { Toolbar } from './Toolbar'
-import { useAuth } from '../../../contexts/AuthContext'
-import { useNotification } from '../../../contexts/NotificationContext'
-import { LeafContext, type Content, type Leaf } from '../../LeafManager'
-import { useContext } from 'react'
+import { LeafContext, type Content } from '../../LeafManager'
+import { useContext, useMemo } from 'react'
+import { debounce } from 'perfect-debounce'
 
 export function Editor({ contentIndex, valueIndex, limit }: { contentIndex: number, valueIndex: number, limit?: number }) {
-    const { notify } = useNotification()
-    const { jsonAuthFetch } = useAuth()
-
     const leafContext = useContext(LeafContext)
     if (!leafContext)
         return null
@@ -28,26 +24,26 @@ export function Editor({ contentIndex, valueIndex, limit }: { contentIndex: numb
     if (!content || content.type !== 'richText')
         return null
 
+    const debouncedUpdate = useMemo(() => debounce(async (editor: EditorType) => {
+        const json = editor.getJSON()
+        const jsonString = JSON.stringify(json)
+
+        console.log(json)
+
+        leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value[valueIndex] = jsonString
+
+        const result = await leafContext.updateLeaf(leaf)
+        console.log({ result })
+        if (result === false)
+            return false
+
+        leafContext.onLeafChange(leaf)
+    }, 1000), [])
+
     const editor = useEditor({
         editable,
         extensions: [
-            StarterKit.configure({
-                bold: {
-                    HTMLAttributes: {
-                        class: 'border border-red-500'
-                    }
-                },
-                blockquote: {
-                    HTMLAttributes: {
-                        class: 'border border-red-500'
-                    }
-                },
-                codeBlock: {
-                    HTMLAttributes: {
-                        class: 'border border-red-500',
-                    },
-                },
-            }),
+            StarterKit.configure({}),
 
             Placeholder.configure({
                 placeholder:
@@ -78,20 +74,10 @@ export function Editor({ contentIndex, valueIndex, limit }: { contentIndex: numb
         },
 
         onUpdate: async ({ editor }) => {
-            const json = editor.getJSON()
-            const jsonString = JSON.stringify(json)
-
-            console.log(json)
-
-            leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value[valueIndex] = jsonString
-
-            const result = await leafContext.updateLeaf(leaf)
-            if (result === false)
-                return false
-
-            leafContext.onLeafChange(leaf)
+            console.log('editor update');
+            debouncedUpdate(editor)
         },
-    })
+    }, [editable, content.value[valueIndex]])
 
     if (!editor)
         return null

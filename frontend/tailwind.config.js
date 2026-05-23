@@ -44,11 +44,6 @@ module.exports = {
                 "on-success": "var(--onSuccess)",
                 "warning": "var(--warning)",
                 "on-warning": "var(--onWarning)",
-                scrollbar: 'hsl(var(--scrollbar))',
-                background: 'hsl(var(--background))',
-                foreground: 'hsl(var(--foreground))',
-                border: 'hsl(var(--outline-variant))',
-                input: 'hsl(var(--outline))',
             },
             borderRadius: {
                 lg: 'var(--radius)',
@@ -79,6 +74,8 @@ module.exports = {
             }
         }
     },
-    plugins: [require("tailwindcss-animate"),
-    require('tailwindcss-ripple')()],
+    plugins: [
+        require("tailwindcss-animate"),
+        require('tailwindcss-ripple')()
+    ],
 }

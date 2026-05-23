@@ -6,7 +6,7 @@ export const collectionName = 'leaf'
 export const schemaVersion = 'v1.0.0'
 
 const contentTypesSchema = string().oneOf(['string', 'richText', 'imageId', 'videoId', 'audioId'])
-const contentSchema = object().shape({ type: contentTypesSchema.required(), value: array().of(string().optional().nonNullable()).required().min(0) })
+const contentSchema = object().shape({ type: contentTypesSchema.required(), value: array().of(string().optional().nullable()).required().min(0) })
 const contentsSchema = array().of(contentSchema.required())
 
 const post = {

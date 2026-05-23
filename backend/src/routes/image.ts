@@ -7,14 +7,14 @@ import { ImageRepository } from '../DB/repositories/ImageRepository';
 
 const router = express.Router();
 
-router.post('/upload', auth, authorization, async (req, res) => {
+router.post('/', auth, authorization, async (req, res) => {
     try {
         console.log('/upload')
 
         console.log('Validating...')
-        let fileName: string | undefined,
-            fileBuffer: Buffer
+        let fileName: string | undefined, fileBuffer: Buffer, title: string | undefined
         try {
+            title = await string().required().label('Title').validate(req.query.title?.toString())
             fileName = await string().required().label('File name').validate(req.query.fileName?.toString())
             const fileStream = Readable.from(req);
             fileBuffer = await streamToBuffer(fileStream)
@@ -30,12 +30,12 @@ router.post('/upload', auth, authorization, async (req, res) => {
 
         console.log("Inserting image file...");
         // Will be permanent after user created corresponding leaf
-        const imageFileId = await imageRepository.upload({ temporary: true, userId: (req as any).user.userId, contentType: req.headers['content-type'] }, { fileName: fileName, bytes: fileBuffer })
+        const imageFileId = await imageRepository.upload({ title, temporary: true, userId: (req as any).user.userId, contentType: req.headers['content-type'] }, { fileName: fileName, bytes: fileBuffer })
         console.log("Upload image file result", imageFileId);
         if (imageFileId === false || !imageFileId)
             return res.status(500).send()
 
-        res.status(201).json({ imageFileId });
+        res.status(201).json({ id: imageFileId });
 
         console.log('------------end------------')
     } catch (err) {

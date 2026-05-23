@@ -245,7 +245,7 @@ export function Nodes() {
         fetching
             ? 'loading...'
             : <div className="size-full relative">
-                <div className="size-full flex flex-col gap-2 items-center p-2 overflow-auto">
+                <div className="size-full flex flex-col gap-2 items-center p-2">
 
                     <div className="w-full flex flex-row items-center justify-between">
                         {/* Go back button */}
@@ -337,7 +337,7 @@ export function Nodes() {
                     {
                         treeNodes && treeNodes.map((r: any, i: number) => {
                             return (
-                                <div key={i} className="flex flex-col gap-2 w-full rounded-lg border border-outline p-2">
+                                <div key={i} className="flex flex-col gap-2 w-full rounded-lg border border-outline p-2 bg-surface text-on-surface">
                                     <div className="flex flex-row items-center justify-between">
                                         {/* Title */}
                                         <div className="w-full grow" onClick={async () => {
@@ -382,9 +382,9 @@ export function Nodes() {
 
                     {/* Leafs */}
                     {
-                        leafs.map((r: any, i: number) => {
+                        leafs && leafs.map((r: any, i: number) => {
                             return (
-                                <div key={i} className="flex flex-col gap-2 w-full rounded-lg border border-outline p-2" onClick={() => setShowingLeaf(i)}>
+                                <div key={i} className="flex flex-col gap-2 w-full rounded-lg border border-outline p-2 bg-surface text-on-surface" onClick={() => setShowingLeaf(i)}>
                                     {r.title}
                                 </div>
                             )
@@ -475,7 +475,7 @@ export function Nodes() {
                             <div className="p-2" />
 
                             <Ripple className="rounded-lg w-full bg-success text-on-success">
-                                <button onClick={async () => {
+                                <button className="w-full" onClick={async () => {
                                     if (locationQueue[locationQueue.length - 1] === 'root')
                                         return
 
@@ -497,13 +497,16 @@ export function Nodes() {
 
                     {/* Leaf manager */}
                     <Slide open={showingLeaf !== undefined} style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
-                        <LeafManager
-                            treeNodeId={parentTreeNode?._id}
-                            leaf={leafs[showingLeaf!]}
-                            onClose={() => setShowingLeaf(undefined)}
-                            onLeafChange={l => { leafs[showingLeaf!] = l; setLeafs([...leafs]) }}
-                            onRemove={() => setLeafs([...leafs.filter((_, i) => i !== showingLeaf)])}
-                        />
+                        {
+                            leafs[showingLeaf!] &&
+                            <LeafManager
+                                treeNodeId={parentTreeNode?._id}
+                                leaf={leafs[showingLeaf!]}
+                                onClose={() => setShowingLeaf(undefined)}
+                                onLeafChange={l => { leafs[showingLeaf!] = l; setLeafs([...leafs]) }}
+                                onRemove={() => setLeafs([...leafs.filter((_, i) => i !== showingLeaf)])}
+                            />
+                        }
                     </Slide>
 
                 </div>

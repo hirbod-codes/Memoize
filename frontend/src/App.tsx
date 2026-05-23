@@ -13,7 +13,7 @@ function App() {
         <ThemeContextProvider>
             <NotificationProvider>
                 <AuthProvider>
-                    <div className="text-on-surface bg-surface size-full flex flex-col overflow-hidden">
+                    <div className="text-on-surface-variant bg-surface-variant size-full flex flex-col overflow-hidden">
                         <TopBar />
 
                         <div className="grow overflow-hidden">

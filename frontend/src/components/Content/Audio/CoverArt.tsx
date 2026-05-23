@@ -16,10 +16,19 @@ export function CoverArt({ audioId, onLoaded, className, coverArtRef }: { audioI
                 .then(async (r) => {
                     if (r === false)
                         notify('failed to download cover art', 3000, 'error')
+                    else if (!r.ok) {
+                        if (r.status === 404)
+                            return
+
+                        notify('failed to download cover art', 3000, 'error')
+                    }
                     else {
                         const imageUrl = URL.createObjectURL(await r.blob());
+                        console.log({ imageUrl });
 
-                        setCoverArt(imageUrl);
+
+                        if (imageUrl)
+                            setCoverArt(imageUrl);
                     }
                 })
                 .catch((err) => {

@@ -38,9 +38,10 @@ export type SurfaceVariants = {
 export type ThemeOptions = {
     mode: ThemeMode;
     radius: string;
-    'scrollbar-width': string;
-    'scrollbar-height': string;
-    'scrollbar-border-radius': string;
+    scrollbarWidth: string;
+    scrollbarHeight: string;
+    scrollbarBorderRadius: string;
+    scrollbarThumbRounded: string;
 }
 
 export type ThemeColorsOptions = {
@@ -84,4 +85,6 @@ export type ThemeColors = {
     onSuccess: string;
     warning: string;
     onWarning: string;
+    scrollbarBg: string;
+    scrollbarThumbBg: string;
 }

@@ -4,12 +4,14 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNotification } from "../../contexts/NotificationContext";
 import { Trash2 } from "../../assets/icons/Trash2";
 import type { Types } from "../LeafManager";
+import { X } from "../../assets/icons/X";
 
 export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (imageIds: string[]) => void, onClose?: () => void }) {
     const { jsonAuthFetch } = useAuth();
 
     const [audioFiles, setAudioFiles] = useState<FileList | null>(null);
     const [progress, setProgress] = useState(0)
+    const [title, setTitle] = useState('')
 
     const { notify } = useNotification()
 
@@ -35,11 +37,11 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
                 break;
 
             case 'audioId':
-                contentType = 'image'
+                contentType = 'audio'
                 break;
 
             case 'videoId':
-                contentType = 'image'
+                contentType = 'video'
                 break;
 
             default:
@@ -51,7 +53,7 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
             const file = audioFiles[i];
 
             try {
-                let result = await jsonAuthFetch(`/api/${contentType}/`, { method: 'POST', body: file, headers: { 'Content-Type': file.type } })
+                let result = await jsonAuthFetch(`/api/${contentType}/?fileName=${file.name}&title=${title}`, { method: 'POST', body: file, headers: { 'Content-Type': file.type } })
                 if (result === false || !result.ok) {
                     notify('failed to upload audio file', 3000, 'error')
                     return false
@@ -61,7 +63,7 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
 
                 console.log(data)
 
-                ids.push(data.imageFileId)
+                ids.push(data.id)
 
                 notify(`${file.name} audio file, uploaded`, 3000, result.ok ? 'success' : 'error')
             } catch (error) {
@@ -84,12 +86,19 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
             inputs.push({ name: file.name, size: file.size })
 
     return (
-        <div className="flex flex-col gap-2 w-full h-full rounded-t-2xl p-4 items-center overflow-auto">
-            <div className="flex flex-row gap-2 items-center justify-end">
+        <div className="flex flex-col gap-2 w-full rounded-lg p-4 items-center overflow-auto bg-surface">
+            <div className="flex flex-row gap-2 items-center justify-between w-full">
                 {/* Remove button */}
-                <Ripple className="rounded-full bg-error text-on-error">
+                <Ripple className="rounded-full p-2 bg-error text-on-error">
                     <button onClick={() => onClose?.()}>
                         <Trash2 />
+                    </button>
+                </Ripple>
+
+                {/* Close button */}
+                <Ripple className="rounded-full p-2">
+                    <button onClick={() => onClose?.()}>
+                        <X />
                     </button>
                 </Ripple>
             </div>
@@ -98,31 +107,42 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
                 <div className="h-1 bg-success rounded transform-gpu transition-all" style={{ width: `${progress}%` }} />
             </div>
 
-            <input type="file" multiple={true} className="hidden" accept="audio/*" onChange={handleFileChange} id="audio-upload" />
-            <div>
-                <Ripple>
-                    <label
-                        htmlFor="audio-upload"
-                        className="w-full"
-                    >
-                        <div className="cursor-pointer border rounded p-2">
-                            Browse audio files
-                        </div>
-                    </label>
-                </Ripple>
-            </div>
+            <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="border border-outline rounded-lg p-2 w-full bg-surface-variant text-on-surface-variant"
+                placeholder='Title...'
+            />
 
-            <div>
-                <Ripple>
-                    <button disabled={!audioFiles || audioFiles.length === 0} className="border rounded p-2" onClick={async () => { const data = await massUpload(); if (data !== false) onUpload?.(data) }}>
-                        Mass Upload
-                    </button>
-                </Ripple>
-            </div>
+            <input type="file" multiple={true} className="hidden" accept={type === 'audioId' ? "audio/*" : (type === 'imageId' ? 'image/*' : (type === 'videoId' ? 'video/*' : undefined))} onChange={handleFileChange} id="audio-upload" />
+            <Ripple className="w-full cursor-pointer border border-outline rounded-lg p-2">
+                <label
+                    htmlFor="audio-upload"
+                    className="w-full"
+                >
+                    <div className="">
+                        Browse files
+                    </div>
+                </label>
+            </Ripple>
+
+            <Ripple className="w-full *:w-full cursor-pointer border rounded-lg p-2">
+                <button disabled={!audioFiles || audioFiles.length === 0} onClick={async () => {
+                    const data = await massUpload();
+                    if (data === false)
+                        return
+
+                    onUpload?.(data)
+
+                    onClose?.()
+                }}>
+                    Upload
+                </button>
+            </Ripple>
 
             <div className={`border-b-4 w-full py-2 border-outline`} />
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 w-full">
                 {
                     inputs.map((v, i) =>
                         <div key={i} className={`flex flex-row items-center py-2 ${(i === inputs.length - 1 ? '' : 'border-b border-outline')}`}>
@@ -131,7 +151,7 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
                             </div>
                             <div className="grow" />
                             <div>
-                                {(v.size / 1000_000).toFixed(0)}Mb
+                                {(v.size / 1000_000).toFixed(2)}Mb
                             </div>
                         </div>
                     )

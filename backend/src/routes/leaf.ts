@@ -54,6 +54,7 @@ router.post('/', async (req, res) => {
         res.status(201).json({ id: insertLeafResult.insertedId.toString() })
         console.log('------------end------------')
     } catch (err) {
+        console.error(err)
         await db?.abortTransaction()
         res.status(500).json({ message: 'Internal server error' });
     }
@@ -152,7 +153,7 @@ router.delete('/', async (req, res) => {
             res.status(400).json({ message: 'Invalid artist id' });
             return
         }
-        console.log({ id, name });
+        console.log({ id });
 
         console.log("Deleting leaf...");
         const leafRepository = new LeafRepository()

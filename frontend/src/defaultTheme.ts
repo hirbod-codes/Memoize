@@ -3,9 +3,10 @@ import type { ThemeColorsOptions, ThemeOptions } from "./types/theme";
 export const defaultTheme: ThemeOptions = {
     "mode": "dark",
     "radius": "0.5rem",
-    "scrollbar-width": "0.5rem",
-    "scrollbar-height": "0.5rem",
-    "scrollbar-border-radius": "5px",
+    "scrollbarWidth": "0.5rem",
+    "scrollbarHeight": "0.5rem",
+    "scrollbarBorderRadius": "5px",
+    "scrollbarThumbRounded": "9999px"
 }
 
 export const themeColors: ThemeColorsOptions = {
@@ -44,7 +45,9 @@ export const themeColors: ThemeColorsOptions = {
         "success": "#006e2f",
         "onSuccess": "#ffffff",
         "warning": "#855300",
-        "onWarning": "#ffffff"
+        "onWarning": "#ffffff",
+        "scrollbarBg": "#fdfbff",
+        "scrollbarThumbBg": "#1a1b1e"
     },
     dark: {
         "primary": "#aac7ff",
@@ -81,6 +84,8 @@ export const themeColors: ThemeColorsOptions = {
         "success": "#4ae176",
         "onSuccess": "#003915",
         "warning": "#ffb95f",
-        "onWarning": "#472a00"
+        "onWarning": "#472a00",
+        "scrollbarBg": "#1a1b1e",
+        "scrollbarThumbBg": "#e3e2e6"
     }
 }

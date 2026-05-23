@@ -24,6 +24,8 @@ import { leafRoutes } from './routes/leaf';
 import { treeNodeRoutes } from './routes/treeNode';
 import { audioRoutes } from './routes/audio';
 import { runCronjobs } from './cronjobs';
+import { imageRoutes } from './routes/image';
+import { videoRoutes } from './routes/video';
 
 dotenv.config({ debug: process.env.DEBUG !== undefined ? Boolean(process.env.DEBUG) : undefined })
 
@@ -55,10 +57,10 @@ export const dbConfig = {
 
         await db.reset();
 
+        db.addRepository(new AudioFileRepository())
         db.addRepository(new UserRepository())
         db.addRepository(new InvalidTokensRepository())
         db.addRepository(new AvatarRepository())
-        db.addRepository(new AudioFileRepository())
         db.addRepository(new ImageRepository())
         db.addRepository(new VideoFileRepository())
         db.addRepository(new LeafRepository())
@@ -124,7 +126,9 @@ export const dbConfig = {
     app.use('/api/user', userRoutes);
     app.use('/api/leaf', leafRoutes);
     app.use('/api/treeNode', treeNodeRoutes);
+    app.use('/api/image', imageRoutes);
     app.use('/api/audio', audioRoutes);
+    app.use('/api/video', videoRoutes);
 
     // 404 For unknown URLs
     app.use((_req, res) => { res.sendStatus(404) })

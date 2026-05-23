@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import Hls from 'hls.js';
 import { Plus } from "../../../assets/icons/Plus";
 import { SquareMinus } from "../../../assets/icons/SquareMinus";
@@ -6,9 +6,18 @@ import { Trash2 } from "../../../assets/icons/Trash2";
 import { Ripple } from "../../Ripple";
 import { Slide } from "../../Slide";
 import { Upload } from "../Upload";
-import type { Leaf } from "../../LeafManager";
+import { LeafContext } from "../../LeafManager";
 
 export function Video({ contentIndex }: { contentIndex: number }) {
+    const leafContext = useContext(LeafContext)
+    if (!leafContext)
+        return null
+
+    const leaf = leafContext.leaf
+    const isTerm = leafContext.isTerm
+    const editing = leafContext.editing
+    const videoIds = leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value
+
     const [selected, setSelected] = useState<string | undefined>(undefined)
     const [openVideoUploadModal, setOpenVideoUploadModal] = useState(false)
 
@@ -51,7 +60,7 @@ export function Video({ contentIndex }: { contentIndex: number }) {
 
                         {/* Remove button */}
                         <Ripple className="rounded-full bg-error text-on-error">
-                            <button onClick={() => onRemoveAll?.()}>
+                            <button onClick={() => leafContext.removeContents(contentIndex)}>
                                 <Trash2 />
                             </button>
                         </Ripple>
@@ -67,7 +76,7 @@ export function Video({ contentIndex }: { contentIndex: number }) {
                                     editing &&
                                     <div className="absolute top-0 right-0">
                                         <Ripple className="rounded-full bg-error text-on-error">
-                                            <button onClick={async () => onRemove?.(m)}>
+                                            <button onClick={async () => leafContext.removeContent(contentIndex, m)}>
                                                 <SquareMinus />
                                             </button>
                                         </Ripple>
@@ -85,7 +94,15 @@ export function Video({ contentIndex }: { contentIndex: number }) {
                 }
 
                 <Slide open={openVideoUploadModal} className="pointer-events-auto rounded-t-3xl bg-surface shadow-2xl" style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
-                    <Upload type='videoId' onClose={() => setOpenVideoUploadModal(false)} onUpload={(ids) => onLeafChange?.([...videoIds, ...ids])} />
+                    <Upload type='videoId' onClose={() => setOpenVideoUploadModal(false)} onUpload={async (ids) => {
+                        leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value.push(...ids)
+
+                        const result = await leafContext.updateLeaf(leaf)
+                        if (result === false)
+                            return
+
+                        leafContext.onLeafChange(leaf);
+                    }} />
                 </Slide>
             </div>
     )

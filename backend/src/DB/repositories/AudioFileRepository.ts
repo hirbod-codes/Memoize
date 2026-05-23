@@ -42,14 +42,20 @@ export class AudioFileRepository implements IRepository, ISeedable, IDropable {
         return AudioFileRepository.bucket!.openDownloadStream(typeof fileId === 'string' ? ObjectId.createFromHexString(fileId) : fileId, !range ? undefined : { start: range[0], end: range[1] + 1 })
     }
 
-    private async getWriteStream(fileName: string, metadata: AudioMetadata): Promise<GridFSBucketWriteStream> {
-        return AudioFileRepository.bucket!.openUploadStream(fileName, { metadata: { ...metadata, createdAt: Date.now(), updatedAt: Date.now() } })
+    private async getWriteStream(fileName: string, metadata: AudioMetadata): Promise<GridFSBucketWriteStream | false> {
+        try { return AudioFileRepository.bucket!.openUploadStream(fileName, { metadata: { ...metadata, createdAt: Date.now(), updatedAt: Date.now() } }) }
+        catch (err) {
+            console.error(err);
+            return false
+        }
     }
 
     async upload(metadata: AudioMetadata, file: { fileName: string; bytes: Buffer | Uint8Array; }): Promise<string | false> {
         try {
             return await (() => new Promise<string>(async (res, rej) => {
                 const upload = await this.getWriteStream(file.fileName, metadata)
+                if (upload === false)
+                    return false
                 upload
                     .on('close', () => { res(upload.id.toString()) })
                     .write(file.bytes, (e) => {

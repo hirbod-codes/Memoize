@@ -26,6 +26,9 @@ import { Equalizer } from "./Equalizer";
 import { AudioTitle } from "./AudioTitle";
 
 export function AudioPlayer({ audioId }: { audioId: string }) {
+    if (!audioId)
+        return ('invalid audio id !')
+
     const { jsonAuthFetch } = useAuth()
     const { notify } = useNotification()
 
@@ -73,8 +76,7 @@ export function AudioPlayer({ audioId }: { audioId: string }) {
     const isSeekingProgressRef = useRef<boolean>(false);
 
     useEffect(() => {
-        if (audioId.length !== 0)
-            audio.setPlaylist([audioId]);
+        audio.setPlaylist([audioId]);
     }, [audioId]);
 
     useEffect(() => {
@@ -127,7 +129,7 @@ export function AudioPlayer({ audioId }: { audioId: string }) {
     }
 
     return (
-        <div className="size-full rounded-t-2xl *:p-3 overflow-hidden relative" ref={bgRef} style={{ background: `linear-gradient(to bottom, ${dominantColor}, ${mode === 'dark' ? '#000000' : '#ffffff'})` }}>
+        <div className="size-full rounded-t-lg *:p-3 overflow-hidden relative" ref={bgRef} style={{ background: `linear-gradient(to bottom, ${dominantColor}, ${mode === 'dark' ? '#000000' : '#ffffff'})` }}>
             <motion.div
                 initial={{ y: "0vh" }}
                 animate={{ y: animateUp ? "-100vh" : "0vh" }}
@@ -139,14 +141,14 @@ export function AudioPlayer({ audioId }: { audioId: string }) {
                 className={'flex flex-col gap-1 size-full items-center absolute'}
             >
                 <div className="w-[80%] max-w-[10cm] aspect-square">
-                    <CoverArt audioId={audioId[audio.index]} onLoaded={prepareDominantColor} className='rounded-2xl shadow-2xl' coverArtRef={coverArtRef} />
+                    <CoverArt audioId={audioId} onLoaded={prepareDominantColor} className='rounded-lg shadow-lg' coverArtRef={coverArtRef} />
                 </div>
 
                 {/* Separator */}
                 <div className="grow" />
 
                 <div className="flex flex-col text-center w-full">
-                    <AudioTitle audioId={audioId[audio.index]} />
+                    <AudioTitle audioId={audioId} />
                 </div>
 
                 {/* Separator */}
