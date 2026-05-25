@@ -1,15 +1,13 @@
 import { Login } from "../../assets/icons/Login"
 import { useAuth } from "../../contexts/AuthContext"
-import { Ripple } from "../Ripple"
+import { Button } from "../Button"
 
 export function LoginButton() {
     const auth = useAuth()
 
     return (
-        <Ripple>
-            <button className='border-outline' onClick={() => auth.open(true)}>
-                <Login />
-            </button>
-        </Ripple>
+        <Button variant="text" color="on-surface" isIcon onPointerDown={() => auth.open(true)}>
+            <Login />
+        </Button >
     )
 }

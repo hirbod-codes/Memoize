@@ -1,4 +1,4 @@
-FROM node:24 AS base
+FROM node:24-alpine AS base
 WORKDIR /app
 COPY ./src/ffmpeg-7.0.2-amd64-static/ ./src/ffmpeg-7.0.2-amd64-static/
 RUN chmod +x ./src/ffmpeg-7.0.2-amd64-static/ffmpeg
@@ -22,7 +22,7 @@ RUN npm run build
 FROM base AS production-dependencies
 RUN npm install --omit=dev
 
-FROM node:24 AS production
+FROM node:24-alpine AS production
 WORKDIR /app
 COPY ./src/ffmpeg-7.0.2-amd64-static/ ./src/ffmpeg-7.0.2-amd64-static/
 RUN chmod +x ./src/ffmpeg-7.0.2-amd64-static/ffmpeg

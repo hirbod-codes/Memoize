@@ -4,6 +4,7 @@ import { useNotification } from "../../../contexts/NotificationContext"
 import { LeafContext } from "../../LeafManager"
 import { Ripple } from "../../Ripple"
 import { SquareMinus } from "../../../assets/icons/SquareMinus"
+import { Button } from "../../Button"
 
 export function VideoPlayer({ videoId, contentIndex, onSelect }: { videoId: string, contentIndex: number, onSelect: (id: string) => void }) {
     if (!videoId)
@@ -54,15 +55,13 @@ export function VideoPlayer({ videoId, contentIndex, onSelect }: { videoId: stri
             {
                 editing &&
                 <div className="absolute top-0 right-0">
-                    <Ripple className="rounded-full bg-error text-on-error p-1">
-                        <button onClick={async () => leafContext.removeContent(contentIndex, videoId)}>
-                            <SquareMinus className="size-4" />
-                        </button>
-                    </Ripple>
+                    <Button isIcon variant="text" color="error" onPointerDown={async () => leafContext.removeContent(contentIndex, videoId)}>
+                        <SquareMinus className="size-4" />
+                    </Button>
                 </div>
             }
 
-            <img src={`/api/video/thumbnail/${videoId}`} crossOrigin="use-credentials" onClick={() => onSelect(videoId)} className="w-full object-contain rounded-lg" />
+            <img src={`/api/video/thumbnail/${videoId}`} crossOrigin="use-credentials" onPointerDown={() => onSelect(videoId)} className="w-full object-contain rounded-lg" />
 
             {/* Title */}
             {video &&

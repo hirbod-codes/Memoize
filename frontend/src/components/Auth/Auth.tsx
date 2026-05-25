@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Ripple } from "../Ripple";
 import { useNotification } from "../../contexts/NotificationContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { Button } from "../Button";
 
 export const logout = async () => {
     try {
@@ -94,38 +94,38 @@ export function Auth({ onClose }: { onClose?: () => void }) {
         : (identifier === '' || password === '')
 
     return (
-        <div className="flex flex-col items-center *:w-full gap-2 size-full rounded-2xl text-on-surface-variant bg-surface-variant shadow-2xl p-4 border">
+        <div className="flex flex-col items-center *:w-full gap-2 size-full rounded-2xl text-on-surface bg-surface-container-high p-4">
             {openRegister &&
                 <>
                     {registerFieldsEmpty && <div className="text-error">One identifier is required.</div>}
                     <input
-                        className={`p-1 rounded border bg-surface text-on-surface ${registerFieldsEmpty ? 'border-error' : 'border-outline'}`}
+                        className={`p-1 rounded border bg-surface-container-highest text-on-surface ${registerFieldsEmpty ? 'border-error' : 'border-outline'}`}
                         placeholder="Username"
                         onChange={(e) => setUsername(e.target.value)}
                         value={username}
                     />
                     <input
-                        className={`p-1 rounded border bg-surface text-on-surface ${registerFieldsEmpty ? 'border-error' : 'border-outline'}`}
+                        className={`p-1 rounded border bg-surface-container-highest text-on-surface ${registerFieldsEmpty ? 'border-error' : 'border-outline'}`}
                         placeholder="Email"
                         onChange={(e) => setEmail(e.target.value)}
                         value={email}
                     />
                     <input
-                        className={`p-1 rounded border bg-surface text-on-surface ${registerFieldsEmpty ? 'border-error' : 'border-outline'}`}
+                        className={`p-1 rounded border bg-surface-container-highest text-on-surface ${registerFieldsEmpty ? 'border-error' : 'border-outline'}`}
                         placeholder="Phone number"
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         value={phoneNumber}
                     />
 
                     <input
-                        className="p-1 rounded border border-outline bg-surface text-on-surface"
+                        className="p-1 rounded border border-outline bg-surface-container-highest text-on-surface"
                         placeholder="Password"
                         onChange={(e) => setPassword(e.target.value)}
                         value={password}
                     />
 
                     <input
-                        className={`p-1 rounded border bg-surface text-on-surface ${password !== confirmPassword ? 'border-error' : 'border-outline'}`}
+                        className={`p-1 rounded border bg-surface-container-highest text-on-surface ${password !== confirmPassword ? 'border-error' : 'border-outline'}`}
                         placeholder="Confirm Password"
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         value={confirmPassword}
@@ -136,14 +136,14 @@ export function Auth({ onClose }: { onClose?: () => void }) {
             {!openRegister &&
                 <>
                     <input
-                        className="p-1 rounded border border-outline bg-surface text-on-surface"
+                        className="p-1 rounded border border-outline bg-surface-container-highest text-on-surface"
                         placeholder="Username / Email / Phone number"
                         onChange={(e) => setIdentifier(e.target.value)}
                         value={identifier}
                     />
 
                     <input
-                        className="p-1 rounded border border-outline bg-surface text-on-surface"
+                        className="p-1 rounded border border-outline bg-surface-container-highest text-on-surface"
                         placeholder="Password"
                         onChange={(e) => setPassword(e.target.value)}
                         value={password}
@@ -153,16 +153,13 @@ export function Auth({ onClose }: { onClose?: () => void }) {
 
             <div className="grow" />
 
-            <Ripple>
-                <button className="w-full border border-outline rounded bg-primary text-on-primary" onClick={submit} disabled={disabled}>
-                    Submit
-                </button>
-            </Ripple>
-            <Ripple>
-                <button className="w-full border border-outline rounded bg-primary text-on-primary" onClick={() => { reset(); setOpenRegister(!openRegister) }}>
-                    {openRegister ? 'Login' : 'Sign Up'}
-                </button>
-            </Ripple>
+            <Button onClick={submit} disabled={disabled}>
+                Submit
+            </Button>
+
+            <Button onClick={() => { reset(); setOpenRegister(!openRegister) }}>
+                {openRegister ? 'Login' : 'Sign Up'}
+            </Button>
         </div>
     )
 }

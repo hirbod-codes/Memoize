@@ -12,6 +12,7 @@ import { Slide } from "./Slide"
 import { Upload } from "./Content/Upload"
 import { Plus } from "../assets/icons/Plus"
 import { Select } from "./Select"
+import { Button } from "./Button"
 
 export type Types = 'string' | 'imageId' | 'videoId' | 'audioId' | 'richText'
 
@@ -32,8 +33,7 @@ export const LeafContext = createContext<{
     leaf: Leaf,
     isTerm: boolean
     editing: boolean
-    updateLeaf: (leaf: Leaf) => Promise<boolean>,
-    removeLeaf: () => Promise<boolean>
+    updateLeaf: (leaf: Leaf) => Promise<boolean>
     removeContent: (i: number, v: string) => Promise<false | Leaf>
     removeContents: (i: number) => Promise<false | Leaf>
     onLeafChange: (leaf: Leaf) => void
@@ -129,30 +129,6 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
         }
     }
 
-    const removeLeaf = async () => {
-        try {
-            if (!leaf || !leaf._id)
-                return false
-
-            setSaving(true)
-            let r = await jsonAuthFetch(`/api/leaf/?id=${leaf._id}`, { method: 'DELETE' })
-            setSaving(false)
-            if (r === false || !r.ok) {
-                notify('Removing card failed', 3000, 'error')
-                return false
-            }
-
-            onRemove?.()
-
-            return true
-        } catch (error) {
-            setSaving(false)
-            console.error(error);
-            notify('Removing card failed', 3000, 'error')
-            return false
-        }
-    }
-
     useEffect(() => {
         setLeaf(initLeaf)
     }, [initLeaf])
@@ -170,7 +146,6 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
             editing,
             updateLeaf: save,
             onLeafChange,
-            removeLeaf,
             removeContent,
             removeContents,
         }}>
@@ -178,17 +153,15 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                 leaf === undefined
                     ? 'nothing'
                     :
-                    <div className="flex flex-col items-start gap-2 p-2 bg-surface text-on-surface rounded-lg overflow-auto max-h-full" onClick={() => (!isTerm)}>
+                    <div className="flex flex-col items-start gap-2 p-2 bg-surface-container-high text-on-surface rounded-lg overflow-auto max-h-full" onPointerDown={() => (!isTerm)}>
                         {/* Close button */}
                         <div className="flex flex-row w-full items-center p-2">
                             <div className="grow" />
 
                             {onClose &&
-                                <Ripple className="rounded-full">
-                                    <button onClick={async () => onClose?.()}>
-                                        <X />
-                                    </button>
-                                </Ripple>
+                                <Button isIcon variant="text" color="on-surface" onPointerDown={async () => onClose?.()}>
+                                    <X />
+                                </Button>
                             }
                         </div>
 
@@ -196,25 +169,21 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                             {/* Delete button */}
                             {
                                 editing &&
-                                <Ripple className="rounded-full bg-error text-on-error p-1">
-                                    <button onClick={async () => removeLeaf()}>
-                                        <Trash2 />
-                                    </button>
-                                </Ripple>
+                                <Button isIcon variant="text" color="error" onPointerDown={async () => onRemove?.()}>
+                                    <Trash2 />
+                                </Button>
                             }
 
                             <div className="grow" />
 
                             {/* Switch edit mode button */}
-                            <Ripple className="rounded-full">
-                                <button onClick={() => setEditing(!editing)}>
-                                    {
-                                        editing
-                                            ? <Eye />
-                                            : <SquarePen />
-                                    }
-                                </button>
-                            </Ripple>
+                            <Button isIcon variant="text" color="on-surface" onPointerDown={() => setEditing(!editing)}>
+                                {
+                                    editing
+                                        ? <Eye />
+                                        : <SquarePen />
+                                }
+                            </Button>
                         </div>
 
                         {/* title */}
@@ -231,8 +200,9 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                                         onChange={(e) => setNewTitle(e.target.value)}
                                         className="w-full rounded-lg p-2 border border-outline bg-surface text-on-surface"
                                     />
-                                    <button
-                                        onClick={async () => {
+
+                                    <Button variant="outlined" color="on-surface"
+                                        onPointerDown={async () => {
                                             const result = await save({ ...leaf, title: newTitle })
                                             if (result === false)
                                                 return
@@ -240,11 +210,11 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                                             setLeaf({ ...leaf, title: newTitle })
                                             onLeafChange?.({ ...leaf, title: newTitle })
                                         }}
-                                        className="p-2 rounded-lg border border-success text-success disabled:border-outline disabled:text-on-surface-variant"
+                                        className="rounded-lg"
                                         disabled={saving}
                                     >
                                         Save
-                                    </button>
+                                    </Button>
                                 </div>
                             }
                         </h1>
@@ -253,7 +223,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                         <div className="flex flex-col items-start gap-4 p-2 w-full">
                             {
                                 leaf[isTerm ? 'termContents' : 'definitionContents']
-                                    .map((_content, i: number, arr) =>
+                                    .map((_content, i: number) =>
                                         <div key={i} className="flex flex-col gap-1 w-full">
                                             <Content contentIndex={i} />
                                         </div>
@@ -295,7 +265,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
 
                                 {
                                     newContent.type === 'richText' &&
-                                    <button className="border border-outline rounded-lg w-full p-1" onClick={async () => {
+                                    <Button variant="outlined" color="success" onPointerDown={async () => {
                                         leaf[isTerm ? 'termContents' : 'definitionContents'].push({ type: 'richText', value: [''] })
 
                                         setSaving(true)
@@ -307,38 +277,37 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                                         onLeafChange?.({ ...leaf })
                                     }}>
                                         <Plus className="inline" /> Add
-                                    </button>
+                                    </Button>
                                 }
 
                                 {
                                     newContent.type !== 'string' && newContent.type !== 'richText' &&
-                                    <button className="border border-outline rounded-lg w-full p-1" onClick={() => setOpenUpload(newContent.type)}>
+                                    <Button variant="outlined" color="success" onPointerDown={() => setOpenUpload(newContent.type)}>
                                         <UploadIcon className='inline' /> Upload
-                                    </button>
+                                    </Button>
                                 }
 
-                                <Ripple>
-                                    <button
-                                        onClick={async () => {
-                                            let l = { ...leaf }
-                                            if (isTerm)
-                                                l.termContents.push(newContent)
-                                            else
-                                                l.definitionContents.push(newContent)
+                                <Button
+                                    variant="outlined"
+                                    color="success"
+                                    onPointerDown={async () => {
+                                        let l = { ...leaf }
+                                        if (isTerm)
+                                            l.termContents.push(newContent)
+                                        else
+                                            l.definitionContents.push(newContent)
 
-                                            const result = await save(l)
-                                            if (result === false)
-                                                return
+                                        const result = await save(l)
+                                        if (result === false)
+                                            return
 
-                                            setLeaf({ ...l })
-                                            onLeafChange?.({ ...leaf, title: newTitle })
-                                            setNewContent(undefined)
-                                        }}
-                                        className="p-1 rounded-lg w-full border border-success text-success"
-                                    >
-                                        Save
-                                    </button>
-                                </Ripple>
+                                        setLeaf({ ...l })
+                                        onLeafChange?.({ ...leaf, title: newTitle })
+                                        setNewContent(undefined)
+                                    }}
+                                >
+                                    Save
+                                </Button>
                             </div>
                         }
 
@@ -346,11 +315,9 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                         {
                             editing &&
                             <div className="flex flex-row items-center justify-center w-full">
-                                <Ripple>
-                                    <button onClick={async () => setNewContent({ type: 'string', value: [''] })} className="p-1 rounded-full w-full bg-success text-on-success">
-                                        <Plus className='inline' />
-                                    </button>
-                                </Ripple>
+                                <Button isIcon variant="text" color='success' onPointerDown={async () => setNewContent({ type: 'string', value: [''] })}>
+                                    <Plus className='inline' />
+                                </Button>
                             </div>
                         }
 

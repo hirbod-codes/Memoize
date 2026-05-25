@@ -1,7 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import type { ThemeColorsOptions, ThemeMode, ThemeOptions } from "../types/theme";
 import { defaultTheme, themeColors } from "../defaultTheme";
-import { ColorStatic } from "../lib/Colors/ColorStatic";
 
 export const ThemeContext = createContext<{ mode: ThemeMode, toggleThemeMode: () => void, themeOptions: ThemeOptions }>({ toggleThemeMode: () => { }, mode: 'dark', themeOptions: defaultTheme });
 
@@ -23,18 +22,17 @@ export function ThemeContextProvider({ children }: { children: React.ReactNode }
         if (!options)
             return false
 
-        const stringifyColorForTailwind = (color: string) => {
-            let hsl = ColorStatic.parse(color).toHsl()
-            return `${hsl.getHue()} ${hsl.getSaturation()}% ${hsl.getLightness()}%`
-        }
-        const setCssVar = (k: string, v: string, isColor = false) => document.documentElement.style.setProperty(`--${k}`, isColor ? stringifyColorForTailwind(v) : v)
+        const setCssVar = (k: string, v: string) => document.documentElement.style.setProperty(`--${k}`, v)
+
         setCssVar('radius', options.radius)
         setCssVar('scrollbarWidth', options['scrollbarWidth'])
         setCssVar('scrollbarHeight', options['scrollbarHeight'])
         setCssVar('scrollbarBorderRadius', options['scrollbarBorderRadius']);
         setCssVar('scrollbarThumbRounded', options['scrollbarThumbRounded']);
 
-        Object.keys(colors[mode]).forEach((k) => { document.documentElement.style.setProperty(`--${k}`, (colors[mode] as any)[k]) });
+        Object.keys(colors[mode]).forEach((k) => { document.documentElement.style.setProperty(`--${k}`, (colors[mode] as any)[k]) })
+
+        Object.entries(colors.palettes).forEach((k) => { Object.entries(k[1]).forEach(kk => document.documentElement.style.setProperty(`--${k[0]}${kk[0]}`, kk[1])) })
     }
 
     useEffect(() => {

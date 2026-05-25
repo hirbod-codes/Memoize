@@ -5,6 +5,7 @@ import { Trash2 } from "../../../assets/icons/Trash2";
 import { LeafContext } from "../../LeafManager";
 import { Ripple } from "../../Ripple";
 import { Editor } from "./Editor";
+import { Button } from "../../Button";
 
 
 export default function Text({ contentIndex }: { contentIndex: number }) {
@@ -31,31 +32,27 @@ export default function Text({ contentIndex }: { contentIndex: number }) {
                     editing &&
                     <div className="w-full flex flex-row items-center justify-between gap-2">
                         {/* Add button */}
-                        <Ripple className="rounded-full bg-success text-on-success p-2">
-                            <button onClick={async () => {
-                                leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value.push('')
-                                const result = await leafContext.updateLeaf(leaf)
-                                if (result === false)
-                                    return
+                        <Button isIcon variant="text" color="success" onPointerDown={async () => {
+                            leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value.push('')
+                            const result = await leafContext.updateLeaf(leaf)
+                            if (result === false)
+                                return
 
-                                leafContext.onLeafChange({ ...leaf });
-                            }}>
-                                <Plus />
-                            </button>
-                        </Ripple>
+                            leafContext.onLeafChange({ ...leaf });
+                        }}>
+                            <Plus />
+                        </Button>
 
                         {/* Remove button */}
-                        <Ripple className="rounded-full bg-error text-on-error p-2">
-                            <button onClick={async () => {
-                                const result = await leafContext.removeContents(contentIndex)
-                                if (result === false)
-                                    return
+                        <Button isIcon variant="text" color="error" onPointerDown={async () => {
+                            const result = await leafContext.removeContents(contentIndex)
+                            if (result === false)
+                                return
 
-                                leafContext.onLeafChange({ ...leaf });
-                            }}>
-                                <Trash2 />
-                            </button>
-                        </Ripple>
+                            leafContext.onLeafChange({ ...leaf });
+                        }}>
+                            <Trash2 />
+                        </Button>
                     </div>
                 }
 
@@ -67,21 +64,19 @@ export default function Text({ contentIndex }: { contentIndex: number }) {
                                 {
                                     editing &&
                                     <div className="absolute top-0 right-0">
-                                        <Ripple className="rounded-full bg-error text-on-error p-1">
-                                            <button onClick={async () => {
-                                                console.log('removeContent', m);
+                                        <Button isIcon variant="text" color="error" onPointerDown={async () => {
+                                            console.log('removeContent', m);
 
-                                                const result = await leafContext.removeContent(contentIndex, m)
-                                                console.log({ result });
+                                            const result = await leafContext.removeContent(contentIndex, m)
+                                            console.log({ result });
 
-                                                if (result === false)
-                                                    return
+                                            if (result === false)
+                                                return
 
-                                                leafContext.onLeafChange({ ...result });
-                                            }}>
-                                                <SquareMinus className="size-4" />
-                                            </button>
-                                        </Ripple>
+                                            leafContext.onLeafChange({ ...result });
+                                        }}>
+                                            <SquareMinus className="size-4" />
+                                        </Button>
                                     </div>
                                 }
 

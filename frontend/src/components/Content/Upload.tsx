@@ -5,6 +5,7 @@ import { useNotification } from "../../contexts/NotificationContext";
 import { Trash2 } from "../../assets/icons/Trash2";
 import type { Types } from "../LeafManager";
 import { X } from "../../assets/icons/X";
+import { Button } from "../Button";
 
 export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (imageIds: string[]) => void, onClose?: () => void }) {
     const { jsonAuthFetch } = useAuth();
@@ -90,14 +91,14 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
             <div className="flex flex-row gap-2 items-center justify-between w-full">
                 {/* Remove button */}
                 <Ripple className="rounded-full p-2 bg-error text-on-error">
-                    <button onClick={() => onClose?.()}>
+                    <button onPointerDown={() => onClose?.()}>
                         <Trash2 />
                     </button>
                 </Ripple>
 
                 {/* Close button */}
                 <Ripple className="rounded-full p-2">
-                    <button onClick={() => onClose?.()}>
+                    <button onPointerDown={() => onClose?.()}>
                         <X />
                     </button>
                 </Ripple>
@@ -115,7 +116,7 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
             />
 
             <input type="file" multiple={true} className="hidden" accept={type === 'audioId' ? "audio/*" : (type === 'imageId' ? 'image/*' : (type === 'videoId' ? 'video/*' : undefined))} onChange={handleFileChange} id="audio-upload" />
-            <Ripple className="w-full cursor-pointer border border-outline rounded-lg p-2">
+            <Button color='on-surface' variant="outlined" className="w-full rounded-lg">
                 <label
                     htmlFor="audio-upload"
                     className="w-full"
@@ -124,23 +125,21 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
                         Browse files
                     </div>
                 </label>
-            </Ripple>
+            </Button>
 
-            <Ripple className="w-full *:w-full cursor-pointer border rounded-lg p-2">
-                <button disabled={!audioFiles || audioFiles.length === 0} onClick={async () => {
-                    const data = await massUpload();
-                    if (data === false)
-                        return
+            <Button variant="outlined" color="success" className="w-full  rounded-lg" disabled={!audioFiles || audioFiles.length === 0} onPointerDown={async () => {
+                const data = await massUpload();
+                if (data === false)
+                    return
 
-                    onUpload?.(data)
+                onUpload?.(data)
 
-                    onClose?.()
-                }}>
-                    Upload
-                </button>
-            </Ripple>
+                onClose?.()
+            }}>
+                Upload
+            </Button>
 
-            <div className={`border-b-4 w-full py-2 border-outline`} />
+            <div className={`border-b-4 w-full py-2 border-outline-variant`} />
 
             <div className="flex flex-col gap-2 w-full">
                 {

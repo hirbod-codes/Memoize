@@ -8,6 +8,7 @@ import { LeafContext } from "../../LeafManager";
 import { VideoPlayer } from "./VideoPlayer";
 import Hls from "hls.js";
 import { X } from "../../../assets/icons/X";
+import { Button } from "../../Button";
 
 export function Video({ contentIndex }: { contentIndex: number }) {
     const leafContext = useContext(LeafContext)
@@ -59,18 +60,14 @@ export function Video({ contentIndex }: { contentIndex: number }) {
                     editing &&
                     <div className="flex flex-row justify-between gap-1 p-2 *:p-2">
                         {/* Remove button */}
-                        <Ripple className="rounded-full bg-error text-on-error">
-                            <button onClick={() => leafContext.removeContents(contentIndex)}>
-                                <Trash2 />
-                            </button>
-                        </Ripple>
+                        <Button isIcon variant="text" color="error" onPointerDown={() => leafContext.removeContents(contentIndex)}>
+                            <Trash2 />
+                        </Button>
 
                         {/* Add button */}
-                        <Ripple className="rounded-full bg-success text-on-success">
-                            <button onClick={async () => setOpenVideoUploadModal(true)}>
-                                <Plus />
-                            </button>
-                        </Ripple>
+                        <Button isIcon variant="text" color="success" onPointerDown={async () => setOpenVideoUploadModal(true)}>
+                            <Plus />
+                        </Button>
                     </div>
                 }
 
@@ -82,13 +79,12 @@ export function Video({ contentIndex }: { contentIndex: number }) {
                         {
                             selected &&
                             <div className="absolute top-0 right-0">
-                                <Ripple className="rounded-full bg-surface text-on-surface">
-                                    <button onClick={async () => setSelected(undefined)}>
-                                        <X />
-                                    </button>
-                                </Ripple>
+                                <Button isIcon variant="text" color="on-surface" onPointerDown={async () => setSelected(undefined)}>
+                                    <X />
+                                </Button>
                             </div>
                         }
+
                         {/* Video player */}
                         {selected && <video ref={videoRef} controls autoPlay={true} className="w-[auto] h-96" crossOrigin="use-credentials" />}
                     </div>

@@ -11,6 +11,8 @@ import { Trash2 } from "../assets/icons/Trash2"
 import { Plus } from "../assets/icons/Plus"
 import { X } from "../assets/icons/X"
 import { FolderPlus } from "../assets/icons/FolderPlus"
+import { Button } from "./Button"
+import { SquareMinus } from "../assets/icons/SquareMinus"
 
 export type TreeNode = {
     _id?: string
@@ -43,6 +45,8 @@ export function Nodes() {
     const [showAddLeafModal, setShowAddLeafModal] = useState<boolean>(false)
 
     const [changingTreeNode, setChangingTreeNode] = useState<boolean>(false)
+
+    const [waitingFor, setWaitingFor] = useState<string | undefined>(undefined)
 
     const createTreeNode = async () => {
         try {
@@ -166,14 +170,15 @@ export function Nodes() {
             if (!id)
                 return
 
-            setChangingTreeNode(true)
+            setWaitingFor(`remove-folder-${id}`)
             const r = await jsonAuthFetch(`/api/treeNode/?treeNodeId=${id}`, { method: 'DELETE' })
-            setChangingTreeNode(false)
+            setWaitingFor(undefined)
             if (r === false || !r.ok)
                 return notify('failed to load folders', 3000, 'error')
 
             return true
         } catch (error) {
+            setWaitingFor(undefined)
             console.error(error);
             notify('failed to load folders', 3000, 'error')
             return false
@@ -226,6 +231,28 @@ export function Nodes() {
         }
     }
 
+    const removeLeaf = async (id: string) => {
+        try {
+            if (!id)
+                return false
+
+            setWaitingFor(`leaf-remove-${id}`)
+            let r = await jsonAuthFetch(`/api/leaf/?id=${id}`, { method: 'DELETE' })
+            setWaitingFor(undefined)
+            if (r === false || !r.ok) {
+                notify('Removing card failed', 3000, 'error')
+                return false
+            }
+
+            return true
+        } catch (error) {
+            setWaitingFor(undefined)
+            console.error(error);
+            notify('Removing card failed', 3000, 'error')
+            return false
+        }
+    }
+
     useEffect(() => {
         getRoots()
             .then(treeNodes => {
@@ -244,103 +271,102 @@ export function Nodes() {
     return (
         fetching
             ? 'loading...'
-            : <div className="size-full relative">
-                <div className="size-full flex flex-col gap-2 items-center p-2 overflow-y-auto">
+            : <div className="size-full relative p-4">
+                <div className="size-full flex flex-col gap-2 items-center p-2 overflow-y-auto bg-surface-container rounded-lg">
 
                     <div className="w-full flex flex-row items-center justify-between">
                         {/* Go back button */}
                         {
                             locationQueue.length > 1 &&
-                            <Ripple className="rounded-full">
-                                <button className="p-1" disabled={locationQueue.length <= 1} onClick={async () => {
-                                    let prev: string | undefined = locationQueue[locationQueue.length - 2]
+                            <Button variant="text" color="on-surface" isIcon disabled={locationQueue.length <= 1} onPointerDown={async () => {
+                                let prev: string | undefined = locationQueue[locationQueue.length - 2]
 
-                                    if (prev === 'root') {
-                                        let r = await getRoots()
-                                        if (r === false)
-                                            return
-
-                                        setTreeNodes(r)
-                                        setParentTreeNode(undefined)
-                                        setLeafs([])
-                                        setLocationQueue(['root'])
-                                        return
-                                    }
-
-                                    let r = await getTreeNodesByParentId(prev)
+                                if (prev === 'root') {
+                                    let r = await getRoots()
                                     if (r === false)
                                         return
 
-                                    let l = await getLeafsByTreeNodeId(prev)
-                                    if (l === false)
-                                        return
-
-
                                     setTreeNodes(r)
-                                    setLeafs(l)
+                                    setParentTreeNode(undefined)
+                                    setLeafs([])
+                                    setLocationQueue(['root'])
+                                    return
+                                }
 
-                                    locationQueue.pop()
-                                    setLocationQueue([...locationQueue])
-                                }}>
-                                    <ChevronLeft />
-                                </button>
-                            </Ripple>
+                                let r = await getTreeNodesByParentId(prev)
+                                if (r === false)
+                                    return
+
+                                let l = await getLeafsByTreeNodeId(prev)
+                                if (l === false)
+                                    return
+
+
+                                setTreeNodes(r)
+                                setLeafs(l)
+
+                                locationQueue.pop()
+                                setLocationQueue([...locationQueue])
+                            }}>
+                                <ChevronLeft />
+                            </Button>
                         }
 
                         <div className="grow" />
 
                         {/* Switch edit mode button */}
-                        <Ripple className="rounded-full border border-outline">
-                            <button className="p-2" onClick={() => setEditing(!editing)}>
-                                {
-                                    editing
-                                        ? <Eye />
-                                        : <SquarePen />
-                                }
-                            </button>
-                        </Ripple>
+                        <Button variant="text" color="on-surface" isIcon onPointerDown={() => setEditing(!editing)}>
+                            {
+                                editing
+                                    ? <Eye />
+                                    : <SquarePen />
+                            }
+                        </Button>
                     </div>
 
                     {/* title */}
-                    <h1 className="w-full">
+                    <h1 className="w-full text-on-surface">
                         {!editing && parentTreeNode && parentTreeNode.title}
 
                         {editing && parentTreeNode &&
-                            <div className="flex flex-row gap-2">
+                            <div className="flex flex-row items-center gap-2">
                                 <input
                                     value={newParentTitle}
                                     onChange={(e) => setNewParentTitle(e.target.value)}
-                                    className="grow rounded p-2 border border-outline bg-surface-variant text-on-surface-variant"
+                                    className="grow rounded-md p-2 border border-outline bg-surface-variant text-on-surface-variant"
                                 />
-                                <Ripple className="rounded border border-outline p-2">
-                                    <button disabled={changingTreeNode} onClick={async () => {
-                                        const result = await updateTreeNode({ ...parentTreeNode, title: newParentTitle })
-                                        if (result === false)
-                                            return
 
-                                        setParentTreeNode({ ...parentTreeNode, title: newParentTitle })
-                                    }}>
-                                        {
-                                            changingTreeNode
-                                                ? 'updating...'
-                                                : 'Save'
-                                        }
-                                    </button>
-                                </Ripple>
+                                <Button variant="outlined" color="on-surface" className="rounded-md" disabled={changingTreeNode} onClick={async () => {
+                                    const result = await updateTreeNode({ ...parentTreeNode, title: newParentTitle })
+                                    if (result === false)
+                                        return
+
+                                    setParentTreeNode({ ...parentTreeNode, title: newParentTitle })
+                                }}>
+                                    {
+                                        changingTreeNode
+                                            ? 'updating...'
+                                            : 'Save'
+                                    }
+                                </Button>
                             </div>
                         }
                     </h1>
 
-                    {parentTreeNode?.title && <div className="border-b border-outline w-full" />}
+                    {parentTreeNode?.title && <div className="border-b border-outline-variant w-full" />}
 
                     {/* Tree nodes */}
                     {
                         treeNodes && treeNodes.map((r: any, i: number) => {
                             return (
-                                <div key={i} className="flex flex-col gap-2 w-full rounded-lg border border-outline p-2 bg-surface text-on-surface">
-                                    <div className="flex flex-row items-center justify-between">
-                                        {/* Title */}
-                                        <div className="w-full grow" onClick={async () => {
+                                <div
+                                    key={i}
+                                    className="flex flex-row items-center justify-between w-full rounded-lg bg-surface-container-low hover:bg-surface-container-highest text-on-surface"
+                                >
+                                    {/* Title */}
+                                    <div
+                                        className="w-full grow p-2"
+                                        onPointerDown={async () => {
                                             let treeNodes = await getTreeNodesByParentId(r._id)
                                             console.log({ treeNodes })
                                             if (treeNodes === false)
@@ -355,37 +381,49 @@ export function Nodes() {
                                             setParentTreeNode(r)
                                             setLeafs(leafs)
                                             setLocationQueue([...locationQueue, r._id])
-                                        }}>
-                                            {r.title}
-                                        </div>
-
-                                        {/* Delete button */}
-                                        {
-                                            editing &&
-                                            <Ripple className="rounded-full bg-error text-on-error p-2">
-                                                <button disabled={changingTreeNode} onClick={async () => { if (await removeTreeNode(r._id)) setTreeNodes(treeNodes.filter(f => f._id !== r._id)); }}>
-                                                    {
-                                                        changingTreeNode
-                                                            ? 'updating...'
-                                                            : <Trash2 />
-                                                    }
-                                                </button>
-                                            </Ripple>
-                                        }
+                                        }}
+                                    >
+                                        {r.title}
                                     </div>
+
+                                    {/* Delete button */}
+                                    {
+                                        editing &&
+                                        <Button variant="text" color='error' isIcon disabled={waitingFor === `remove-folder-${r._id}`} onClick={async () => { if (await removeTreeNode(r._id)) setTreeNodes(treeNodes.filter(f => f._id !== r._id)); }}>
+                                            {
+                                                waitingFor === `remove-folder-${r._id}`
+                                                    ? 'updating...'
+                                                    : <SquareMinus />
+                                            }
+                                        </Button>
+                                    }
                                 </div>
                             )
                         })
                     }
 
-                    {leafs.length !== 0 && <div className="border-b border-outline w-full my-8" />}
+                    {leafs.length !== 0 && <div className="border-b border-outline-variant w-full my-8" />}
 
                     {/* Leafs */}
                     {
                         leafs && leafs.map((r: any, i: number) => {
                             return (
-                                <div key={i} className="flex flex-col gap-2 w-full rounded-lg border border-outline p-2 bg-surface text-on-surface" onClick={() => setShowingLeaf(i)}>
-                                    {r.title}
+                                <div key={i} className="flex flex-row items-center justify-between w-full rounded-lg p-2 bg-surface-container-low hover:bg-surface-container-highest text-on-surface" onClick={() => setShowingLeaf(i)}>
+                                    <div className="w-full grow">
+                                        {r.title}
+                                    </div>
+
+                                    {/* Delete button */}
+                                    {
+                                        editing &&
+                                        <Button variant="text" color='error' isIcon disabled={waitingFor === `leaf-remove-${r._id}`} onClick={async () => { if (await removeLeaf(r._id)) setLeafs(leafs.filter(f => f._id !== r._id)); }}>
+                                            {
+                                                waitingFor === `leaf-remove-${r._id}`
+                                                    ? 'updating...'
+                                                    : <SquareMinus />
+                                            }
+                                        </Button>
+                                    }
                                 </div>
                             )
                         })
@@ -396,20 +434,16 @@ export function Nodes() {
                         editing &&
                         <div className="absolute bottom-0 right-0 w-full flex flex-row justify-end gap-2 p-2">
                             {/* Add tree node button */}
-                            <Ripple className="rounded-full bg-success text-on-success p-2">
-                                <button onClick={async () => setShowAddTreeNodeModal(true)}>
-                                    <FolderPlus />
-                                </button>
-                            </Ripple>
+                            <Button variant='filled' color="success" isIcon onPointerDown={async () => setShowAddTreeNodeModal(true)}>
+                                <FolderPlus />
+                            </Button>
 
                             {/* Add leaf button */}
                             {
                                 locationQueue[locationQueue.length - 1] !== 'root' &&
-                                <Ripple className="rounded-full bg-success text-on-success p-2">
-                                    <button onClick={async () => setShowAddLeafModal(true)}>
-                                        <Plus />
-                                    </button>
-                                </Ripple>
+                                <Button variant='filled' color="success" isIcon onPointerDown={async () => setShowAddLeafModal(true)}>
+                                    <Plus />
+                                </Button>
                             }
                         </div>
                     }
@@ -419,11 +453,9 @@ export function Nodes() {
                         <div className="flex flex-col gap-2 bg-surface-variant rounded-lg p-2">
 
                             <div className="flex flex-row w-full items-center justify-end">
-                                <Ripple className="rounded-full">
-                                    <button onClick={() => { setNewTreeNodeTitle(''); setShowAddTreeNodeModal(false) }}>
-                                        <X />
-                                    </button>
-                                </Ripple>
+                                <Button variant='text' isIcon onPointerDown={() => { setNewTreeNodeTitle(''); setShowAddTreeNodeModal(false) }}>
+                                    <X />
+                                </Button>
                             </div>
 
                             <input
@@ -435,20 +467,18 @@ export function Nodes() {
 
                             <div className="py-2" />
 
-                            <Ripple className="rounded-lg w-full bg-success text-on-success">
-                                <button className="w-full" onClick={async () => {
-                                    const result = await createTreeNode()
-                                    if (result === false)
-                                        return
+                            <Button icon={<Plus />} variant="outlined" color='success' className="w-full rounded-lg" onClick={async () => {
+                                const result = await createTreeNode()
+                                if (result === false)
+                                    return
 
-                                    setTreeNodes([...treeNodes, { _id: result, parentId: locationQueue[locationQueue.length - 1] !== 'root' ? locationQueue[locationQueue.length - 1] : 'undefined', title: newTreeNodeTitle }])
+                                setTreeNodes([...treeNodes, { _id: result, parentId: locationQueue[locationQueue.length - 1] !== 'root' ? locationQueue[locationQueue.length - 1] : 'undefined', title: newTreeNodeTitle }])
 
-                                    setNewTreeNodeTitle('')
-                                    setShowAddTreeNodeModal(false)
-                                }}>
-                                    <Plus className="inline" /> Add
-                                </button>
-                            </Ripple>
+                                setNewTreeNodeTitle('')
+                                setShowAddTreeNodeModal(false)
+                            }}>
+                                Add
+                            </Button>
 
                         </div>
                     </Slide>
@@ -456,13 +486,10 @@ export function Nodes() {
                     {/* Create Leaf */}
                     <Slide open={showAddLeafModal} style={{ height: 'calc(100% - 0.7cm)', marginTop: '0.7cm' }}>
                         <div className="flex flex-col gap-2 bg-surface-variant text-surface-variant rounded-lg p-2">
-
                             <div className="flex flex-row w-full items-center justify-end">
-                                <Ripple className="rounded-lg">
-                                    <button onClick={() => { setNewLeafTitle(''); setShowAddLeafModal(false) }}>
-                                        <X />
-                                    </button>
-                                </Ripple>
+                                <Button variant="text" color='on-surface' isIcon onPointerDown={() => { setNewLeafTitle(''); setShowAddLeafModal(false) }}>
+                                    <X />
+                                </Button>
                             </div>
 
                             <input
@@ -474,23 +501,21 @@ export function Nodes() {
 
                             <div className="p-2" />
 
-                            <Ripple className="rounded-lg w-full bg-success text-on-success">
-                                <button className="w-full" onClick={async () => {
-                                    if (locationQueue[locationQueue.length - 1] === 'root')
-                                        return
+                            <Button icon={<Plus />} variant="outlined" color='success' className="w-full rounded-lg" onClick={async () => {
+                                if (locationQueue[locationQueue.length - 1] === 'root')
+                                    return
 
-                                    const id = await createLeaf(locationQueue[locationQueue.length - 1], newLeafTitle)
-                                    if (id === false)
-                                        return
+                                const id = await createLeaf(locationQueue[locationQueue.length - 1], newLeafTitle)
+                                if (id === false)
+                                    return
 
-                                    setLeafs([...leafs, { _id: id, title: newLeafTitle, definitionContents: [], termContents: [], userId: '' }])
+                                setLeafs([...leafs, { _id: id, title: newLeafTitle, definitionContents: [], termContents: [], userId: '' }])
 
-                                    setNewLeafTitle('')
-                                    setShowAddLeafModal(false)
-                                }}>
-                                    <Plus className="inline" /> Add
-                                </button>
-                            </Ripple>
+                                setNewLeafTitle('')
+                                setShowAddLeafModal(false)
+                            }}>
+                                Add
+                            </Button>
 
                         </div>
                     </Slide>

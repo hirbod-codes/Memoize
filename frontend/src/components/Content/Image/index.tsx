@@ -6,6 +6,7 @@ import { Ripple } from "../../Ripple";
 import { Slide } from "../../Slide";
 import { Upload } from "../Upload";
 import { LeafContext } from "../../LeafManager";
+import { Button } from "../../Button";
 
 export function Image({ contentIndex }: { contentIndex: number }) {
     const leafContext = useContext(LeafContext)
@@ -28,18 +29,14 @@ export function Image({ contentIndex }: { contentIndex: number }) {
                     editing &&
                     <div className="w-full flex flex-row items-center justify-between gap-2 p-2 *:p-2">
                         {/* Remove button */}
-                        <Ripple className="rounded-full bg-error text-on-error">
-                            <button onClick={() => leafContext.removeContents(contentIndex)}>
-                                <Trash2 />
-                            </button>
-                        </Ripple>
+                        <Button isIcon variant="text" color="error" onPointerDown={() => leafContext.removeContents(contentIndex)}>
+                            <Trash2 />
+                        </Button>
 
                         {/* Add button */}
-                        <Ripple className="rounded-full bg-success text-on-success">
-                            <button onClick={async () => setOpenImageUploadModal(true)}>
-                                <Plus />
-                            </button>
-                        </Ripple>
+                        <Button isIcon variant="text" color="success" onPointerDown={async () => setOpenImageUploadModal(true)}>
+                            <Plus />
+                        </Button>
                     </div>
                 }
 
@@ -52,14 +49,12 @@ export function Image({ contentIndex }: { contentIndex: number }) {
                                     {/* Remove button */}
                                     {
                                         editing &&
-                                        <Ripple className="absolute top-0 right-0 p-1 rounded-full bg-error text-on-error">
-                                            <button onClick={async () => leafContext.removeContent(contentIndex, m)}>
-                                                <SquareMinus className="size-4" />
-                                            </button>
-                                        </Ripple>
+                                        <Button isIcon variant="text" color="error" className="absolute top-0 right-0" onPointerDown={async () => leafContext.removeContent(contentIndex, m)}>
+                                            <SquareMinus className="size-4" />
+                                        </Button>
                                     }
 
-                                    <img src={`/api/image/file/${m}`} crossOrigin="use-credentials" className="w-[4cm]" onClick={() => setShowFullscreen(`/api/image/file/${m}`)} />
+                                    <img src={`/api/image/file/${m}`} crossOrigin="use-credentials" className="w-[4cm]" onPointerDown={() => setShowFullscreen(`/api/image/file/${m}`)} />
                                 </div>
                             )
                         }
@@ -69,7 +64,7 @@ export function Image({ contentIndex }: { contentIndex: number }) {
                 {/* Fullscreen image */}
                 {showFullscreen !== undefined &&
                     < div className="absolute top-0 left-0 size-full bg-surface">
-                        <img src={showFullscreen} crossOrigin="use-credentials" className="size-full object-contain" onClick={() => setShowFullscreen(undefined)} />
+                        <img src={showFullscreen} crossOrigin="use-credentials" className="size-full object-contain" onPointerDown={() => setShowFullscreen(undefined)} />
                     </div>
                 }
 

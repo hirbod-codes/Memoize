@@ -7,6 +7,7 @@ import { Plus } from "../../../assets/icons/Plus"
 import { Trash2 } from "../../../assets/icons/Trash2"
 import { AudioPlayer } from "./AudioPlayer"
 import { LeafContext } from "../../LeafManager"
+import { Button } from "../../Button"
 
 export function Audio({ contentIndex }: { contentIndex: number }) {
     const leafContext = useContext(LeafContext)
@@ -28,18 +29,14 @@ export function Audio({ contentIndex }: { contentIndex: number }) {
                     editing &&
                     <div className="flex flex-row items-center justify-between gap-2 p-2 *:p-2">
                         {/* Remove button */}
-                        <Ripple className="rounded-full bg-error text-on-error">
-                            <button onClick={() => leafContext.removeContents(contentIndex)}>
-                                <Trash2 />
-                            </button>
-                        </Ripple>
+                        <Button variant="text" isIcon color="error" onPointerDown={() => leafContext.removeContents(contentIndex)}>
+                            <Trash2 />
+                        </Button>
 
                         {/* Add button */}
-                        <Ripple className="rounded-full bg-success text-on-success">
-                            <button onClick={async () => setOpenAudioUploadModal(true)}>
-                                <Plus />
-                            </button>
-                        </Ripple>
+                        <Button variant="text" isIcon color="success" onPointerDown={async () => setOpenAudioUploadModal(true)}>
+                            <Plus />
+                        </Button>
                     </div>
                 }
 
@@ -52,11 +49,9 @@ export function Audio({ contentIndex }: { contentIndex: number }) {
                                     {
                                         editing &&
                                         <div className="absolute top-0 right-0">
-                                            <Ripple className="rounded-full bg-error text-on-error p-1">
-                                                <button onClick={async () => leafContext.removeContent(contentIndex, m)}>
-                                                    <SquareMinus className="size-4" />
-                                                </button>
-                                            </Ripple>
+                                            <Button variant="text" isIcon color="error" onPointerDown={async () => leafContext.removeContent(contentIndex, m)}>
+                                                <SquareMinus className="size-4" />
+                                            </Button>
                                         </div>
                                     }
 
