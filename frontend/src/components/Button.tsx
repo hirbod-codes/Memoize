@@ -2,7 +2,7 @@ import { useLayoutEffect, useState, type ButtonHTMLAttributes, type MouseEvent, 
 import { cn } from "../lib/utils";
 
 type ButtonVariant = 'filled' | 'elevated' | 'tonal' | 'outlined' | 'text' | 'elevated';
-type ColorPalette = 'primary' | 'secondary' | 'tertiary' | 'error' | 'surface' | 'on-surface' | 'success';
+type ColorPalette = 'primary' | 'primary-container' | 'secondary' | 'secondary-container' | 'tertiary' | 'error' | 'surface' | 'on-surface' | 'success' | 'warning';
 
 interface MaterialButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: ButtonVariant;
@@ -65,19 +65,18 @@ export function Button({ children, variant = 'filled', color = 'primary', icon, 
     `.trim();
 
     // Dynamic Tailwind mapping based on variant 
+    // type ColorPalette = 'primary' | 'primary-container' | 'secondary' | 'secondary-container' | 'tertiary' | 'error' | 'surface' | 'on-surface' | 'success' | 'warning';
     const variantStyles: Record<ButtonVariant, string> = {
-        filled: ` bg-${color} text-on-${color} shadow-sm hover:shadow-md focus-visible:ring-${color}`,
-        elevated: ` bg-surface-container-low text-${color} shadow-md hover:shadow-lg focus-visible:ring-${color} disabled:bg-on-surface/[0.12]`,
-        tonal: ` bg-${color}-container text-on-${color}-container hover:shadow-sm focus-visible:ring-${color}`,
-        outlined: ` bg-transparent text-${color} border border-${color} hover:bg-${color}/[0.08] focus-visible:ring-${color} focus-visible:border-${color} disabled:border-on-surface/[0.12] disabled:bg-transparent`,
-        text: ` bg-transparent text-${color} px-3 hover:bg-${color}/[0.08] focus-visible:ring-${color} disabled:bg-transparent`,
+        filled: `bg-${color} text-on-${color} shadow-sm hover:shadow-md focus-visible:ring-${color}`,
+        elevated: `bg-surface-container-low text-${color} shadow-md hover:shadow-lg focus-visible:ring-${color} disabled:bg-on-surface/[0.12]`,
+        tonal: `bg-${color}-container text-on-${color}-container hover:shadow-sm focus-visible:ring-${color}`,
+        outlined: `bg-transparent text-${color} border border-${color} hover:bg-${color}/[0.08] focus-visible:ring-${color} focus-visible:border-${color} disabled:border-on-surface/[0.12] disabled:bg-transparent`,
+        text: `bg-transparent text-${color} px-3 hover:bg-${color}/[0.08] focus-visible:ring-${color} disabled:bg-transparent`,
     };
 
     const iconPadding = icon && variant !== 'text' ? 'pl-4 pr-6' : '';
 
     const hasAction = onClick || onPointerDown || props.onMouseDown
-
-    console.log({ ripples });
 
     return (
         <button

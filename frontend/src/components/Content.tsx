@@ -8,6 +8,7 @@ import { LeafContext } from "./LeafManager";
 import { Ripple } from "./Ripple";
 import { Trash2 } from "../assets/icons/Trash2";
 import { Plus } from "../assets/icons/Plus";
+import { Button } from "./Button";
 
 export function Content({ contentIndex }: { contentIndex: number }) {
     const leafContext = useContext(LeafContext)
@@ -40,11 +41,9 @@ export function Content({ contentIndex }: { contentIndex: number }) {
                                                     {/* Delete button */}
                                                     {
                                                         editing &&
-                                                        <Ripple className="rounded-full text-error">
-                                                            <button onClick={async () => leafContext?.removeContents(contentIndex)}>
-                                                                <Trash2 />
-                                                            </button>
-                                                        </Ripple>
+                                                        <Button isIcon variant="text" color="error" onPointerDown={async () => leafContext?.removeContents(contentIndex)}>
+                                                            <Trash2 />
+                                                        </Button>
                                                     }
 
                                                     <div className="grow" />
@@ -58,11 +57,9 @@ export function Content({ contentIndex }: { contentIndex: number }) {
                                                             {/* Delete button */}
                                                             {
                                                                 editing &&
-                                                                <Ripple className="rounded-full text-error p-1">
-                                                                    <button onClick={async () => leafContext?.removeContent(contentIndex, v)}>
-                                                                        <SquareMinus />
-                                                                    </button>
-                                                                </Ripple>
+                                                                <Button isIcon variant="text" color="error" onPointerDown={async () => leafContext?.removeContent(contentIndex, v)}>
+                                                                    <SquareMinus className="size-4" />
+                                                                </Button>
                                                             }
                                                         </div>
                                                     )
@@ -71,27 +68,25 @@ export function Content({ contentIndex }: { contentIndex: number }) {
                                                 {/* Create content */}
                                                 {
                                                     editing &&
-                                                    <div key={values.length} className="flex flex-row items-center gap-2 p-1">
+                                                    <div key={values.length} className="flex flex-row items-center gap-2 p-1 w-full">
                                                         <input
-                                                            className="bg-surface rounded-lg border border-outline p-2"
+                                                            className="bg-surface rounded-lg border border-outline grow p-2"
                                                             value={newStringContent}
                                                             onChange={(e) => setNewStringContent(e.target.value)}
                                                         />
 
-                                                        <Ripple className="rounded-full text-success">
-                                                            <button onClick={async () => {
-                                                                let l = { ...leaf }
-                                                                l[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value.push(newStringContent)
+                                                        <Button isIcon variant="text" color="success" onPointerDown={async () => {
+                                                            let l = { ...leaf }
+                                                            l[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value.push(newStringContent)
 
-                                                                const result = await leafContext?.updateLeaf(l)
-                                                                if (result === false)
-                                                                    return
+                                                            const result = await leafContext?.updateLeaf(l)
+                                                            if (result === false)
+                                                                return
 
-                                                                leafContext.onLeafChange(l)
-                                                            }}>
-                                                                <Plus />
-                                                            </button>
-                                                        </Ripple>
+                                                            leafContext.onLeafChange(l)
+                                                        }}>
+                                                            <Plus />
+                                                        </Button>
                                                     </div>
                                                 }
                                             </div>

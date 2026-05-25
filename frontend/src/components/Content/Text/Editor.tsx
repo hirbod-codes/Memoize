@@ -1,4 +1,4 @@
-import { Editor as EditorType, EditorContent, useEditor, } from '@tiptap/react'
+import { EditorContent, useEditor, } from '@tiptap/react'
 
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -8,8 +8,9 @@ import CharacterCount from '@tiptap/extension-character-count'
 import TextAlign from '@tiptap/extension-text-align'
 import { Toolbar } from './Toolbar'
 import { LeafContext, type Content } from '../../LeafManager'
-import { useContext, useMemo } from 'react'
-import { debounce } from 'perfect-debounce'
+import { useContext, useState } from 'react'
+import { Button } from '../../Button'
+import { Save } from '../../../assets/icons/Save'
 
 export function Editor({ contentIndex, valueIndex, limit }: { contentIndex: number, valueIndex: number, limit?: number }) {
     const leafContext = useContext(LeafContext)
@@ -24,11 +25,28 @@ export function Editor({ contentIndex, valueIndex, limit }: { contentIndex: numb
     if (!content || content.type !== 'richText')
         return null
 
-    const debouncedUpdate = useMemo(() => debounce(async (editor: EditorType) => {
-        const json = editor.getJSON()
-        const jsonString = JSON.stringify(json)
+    const [saving, setSaving] = useState(false)
+    const [hasSaved, setHasSaved] = useState(true)
 
-        console.log(json)
+    const handleSave = async () => {
+        if (saving)
+            return
+
+        setSaving(true)
+        try {
+            if (await save())
+                setHasSaved(true)
+
+            setSaving(false)
+        } catch (error) {
+            setSaving(false)
+        }
+    }
+
+    const save = async () => {
+        console.log(jsonContent)
+
+        const jsonString = JSON.stringify(jsonContent)
 
         leaf[isTerm ? 'termContents' : 'definitionContents'][contentIndex].value[valueIndex] = jsonString
 
@@ -38,7 +56,11 @@ export function Editor({ contentIndex, valueIndex, limit }: { contentIndex: numb
             return false
 
         leafContext.onLeafChange(leaf)
-    }, 1000), [])
+
+        return true
+    }
+
+    const [jsonContent, setJsonContent] = useState<any>(undefined)
 
     const editor = useEditor({
         editable,
@@ -73,9 +95,9 @@ export function Editor({ contentIndex, valueIndex, limit }: { contentIndex: numb
             },
         },
 
-        onUpdate: async ({ editor }) => {
-            console.log('editor update');
-            debouncedUpdate(editor)
+        onUpdate: ({ editor }) => {
+            setHasSaved(false)
+            setJsonContent(editor.getJSON())
         },
     }, [editable, content.value[valueIndex]])
 
@@ -84,13 +106,26 @@ export function Editor({ contentIndex, valueIndex, limit }: { contentIndex: numb
 
     return (
         <div className="w-full p-2 flex flex-col gap-1">
-            <Toolbar editor={editor} />
+
+            {
+                editor.isEditable &&
+                <Toolbar editor={editor} />
+            }
 
             <EditorContent className='border border-outline rounded-lg p-2' editor={editor} />
 
-            <div className="border border-outline rounded-lg p-2">
-                Character count:{' '}
-                {editor.storage.characterCount.characters()}
+            <div className="flex flex-row items-center justify-between text-current">
+                <div className="border border-outline rounded-lg p-2">
+                    Character count:{' '}
+                    {editor.storage.characterCount.characters()}
+                </div>
+
+                {
+                    editor.isEditable &&
+                    <Button isIcon variant='text' color={hasSaved ? 'primary' : 'warning'} className='rounded-md' onPointerDown={handleSave}>
+                        <Save />
+                    </Button>
+                }
             </div>
         </div>
     )

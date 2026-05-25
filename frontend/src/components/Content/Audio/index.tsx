@@ -1,6 +1,5 @@
 import { useContext, useState } from "react"
 import { SquareMinus } from "../../../assets/icons/SquareMinus"
-import { Ripple } from "../../Ripple"
 import { Slide } from "../../Slide"
 import { Upload } from "../Upload"
 import { Plus } from "../../../assets/icons/Plus"
@@ -44,7 +43,7 @@ export function Audio({ contentIndex }: { contentIndex: number }) {
                     <div className="w-fit p-2 flex flex-row items-center gap-2">
                         {
                             audioIds.map((m, i) =>
-                                <div key={i} className="w-[4cm] rounded-lg border border-outline relative">
+                                <div key={i} className="w-[5cm] rounded-lg relative">
                                     {/* Remove button */}
                                     {
                                         editing &&
@@ -55,7 +54,7 @@ export function Audio({ contentIndex }: { contentIndex: number }) {
                                         </div>
                                     }
 
-                                    <div className="h-96">
+                                    <div className="h-96 bg-surface-container-highest rounded-lg">
                                         <AudioPlayer audioId={m} />
                                     </div>
                                 </div>

@@ -3,7 +3,6 @@ import { Plus } from "../../../assets/icons/Plus";
 import { SquareMinus } from "../../../assets/icons/SquareMinus";
 import { Trash2 } from "../../../assets/icons/Trash2";
 import { LeafContext } from "../../LeafManager";
-import { Ripple } from "../../Ripple";
 import { Editor } from "./Editor";
 import { Button } from "../../Button";
 
@@ -56,7 +55,7 @@ export default function Text({ contentIndex }: { contentIndex: number }) {
                     </div>
                 }
 
-                <div className="size-full p-2 flex flex-col gap-4 rounded-lg border border-outline">
+                <div className="size-full p-2 flex flex-col gap-4 rounded-lg">
                     {
                         jsonStrings.map((m, i) =>
                             <div key={i} className="w-full rounded-lg border border-outline relative">

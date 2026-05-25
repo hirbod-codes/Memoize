@@ -1,7 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { Plus } from "../../../assets/icons/Plus";
 import { Trash2 } from "../../../assets/icons/Trash2";
-import { Ripple } from "../../Ripple";
 import { Slide } from "../../Slide";
 import { Upload } from "../Upload";
 import { LeafContext } from "../../LeafManager";

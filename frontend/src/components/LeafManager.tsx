@@ -1,6 +1,5 @@
 import { createContext, useEffect, useState } from "react"
 import { Content } from "./Content"
-import { Ripple } from "./Ripple"
 import { Trash2 } from "../assets/icons/Trash2"
 import { useNotification } from "../contexts/NotificationContext"
 import { useAuth } from "../contexts/AuthContext"

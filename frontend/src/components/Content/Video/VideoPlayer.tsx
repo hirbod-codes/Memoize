@@ -2,7 +2,6 @@ import { useContext, useEffect, useState } from "react"
 import { useAuth } from "../../../contexts/AuthContext"
 import { useNotification } from "../../../contexts/NotificationContext"
 import { LeafContext } from "../../LeafManager"
-import { Ripple } from "../../Ripple"
 import { SquareMinus } from "../../../assets/icons/SquareMinus"
 import { Button } from "../../Button"
 

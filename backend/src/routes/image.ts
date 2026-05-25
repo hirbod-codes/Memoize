@@ -49,20 +49,20 @@ router.get('/info/', auth, async (req, res) => {
         console.log('/info')
 
         console.log('Validation...')
-        let imageId: string | undefined = undefined
+        let id: string | undefined = undefined
         try {
-            imageId = await string().objectIdString().required().label('Image id').validate(req.query.imageId?.toString())
+            id = await string().objectIdString().required().label('Image id').validate(req.query.id?.toString())
         } catch (err) {
             console.error(err)
             if (err instanceof ValidationError)
                 return res.status(400).json({ errors: err.errors })
             return res.status(400).json({ message: 'Invalid Tree node' });
         }
-        console.log({ imageId })
+        console.log({ id })
 
         const imageRepository = new ImageRepository()
 
-        let result = await imageRepository.getFile(imageId)
+        let result = await imageRepository.getFile(id)
 
         console.log({ result })
 

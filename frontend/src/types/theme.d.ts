@@ -101,6 +101,14 @@ export type ThemeColors = {
     "onSuccessFixed": string;
     "successFixedDim": string;
     "onSuccessFixedVariant": string;
+    "warning": string;
+    "onWarning": string;
+    "warningContainer": string;
+    "onWarningContainer": string;
+    "warningFixed": string;
+    "onWarningFixed": string;
+    "warningFixedDim": string;
+    "onWarningFixedVariant": string;
     "background": string;
     "onBackground": string;
     "surface": string;

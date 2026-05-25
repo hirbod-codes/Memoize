@@ -12,7 +12,7 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
 
     const [audioFiles, setAudioFiles] = useState<FileList | null>(null);
     const [progress, setProgress] = useState(0)
-    const [title, setTitle] = useState('')
+    const [titles, setTitles] = useState<string[]>([])
 
     const { notify } = useNotification()
 
@@ -23,6 +23,21 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
         }
         if (event.target.files.length > 0) {
             setAudioFiles(event.target.files);
+
+            let ts: string[] = []
+            for (let i = 0; i < event.target.files.length; i++) {
+                const file = event.target.files.item(i);
+
+                let title = ''
+                if (!file)
+                    continue
+                else
+                    title = file.name.split('.')[0]
+
+                ts[i] = title
+            }
+
+            setTitles(ts)
             setProgress(0)
         }
     }
@@ -51,10 +66,13 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
 
         let ids: string[] = []
         for (let i = 0; i < audioFiles.length; i++) {
-            const file = audioFiles[i];
+            const file = audioFiles.item(i);
+
+            if (!file)
+                continue
 
             try {
-                let result = await jsonAuthFetch(`/api/${contentType}/?fileName=${file.name}&title=${title}`, { method: 'POST', body: file, headers: { 'Content-Type': file.type } })
+                let result = await jsonAuthFetch(`/api/${contentType}/?fileName=${file.name}&title=${titles[i]}`, { method: 'POST', body: file, headers: { 'Content-Type': file.type } })
                 if (result === false || !result.ok) {
                     notify('failed to upload audio file', 3000, 'error')
                     return false
@@ -108,13 +126,6 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
                 <div className="h-1 bg-success rounded transform-gpu transition-all" style={{ width: `${progress}%` }} />
             </div>
 
-            <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="border border-outline rounded-lg p-2 w-full bg-surface-variant text-on-surface-variant"
-                placeholder='Title...'
-            />
-
             <input type="file" multiple={true} className="hidden" accept={type === 'audioId' ? "audio/*" : (type === 'imageId' ? 'image/*' : (type === 'videoId' ? 'video/*' : undefined))} onChange={handleFileChange} id="audio-upload" />
             <Button color='on-surface' variant="outlined" className="w-full rounded-lg">
                 <label
@@ -127,15 +138,21 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
                 </label>
             </Button>
 
-            <Button variant="outlined" color="success" className="w-full  rounded-lg" disabled={!audioFiles || audioFiles.length === 0} onPointerDown={async () => {
-                const data = await massUpload();
-                if (data === false)
-                    return
+            <Button
+                variant="outlined"
+                color="success"
+                className="w-full  rounded-lg"
+                disabled={!audioFiles || audioFiles.length === 0}
+                onPointerDown={async () => {
+                    const data = await massUpload();
+                    if (data === false)
+                        return
 
-                onUpload?.(data)
+                    onUpload?.(data)
 
-                onClose?.()
-            }}>
+                    onClose?.()
+                }}
+            >
                 Upload
             </Button>
 
@@ -144,14 +161,22 @@ export function Upload({ type, onUpload, onClose }: { type: Types, onUpload?: (i
             <div className="flex flex-col gap-2 w-full">
                 {
                     inputs.map((v, i) =>
-                        <div key={i} className={`flex flex-row items-center py-2 ${(i === inputs.length - 1 ? '' : 'border-b border-outline')}`}>
-                            <div>
-                                {v.name}
+                        <div key={i} className="flex flex-col gap-1">
+                            <div className={`flex flex-row items-center py-2 ${(i === inputs.length - 1 ? '' : 'border-b border-outline')}`}>
+                                <div>
+                                    {v.name}
+                                </div>
+                                <div className="grow" />
+                                <div>
+                                    {(v.size / 1000_000).toFixed(2)}Mb
+                                </div>
                             </div>
-                            <div className="grow" />
-                            <div>
-                                {(v.size / 1000_000).toFixed(2)}Mb
-                            </div>
+
+                            <input
+                                value={titles[i] ?? ''}
+                                onChange={e => setTitles(titles.map((t, ii) => { if (i !== ii) return t; else return e.target.value }))}
+                                className="border bg-surface text-on-surface p-2 rounded-md"
+                            />
                         </div>
                     )
                 }

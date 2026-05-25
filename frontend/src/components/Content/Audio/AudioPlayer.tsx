@@ -129,7 +129,7 @@ export function AudioPlayer({ audioId }: { audioId: string }) {
     }
 
     return (
-        <div className="size-full rounded-t-lg *:p-3 overflow-hidden relative" ref={bgRef} style={{ background: `linear-gradient(to bottom, ${dominantColor}, ${mode === 'dark' ? '#000000' : '#ffffff'})` }}>
+        <div className="size-full *:p-3 overflow-hidden relative" ref={bgRef} style={{ background: `linear-gradient(to bottom, ${dominantColor}, ${mode === 'dark' ? '#000000' : '#ffffff'})` }}>
             <motion.div
                 initial={{ y: "0vh" }}
                 animate={{ y: animateUp ? "-100vh" : "0vh" }}
