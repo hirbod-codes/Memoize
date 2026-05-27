@@ -63,9 +63,9 @@ export const meili = new Meilisearch({
     apiKey: meilisearchKey
 });
 
-setupSearch();
-
 (async () => {
+    await setupSearch();
+
     if (!await tryAndWait(async () => {
         MongoDB.config = dbConfig
 

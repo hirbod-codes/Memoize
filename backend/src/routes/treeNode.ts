@@ -40,14 +40,19 @@ router.post('/', async (req, res) => {
 
         console.log("Inserting new meili treeNode...");
         const index = meili.index(MEILI_TREE_NODE)
-        index.addDocuments([{
-            id: insertTreeNodeResult.insertedId.toString(),
+        const task = await index.addDocuments([{
+            _id: insertTreeNodeResult.insertedId.toString(),
             userId: (req as any).user.userId,
             parentId: treeNode.parentId ?? null,
             title: treeNode.title,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         }])
+        const result = await index.tasks.waitForTask(task.taskUid)
+        if (result.status !== 'succeeded') {
+            console.error(result)
+            return res.status(500).send()
+        }
 
         res.status(201).json({ id: insertTreeNodeResult.insertedId.toString() })
         console.log('------------end------------')
@@ -151,7 +156,7 @@ router.get('/list', async (req, res) => {
             search = await string().optional().label('Search input').validate(req.query.search?.toString())
             parentId = await string().optional().objectIdString().label('Parent folder id').validate(req.query.parentId?.toString())
             let l: number = await number().required().integer().min(0).max(100).label('Limit').validate(req.query.limit?.toString())
-            let s = await number().optional().label('Skip').validate(req.query.skip?.toString())
+            let s = await number().optional().integer().min(0).label('Skip').validate(req.query.skip?.toString())
             console.log({ l, skip, search })
 
             limit = typeof l === 'string' ? Number.parseInt(l!, 10) : l
@@ -182,7 +187,7 @@ router.get('/list', async (req, res) => {
             })
             console.log(JSON.stringify(result, null, 2))
 
-            ids = result.hits.map(x => x.id)
+            ids = result.hits.map(x => x._id)
         }
         console.log({ ids })
 
@@ -228,12 +233,28 @@ router.patch('/', async (req, res) => {
         const userId = (req as any).user.userId
 
         console.log("Replacing new treeNode...");
-        const insertTreeNodeResult = await treeNodeRepository.replaceForUser(treeNode, userId)
-        console.log("Insert result", insertTreeNodeResult);
-        if (!insertTreeNodeResult.acknowledged)
+        const updateTreeNodeResult = await treeNodeRepository.replaceForUser(treeNode, userId)
+        console.log("Insert result", updateTreeNodeResult);
+        if (!updateTreeNodeResult.acknowledged)
             return res.status(500).send()
-        if (insertTreeNodeResult.acknowledged && insertTreeNodeResult.matchedCount === 0)
+        if (updateTreeNodeResult.acknowledged && updateTreeNodeResult.matchedCount === 0)
             return res.status(403).send()
+
+        if (treeNode.title) {
+            console.log("Updating title in meilisearch...");
+
+            const index = meili.index(MEILI_TREE_NODE)
+            const task = await index.updateDocuments([{
+                _id: treeNode._id,
+                title: treeNode.title,
+                updatedAt: new Date().toISOString()
+            }])
+            const result = await index.tasks.waitForTask(task.taskUid)
+            if (result.status !== 'succeeded') {
+                console.error(result)
+                return res.status(500).send()
+            }
+        }
 
         res.status(200).json({ id: treeNode._id!.toString() })
         console.log('------------end------------')
@@ -265,7 +286,12 @@ router.delete('/', async (req, res) => {
             return res.status(500).send()
 
         const index = meili.index(MEILI_TREE_NODE)
-        index.deleteDocument(treeNodeId)
+        const task = await index.deleteDocument(treeNodeId)
+        const result = await index.tasks.waitForTask(task.taskUid)
+        if (result.status !== 'succeeded') {
+            console.error(result)
+            return res.status(500).send()
+        }
 
         res.status(200).send()
         console.log('------------end------------')

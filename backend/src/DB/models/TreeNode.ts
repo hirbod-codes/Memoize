@@ -6,20 +6,20 @@ export const collectionName = 'treeNode'
 export const schemaVersion = 'v1.0.0'
 
 const post = {
-    parentId: likeObjectId.optional().label('Parent id'),
+    parentId: string().objectIdString().optional().label('Parent id'),
     title: string().required().label('Title'),
 }
 
 const update = {
-    _id: likeObjectId.required().label('Id'),
+    _id: string().objectIdString().required().label('Id'),
     title: string().optional().label('Title'),
     treeNodeIds: array().optional().min(0).of(string().required()).label('Tree node ids'),
     leafIds: array().optional().nonNullable().min(0).of(string().required()).label('Leaf ids'),
 }
 
 const create = {
-    userId: likeObjectId.required().label('User'),
-    parentId: likeObjectId.optional().label('Parent id'),
+    userId: string().objectIdString().required().label('User'),
+    parentId: string().objectIdString().optional().label('Parent id'),
     title: string().required().label('Title'),
     treeNodeIds: array().required().min(0).of(string().required()).label('Tree node ids'),
     leafIds: array().required().min(0).of(string().required()).label('Leaf ids'),
@@ -33,8 +33,8 @@ export const treeNodeSchema = object().required().shape(create).shape({
     schemaVersion: string().optional().min(6).max(20).label('Schema version'),
     _id: likeObjectId.optional().label('Id'),
 
-    userId: likeObjectId.required().label('User id'),
-    parentId: likeObjectId.optional().label('Parent id'),
+    userId: string().objectIdString().required().label('User id'),
+    parentId: string().objectIdString().optional().label('Parent id'),
     title: string().required().label('Title'),
 
     treeNodeIds: array().required().min(0).of(string().required()).label('Tree node ids'),

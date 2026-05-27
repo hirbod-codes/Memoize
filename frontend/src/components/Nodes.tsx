@@ -93,11 +93,11 @@ export function Nodes() {
 
     }
 
-    const getPaginated = async (reset: boolean) => {
+    const getPaginated = async (isRoot: boolean) => {
         try {
             let docs: any[]
-            const lastId = !reset ? skip.current : undefined
-            const parentId = !reset && parentTreeNode?._id ? parentTreeNode._id : undefined
+            const lastId = !isRoot ? skip.current : undefined
+            const parentId = !isRoot && parentTreeNode?._id ? parentTreeNode._id : undefined
 
             addWaiting(`fetch-${filter === 'folder' ? 'treeNode' : 'leaf'}`)
             const r = await jsonAuthFetch(`/api/${!parentTreeNode || filter === 'folder' ? 'treeNode' : 'leaf'}/list/?limit=${LIMIT}${lastId ? `&lastId=${lastId}` : ``}${!search || search === '' ? '' : '&search=' + search}${parentId ? `&parentId=${parentId}` : ''}`)
@@ -294,6 +294,8 @@ export function Nodes() {
             getPaginated(false)
     }, [parentTreeNode])
 
+    const isFetching = waitingFor.includes('fetch-treeNode') || waitingFor.includes('fetch-leaf')
+
     // Pagination
     const [search, setSearch] = useState('')
     const [hasMore, setHasMore] = useState(true)
@@ -310,7 +312,7 @@ export function Nodes() {
                 setLeafs([])
                 skip.current = null
                 setHasMore(true)
-                getPaginated(true)
+                getPaginated(search === '' && !parentTreeNode ? true : false)
             }, 500)
 
             return () => clearTimeout(t)
@@ -321,7 +323,7 @@ export function Nodes() {
             entries => {
                 const first = entries[0];
 
-                if (first.isIntersecting && hasMore && !waitingFor.includes('fetch-treeNode'))
+                if (first.isIntersecting && hasMore && !isFetching)
                     getPaginated(false)
             },
             {
@@ -338,7 +340,7 @@ export function Nodes() {
         return () => {
             if (current) observer.unobserve(current);
         };
-    }, [hasMore, waitingFor]);
+    }, [hasMore, isFetching]);
 
     console.log({ locationQueue, treeNodes, leafs, parentTreeNode, showingLeaf, newParentTitle, newLeafTitle })
 
@@ -346,9 +348,14 @@ export function Nodes() {
         <div className="size-full relative p-4">
             <div className="size-full flex flex-col gap-2 items-center">
 
+                {/* Search */}
                 <div className="w-full flex flex-row items-center gap-2 bg-surface-container text-on-surface px-2 py-1 rounded-lg">
                     <Button isIcon variant="text" color="primary">
-                        <Search />
+                        {
+                            isFetching
+                                ? <CircularProgress size={20} strokeWidth={1.5} />
+                                : <Search />
+                        }
                     </Button>
 
                     <input
@@ -565,7 +572,7 @@ export function Nodes() {
                                 {
                                     waitingFor.includes('create-treeNode')
                                         ? <CircularProgress size={20} strokeWidth={1} className="text-success" />
-                                        : [<Plus className="inline" />, 'Add']
+                                        : [<Plus className="inline" key={0} />, <span key={1}>Add</span>]
                                 }
                             </Button>
 
@@ -606,7 +613,7 @@ export function Nodes() {
                                 {
                                     waitingFor.includes('create-leaf')
                                         ? <CircularProgress size={20} strokeWidth={1} className="text-success" />
-                                        : [<Plus className="inline" />, 'Add']
+                                        : [<Plus className="inline" key={0} />, <span key={1}>Add</span>]
                                 }
                             </Button>
 

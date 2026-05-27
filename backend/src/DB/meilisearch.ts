@@ -4,7 +4,17 @@ export const MEILI_TREE_NODE = 'tree_node'
 export const MEILI_LEAF = 'leaf'
 
 export async function setupSearch() {
-    await meili.deleteIndex(MEILI_TREE_NODE)
+    console.log('Meilisearch setup...')
+
+    console.log('Create MEILI_TREE_NODE index...')
+    try {
+        await meili.createIndex(MEILI_TREE_NODE, { primaryKey: '_id' })
+    } catch (err) {
+        console.log('Index probably already exists')
+        console.error(err);
+    }
+
+    console.log('Prepare MEILI_TREE_NODE index...')
     const treeNodeIndex = meili.index(MEILI_TREE_NODE)
     await treeNodeIndex.updateFilterableAttributes([
         'userId',
@@ -19,7 +29,15 @@ export async function setupSearch() {
         'title'
     ])
 
-    await meili.deleteIndex(MEILI_LEAF)
+    console.log('Create MEILI_LEAF index...')
+    try {
+        await meili.createIndex(MEILI_LEAF, { primaryKey: '_id' })
+    } catch (err) {
+        console.log('Index probably already exists')
+        console.error(err);
+    }
+
+    console.log('Prepare MEILI_LEAF index...')
     const leafIndex = meili.index(MEILI_LEAF)
     await leafIndex.updateFilterableAttributes([
         'userId',
@@ -33,5 +51,4 @@ export async function setupSearch() {
     await leafIndex.updateSearchableAttributes([
         'title'
     ])
-
 }
