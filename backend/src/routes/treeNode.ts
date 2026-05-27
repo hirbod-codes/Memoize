@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.use(auth)
 
-router.post('/', async (req, res) => {`
+router.post('/', async (req, res) => {
     try {
         console.log('/api/treeNode', 'POST')
 
@@ -55,7 +55,7 @@ router.post('/', async (req, res) => {`
         console.error(err);
         res.status(500).json({ message: 'Internal server error' });
     }
-`})
+})
 
 router.get('/', async (req, res) => {
     try {
@@ -189,7 +189,7 @@ router.get('/list', async (req, res) => {
         console.log('Fetching...')
         const treeNodeRepository = new TreeNodeRepository()
         let result
-        if (ids.length > 0)
+        if (search?.trim())
             result = await treeNodeRepository.getManyForUser(ids, userId)
         else
             if (parentId)
