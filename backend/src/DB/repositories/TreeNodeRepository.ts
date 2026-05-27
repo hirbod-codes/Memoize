@@ -98,6 +98,7 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
         let filter: Filter<TreeNode> = { userId, parentId: undefined }
         if (search)
             filter['$text'] = { '$search': search }
+        console.log({ filter })
         return await TreeNodeRepository.collection!.find(filter, { session: this.session }).sort({ _id: -1 }).skip(skip).limit(limit).toArray()
     }
 
