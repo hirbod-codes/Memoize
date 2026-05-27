@@ -9,6 +9,6 @@ FROM node:24-alpine AS production
 WORKDIR /app
 RUN npm install -g vite
 COPY --from=build /app/dist ./dist
-EXPOSE 5173
+EXPOSE 5174
 
 CMD ["vite", "preview", "--host", "0.0.0.0"]

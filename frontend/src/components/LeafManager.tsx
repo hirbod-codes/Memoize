@@ -156,8 +156,8 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                     :
                     <div className="flex flex-col items-start gap-2 p-2 bg-surface-container-high text-on-surface rounded-lg overflow-auto max-h-full" onPointerDown={() => (!isTerm)}>
                         <div className="flex flex-row w-full items-center p-2">
-                            <Button isIcon variant="text" color="primary" onPointerDown={() => setIsTerm(!isTerm)}>
-                                <ArrowRightLeft />
+                            <Button variant="text" color="primary" className="rounded-lg" onPointerDown={() => setIsTerm(!isTerm)}>
+                                <ArrowRightLeft className="inline" /> Flip
                             </Button>
                             <div className="grow" />
 

@@ -23,3 +23,8 @@ run (for Windows)
 mkcert.exe -install
 mkcert.exe localhost 127.0.0.1 ::1
 ```
+
+## To Do
+
+1. Have contents visible when editing vertically.
+2. Make contents sharable between leafs.
