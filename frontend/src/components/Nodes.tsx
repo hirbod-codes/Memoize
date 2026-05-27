@@ -301,12 +301,15 @@ export function Nodes() {
     const [hasMore, setHasMore] = useState(true)
     const skip = useRef<number | null>(null)
     const loaderRef = useRef<HTMLDivElement | null>(null);
+    const noSearch = useRef(false)
     useEffect(() => {
         skip.current = null
         getPaginated(false)
     }, [filter])
     useEffect(() => {
-        if (search || search === '') {
+        if (noSearch.current)
+            noSearch.current = false
+        else if (search || search === '') {
             const t = setTimeout(() => {
                 setTreeNodes([])
                 setLeafs([])
@@ -372,6 +375,8 @@ export function Nodes() {
                         {
                             locationQueue.length > 1 &&
                             <Button variant="text" color="on-surface" isIcon disabled={locationQueue.length <= 1 || waitingFor.includes('fetch-treeNode') || waitingFor.includes('fetch-parentTreeNode')} onPointerDown={async () => {
+                                noSearch.current = true
+                                setSearch('')
                                 setLeafs([])
                                 setLocationQueue(prev => { prev.pop(); return [...prev]; })
                             }}>
