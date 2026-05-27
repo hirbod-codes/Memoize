@@ -197,20 +197,20 @@ router.get('/info', auth, async (req, res) => {
         console.log('/info')
 
         console.log('Validation...')
-        let videoId: string | undefined = undefined
+        let id: string | undefined = undefined
         try {
-            videoId = await string().objectIdString().required().label('Video id').validate(req.query.videoId?.toString())
+            id = await string().objectIdString().required().label('Video id').validate(req.query.id?.toString())
         } catch (err) {
             console.error(err)
             if (err instanceof ValidationError)
                 return res.status(400).json({ errors: err.errors })
             return res.status(400).json({ message: 'Invalid Tree node' });
         }
-        console.log({ videoId })
+        console.log({ id })
 
         const videoRepository = new VideoRepository()
 
-        let result = (await videoRepository.getForUser(videoId, (req as any).user.userId))
+        let result = (await videoRepository.getForUser(id, (req as any).user.userId))
         console.log({ result })
         if (!result)
             return res.status(404).send()

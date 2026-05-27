@@ -3,9 +3,11 @@ import { likeObjectId } from '../DB/common_schemas';
 import { auth } from '../middlewares/auth';
 import { Leaf, LeafPost, leafPostSchema, LeafUpdate, leafUpdateSchema } from '../DB/models/Leaf';
 import LeafRepository from '../DB/repositories/LeafRepository';
-import { array, string, ValidationError } from 'yup';
+import { array, number, string, ValidationError } from 'yup';
 import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
 import { MongoDB } from '../DB/mongodb';
+import { meili } from '..';
+import { MEILI_LEAF } from '../DB/meilisearch';
 
 const router = express.Router();
 
@@ -39,7 +41,7 @@ router.post('/', async (req, res) => {
 
         console.log("Authorize...")
         const userId = (req as any).user.userId
-        const treeNode = await treeNodeRepository.getForUser(leaf.treeNodeId.toString(), userId)
+        const treeNode = await treeNodeRepository.getForUser(leaf.treeNodeId, userId)
         if (!treeNode)
             return res.status(403).send()
 
@@ -48,6 +50,16 @@ router.post('/', async (req, res) => {
         console.log("Insert result", insertLeafResult)
         if (!insertLeafResult.acknowledged)
             return res.status(500).send()
+
+        const index = meili.index(MEILI_LEAF)
+        index.addDocuments([{
+            id: insertLeafResult.insertedId.toString(),
+            userId: (req as any).user.userId,
+            treeNodeId: leaf.treeNodeId,
+            title: treeNode.title,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        }])
 
         await db.commitTransaction()
 
@@ -99,6 +111,65 @@ router.get('/', async (req, res) => {
         console.log('------------end------------')
     } catch (err) {
         console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+})
+
+router.get('/list', async (req, res) => {
+    try {
+        console.log('/api/leaf/list/')
+
+        console.log('Validation...')
+        let search: string | undefined, limit: number, skip: number, parentId: string | undefined
+        try {
+            search = await string().optional().label('Search input').validate(req.query.search?.toString())
+            parentId = await string().required().objectIdString().label('Parent folder id').validate(req.query.parentId?.toString())
+            let l: number = await number().required().integer().min(0).max(100).label('Limit').validate(req.query.limit?.toString())
+            let s: number = await number().required().integer().min(0).label('Limit').validate(req.query.skip?.toString())
+            console.log({ l, s, search })
+
+            limit = typeof l === 'string' ? Number.parseInt(l!, 10) : l
+            skip = typeof s === 'string' ? Number.parseInt(s!, 10) : s
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ message: 'Invalid Tree node ids' });
+        }
+        console.log({ limit, skip, search })
+
+        const userId = (req as any).user.userId
+
+        let ids: string[] = []
+        if (search?.trim()) {
+            const index = meili.index(MEILI_LEAF)
+
+            const result = await index.search(search, {
+                filter: [
+                    `userId = "${userId}"`,
+                    `treeNodeId = "${parentId}"`
+                ],
+                limit,
+                offset: skip
+            })
+
+            ids = result.hits.map(x => x.id)
+        }
+
+        console.log('Fetching...')
+        const leafRepository = new LeafRepository()
+        let result
+        if (ids.length > 0)
+            result = await leafRepository.getManyForUserByParentTreeNodeId(ids, parentId, userId)
+        else
+            result = await leafRepository.getForUserPaginated((req as any).user.userId, parentId, limit, skip, search)
+
+        res.status(200).json(result)
+
+        console.log('------------end------------')
+
+    } catch (err) {
+        console.error(err)
         res.status(500).json({ message: 'Internal server error' });
     }
 })
@@ -158,8 +229,11 @@ router.delete('/', async (req, res) => {
         console.log("Deleting leaf...");
         const leafRepository = new LeafRepository()
         const leaf = await leafRepository.delete(id)
-        if (!leaf.acknowledged)
+        if (!leaf.acknowledged || leaf.deletedCount === 0)
             return res.status(500).send()
+
+        const index = meili.index(MEILI_LEAF)
+        index.deleteDocument(id)
 
         res.status(200).send()
         console.log('------------end------------')

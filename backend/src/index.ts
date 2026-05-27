@@ -6,6 +6,7 @@ import express from 'express';
 import https from 'https'
 import fs from 'fs'
 import dotenv from 'dotenv';
+import { Meilisearch } from 'meilisearch'
 import { getBooleanEnv, getIntegerEnv, getStringEnv, tryAndWait } from './utils';
 import { MongoDB } from './DB/mongodb';
 import { UserRepository } from './DB/repositories/UserRepository';
@@ -29,6 +30,7 @@ import { videoRoutes } from './routes/video';
 import VideoRepository from './DB/repositories/VideoRepository';
 import { ThumbnailRepository } from './DB/repositories/ThumbnailRepository';
 import { CoverArtRepository } from './DB/repositories/CoverArtRepository';
+import { setupSearch } from './DB/meilisearch';
 
 dotenv.config({ debug: process.env.DEBUG !== undefined ? Boolean(process.env.DEBUG) : undefined })
 
@@ -42,6 +44,10 @@ export const accessTokenSecret = getStringEnv('ACCESS_TOKEN_SECRET', 'The access
 export const refreshTokenSecret = getStringEnv('REFRESH_TOKEN_SECRET', 'The refresh token secret environment variable is not provided')
 export const allowedOrigins = getStringEnv('ALLOWED_ORIGINS', 'The Allowed origins environment variable is not provided')!
 
+export const meilisearchKey = getStringEnv('MEILISEARCH_KEY', 'The Allowed origins environment variable is not provided')!
+export const meilisearchHost = getStringEnv('MEILISEARCH_HOST', 'The Allowed origins environment variable is not provided')!
+export const meilisearchPort = getIntegerEnv('MEILISEARCH_PORT', 'The Allowed origins environment variable is not provided')!
+
 export const dbConfig = {
     databaseName: getStringEnv('DB_DATABASE_NAME', 'The Db database name environment variable is not provided'),
     supportsTransaction: getBooleanEnv('DB_SUPPORTS_TRANSACTION', 'The Db supports transaction environment variable is not provided'),
@@ -51,6 +57,13 @@ export const dbConfig = {
         password: getStringEnv('MONGODB_PASSWORD', 'The Mongodb password environment variable is not provided'),
     }
 };
+
+export const meili = new Meilisearch({
+    host: meilisearchHost + ':' + meilisearchPort.toString(),
+    apiKey: meilisearchKey
+});
+
+setupSearch();
 
 (async () => {
     if (!await tryAndWait(async () => {

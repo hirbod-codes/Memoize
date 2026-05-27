@@ -1,4 +1,4 @@
-import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId } from 'mongodb';
+import { ClientSession, Collection, Db, DeleteResult, Filter, InsertOneResult, ObjectId } from 'mongodb';
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
@@ -31,8 +31,8 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
 
         const indexes = await db.collection(collectionName).indexes()
 
-        if (indexes.find(i => i.name === 'title') === undefined)
-            await db.createIndex(collectionName, { title: 1 }, { unique: true, name: 'title' })
+        if (indexes.find(i => i.name === 'text-title') === undefined)
+            await db.createIndex(collectionName, { title: 'text' }, { name: 'text-title' })
 
         if (indexes.find(i => i.name === 'userId') === undefined)
             await db.createIndex(collectionName, { userId: 1 }, { name: 'userId' })
@@ -70,6 +70,10 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
         return await LeafRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
 
+    async getManyForUserByParentTreeNodeId(leafIds: string[], parentTreeNodeId: string, userId: string) {
+        return await LeafRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, treeNodeId: parentTreeNodeId, userId }, { session: this.session }).toArray()
+    }
+
     async getForUserByParentTreeNode(parentTreeNodeId: string, userId: string) {
         return await LeafRepository.collection!.find({ treeNodeId: parentTreeNodeId, userId }, { session: this.session }).toArray()
     }
@@ -88,6 +92,13 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
 
     async audioIdExistsFrom(audioId: string, fromTsMs: number) {
         return (await LeafRepository.collection!.countDocuments({ $or: [{ definitionContents: { $elemMatch: { type: 'audioId', value: audioId } }, updatedAt: { $gte: fromTsMs } }, { termContents: { $elemMatch: { type: 'audioId', value: audioId } }, updatedAt: { $gte: fromTsMs } }] })) > 0
+    }
+
+    async getForUserPaginated(userId: string, parentId: string, limit: number, skip: number, search?: string) {
+        let filter: Filter<Leaf> = { userId, treeNodeId: parentId }
+        if (search)
+            filter['$text'] = { '$search': search }
+        return await LeafRepository.collection!.find(filter, { session: this.session }).sort({ _id: -1 }).skip(skip).limit(limit).toArray()
     }
 
     async replace(leafArg: LeafUpdate) {

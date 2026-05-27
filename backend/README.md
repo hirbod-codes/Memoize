@@ -72,4 +72,15 @@ docker run -d \
     -e ME_CONFIG_MONGODB_ADMINPASSWORD=strongpassword \
     -e ME_CONFIG_MONGODB_SERVER=mongo \
     mongo-express:latest
+
+docker run -d \
+    --name meilisearch \
+    -p 7700:7700 \
+    -e MEILI_MASTER_KEY=supersecret \
+    -e MEILI_NO_ANALYTICS=true \
+    getmeili/meilisearch:v1
+```
+
+```bash
+openssl rand -base64 64
 ```

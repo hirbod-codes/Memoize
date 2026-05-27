@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import { useNotification } from "../contexts/NotificationContext"
 import { ChevronLeft } from "../assets/icons/ChevronLeft"
@@ -11,6 +11,8 @@ import { X } from "../assets/icons/X"
 import { FolderPlus } from "../assets/icons/FolderPlus"
 import { Button } from "./Button"
 import { SquareMinus } from "../assets/icons/SquareMinus"
+import { Search } from "../assets/icons/Search"
+import { CircularProgress } from "./CircularProgress"
 
 export type TreeNode = {
     _id?: string
@@ -18,6 +20,8 @@ export type TreeNode = {
     parentId: string
     title: string
 }
+
+const LIMIT = 10
 
 export function Nodes() {
     const { jsonAuthFetch } = useAuth()
@@ -27,7 +31,8 @@ export function Nodes() {
 
     const [locationQueue, setLocationQueue] = useState<string[]>(['root'])
 
-    const [fetching, setFetching] = useState<boolean>(false)
+    const [filter, setFilter] = useState<'folder' | 'file'>('folder')
+
     const [treeNodes, setTreeNodes] = useState<TreeNode[]>([])
     const [parentTreeNode, setParentTreeNode] = useState<TreeNode>()
     const [leafs, setLeafs] = useState<Leaf[]>([])
@@ -42,9 +47,16 @@ export function Nodes() {
 
     const [showAddLeafModal, setShowAddLeafModal] = useState<boolean>(false)
 
-    const [changingTreeNode, setChangingTreeNode] = useState<boolean>(false)
-
-    const [waitingFor, setWaitingFor] = useState<string | undefined>(undefined)
+    const [waitingFor, setWaitingFor] = useState<string[]>([])
+    const addWaiting = (str: string) => {
+        setWaitingFor((prev) => [...prev, str])
+    }
+    const removeWaiting = (str: string) => {
+        setWaitingFor((prev) => {
+            prev = prev.filter(f => f !== str)
+            return [...prev]
+        })
+    }
 
     const createTreeNode = async () => {
         try {
@@ -52,9 +64,9 @@ export function Nodes() {
             if (locationQueue[locationQueue.length - 1] !== 'root')
                 body.treeNode.parentId = locationQueue[locationQueue.length - 1]
 
-            setChangingTreeNode(true)
+            addWaiting('create-treeNode')
             const r = await jsonAuthFetch(`/api/treeNode`, { method: 'POST', body: JSON.stringify(body) })
-            setChangingTreeNode(false)
+            removeWaiting('create-treeNode')
             if (r === false || !r.ok) {
                 if (r && r.status === 400) {
                     const json = await r.json()
@@ -73,6 +85,7 @@ export function Nodes() {
 
             return data.id
         } catch (error) {
+            removeWaiting('create-treeNode')
             console.error(error);
             notify('Failed to create folder', 3000, 'error')
             return false
@@ -80,65 +93,83 @@ export function Nodes() {
 
     }
 
-    const getTreeNodesByParentId = async (id: string) => {
+    const getPaginated = async (reset: boolean) => {
         try {
-            if (!id)
-                return false
+            let docs: any[]
+            const lastId = !reset ? skip.current : undefined
+            const parentId = !reset && parentTreeNode?._id ? parentTreeNode._id : undefined
 
-            setFetching(true)
-            const r = await jsonAuthFetch(`/api/treeNode/children/?parentTreeNodeId=${id}`)
-            setFetching(false)
-            if (r === false || !r.ok) {
-                if (r && r.status === 400) {
-                    const json = await r.json()
-                    for (const error of json.errors)
-                        notify(error, 3000, 'error')
-                    return false
-                }
-
-                notify('failed to load folders', 3000, 'error')
+            addWaiting(`fetch-${filter === 'folder' ? 'treeNode' : 'leaf'}`)
+            const r = await jsonAuthFetch(`/api/${!parentTreeNode || filter === 'folder' ? 'treeNode' : 'leaf'}/list/?limit=${LIMIT}${lastId ? `&lastId=${lastId}` : ``}${!search || search === '' ? '' : '&search=' + search}${parentId ? `&parentId=${parentId}` : ''}`)
+            removeWaiting(`fetch-${filter === 'folder' ? 'treeNode' : 'leaf'}`)
+            if (r === false || !r.headers.get('content-type')?.includes('application/json')) {
+                notify(`failed to search for ${filter}`, 3000, 'error')
+                setHasMore(false)
                 return false
             }
 
-            const data = await r.json()
+            docs = await r.json()
+            console.log({ docs });
 
-            console.log({ data })
+            if (docs.length < 10)
+                setHasMore(false)
+            else
+                setHasMore(true)
 
-            return data
-        } catch (error) {
-            console.error(error);
-            notify('failed to load folders', 3000, 'error')
-            return false
+            if (docs.length > 0)
+                skip.current = docs.length + (skip.current ?? 0)
+
+            if (!parentTreeNode || filter === 'folder')
+                setTreeNodes(_prev => {
+                    const map = new Map()
+
+                    for (const item of [...docs])
+                        map.set(item._id, item)
+
+                    return [...map.values()]
+                })
+            else
+                setLeafs(_prev => {
+                    const map = new Map()
+
+                    for (const item of [...docs])
+                        map.set(item._id, item)
+
+                    return [...map.values()]
+                })
+        } catch (err) {
+            removeWaiting(`fetch-${filter === 'folder' ? 'treeNode' : 'leaf'}`)
+            console.error(err);
+            notify(`failed to search for ${filter}`, 3000, 'error')
         }
     }
 
-    const getRoots = async () => {
+    const getTreeNodeById = async (ids: string[]) => {
         try {
-            setFetching(true)
-            const r = await jsonAuthFetch('/api/treeNode/root')
-            setFetching(false)
-            if (r === false || !r.ok) {
-                notify('failed to load folders', 3000, 'error')
+            addWaiting('fetch-treeNode')
+            const r = await jsonAuthFetch(`/api/treeNode/?ids=${ids.join(',')}`)
+            removeWaiting('fetch-treeNode')
+            if (r === false || !r.headers.get('content-type')?.includes('application/json')) {
+                notify(`failed to search for ${filter}`, 3000, 'error')
                 return false
             }
 
             const data = await r.json()
-
-            console.log({ data })
+            console.log({ data });
 
             return data
-        } catch (error) {
-            console.error(error);
-            notify('failed to load folders', 3000, 'error')
-            return false
+        } catch (err) {
+            removeWaiting('fetch-treeNode')
+            console.error(err);
+            notify(`failed to search for ${filter}`, 3000, 'error')
         }
     }
 
     const updateTreeNode = async (treeNode: TreeNode) => {
         try {
-            setChangingTreeNode(true)
+            addWaiting('update-treeNode')
             let r = await jsonAuthFetch(`/api/treeNode`, { method: 'PATCH', body: JSON.stringify({ treeNode }) })
-            setChangingTreeNode(false)
+            removeWaiting('update-treeNode')
             if (r === false || !r.ok) {
                 if (r && r.status === 400) {
                     for (const error of await r.json())
@@ -157,6 +188,7 @@ export function Nodes() {
 
             return data.id
         } catch (error) {
+            removeWaiting('update-treeNode')
             console.error(error);
             notify('Failed to update folder', 3000, 'error')
             return false
@@ -168,15 +200,15 @@ export function Nodes() {
             if (!id)
                 return
 
-            setWaitingFor(`remove-folder-${id}`)
+            addWaiting(`remove-folder-${id}`)
             const r = await jsonAuthFetch(`/api/treeNode/?treeNodeId=${id}`, { method: 'DELETE' })
-            setWaitingFor(undefined)
+            removeWaiting(`remove-folder-${id}`)
             if (r === false || !r.ok)
                 return notify('failed to load folders', 3000, 'error')
 
             return true
         } catch (error) {
-            setWaitingFor(undefined)
+            removeWaiting(`remove-folder-${id}`)
             console.error(error);
             notify('failed to load folders', 3000, 'error')
             return false
@@ -185,9 +217,9 @@ export function Nodes() {
 
     const createLeaf = async (treeNodeId: string, title: string): Promise<string | false> => {
         try {
-            setChangingTreeNode(true)
+            addWaiting('create-leaf')
             let r = await jsonAuthFetch(`/api/leaf`, { method: 'POST', body: JSON.stringify({ leaf: { treeNodeId, title, termContents: [], definitionContents: [] } }) })
-            setChangingTreeNode(false)
+            removeWaiting('create-leaf')
             if (r === false || !r.ok) {
                 notify('Failed to create new card', 3000, 'error')
                 return false
@@ -199,32 +231,9 @@ export function Nodes() {
 
             return data.id
         } catch (error) {
+            removeWaiting('create-leaf')
             console.error(error);
             notify('Failed to create new card', 3000, 'error')
-            return false
-        }
-    }
-
-    const getLeafsByTreeNodeId = async (id: string) => {
-        try {
-            if (!id)
-                return []
-
-            setFetching(true)
-            const r = await jsonAuthFetch(`/api/leaf/?parentTreeNodeId=${id}`)
-            setFetching(false)
-            if (r === false || !r.ok) {
-                notify('failed to load folders', 3000, 'error')
-                return false
-            }
-            const data = await r.json()
-
-            console.log({ data })
-
-            return data
-        } catch (error) {
-            console.error(error);
-            notify('failed to load folders', 3000, 'error')
             return false
         }
     }
@@ -234,9 +243,9 @@ export function Nodes() {
             if (!id)
                 return false
 
-            setWaitingFor(`leaf-remove-${id}`)
+            addWaiting(`leaf-remove-${id}`)
             let r = await jsonAuthFetch(`/api/leaf/?id=${id}`, { method: 'DELETE' })
-            setWaitingFor(undefined)
+            removeWaiting(`leaf-remove-${id}`)
             if (r === false || !r.ok) {
                 notify('Removing card failed', 3000, 'error')
                 return false
@@ -244,67 +253,120 @@ export function Nodes() {
 
             return true
         } catch (error) {
-            setWaitingFor(undefined)
+            removeWaiting(`leaf-remove-${id}`)
             console.error(error);
             notify('Removing card failed', 3000, 'error')
             return false
         }
     }
 
-    useEffect(() => {
-        getRoots()
-            .then(treeNodes => {
-                if (treeNodes !== false)
-                    setTreeNodes(treeNodes)
-            })
-    }, [])
-
+    // Match title
     useEffect(() => {
         if (parentTreeNode)
             setNewParentTitle(parentTreeNode.title)
     }, [parentTreeNode])
 
+    // Location
+    useEffect(() => {
+        let lastLocationId: string | undefined = locationQueue[locationQueue.length - 1]
+
+        if (lastLocationId === 'root') {
+            setParentTreeNode(undefined)
+            return
+        }
+
+        addWaiting('fetch-parentTreeNode')
+        getTreeNodeById([lastLocationId])
+            .then(v => {
+                removeWaiting('fetch-parentTreeNode')
+                if (v === false || v.length < 1)
+                    return
+
+                setParentTreeNode(v[0])
+            })
+            .catch(e => { console.error(e); removeWaiting('fetch-parentTreeNode'); })
+    }, [locationQueue])
+    useEffect(() => {
+        skip.current = null
+        if (!parentTreeNode)
+            getPaginated(true)
+        else if (parentTreeNode)
+            getPaginated(false)
+    }, [parentTreeNode])
+
+    // Pagination
+    const [search, setSearch] = useState('')
+    const [hasMore, setHasMore] = useState(true)
+    const skip = useRef<number | null>(null)
+    const loaderRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        skip.current = null
+        getPaginated(false)
+    }, [filter])
+    useEffect(() => {
+        if (search || search === '') {
+            const t = setTimeout(() => {
+                setTreeNodes([])
+                setLeafs([])
+                skip.current = null
+                setHasMore(true)
+                getPaginated(true)
+            }, 500)
+
+            return () => clearTimeout(t)
+        }
+    }, [search])
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            entries => {
+                const first = entries[0];
+
+                if (first.isIntersecting && hasMore && !waitingFor.includes('fetch-treeNode'))
+                    getPaginated(false)
+            },
+            {
+                rootMargin: "200px",
+            }
+        );
+
+        const current = loaderRef.current;
+
+        if (current) {
+            observer.observe(current);
+        }
+
+        return () => {
+            if (current) observer.unobserve(current);
+        };
+    }, [hasMore, waitingFor]);
+
     console.log({ locationQueue, treeNodes, leafs, parentTreeNode, showingLeaf, newParentTitle, newLeafTitle })
 
     return (
-        fetching
-            ? 'loading...'
-            : <div className="size-full relative p-4">
-                <div className="size-full flex flex-col gap-2 items-center p-2 overflow-y-auto bg-surface-container rounded-lg">
+        <div className="size-full relative p-4">
+            <div className="size-full flex flex-col gap-2 items-center">
 
+                <div className="w-full flex flex-row items-center gap-2 bg-surface-container text-on-surface px-2 py-1 rounded-lg">
+                    <Button isIcon variant="text" color="primary">
+                        <Search />
+                    </Button>
+
+                    <input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="grow bg-transparent py-2"
+                    />
+                </div>
+
+                <div className="size-full flex flex-col gap-2 p-2 overflow-y-auto bg-surface-container rounded-lg">
+                    {/* Buttons */}
                     <div className="w-full flex flex-row items-center justify-between">
                         {/* Go back button */}
                         {
                             locationQueue.length > 1 &&
-                            <Button variant="text" color="on-surface" isIcon disabled={locationQueue.length <= 1} onPointerDown={async () => {
-                                let prev: string | undefined = locationQueue[locationQueue.length - 2]
-
-                                if (prev === 'root') {
-                                    let r = await getRoots()
-                                    if (r === false)
-                                        return
-
-                                    setTreeNodes(r)
-                                    setParentTreeNode(undefined)
-                                    setLeafs([])
-                                    setLocationQueue(['root'])
-                                    return
-                                }
-
-                                let r = await getTreeNodesByParentId(prev)
-                                if (r === false)
-                                    return
-
-                                let l = await getLeafsByTreeNodeId(prev)
-                                if (l === false)
-                                    return
-
-
-                                setTreeNodes(r)
-                                setLeafs(l)
-
-                                locationQueue.pop()
-                                setLocationQueue([...locationQueue])
+                            <Button variant="text" color="on-surface" isIcon disabled={locationQueue.length <= 1 || waitingFor.includes('fetch-treeNode') || waitingFor.includes('fetch-parentTreeNode')} onPointerDown={async () => {
+                                setLeafs([])
+                                setLocationQueue(prev => { prev.pop(); return [...prev]; })
                             }}>
                                 <ChevronLeft />
                             </Button>
@@ -326,6 +388,13 @@ export function Nodes() {
                     <h1 className="w-full text-on-surface">
                         {!editing && parentTreeNode && parentTreeNode.title}
 
+                        {
+                            locationQueue[locationQueue.length - 1] !== 'root' && waitingFor.includes('fetch-parentTreeNode') &&
+                            <div className="flex flex-col items-center justify-center w-full">
+                                <CircularProgress size={30} strokeWidth={2} />
+                            </div>
+                        }
+
                         {editing && parentTreeNode &&
                             <div className="flex flex-row items-center gap-2">
                                 <input
@@ -334,7 +403,7 @@ export function Nodes() {
                                     className="grow rounded-md p-2 border border-outline bg-surface-variant text-on-surface-variant"
                                 />
 
-                                <Button variant="outlined" color="on-surface" className="rounded-md" disabled={changingTreeNode} onClick={async () => {
+                                <Button variant="outlined" color="on-surface" className="rounded-md" disabled={waitingFor.includes('fetch-treeNode')} onPointerDown={async () => {
                                     const result = await updateTreeNode({ ...parentTreeNode, title: newParentTitle })
                                     if (result === false)
                                         return
@@ -342,8 +411,8 @@ export function Nodes() {
                                     setParentTreeNode({ ...parentTreeNode, title: newParentTitle })
                                 }}>
                                     {
-                                        changingTreeNode
-                                            ? 'updating...'
+                                        waitingFor.includes('fetch-treeNode')
+                                            ? <CircularProgress size={20} strokeWidth={1} />
                                             : 'Save'
                                     }
                                 </Button>
@@ -353,9 +422,29 @@ export function Nodes() {
 
                     {parentTreeNode?.title && <div className="border-b border-outline-variant w-full" />}
 
+                    {/* Tabs */}
+                    {
+                        locationQueue[locationQueue.length - 1] !== 'root' &&
+                        <div className="w-full flex flex-row items-start *:border-b-4 border-b border-outline-variant">
+                            <Button variant='text' color={filter === 'folder' ? 'secondary' : "on-surface"} className={`rounded-none ${filter === 'folder' ? 'border-secondary' : 'border-outline'}`} onPointerDown={() => setFilter('folder')}>
+                                Folder
+                            </Button>
+                            <Button variant='text' color={filter === 'file' ? 'secondary' : "on-surface"} className={`rounded-none ${filter === 'file' ? 'border-secondary' : 'border-outline'}`} onPointerDown={() => setFilter('file')}>
+                                File
+                            </Button>
+                        </div>
+                    }
+
+                    {
+                        waitingFor.includes('fetch-treeNode') &&
+                        <div className="flex flex-col items-center justify-center size-full">
+                            <CircularProgress size={60} />
+                        </div>
+                    }
+
                     {/* Tree nodes */}
                     {
-                        treeNodes && treeNodes.map((r: any, i: number) => {
+                        !waitingFor.includes('fetch-treeNode') && (!parentTreeNode || filter === 'folder') && treeNodes && treeNodes.map((r: any, i: number) => {
                             return (
                                 <div
                                     key={i}
@@ -365,19 +454,7 @@ export function Nodes() {
                                     <div
                                         className="w-full grow p-2"
                                         onPointerDown={async () => {
-                                            let treeNodes = await getTreeNodesByParentId(r._id)
-                                            console.log({ treeNodes })
-                                            if (treeNodes === false)
-                                                return
-
-                                            let leafs = await getLeafsByTreeNodeId(r._id)
-                                            console.log({ leafs })
-                                            if (leafs === false)
-                                                return
-
-                                            setTreeNodes(treeNodes)
-                                            setParentTreeNode(r)
-                                            setLeafs(leafs)
+                                            setLeafs([])
                                             setLocationQueue([...locationQueue, r._id])
                                         }}
                                     >
@@ -387,10 +464,10 @@ export function Nodes() {
                                     {/* Delete button */}
                                     {
                                         editing &&
-                                        <Button variant="text" color='error' isIcon disabled={waitingFor === `remove-folder-${r._id}`} onClick={async () => { if (await removeTreeNode(r._id)) setTreeNodes(treeNodes.filter(f => f._id !== r._id)); }}>
+                                        <Button variant="text" color='error' isIcon disabled={waitingFor.includes(`remove-folder-${r._id}`)} onPointerDown={async () => { if (await removeTreeNode(r._id)) setTreeNodes(treeNodes.filter(f => f._id !== r._id)); }}>
                                             {
-                                                waitingFor === `remove-folder-${r._id}`
-                                                    ? 'updating...'
+                                                waitingFor.includes(`remove-folder-${r._id}`)
+                                                    ? <CircularProgress size={20} strokeWidth={1} className="text-error" />
                                                     : <SquareMinus />
                                             }
                                         </Button>
@@ -400,13 +477,18 @@ export function Nodes() {
                         })
                     }
 
-                    {leafs.length !== 0 && <div className="border-b border-outline-variant w-full my-8" />}
+                    {
+                        waitingFor.includes('fetch-leaf') &&
+                        <div className="flex flex-col items-center justify-center size-full">
+                            <CircularProgress size={60} />
+                        </div>
+                    }
 
                     {/* Leafs */}
                     {
-                        leafs && leafs.map((r: any, i: number) => {
+                        !waitingFor.includes('fetch-treeNode') && filter === 'file' && leafs && leafs.map((r: any, i: number) => {
                             return (
-                                <div key={i} className="flex flex-row items-center justify-between w-full rounded-lg p-2 bg-surface-container-low hover:bg-surface-container-highest text-on-surface" onClick={() => setShowingLeaf(i)}>
+                                <div key={i} className="flex flex-row items-center justify-between w-full rounded-lg p-2 bg-surface-container-low hover:bg-surface-container-highest text-on-surface" onPointerDown={() => setShowingLeaf(i)}>
                                     <div className="w-full grow">
                                         {r.title}
                                     </div>
@@ -414,10 +496,10 @@ export function Nodes() {
                                     {/* Delete button */}
                                     {
                                         editing &&
-                                        <Button variant="text" color='error' isIcon disabled={waitingFor === `leaf-remove-${r._id}`} onClick={async () => { if (await removeLeaf(r._id)) setLeafs(leafs.filter(f => f._id !== r._id)); }}>
+                                        <Button variant="text" color='error' isIcon disabled={waitingFor.includes(`leaf-remove-${r._id}`)} onPointerDown={async () => { if (await removeLeaf(r._id)) setLeafs(leafs.filter(f => f._id !== r._id)); }}>
                                             {
-                                                waitingFor === `leaf-remove-${r._id}`
-                                                    ? 'updating...'
+                                                waitingFor.includes(`leaf-remove-${r._id}`)
+                                                    ? <CircularProgress size={20} strokeWidth={1} className="text-error" />
                                                     : <SquareMinus />
                                             }
                                         </Button>
@@ -427,18 +509,23 @@ export function Nodes() {
                         })
                     }
 
+                    <div ref={loaderRef} className="h-10" />
+
                     {/* Add buttons */}
                     {
                         editing &&
                         <div className="absolute bottom-0 right-0 w-full flex flex-row justify-end gap-2 p-2">
                             {/* Add tree node button */}
-                            <Button variant='filled' color="success" isIcon onPointerDown={async () => setShowAddTreeNodeModal(true)}>
-                                <FolderPlus />
-                            </Button>
+                            {
+                                filter === 'folder' &&
+                                <Button variant='filled' color="success" isIcon onPointerDown={async () => setShowAddTreeNodeModal(true)}>
+                                    <FolderPlus />
+                                </Button>
+                            }
 
                             {/* Add leaf button */}
                             {
-                                locationQueue[locationQueue.length - 1] !== 'root' &&
+                                filter === 'file' && locationQueue[locationQueue.length - 1] !== 'root' &&
                                 <Button variant='filled' color="success" isIcon onPointerDown={async () => setShowAddLeafModal(true)}>
                                     <Plus />
                                 </Button>
@@ -451,7 +538,7 @@ export function Nodes() {
                         <div className="flex flex-col gap-2 bg-surface-variant rounded-lg p-2">
 
                             <div className="flex flex-row w-full items-center justify-end">
-                                <Button variant='text' isIcon onPointerDown={() => { setNewTreeNodeTitle(''); setShowAddTreeNodeModal(false) }}>
+                                <Button variant='text' isIcon color="on-surface" onPointerDown={() => { setNewTreeNodeTitle(''); setShowAddTreeNodeModal(false) }}>
                                     <X />
                                 </Button>
                             </div>
@@ -465,17 +552,21 @@ export function Nodes() {
 
                             <div className="py-2" />
 
-                            <Button icon={<Plus />} variant="outlined" color='success' className="w-full rounded-lg" onClick={async () => {
+                            <Button variant="outlined" color='success' className="w-full rounded-lg" disabled={waitingFor.includes('create-treeNode')} onPointerDown={async () => {
                                 const result = await createTreeNode()
                                 if (result === false)
                                     return
 
-                                setTreeNodes([...treeNodes, { _id: result, parentId: locationQueue[locationQueue.length - 1] !== 'root' ? locationQueue[locationQueue.length - 1] : 'undefined', title: newTreeNodeTitle }])
+                                setTreeNodes([{ _id: result, parentId: locationQueue[locationQueue.length - 1] !== 'root' ? locationQueue[locationQueue.length - 1] : 'undefined', title: newTreeNodeTitle }, ...treeNodes])
 
                                 setNewTreeNodeTitle('')
                                 setShowAddTreeNodeModal(false)
                             }}>
-                                Add
+                                {
+                                    waitingFor.includes('create-treeNode')
+                                        ? <CircularProgress size={20} strokeWidth={1} className="text-success" />
+                                        : [<Plus className="inline" />, 'Add']
+                                }
                             </Button>
 
                         </div>
@@ -499,7 +590,7 @@ export function Nodes() {
 
                             <div className="p-2" />
 
-                            <Button icon={<Plus />} variant="outlined" color='success' className="w-full rounded-lg" onClick={async () => {
+                            <Button variant="outlined" color='success' className="w-full rounded-lg" disabled={waitingFor.includes('create-leaf')} onPointerDown={async () => {
                                 if (locationQueue[locationQueue.length - 1] === 'root')
                                     return
 
@@ -507,12 +598,16 @@ export function Nodes() {
                                 if (id === false)
                                     return
 
-                                setLeafs([...leafs, { _id: id, title: newLeafTitle, definitionContents: [], termContents: [], userId: '' }])
+                                setLeafs([{ _id: id, title: newLeafTitle, definitionContents: [], termContents: [], userId: '' }, ...leafs])
 
                                 setNewLeafTitle('')
                                 setShowAddLeafModal(false)
                             }}>
-                                Add
+                                {
+                                    waitingFor.includes('create-leaf')
+                                        ? <CircularProgress size={20} strokeWidth={1} className="text-success" />
+                                        : [<Plus className="inline" />, 'Add']
+                                }
                             </Button>
 
                         </div>
@@ -527,12 +622,18 @@ export function Nodes() {
                                 leaf={leafs[showingLeaf!]}
                                 onClose={() => setShowingLeaf(undefined)}
                                 onLeafChange={l => { leafs[showingLeaf!] = l; setLeafs([...leafs]) }}
-                                onRemove={() => setLeafs([...leafs.filter((_, i) => i !== showingLeaf)])}
+                                onRemove={async () => {
+                                    let result = await removeLeaf(leafs[showingLeaf!]._id)
+                                    if (result === false)
+                                        return
+
+                                    setLeafs(prev => [...prev.filter((_, i) => i !== showingLeaf)])
+                                }}
                             />
                         }
                     </Slide>
-
                 </div>
             </div>
+        </div>
     )
 }

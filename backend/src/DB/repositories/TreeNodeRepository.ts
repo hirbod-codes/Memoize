@@ -1,4 +1,4 @@
-import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId } from 'mongodb';
+import { ClientSession, Collection, Db, DeleteResult, Filter, InsertOneResult, ObjectId } from 'mongodb';
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
@@ -31,14 +31,11 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
 
         const indexes = await db.collection(collectionName).indexes()
 
-        if (indexes.find(i => i.name === 'title') === undefined)
-            await db.createIndex(collectionName, { title: 1 }, { unique: true, name: 'title' })
+        if (indexes.find(i => i.name === 'text-title') === undefined)
+            await db.createIndex(collectionName, { title: 'text' }, { name: 'text-title' })
 
         if (indexes.find(i => i.name === 'userId') === undefined)
             await db.createIndex(collectionName, { userId: 1 }, { name: 'userId' })
-
-        if (indexes.find(i => i.name === 'root') === undefined)
-            await db.createIndex(collectionName, { root: 1 }, { name: 'root' })
 
         if (indexes.find(i => i.name === 'createdAt') === undefined)
             await db.createIndex(collectionName, { createdAt: -1 }, { name: 'createdAt' })
@@ -95,6 +92,20 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
 
     async hasLeaf(treeNodeId: string, leafId: string) {
         return (await TreeNodeRepository.collection!.countDocuments({ _id: ObjectId.createFromHexString(treeNodeId), leafIds: { $in: [leafId] } }, { session: this.session })) > 0
+    }
+
+    async getRootsForUserPaginated(userId: string, limit: number, skip: number, search?: string) {
+        let filter: Filter<TreeNode> = { userId, parentId: undefined }
+        if (search)
+            filter['$text'] = { '$search': search }
+        return await TreeNodeRepository.collection!.find(filter, { session: this.session }).sort({ _id: -1 }).skip(skip).limit(limit).toArray()
+    }
+
+    async getChildrenForUserPaginated(userId: string, parentId: string, limit: number, skip: number, search?: string) {
+        let filter: Filter<TreeNode> = { userId, parentId }
+        if (search)
+            filter['$text'] = { '$search': search }
+        return await TreeNodeRepository.collection!.find(filter, { session: this.session }).sort({ _id: -1 }).skip(skip).limit(limit).toArray()
     }
 
     async replace(treeNodeArg: TreeNodeUpdate) {

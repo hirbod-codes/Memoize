@@ -5,7 +5,6 @@ import { Image } from "./Content/Image";
 import Text from "./Content/Text";
 import { Video } from "./Content/Video";
 import { LeafContext } from "./LeafManager";
-import { Ripple } from "./Ripple";
 import { Trash2 } from "../assets/icons/Trash2";
 import { Plus } from "../assets/icons/Plus";
 import { Button } from "./Button";

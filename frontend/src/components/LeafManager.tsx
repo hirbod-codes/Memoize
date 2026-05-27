@@ -12,6 +12,8 @@ import { Upload } from "./Content/Upload"
 import { Plus } from "../assets/icons/Plus"
 import { Select } from "./Select"
 import { Button } from "./Button"
+import { CircularProgress } from "./CircularProgress"
+import { ArrowRightLeft } from "../assets/icons/ArrowRightLeft"
 
 export type Types = 'string' | 'imageId' | 'videoId' | 'audioId' | 'richText'
 
@@ -44,7 +46,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
 
     const [leaf, setLeaf] = useState({ ...initLeaf })
 
-    const [isTerm,] = useState<boolean>(true)
+    const [isTerm, setIsTerm] = useState<boolean>(true)
     const [editing, setEditing] = useState<boolean>(false)
 
     const [newTitle, setNewTitle] = useState(initLeaf.title)
@@ -153,10 +155,13 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                     ? 'nothing'
                     :
                     <div className="flex flex-col items-start gap-2 p-2 bg-surface-container-high text-on-surface rounded-lg overflow-auto max-h-full" onPointerDown={() => (!isTerm)}>
-                        {/* Close button */}
                         <div className="flex flex-row w-full items-center p-2">
+                            <Button isIcon variant="text" color="primary" onPointerDown={() => setIsTerm(!isTerm)}>
+                                <ArrowRightLeft />
+                            </Button>
                             <div className="grow" />
 
+                            {/* Close button */}
                             {onClose &&
                                 <Button isIcon variant="text" color="on-surface" onPointerDown={async () => onClose?.()}>
                                     <X />
@@ -164,6 +169,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                             }
                         </div>
 
+                        {/* Buttons */}
                         <div className="flex flex-row items-center w-full p-2">
                             {/* Delete button */}
                             {
@@ -275,7 +281,11 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
 
                                         onLeafChange?.({ ...leaf })
                                     }}>
-                                        <Plus className="inline" /> Add
+                                        {
+                                            saving
+                                                ? <CircularProgress size={20} strokeWidth={1} className="text-success" />
+                                                : [<Plus className="inline" />, 'Add']
+                                        }
                                     </Button>
                                 }
 
@@ -305,7 +315,11 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                                         setNewContent(undefined)
                                     }}
                                 >
-                                    Save
+                                    {
+                                        saving
+                                            ? <CircularProgress size={20} strokeWidth={1} className="text-success" />
+                                            : 'Save'
+                                    }
                                 </Button>
                             </div>
                         }
