@@ -137,13 +137,14 @@ router.post('/register', unAuth, authRateLimiter, async (req, res) => {
         const userRepository = new UserRepository()
 
         console.log('Validation...')
-        let username: string | undefined = undefined, email: string | undefined = undefined, phoneNumber: string | undefined = undefined, password: string | undefined = undefined
+        let username: string | undefined = undefined, email: string | undefined = undefined, phoneNumber: string | undefined = undefined, password: string | undefined = undefined, noCookies: boolean = false
         try {
             username = req.body?.username?.toString()
             email = req.body?.email?.toString()
             phoneNumber = req.body?.phoneNumber?.toString()
             password = req.body?.password?.toString()
-            console.log({ username, email, phoneNumber, password })
+            noCookies = req.body?.noCookies?.toString() === 'true'
+            console.log({ username, email, phoneNumber, password, noCookies })
 
             if (username && !string().optional().min(2).isValidSync(username)) {
                 res.status(400).json({ message: 'Invalid username' })
@@ -218,23 +219,27 @@ router.post('/register', unAuth, authRateLimiter, async (req, res) => {
         }
         console.log({ updateResult })
 
-        console.log('Storing new tokens in cookie...')
-        res.cookie("refreshToken", result.refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-            path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
-        res.cookie("accessToken", result.accessToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-            path: '/',
-            maxAge: 1 * 60 * 60 * 1000,
-        });
+        if (noCookies)
+            res.status(200).json({ accessToken: result.accessToken, refreshToken: result.refreshToken })
+        else {
+            console.log('Storing new tokens in cookie...')
+            res.cookie("refreshToken", result.refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                path: '/',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+            });
+            res.cookie("accessToken", result.accessToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                path: '/',
+                maxAge: 1 * 60 * 60 * 1000,
+            });
 
-        res.status(200).json({ accessToken: result.accessToken })
+            res.status(200).json({ accessToken: result.accessToken })
+        }
 
         console.log('------------end------------')
     } catch (err) {
@@ -325,23 +330,27 @@ router.post('/login', unAuth, authRateLimiter, async (req, res) => {
         } else
             refreshToken = user.refreshToken
 
-        console.log('Storing new tokens in cookie...')
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-            path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
-        res.cookie("accessToken", accessToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-            path: '/',
-            maxAge: 1 * 60 * 60 * 1000,
-        });
+        if (!noCookies)
+            res.status(200).json({ accessToken, refreshToken })
+        else {
+            console.log('Storing new tokens in cookie...')
+            res.cookie("refreshToken", refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                path: '/',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+            });
+            res.cookie("accessToken", accessToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                path: '/',
+                maxAge: 1 * 60 * 60 * 1000,
+            });
 
-        res.status(200).json({ accessToken })
+            res.status(200).json({ accessToken })
+        }
 
         console.log('------------end------------')
     } catch (err) {
@@ -358,10 +367,12 @@ router.post('/refresh', async (req, res) => {
         const userRepository = new UserRepository()
 
         console.log('Validation...')
-        let refreshToken: string | undefined = undefined, userId: string | undefined = undefined, username: string | undefined = undefined
+        let refreshToken: string | undefined = undefined, userId: string | undefined = undefined, username: string | undefined = undefined, noCookies: boolean = false, accessToken: string | undefined = undefined
         try {
-            refreshToken = req.cookies.refreshToken;
-            console.log({ refreshToken })
+            refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+            accessToken = req.cookies?.accessToken || req.body?.accessToken;
+            noCookies = req.body?.noCookies?.toString() === 'true'
+            console.log({ refreshToken, noCookies })
 
             if (!string().required().isValidSync(refreshToken)) {
                 res.status(400).json({ message: 'invalid refresh token' })
@@ -395,20 +406,53 @@ router.post('/refresh', async (req, res) => {
             return
         }
 
+        console.log('Invalidating old tokens...')
+        const invalidTokensRepository = new InvalidTokensRepository()
+
+        if (refreshToken) {
+            const invalidationResult = await invalidTokensRepository.create(refreshToken)
+            console.log({ invalidationResult })
+            if (invalidationResult === false || !invalidationResult.acknowledged) {
+                res.status(500).send()
+                return
+            }
+        }
+
+        if (accessToken) {
+            const invalidationResult = await invalidTokensRepository.create(accessToken)
+            console.log({ invalidationResult })
+            if (invalidationResult === false || !invalidationResult.acknowledged) {
+                res.status(500).send()
+                return
+            }
+        }
+
         console.log('Generating tokens...')
-        const accessToken = auth.generateAccessToken({ userId, username })
-        console.log({ accessToken })
+        const newAccessToken = auth.generateAccessToken({ userId, username })
+        const newRefreshToken = auth.generateRefreshToken({ userId, username })
+        console.log({ newAccessToken, newRefreshToken })
 
-        console.log('Storing new access token in cookie...')
-        res.cookie("accessToken", accessToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-            path: '/',
-            maxAge: 1 * 60 * 60 * 1000,
-        });
+        if (noCookies)
+            res.status(200).json({ accessToken: newAccessToken, refreshToken: newRefreshToken })
+        else {
+            console.log('Storing new access token in cookie...')
+            res.cookie("refreshToken", refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                path: '/',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+            });
+            res.cookie("accessToken", newAccessToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                path: '/',
+                maxAge: 1 * 60 * 60 * 1000,
+            });
 
-        res.status(200).json({ accessToken })
+            res.status(200).json({ accessToken: newAccessToken })
+        }
 
         console.log('------------end------------')
     } catch (err) {
