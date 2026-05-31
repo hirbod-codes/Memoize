@@ -79,16 +79,16 @@ jobs:
       - name: Build backend's Docker Image
         run: |
             cd backend
-            docker build -t ghcr.io/memoize/backend:${VERSION} -t ghcr.io/memoize/backend:latest --target production .
+            docker build -t ghcr.io/hirbod-codes/memoize/backend:${VERSION} -t ghcr.io/hirbod-codes/memoize/backend:latest --target production .
 
       - name: Push Docker Image
         run: |
-            docker push ghcr.io/memoize/backend:${VERSION}
-            docker push ghcr.io/memoize/backend:latest
+            docker push ghcr.io/hirbod-codes/memoize/backend:${VERSION}
+            docker push ghcr.io/hirbod-codes/memoize/backend:latest
 
       - name: Export Docker Image
         run: |
-            docker save ghcr.io/memoize:${VERSION} | gzip > image-${VERSION}.tar.gz
+            docker save ghcr.io/hirbod-codes/memoize:${VERSION} | gzip > image-${VERSION}.tar.gz
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
