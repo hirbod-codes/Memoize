@@ -1,4 +1,4 @@
-name: Release
+name: hirbod-codes/Memoize/Release
 
 on:
   push:
@@ -29,6 +29,8 @@ jobs:
       - name: Semantic Release
         id: semantic
         uses: cycjimmy/semantic-release-action@v4
+        with:
+            working_directory: frontend
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -95,3 +97,14 @@ jobs:
                 dist.tar.gz
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Send dispatch to Nginx repo
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.DISPATCH_TOKEN }}
+          repository: hirbod-codes/nginx
+          event-type: memoize-released
+          client-payload: |
+            {
+              "version": "${{ github.ref_name }}"
+            }

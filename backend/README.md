@@ -92,3 +92,9 @@ docker run -d \
 ```bash
 openssl rand -base64 64
 ```
+
+## how to commit
+
+feat: add authentication
+fix: refresh token rotation
+feat!: change API format
