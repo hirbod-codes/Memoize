@@ -73,7 +73,7 @@ export function Button({ children, variant = 'filled', color = 'primary', icon, 
 
     // Dynamic Tailwind mapping based on variant 
     const variantStyles: Record<ButtonVariant, string> = {
-        filled: `bg-${color} text-on-${color} shadow-sm hover:shadow-md focus-visible:ring-${color}`,
+        filled: `bg-${color} text-on-${color} shadow-sm hover:shadow-md focus-visible:ring-${color} disabled:bg-on-surface/[0.12]`,
         elevated: `bg-surface-container-low text-${color} shadow-md hover:shadow-lg focus-visible:ring-${color} disabled:bg-on-surface/[0.12]`,
         tonal: `bg-${color}-container text-on-${color}-container hover:shadow-sm focus-visible:ring-${color}`,
         outlined: `bg-transparent text-${color} border border-${color} hover:bg-${color}/[0.08] focus-visible:ring-${color} focus-visible:border-${color} disabled:border-on-surface/[0.12] disabled:bg-transparent`,

@@ -425,8 +425,9 @@ router.post('/logout', authRateLimiter, async (req, res) => {
         console.log('Validations...')
         let refreshToken: string | undefined = undefined, accessToken: string | undefined = undefined
         try {
-            refreshToken = req.cookies.refreshToken;
-            accessToken = req.cookies.accessToken;
+            // Body for non web clients
+            refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+            accessToken = req.cookies?.accessToken || req.body?.accessToken;
             console.log({ refreshToken, accessToken })
 
             if (!string().required().isValidSync(refreshToken)) {
