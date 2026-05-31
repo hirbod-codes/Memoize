@@ -248,11 +248,12 @@ router.post('/login', unAuth, authRateLimiter, async (req, res) => {
         console.log('/api/auth/login')
 
         console.log('Validation...')
-        let username: string | undefined = undefined, email: string | undefined = undefined, phoneNumber: string | undefined = undefined, password: string | undefined = undefined
+        let username: string | undefined = undefined, email: string | undefined = undefined, phoneNumber: string | undefined = undefined, password: string | undefined = undefined, noCookies: boolean = false
         try {
             const identifier = req.body?.identifier?.toString()
             password = req.body?.password?.toString()
-            console.log({ identifier, password })
+            noCookies = req.body?.noCookies?.toString() === 'true'
+            console.log({ identifier, password, noCookies })
 
             if (!string().required().isValidSync(identifier)) {
                 res.status(400).json({ message: 'Invalid credentials' })

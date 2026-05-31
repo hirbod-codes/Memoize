@@ -3,8 +3,8 @@ import { useAccessToken } from "../stores/accessToken";
 import { getRefreshToken, saveRefreshToken } from "../stores/refreshToken";
 import { string } from "yup";
 
-const api = axios.create({ baseURL: "https://memoize.hirbod-codes.com/api" });
-const apiAuth = axios.create({ baseURL: "https://memoize.hirbod-codes.com/api" });
+const api = axios.create({ baseURL: "https://memoize.hirbod-codes.ir/api" });
+const apiAuth = axios.create({ baseURL: "https://memoize.hirbod-codes.ir/api" });
 
 // Add access token
 apiAuth.interceptors.request.use((config) => {
@@ -38,7 +38,7 @@ apiAuth.interceptors.response.use(
     }
 );
 
-const refreshAccessToken = async () => {
+export async function refreshAccessToken() {
     const refreshToken = await getRefreshToken();
 
     if (!refreshToken)
@@ -47,6 +47,7 @@ const refreshAccessToken = async () => {
     const response = await apiAuth.post("/auth/refresh", { refreshToken });
 
     const { accessToken, newRefreshToken } = response.data;
+    console.log('refreshAccessToken', response.data);
 
     const validatedAccessToken = string().required().strict().validateSync(accessToken)
     const validatedNewRefreshToken = string().required().strict().validateSync(newRefreshToken)
@@ -78,6 +79,7 @@ export async function register(password: string, username?: string, email?: stri
     const response = await api.post("/auth/register", data);
 
     const { accessToken, refreshToken, } = response.data;
+    console.log('register', response.data);
 
     useAccessToken
         .getState()
@@ -90,6 +92,7 @@ export async function login(identifier: string, password: string) {
     const response = await api.post("/auth/login", { identifier, password, });
 
     const { accessToken, refreshToken, } = response.data;
+    console.log('login', response.data);
 
     useAccessToken
         .getState()
@@ -102,6 +105,7 @@ export async function logout() {
     const response = await api.post("/auth/logout");
 
     const { accessToken, refreshToken, } = response.data;
+    console.log('logout', response.data);
 
     useAccessToken
         .getState()

@@ -32,7 +32,7 @@ export function Auth({ onClose }: { onClose?: () => void }) {
             if (openRegister)
                 await register(password, username, email, phoneNumber)
             else
-                await login(username ? username : (email ? email : phoneNumber), password)
+                await login(identifier, password)
 
             onClose?.()
         } catch (error) {
