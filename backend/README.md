@@ -51,6 +51,8 @@ docker run -d \
 
 ## for HTTPS (necessary for development too, because of modern browsers cookie restrictions)
 
+### Make sure you run install command, if you haven't already
+
 run (for Windows)
 
 ```bash
