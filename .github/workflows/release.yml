@@ -38,7 +38,7 @@ jobs:
 
       - name: Stop if no release
         if: steps.semantic.outputs.new_release_published != 'true'
-        run: exit 0
+        run: exit 1
 
       - name: Set Version
         run: |
