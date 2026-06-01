@@ -23,9 +23,6 @@ type Props = {
 export function Button({ title, icon, color = "onSurface", onColor: inputOnColor, variant = "filled", onPress, disabled = false, className = '', ...props }: Props) {
     const { theme: mode } = useTheme()
 
-    if ((variant === 'filled' || variant === 'elevated' || variant === 'tonal') && color.includes('on'))
-        throw new Error('color must not include `on` if variant is one of: filled, elevated, tonal.')
-
     const onColor: keyof ThemeColors = inputOnColor ? inputOnColor : (
         color.includes('on')
             ? `${color.replace('on', '')[0].toLowerCase()}${color.replace('on', '').slice(1)}`

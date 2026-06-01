@@ -40,11 +40,11 @@ apiAuth.interceptors.response.use(
 
 export async function refreshAccessToken() {
     const refreshToken = await getRefreshToken();
-
+    
     if (!refreshToken)
         throw new Error("No refresh token");
 
-    const response = await apiAuth.post("/auth/refresh", { refreshToken });
+    const response = await api.post("/auth/refresh", { refreshToken, noCookies: 'true' });
 
     const { accessToken, newRefreshToken } = response.data;
     console.log('refreshAccessToken', response.data);
@@ -62,7 +62,7 @@ export async function refreshAccessToken() {
 }
 
 export async function register(password: string, username?: string, email?: string, phoneNumber?: string) {
-    const data = {} as any
+    const data = { noCookies: 'true' } as any
 
     if (!username && !email && !phoneNumber)
         throw new Error('invalid input')
@@ -89,7 +89,7 @@ export async function register(password: string, username?: string, email?: stri
 }
 
 export async function login(identifier: string, password: string) {
-    const response = await api.post("/auth/login", { identifier, password, });
+    const response = await api.post("/auth/login", { identifier, password, noCookies: 'true' });
 
     const { accessToken, refreshToken, } = response.data;
     console.log('login', response.data);

@@ -1,8 +1,8 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useAccessToken } from "../stores/accessToken";
-import { View } from "react-native";
 import { Slide } from "../components/Slide";
 import { Auth } from "../components/auth/Auth";
+import { refreshAccessToken } from "../services/auth";
 
 type ContextType = {
     open: (state: boolean) => void
@@ -21,7 +21,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (!useAccessToken.getState().accessToken)
-            setOpen(true)
+            refreshAccessToken()
+                .catch(error => {
+                    console.error(error);
+                    setOpen(true)
+                })
     }, [])
 
     console.log('AuthProvider', { open })
