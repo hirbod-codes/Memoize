@@ -65,7 +65,7 @@ mkcert.exe localhost 127.0.0.1 ::1
 ```bash
 docker run -d \
     --name mongo \
-    --network mongo_net \
+    --network db_net \
     --restart unless-stopped \
     -p 27017:27017 \
     -e MONGO_INITDB_ROOT_USERNAME=admin \
@@ -75,7 +75,7 @@ docker run -d \
 
 docker run -d \
     --name mongo-express \
-    --network mongo_net \
+    --network db_net \
     --restart unless-stopped \
     -p 8081:8081 \
     -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin \
@@ -85,6 +85,7 @@ docker run -d \
 
 docker run -d \
     --name meilisearch \
+    --network db_net \
     -p 7700:7700 \
     -e MEILI_MASTER_KEY=supersecret \
     -e MEILI_NO_ANALYTICS=true \
