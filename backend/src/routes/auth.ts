@@ -8,6 +8,7 @@ import { unAuth } from '../middlewares/auth';
 import { accessTokenSecret } from '..';
 import jwt from 'jsonwebtoken'
 
+// To Do: create redis container for invalid tokens
 const router = express.Router();
 
 router.get('/hasRefreshToken', authRateLimiter, async (req, res) => {
