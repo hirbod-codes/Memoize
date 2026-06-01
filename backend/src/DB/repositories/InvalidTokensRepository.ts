@@ -1,4 +1,4 @@
-import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId, UpdateResult } from 'mongodb';
+import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId } from 'mongodb';
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
@@ -42,13 +42,8 @@ export class InvalidTokensRepository implements IRepository, ISeedable, IDropabl
         await db.dropCollection(collectionName)
     }
 
-    async create(token: string): Promise<InsertOneResult | false> {
-        try {
-            return await InvalidTokensRepository.collection!.insertOne({ token, schemaVersion })
-        } catch (err) {
-            console.error(err)
-            return false
-        }
+    async create(token: string): Promise<InsertOneResult> {
+        return await InvalidTokensRepository.collection!.insertOne({ token, schemaVersion })
     }
 
     async get(id: string) {

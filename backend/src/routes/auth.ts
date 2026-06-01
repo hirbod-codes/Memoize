@@ -4,7 +4,6 @@ import { authRateLimiter } from '../middlewares/rateLimiting';
 import { UserRepository } from '../DB/repositories/UserRepository';
 import { User } from '../DB/models/User';
 import { Auth, Payload } from '../auth';
-import { InvalidTokensRepository } from '../DB/repositories/InvalidTokensRepository';
 import { unAuth } from '../middlewares/auth';
 import { accessTokenSecret } from '..';
 import jwt from 'jsonwebtoken'
@@ -367,10 +366,9 @@ router.post('/refresh', async (req, res) => {
         const userRepository = new UserRepository()
 
         console.log('Validation...')
-        let refreshToken: string | undefined = undefined, userId: string | undefined = undefined, username: string | undefined = undefined, noCookies: boolean = false, accessToken: string | undefined = undefined
+        let refreshToken: string | undefined = undefined, userId: string | undefined = undefined, username: string | undefined = undefined, noCookies: boolean = false
         try {
-            refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
-            accessToken = req.cookies?.accessToken || req.body?.accessToken;
+            refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
             noCookies = req.body?.noCookies?.toString() === 'true'
             console.log({ refreshToken, noCookies })
 
@@ -406,43 +404,14 @@ router.post('/refresh', async (req, res) => {
             return
         }
 
-        console.log('Invalidating old tokens...')
-        const invalidTokensRepository = new InvalidTokensRepository()
-
-        if (refreshToken) {
-            const invalidationResult = await invalidTokensRepository.create(refreshToken)
-            console.log({ invalidationResult })
-            if (invalidationResult === false || !invalidationResult.acknowledged) {
-                res.status(500).send()
-                return
-            }
-        }
-
-        if (accessToken) {
-            const invalidationResult = await invalidTokensRepository.create(accessToken)
-            console.log({ invalidationResult })
-            if (invalidationResult === false || !invalidationResult.acknowledged) {
-                res.status(500).send()
-                return
-            }
-        }
-
         console.log('Generating tokens...')
         const newAccessToken = auth.generateAccessToken({ userId, username })
-        const newRefreshToken = auth.generateRefreshToken({ userId, username })
-        console.log({ newAccessToken, newRefreshToken })
+        console.log({ newAccessToken })
 
         if (noCookies)
-            res.status(200).json({ accessToken: newAccessToken, refreshToken: newRefreshToken })
+            res.status(200).json({ accessToken: newAccessToken })
         else {
             console.log('Storing new access token in cookie...')
-            res.cookie("refreshToken", refreshToken, {
-                httpOnly: true,
-                secure: true,
-                sameSite: "none",
-                path: '/',
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-            });
             res.cookie("accessToken", newAccessToken, {
                 httpOnly: true,
                 secure: true,
@@ -500,26 +469,6 @@ router.post('/logout', authRateLimiter, async (req, res) => {
         if (updateResult === false || !updateResult.acknowledged) {
             res.status(500).send()
             return
-        }
-
-        const invalidTokensRepository = new InvalidTokensRepository()
-
-        if (refreshToken) {
-            const invalidationResult = await invalidTokensRepository.create(refreshToken)
-            console.log({ invalidationResult })
-            if (invalidationResult === false || !invalidationResult.acknowledged) {
-                res.status(500).send()
-                return
-            }
-        }
-
-        if (accessToken) {
-            const invalidationResult = await invalidTokensRepository.create(accessToken)
-            console.log({ invalidationResult })
-            if (invalidationResult === false || !invalidationResult.acknowledged) {
-                res.status(500).send()
-                return
-            }
         }
 
         console.log('Clearing tokens in cookie...')

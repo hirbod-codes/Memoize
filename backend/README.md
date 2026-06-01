@@ -20,7 +20,6 @@ docker run -d \
     -e MEILISEARCH_KEY=very_secret \
     -e MEILISEARCH_HOST=localhost \
     -e MEILISEARCH_PORT=7700 \
-    -e JWT_SECRET=very_secret \
     -e ACCESS_TOKEN_SECRET=very_secret \
     -e REFRESH_TOKEN_SECRET=very_secret \
     --network backend_net \
@@ -40,7 +39,6 @@ docker run -d \
     -e MEILISEARCH_KEY=very_secret \
     -e MEILISEARCH_HOST=localhost \
     -e MEILISEARCH_PORT=7700 \
-    -e JWT_SECRET=very_secret \
     -e ACCESS_TOKEN_SECRET=very_secret \
     -e REFRESH_TOKEN_SECRET=very_secret \
     --network backend_net \
