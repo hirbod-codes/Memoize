@@ -99,3 +99,5 @@ openssl rand -base64 64
 feat: add authentication
 fix: refresh token rotation
 feat!: change API format
+
+Apparently github action doesn't realize new versions when squashing commits when merging.
