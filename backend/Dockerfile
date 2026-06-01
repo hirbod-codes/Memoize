@@ -3,33 +3,29 @@ WORKDIR /app
 COPY package*.json ./
 
 FROM base AS dependencies
-RUN npm install
+RUN npm ci
 
-FROM base AS production-dependencies
-RUN npm install --omit=dev
-
-FROM dependencies AS development
-ENV NODE_ENV=development
-COPY . .
-RUN chmod +x ./src/ffmpeg-7.0.2-amd64-static/ffmpeg
-RUN chmod +x ./src/ffmpeg-7.0.2-amd64-static/ffprobe
-RUN chmod +x ./src/ffmpeg-7.0.2-amd64-static/qt-faststart
-EXPOSE 3000
-CMD ["npm", "run", "dev"]
-
-FROM production-dependencies AS production-build
+FROM dependencies AS build
 COPY . .
 RUN npm run build
 
-FROM node:24-alpine AS production
+FROM base AS production-dependencies
+RUN npm ci --omit=dev
+
+FROM node:24-bookworm-slim AS production
 WORKDIR /app
-COPY ./src/ffmpeg-7.0.2-amd64-static/ ./src/ffmpeg-7.0.2-amd64-static/
-RUN chmod +x ./src/ffmpeg-7.0.2-amd64-static/ffmpeg
-RUN chmod +x ./src/ffmpeg-7.0.2-amd64-static/ffprobe
-RUN chmod +x ./src/ffmpeg-7.0.2-amd64-static/qt-faststart
-ENV NODE_ENV=production
+
+# Dev dependencies are required, because of tsc.
+COPY --from=build /app/dist ./dist
+
 COPY --from=production-dependencies /app/node_modules ./node_modules
-COPY --from=production-build /app/dist ./dist
-COPY package*.json ./
+COPY --from=build /app/src/ffmpeg-7.0.2-amd64-static ./src/ffmpeg-7.0.2-amd64-static
+COPY package.json ./
+
+RUN chmod +x src/ffmpeg-7.0.2-amd64-static/*
+
+ENV NODE_ENV=production
+
 EXPOSE 3000
+
 CMD ["node", "dist/index.js"]
