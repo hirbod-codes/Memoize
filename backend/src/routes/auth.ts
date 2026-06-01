@@ -330,7 +330,7 @@ router.post('/login', unAuth, authRateLimiter, async (req, res) => {
         } else
             refreshToken = user.refreshToken
 
-        if (!noCookies)
+        if (noCookies)
             res.status(200).json({ accessToken, refreshToken })
         else {
             console.log('Storing new tokens in cookie...')
