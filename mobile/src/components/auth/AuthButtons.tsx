@@ -4,7 +4,7 @@ import { LogoutButton } from "./LogoutButton"
 
 export function AuthButtons() {
     return (
-        useAccessToken.getState().accessToken
+        useAccessToken().accessToken
             ? <LogoutButton />
             : <LoginButton />
 
