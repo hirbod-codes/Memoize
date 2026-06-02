@@ -441,8 +441,8 @@ router.post('/logout', authRateLimiter, async (req, res) => {
         let refreshToken: string | undefined = undefined, accessToken: string | undefined = undefined
         try {
             // Body for non web clients
-            refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
-            accessToken = req.cookies?.accessToken || req.body?.accessToken;
+            refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
+            accessToken = req.body?.accessToken || req.cookies?.accessToken;
             console.log({ refreshToken, accessToken })
 
             if (!string().required().isValidSync(refreshToken)) {
