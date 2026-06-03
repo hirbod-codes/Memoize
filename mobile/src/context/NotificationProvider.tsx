@@ -1,6 +1,6 @@
 import Animated, { FadeInUp, FadeOutUp, LinearTransition } from 'react-native-reanimated';
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { View, Text } from "react-native";
+import { Text, View } from "react-native";
 import { Button } from "../components/Button";
 import { ThemeColors } from "../theme/theme";
 import { themeColors } from "../theme/themes";
@@ -36,8 +36,11 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         <NotificationContext.Provider value={{ notify }}>
             {children}
 
-            <Animated.View layout={LinearTransition.springify()} pointerEvents={'box-none'} className='absolute top-0 left-0 pt-20 size-full items-center'>
-                {notifications.map((n, idx) => (<NotificationItem key={n.id} notification={n} onClose={() => removeNotification(n.id)} />))}
+            <Animated.View layout={LinearTransition.springify()} pointerEvents={'box-none'} className='absolute top-0 left-0 size-full items-center px-4'>
+                {/* Space for TopBar */}
+                <View className='w-full' style={{ height: 100 }} />
+
+                {notifications.map((n) => (<NotificationItem key={n.id} notification={n} onClose={() => removeNotification(n.id)} />))}
             </Animated.View>
         </NotificationContext.Provider>
     );
@@ -71,14 +74,12 @@ const NotificationItem = ({ notification, onClose }: { notification: Notificatio
             entering={FadeInUp}
             exiting={FadeOutUp}
             layout={LinearTransition.springify()}
-            className='w-full px-4 mb-2 relative left-0'
+            className='w-full p-4 mb-2 left-0 rounded-lg items-center justify-between flex flex-row'
             style={{ backgroundColor: cssBg }}
         >
-            <View className="rounded-lg items-center justify-between flex flex-row" style={{ backgroundColor: cssBg }}>
-                <Text className="text-xl font-bold" style={{ color: cssFg }}>{notification.message}</Text>
+            <Text className="text-xl font-bold" style={{ color: cssFg }}>{notification.message}</Text>
 
-                <Button icon='close' bg={bg} fg={fg} onPress={() => { console.log('X clicked'); onClose?.() }} />
-            </View>
+            <Button icon='close' bg={bg} fg={fg} onPress={() => { onClose?.() }} />
         </Animated.View>
     );
 };

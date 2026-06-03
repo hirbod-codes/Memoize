@@ -64,7 +64,7 @@ export function Button({ title, icon, bg = "onSurface", fg: inputFg, variant = "
             disabled={disabled}
             onPress={onPress}
             android_ripple={{ color: "rgba(255,255,255,0.12)" }}
-            className={cn(`min-h-[40px] px-6 rounded-full justify-center`, className)}
+            className={cn(`px-6 rounded-lg justify-center`, icon && !title ? 'rounded-full px-2 aspect-square' : '', className)}
             style={{
                 backgroundColor: variantColors[variant].bg,
                 borderColor: variantColors[variant].borderColor,
@@ -72,7 +72,7 @@ export function Button({ title, icon, bg = "onSurface", fg: inputFg, variant = "
             }}
             {...props}
         >
-            <View className="flex-row items-center justify-center gap-2 h-10">
+            <View className={`flex-row items-center justify-center gap-2 h-10`}>
                 {icon && <MaterialIcons name={icon} size={18} style={{ color: variantColors[variant].fg }} />}
 
                 {title && <Text className={`font-semibold`} style={{ color: variantColors[variant].fg }}>{title}</Text>}
