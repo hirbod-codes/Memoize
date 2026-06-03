@@ -5,36 +5,34 @@ import { ThemeColors } from "../theme/theme";
 import { useTheme } from "../theme/ThemeProvider";
 import { themeColors } from "../theme/themes";
 
-type ColorRole = | "primary" | "secondary" | "success" | "warning" | "surface" | "on-surface";
-
 type Variant = | "filled" | "outlined" | "tonal" | "text" | "elevated";
 
 type Props = {
     title?: string;
     icon?: keyof typeof MaterialIcons.glyphMap;
-    color?: keyof ThemeColors;
-    onColor?: keyof ThemeColors;
+    bg?: keyof ThemeColors;
+    fg?: keyof ThemeColors;
     variant?: Variant;
     onPress?: () => void;
     disabled?: boolean;
     className?: string;
 };
 
-export function Button({ title, icon, color = "onSurface", onColor: inputOnColor, variant = "filled", onPress, disabled = false, className = '', ...props }: Props) {
+export function Button({ title, icon, bg = "onSurface", fg: inputFg, variant = "filled", onPress, disabled = false, className = '', ...props }: Props) {
     const { theme: mode } = useTheme()
 
-    const onColor: keyof ThemeColors = inputOnColor ? inputOnColor : (
-        color.includes('on')
-            ? `${color.replace('on', '')[0].toLowerCase()}${color.replace('on', '').slice(1)}`
-            : `on${color[0].toUpperCase() + color.slice(1)}`
+    const fg: keyof ThemeColors = inputFg ? inputFg : (
+        bg.includes('on')
+            ? `${bg.replace('on', '')[0].toLowerCase()}${bg.replace('on', '').slice(1)}`
+            : `on${bg[0].toUpperCase() + bg.slice(1)}`
     ) as any
 
-    let cssColor = `rgba(${themeColors[mode][color]}${disabled ? '/ 0.12' : '/ 1'})`
-    let cssOnColor = `rgba(${themeColors[mode][onColor]}${disabled ? '/ 0.38' : '/ 1'})`
+    let cssColor = `rgba(${themeColors[mode][bg]}${disabled ? '/ 0.12' : '/ 1'})`
+    let cssOnColor = `rgba(${themeColors[mode][fg]}${disabled ? '/ 0.38' : '/ 1'})`
 
-    if (variant === 'tonal' && !color.includes('Container')) {
-        cssColor = `rgba(${(themeColors[mode] as any)[color + 'Container']}${disabled ? '/ 0.12' : '/ 1'})`
-        cssOnColor = `rgba(${(themeColors[mode] as any)[onColor + 'Container']}${disabled ? '/ 0.38' : '/ 1'})`
+    if (variant === 'tonal' && !bg.includes('Container')) {
+        cssColor = `rgba(${(themeColors[mode] as any)[bg + 'Container']}${disabled ? '/ 0.12' : '/ 1'})`
+        cssOnColor = `rgba(${(themeColors[mode] as any)[fg + 'Container']}${disabled ? '/ 0.38' : '/ 1'})`
     }
 
     const variantColors: Record<Variant, { bg?: string, fg?: string, borderColor?: string }> = {

@@ -8,7 +8,7 @@ export function TopBar() {
 
     return (
         <View className="pt-8 text-on-surface bg-surface-container px-3 flex flex-row items-center justify-start">
-            <Button color="onSurface" variant="text" icon={theme === 'light' ? 'light-mode' : 'dark-mode'} onPress={() => { setTheme(theme === 'dark' ? 'light' : 'dark') }} />
+            <Button bg="onSurface" variant="text" icon={theme === 'light' ? 'light-mode' : 'dark-mode'} onPress={() => { setTheme(theme === 'dark' ? 'light' : 'dark') }} />
 
             <View className="grow" />
 

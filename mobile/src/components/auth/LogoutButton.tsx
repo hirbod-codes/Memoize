@@ -23,5 +23,5 @@ export function LogoutButton() {
         }
     }
 
-    return (<Button variant="text" color="onSurface" icon='logout' onPress={handleLogout} />)
+    return (<Button variant="text" bg="onSurface" icon='logout' onPress={handleLogout} />)
 }

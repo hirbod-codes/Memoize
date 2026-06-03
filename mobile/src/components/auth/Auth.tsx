@@ -112,9 +112,9 @@ export function Auth({ onClose }: { onClose?: () => void }) {
 
             <View className="p-12" />
 
-            <Button variant="filled" color="primary" className='w-full rounded-lg' title="Submit" onPress={submit} disabled={disabled} />
+            <Button variant="filled" bg="primary" className='w-full rounded-lg' title="Submit" onPress={submit} disabled={disabled} />
 
-            <Button variant="filled" color="primary" className='w-full rounded-lg' title={openRegister ? 'Login' : 'Sign Up'} onPress={() => { reset(); setOpenRegister(!openRegister) }} />
+            <Button variant="filled" bg="primary" className='w-full rounded-lg' title={openRegister ? 'Login' : 'Sign Up'} onPress={() => { reset(); setOpenRegister(!openRegister) }} />
         </View>
     )
 }

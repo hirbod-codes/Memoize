@@ -1,67 +1,83 @@
+import Animated, { FadeInUp, FadeOutUp, LinearTransition } from 'react-native-reanimated';
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { View, Text, TouchableOpacity, Animated, Dimensions, } from "react-native";
+import { View, Text } from "react-native";
+import { Button } from "../components/Button";
+import { ThemeColors } from "../theme/theme";
+import { themeColors } from "../theme/themes";
+import { useTheme } from "../theme/ThemeProvider";
 
 type Notification = {
-    id: string;
-    title?: string;
     message: string;
+    bg?: keyof ThemeColors;
+    fg?: keyof ThemeColors;
 };
 
-type NotificationContextType = {
-    notify: (message: string, title?: string) => void;
-};
+type NotificationContextType = { notify: (notification: Notification) => void };
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
 
-export const useNotifications = () => {
+export const useNotification = () => {
     const ctx = useContext(NotificationContext);
     if (!ctx) throw new Error("useNotifications must be used within Provider");
     return ctx;
 };
 
-export const NotificationsProvider = ({ children }: { children: React.ReactNode }) => {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+export const NotificationProvider = ({ children }: { children: React.ReactNode }) => {
+    const [notifications, setNotifications] = useState<(Notification & { id: string })[]>([]);
 
     const removeNotification = useCallback((id: string) => { setNotifications((prev) => prev.filter((n) => n.id !== id)); }, []);
 
-    const notify = useCallback((message: string, title?: string) => {
+    const notify = useCallback((notification: Notification) => {
         const id = Math.random().toString(36).substring(2, 9);
-        setNotifications((prev) => [...prev, { id, title, message }]);
-
-        setTimeout(() => removeNotification(id), 5000);
-    }, [removeNotification]);
+        setNotifications((prev) => [...prev, { ...notification, id }]);
+    }, []);
 
     return (
         <NotificationContext.Provider value={{ notify }}>
             {children}
-            <View className='absolute top-50 w-full items-center z-[9999]'>
-                {notifications.map((n, idx) => (<NotificationItem key={n.id} notification={n} index={idx} onClose={() => removeNotification(n.id)} />))}
-            </View>
+
+            <Animated.View
+                layout={LinearTransition.springify()}
+                pointerEvents={'box-none'}
+                className='absolute top-0 left-0 pt-16 size-full items-center border-4 border-white transition-transform'
+            >
+                <Animated.View layout={LinearTransition.springify()} pointerEvents={'box-none'} className='border-4 border-white relative w-full'>
+                    {notifications.map((n, idx) => (<NotificationItem key={n.id} id={n.id} notification={n} onClose={() => removeNotification(n.id)} />))}
+                </Animated.View>
+            </Animated.View>
         </NotificationContext.Provider>
     );
 };
 
-const NotificationItem = ({ notification, index, onClose, }: { notification: Notification; index: number; onClose: () => void; }) => {
-    const translateY = new Animated.Value(-100);
+const NotificationItem = ({ notification, onClose, id }: { notification: Notification; onClose?: () => void; id: any }) => {
+    const { theme: mode } = useTheme()
 
-    React.useEffect(() => {
-        Animated.spring(translateY, {
-            toValue: index * 70,
-            useNativeDriver: true,
-        }).start();
-    }, [index]);
+    const bg = notification?.bg ?? 'surfaceContainer'
+
+    let fg: keyof ThemeColors | undefined = notification?.fg
+    if (!fg)
+        if (bg === 'surfaceContainer')
+            fg = 'onSurface'
+        else if (bg.includes('on'))
+            fg = `${bg.replace('on', '')[0].toLowerCase()}${bg.replace('on', '').slice(1)}` as keyof ThemeColors
+        else
+            fg = `on${bg[0].toUpperCase() + bg.slice(1)}` as keyof ThemeColors
+
+    let cssBg = `rgb(${themeColors[mode][bg]})`
+    let cssFg = `rgb(${themeColors[mode][fg]})`
 
     return (
-        <Animated.View className='w-[90%] p-2 rounded-lg mb-2 items-center flex flex-row' style={{ transform: [{ translateY }] }}>
-            <View style={{ flex: 1 }}>
-                {notification.title && <Text className="font-bold mb-2">{notification.title}</Text>}
-                <Text>{notification.message}</Text>
+        <Animated.View
+            entering={FadeInUp}
+            exiting={FadeOutUp}
+            layout={LinearTransition.springify()}
+            className='w-full px-4 mb-2 relative left-0 border-4 border-white'
+            style={{ backgroundColor: cssBg }}>
+            <View className="rounded-lg items-center justify-between flex flex-row" style={{ backgroundColor: cssBg }}>
+                <Text className="text-xl font-bold" style={{ color: cssFg }}>{notification.message + ' ' + id}</Text>
+
+                <Button icon='close' bg={bg} fg={fg} onPress={() => { console.log('X clicked'); onClose?.() }} />
             </View>
-            <TouchableOpacity onPress={onClose} className="ml-4 p-2">
-                <Text style={{ fontWeight: "bold" }}>X</Text>
-            </TouchableOpacity>
         </Animated.View>
     );
 };
-
-const { width } = Dimensions.get("window");
