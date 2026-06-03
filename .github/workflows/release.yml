@@ -252,10 +252,10 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     needs:
-      - backend-release
-      - frontend-release
-      - mobile-release
-    if: always() && ( (needs.backend-release.result == 'success') || (needs.frontend-release.result == 'success') || (needs.mobile-release.result == 'success') )
+      - backend-build
+      - frontend-build
+      - mobile-build
+    if: always() && ( (needs.backend-build.result == 'success') || (needs.frontend-build.result == 'success') || (needs.mobile-build.result == 'success') )
 
     steps:
       - uses: actions/checkout@v4
