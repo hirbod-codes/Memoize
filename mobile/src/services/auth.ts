@@ -40,19 +40,16 @@ apiAuth.interceptors.response.use(
 
 export async function refreshAccessToken() {
     const refreshToken = await getRefreshToken();
-    
+
     if (!refreshToken)
         throw new Error("No refresh token");
 
     const response = await api.post("/auth/refresh", { refreshToken, noCookies: 'true' });
 
-    const { accessToken, newRefreshToken } = response.data;
+    const { accessToken } = response.data;
     console.log('refreshAccessToken', response.data);
 
     const validatedAccessToken = string().required().strict().validateSync(accessToken)
-    const validatedNewRefreshToken = string().required().strict().validateSync(newRefreshToken)
-
-    await saveRefreshToken(validatedNewRefreshToken)
 
     useAccessToken
         .getState()
@@ -101,17 +98,8 @@ export async function login(identifier: string, password: string) {
     await saveRefreshToken(refreshToken);
 }
 
-export async function logout() {
-    const response = await api.post("/auth/logout");
-
-    const { accessToken, refreshToken, } = response.data;
-    console.log('logout', response.data);
-
-    useAccessToken
-        .getState()
-        .setAccessToken(accessToken);
-
-    await saveRefreshToken(refreshToken);
+export async function logout(refreshToken: string, accessToken?: string | null | undefined) {
+    await api.post("/auth/logout", { refreshToken, accessToken });
 }
 
 export { apiAuth }
