@@ -3,112 +3,290 @@ name: hirbod-codes/Memoize/Release
 on:
   push:
     branches:
-        - main
-
-  workflow_dispatch:
+      - main
 
 permissions:
   contents: write
   packages: write
-  issues: write
   pull-requests: write
 
 jobs:
-    release:
-        runs-on: ubuntu-latest
-        outputs:
-            new_release_published: ${{ steps.semantic.outputs.new_release_published }}
-            new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      mobile: ${{ steps.filter.outputs.mobile }}
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-              with:
-                fetch-depth: 0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-            - name: Setup Node
-              uses: actions/setup-node@v4
-              with:
-                node-version: 22
+      - name: Detect folder changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+            mobile:
+              - 'mobile/**'
 
-            - name: Semantic Release
-              id: semantic
-              uses: cycjimmy/semantic-release-action@v4
-              with:
-                working_directory: frontend
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  backend-release:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    outputs:
+      version: ${{ steps.semantic.outputs.new_release_version }}
+      released: ${{ steps.semantic.outputs.new_release_published }}
 
-    build:
-        needs: release
-        if: needs.release.outputs.new_release_published == 'true'
-        runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-              with:
-                fetch-depth: 0
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
 
-            - name: Setup Node
-              uses: actions/setup-node@v4
-              with:
-                node-version: 22
+      - name: Semantic Release (backend)
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          working_directory: backend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Set Version
-              run: |
-                echo "VERSION=${{ needs.release.outputs.new_release_version }}" >> $GITHUB_ENV
+  backend-build:
+    runs-on: ubuntu-latest
+    needs: backend-release
+    if: needs.backend-release.result == 'success' && needs.backend-release.outputs.released == 'true' && needs.backend-release.outputs.version != ''
 
-            - name: Setup Node
-              uses: actions/setup-node@v4
-              with:
-                node-version: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-            - name: Build Vite app
-              run: |
-                cd frontend
-                npm ci
-                npm run build
-                tar -czf ../dist.tar.gz dist
-                ls -la ./
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
 
-            - name: Login GHCR
-              uses: docker/login-action@v3
-              with:
-                registry: ghcr.io
-                username: ${{ github.actor }}
-                password: ${{ secrets.GHCR_PAT }}
+      - name: Set Version
+        run: |
+          echo "VERSION=${{ needs.backend-release.outputs.version }}" >> $GITHUB_ENV
 
-            - name: Build backend's Docker Image
-              run: |
-                cd backend
-                docker build -t ghcr.io/hirbod-codes/memoize/backend:${VERSION} -t ghcr.io/hirbod-codes/memoize/backend:latest --target production .
+      - name: Build Docker image
+        run: |
+          cd backend
+          echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker build -t ghcr.io/hirbod-codes/memoize/backend:${VERSION} --target production .
+          docker push ghcr.io/hirbod-codes/memoize/backend:${VERSION}
+          docker save ghcr.io/hirbod-codes/memoize/backend:${VERSION} | gzip > backend-image-${VERSION}.tar.gz
 
-            - name: Push Docker Image
-              run: |
-                docker push ghcr.io/hirbod-codes/memoize/backend:${VERSION}
-                docker push ghcr.io/hirbod-codes/memoize/backend:latest
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-image
+          path: backend-image-${VERSION}.tar.gz
 
-            - name: Export Docker Image
-              run: docker save ghcr.io/hirbod-codes/memoize/backend:${VERSION} | gzip > image-${VERSION}.tar.gz
+  frontend-release:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.semantic.outputs.new_release_version }}
+      released: ${{ steps.semantic.outputs.new_release_published }}
 
-            - name: Upload Release Asset
-              uses: softprops/action-gh-release@v2
-              with:
-                tag_name: v${{ env.VERSION }}
-                files: |
-                    image-${{ env.VERSION }}.tar.gz
-                    dist.tar.gz
-              env:
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-            - name: Send dispatch to Nginx repo
-              uses: peter-evans/repository-dispatch@v3
-              with:
-                token: ${{ secrets.DISPATCH_TOKEN }}
-                repository: hirbod-codes/nginx
-                event-type: memoize-released
-                client-payload: |
-                    {
-                    "version": "${{ github.ref_name }}"
-                    }
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Semantic Release (frontend)
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          working_directory: frontend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  frontend-build:
+    needs: frontend-release
+    if: needs.frontend-release.result == 'success' && needs.frontend-release.outputs.released == 'true' && needs.frontend-release.outputs.version != ''
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Set Version
+        run: |
+          echo "VERSION=${{ needs.frontend-release.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+          tar -czf ../dist-${VERSION}.tar.gz dist
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist-${VERSION}.tar.gz
+
+  mobile-release:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.mobile == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.semantic.outputs.new_release_version }}
+      released: ${{ steps.semantic.outputs.new_release_published }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Semantic Release (mobile)
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          working_directory: mobile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  mobile-build:
+    needs: mobile-release
+    if: needs.mobile-release.result == 'success' && needs.mobile-release.outputs.released == 'true' && needs.mobile-release.outputs.version != ''
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          cd mobile
+          npm ci
+          npm install -g eas-cli
+
+      - name: Set Version
+        run: |
+          echo "VERSION=${{ needs.mobile-release.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Build Android (AAB)
+        run: |
+          cd mobile
+          eas build \
+            --platform android \
+            --profile production \
+            --non-interactive \
+            --wait \
+            --json > android.json
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Extract Android URL
+        run: |
+          echo "ANDROID_URL=$(jq -r '.[0].artifacts.buildUrl' mobile/android.json)" >> $GITHUB_ENV
+
+      - name: Download Android AAB
+        run: |
+          curl -L "$ANDROID_URL" -o memoize-${VERSION}.aab
+
+      - name: Build iOS (IPA)
+        run: |
+          cd mobile
+          eas build \
+            --platform ios \
+            --profile production \
+            --non-interactive \
+            --wait \
+            --json > ios.json
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Extract iOS URL
+        run: |
+          echo "IOS_URL=$(jq -r '.[0].artifacts.buildUrl' mobile/ios.json)" >> $GITHUB_ENV
+
+      - name: Download IPA
+        run: |
+          curl -L "$IOS_URL" -o memoize-${VERSION}.ipa
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-build
+          path: |
+            memoize-${VERSION}.ipa
+            memoize-${VERSION}.aab
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs:
+      - backend-release
+      - frontend-release
+      - mobile-release
+    if: always() && ( (needs.backend-release.result == 'success') || (needs.frontend-release.result == 'success') || (needs.mobile-release.result == 'success') )
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          files: artifacts/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dispatch-nginx-repo:
+    needs:
+      - create-release
+      - detect-changes
+      - frontend-release
+    runs-on: ubuntu-latest
+    if: needs.frontend-release.result == 'success' && needs.frontend-release.outputs.version != '' && needs.create-release.result == 'success'
+
+    steps:
+      - name: Send dispatch to Nginx repo
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.DISPATCH_TOKEN }}
+          repository: hirbod-codes/nginx
+          event-type: memoize-released
+          client-payload: |
+              {
+              "VERSION": "${{ needs.frontend-release.outputs.version }}"
+              }
