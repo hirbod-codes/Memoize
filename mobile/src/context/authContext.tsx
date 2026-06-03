@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             notify({ bg: 'success', message: 'Logged in' })
             setLoading(false)
         } catch (error) {
+            notify({ bg: 'error', message: 'Login failed!' })
             console.error(error);
             setOpen(true)
             setLoading(false)

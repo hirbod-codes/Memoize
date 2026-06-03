@@ -1,5 +1,5 @@
 {
-  "name": "mobile",
+  "name": "memoize",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
@@ -30,6 +30,7 @@
   "devDependencies": {
     "@types/react": "~19.1.0",
     "babel-preset-expo": "~54.0.10",
+    "eas-cli": "^20.0.0",
     "prettier-plugin-tailwindcss": "0.5.11",
     "tailwindcss": "3.4.17",
     "typescript": "~5.9.2"
