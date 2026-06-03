@@ -1,5 +1,5 @@
 import Animated, { FadeInUp, FadeOutUp, LinearTransition } from 'react-native-reanimated';
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { View, Text } from "react-native";
 import { Button } from "../components/Button";
 import { ThemeColors } from "../theme/theme";
@@ -36,20 +36,14 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         <NotificationContext.Provider value={{ notify }}>
             {children}
 
-            <Animated.View
-                layout={LinearTransition.springify()}
-                pointerEvents={'box-none'}
-                className='absolute top-0 left-0 pt-16 size-full items-center border-4 border-white transition-transform'
-            >
-                <Animated.View layout={LinearTransition.springify()} pointerEvents={'box-none'} className='border-4 border-white relative w-full'>
-                    {notifications.map((n, idx) => (<NotificationItem key={n.id} id={n.id} notification={n} onClose={() => removeNotification(n.id)} />))}
-                </Animated.View>
+            <Animated.View layout={LinearTransition.springify()} pointerEvents={'box-none'} className='absolute top-0 left-0 pt-20 size-full items-center'>
+                {notifications.map((n, idx) => (<NotificationItem key={n.id} notification={n} onClose={() => removeNotification(n.id)} />))}
             </Animated.View>
         </NotificationContext.Provider>
     );
 };
 
-const NotificationItem = ({ notification, onClose, id }: { notification: Notification; onClose?: () => void; id: any }) => {
+const NotificationItem = ({ notification, onClose }: { notification: Notification; onClose?: () => void; }) => {
     const { theme: mode } = useTheme()
 
     const bg = notification?.bg ?? 'surfaceContainer'
@@ -66,15 +60,22 @@ const NotificationItem = ({ notification, onClose, id }: { notification: Notific
     let cssBg = `rgb(${themeColors[mode][bg]})`
     let cssFg = `rgb(${themeColors[mode][fg]})`
 
+    useEffect(() => {
+        const timer = setTimeout(() => { onClose?.() }, 3000)
+
+        return () => { clearTimeout(timer) }
+    }, [])
+
     return (
         <Animated.View
             entering={FadeInUp}
             exiting={FadeOutUp}
             layout={LinearTransition.springify()}
-            className='w-full px-4 mb-2 relative left-0 border-4 border-white'
-            style={{ backgroundColor: cssBg }}>
+            className='w-full px-4 mb-2 relative left-0'
+            style={{ backgroundColor: cssBg }}
+        >
             <View className="rounded-lg items-center justify-between flex flex-row" style={{ backgroundColor: cssBg }}>
-                <Text className="text-xl font-bold" style={{ color: cssFg }}>{notification.message + ' ' + id}</Text>
+                <Text className="text-xl font-bold" style={{ color: cssFg }}>{notification.message}</Text>
 
                 <Button icon='close' bg={bg} fg={fg} onPress={() => { console.log('X clicked'); onClose?.() }} />
             </View>
