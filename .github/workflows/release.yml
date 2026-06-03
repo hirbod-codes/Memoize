@@ -8,7 +8,9 @@ on:
 permissions:
   contents: write
   packages: write
+  # Needed by semantic release action
   pull-requests: write
+  issues: write
 
 jobs:
   detect-changes:
