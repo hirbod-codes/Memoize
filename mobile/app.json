@@ -13,6 +13,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "ir.hirbodcodes.memoize",
       "supportsTablet": true
     },
     "android": {
@@ -21,7 +22,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "ir.hirbodcodes.memoize"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -30,11 +32,11 @@
     "plugins": [
       "expo-secure-store"
     ],
+    "owner": "hirbod99",
     "extra": {
       "eas": {
         "projectId": "ce68bdd3-c6b5-4cc3-8515-29a1fb076d88"
       }
-    },
-    "owner": "hirbod99"
+    }
   }
 }
