@@ -152,7 +152,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
         }}>
             {
                 leaf === undefined
-                    ? 'nothing'
+                    ? 'nothing!'
                     :
                     <div className="flex flex-col items-start gap-2 p-2 bg-surface-container-high text-on-surface rounded-lg overflow-auto max-h-full" onPointerDown={() => (!isTerm)}>
                         <div className="flex flex-row w-full items-center p-2">
@@ -225,7 +225,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                         </h1>
 
                         {/* Contents */}
-                        <div className="flex flex-col items-start gap-4 p-2 w-full">
+                        <div className="flex flex-col items-start gap-4 w-full">
                             {
                                 leaf[isTerm ? 'termContents' : 'definitionContents']
                                     .map((_content, i: number) =>
@@ -239,7 +239,7 @@ export function LeafManager({ leaf: initLeaf, onLeafChange, onRemove, onClose }:
                         {/* New content */}
                         {
                             editing && newContent &&
-                            <div className="w-full flex flex-col gap-4 p-2 bg-surface rounded-lg">
+                            <div className="w-full flex flex-col gap-4 bg-surface rounded-lg">
                                 <Select
                                     onChange={(e) => {
                                         setNewContent({ type: e.target.value as any, value: [''] })

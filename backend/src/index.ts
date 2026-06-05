@@ -6,31 +6,36 @@ import express from 'express';
 import https from 'https'
 import fs from 'fs'
 import dotenv from 'dotenv';
-import { Meilisearch } from 'meilisearch'
+
 import { getBooleanEnv, getIntegerEnv, getStringEnv, tryAndWait } from './utils';
+
+import { Meilisearch } from 'meilisearch'
 import { MongoDB } from './DB/mongodb';
 import { UserRepository } from './DB/repositories/UserRepository';
-import { jsonResponseLogger, streamResponseLogger } from './middlewares/responseLogger';
-import { generalRateLimiter } from './middlewares/rateLimiting';
-import { authRoutes } from './routes/auth';
 import { InvalidTokensRepository } from './DB/repositories/InvalidTokensRepository';
-import { userRoutes } from './routes/user';
 import { AudioFileRepository } from './DB/repositories/AudioFileRepository';
 import { AvatarRepository } from './DB/repositories/AvatarRepository';
 import { ImageRepository } from './DB/repositories/ImageRepository';
 import LeafRepository from './DB/repositories/LeafRepository';
 import TreeNodeRepository from './DB/repositories/TreeNodeRepository';
 import { VideoFileRepository } from './DB/repositories/VideoFileRepository';
+import { ThumbnailRepository } from './DB/repositories/ThumbnailRepository';
+import { CoverArtRepository } from './DB/repositories/CoverArtRepository';
+import VideoRepository from './DB/repositories/VideoRepository';
+import { setupSearch } from './DB/meilisearch';
+
+import { runCronjobs } from './cronjobs';
+import { jsonResponseLogger, streamResponseLogger } from './middlewares/responseLogger';
+import { generalRateLimiter } from './middlewares/rateLimiting';
+
 import { leafRoutes } from './routes/leaf';
 import { treeNodeRoutes } from './routes/treeNode';
 import { audioRoutes } from './routes/audio';
-import { runCronjobs } from './cronjobs';
 import { imageRoutes } from './routes/image';
 import { videoRoutes } from './routes/video';
-import VideoRepository from './DB/repositories/VideoRepository';
-import { ThumbnailRepository } from './DB/repositories/ThumbnailRepository';
-import { CoverArtRepository } from './DB/repositories/CoverArtRepository';
-import { setupSearch } from './DB/meilisearch';
+import { authRoutes } from './routes/auth';
+import { userRoutes } from './routes/user';
+import { ttsRoutes } from './routes/tts';
 
 dotenv.config({ debug: process.env.DEBUG !== undefined ? Boolean(process.env.DEBUG) : undefined })
 
@@ -148,6 +153,7 @@ export const meili = new Meilisearch({
     app.use('/api/image', imageRoutes);
     app.use('/api/audio', audioRoutes);
     app.use('/api/video', videoRoutes);
+    app.use('/api/tts', ttsRoutes);
 
     // 404 For unknown URLs
     app.use((_req, res) => { res.sendStatus(404) })

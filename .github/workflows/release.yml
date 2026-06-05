@@ -224,7 +224,7 @@ jobs:
           cd mobile
           eas build \
             --platform ios \
-            --profile production \
+            --profile preview \
             --non-interactive \
             --wait \
             --json > ios.json

@@ -90,7 +90,6 @@ export function Nodes() {
             notify('Failed to create folder', 3000, 'error')
             return false
         }
-
     }
 
     const getPaginated = async (isRoot: boolean) => {

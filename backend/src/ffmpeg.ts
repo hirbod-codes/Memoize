@@ -1,8 +1,10 @@
-import { spawn } from "child_process";
+import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { platform } from "os";
 import fs from "fs";
 import path from "path";
-import { Readable } from "stream";
+import { pipeline, Readable, Writable } from "stream";
+
+// To Do: manage spawned processes, their log files, ...
 
 export function decodeToPCM(input: Buffer | Readable): Promise<Float32Array> {
     return new Promise((resolve, reject) => {
@@ -60,6 +62,84 @@ export function decodeToPCM(input: Buffer | Readable): Promise<Float32Array> {
     });
 }
 
+export function decodePCMStreamToOutputStream(sampleRate: string, input: ChildProcessWithoutNullStreams, output: Writable, maxFileSize: number): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        const platformName = platform();
+        let executable
+        if (platformName === 'win32')
+            executable = path.join(process.cwd(), 'src', 'ffmpeg-8.1-essentials_build', 'bin', 'ffmpeg.exe')
+        else
+            executable = path.join(process.cwd(), 'src', 'ffmpeg-7.0.2-amd64-static', 'ffmpeg')
+
+        const errorLogsStream = fs.createWriteStream('ffmpeg-errors.log')
+
+        const ffmpeg = spawn(executable, [
+            "-f", "s16le",
+            "-ar", sampleRate,
+            "-ac", "1",
+            "-i", "pipe:0",
+            "-f", "wav",
+            "pipe:1",
+        ]);
+
+        ffmpeg.stdout.on("error", (e) => {
+            console.error(e);
+        });
+
+        ffmpeg.stderr.on("data", (data) => {
+            console.error('[ffmpeg]', data.toString());
+        });
+
+        ffmpeg.on("close", (code) => {
+            if (code !== 0) {
+                return reject(new Error(`FFmpeg exited with code ${code}`));
+            }
+
+            resolve();
+        });
+
+        ffmpeg.on("error", (e) => {
+            console.log(e);
+            reject(e)
+        });
+
+        ffmpeg.stderr.pipe(errorLogsStream)
+
+        // Feed input
+        if (ffmpeg.stdin.destroyed) {
+            reject(new Error("ffmpeg stdin destroyed"));
+            return;
+        }
+
+        let total = 0;
+        input.stdout.on("data", (chunk) => {
+            total += chunk.length;
+
+            if (total > maxFileSize) {
+                console.log('File size too large...')
+                ffmpeg.kill("SIGKILL");
+                input.stdout.destroy();
+
+                return;
+            }
+        })
+        input.stderr.on("data", data => {
+            console.error("[piper]", data.toString());
+        });
+        input.on("error", reject);
+
+        pipeline(
+            input.stdout,
+            ffmpeg.stdin,
+            err => {
+                if (err) reject(err);
+            }
+        )
+
+        ffmpeg.stdout.pipe(output);
+    })
+}
+
 export function decodeVideoStreamToDisk(input: Buffer | Readable, format: string, maxFileSize: number, outputDirectory: string): Promise<void> {
     return new Promise((resolve, reject) => {
         const platformName = platform();
@@ -115,7 +195,6 @@ export function decodeVideoStreamToDisk(input: Buffer | Readable, format: string
 
         ffmpeg.stdout.pipe(logsStream)
 
-
         // Feed input
         if (!ffmpeg.stdin.destroyed) {
             if (Buffer.isBuffer(input)) {
@@ -145,6 +224,8 @@ export function decodeVideoStreamToDisk(input: Buffer | Readable, format: string
                 input.pipe(ffmpeg.stdin);
             }
         }
+
+        reject(new Error("ffmpeg stdin destroyed"));
     });
 }
 
