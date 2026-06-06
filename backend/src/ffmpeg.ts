@@ -1,6 +1,5 @@
 import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { platform } from "os";
-import fs from "fs";
 import path from "path";
 import { pipeline, Readable, Writable } from "stream";
 
