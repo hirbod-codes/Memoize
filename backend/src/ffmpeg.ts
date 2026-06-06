@@ -4,8 +4,6 @@ import fs from "fs";
 import path from "path";
 import { pipeline, Readable, Writable } from "stream";
 
-// To Do: manage spawned processes, their log files, ...
-
 export function decodeToPCM(input: Buffer | Readable): Promise<Float32Array> {
     return new Promise((resolve, reject) => {
         const platformName = platform();
@@ -64,14 +62,17 @@ export function decodeToPCM(input: Buffer | Readable): Promise<Float32Array> {
 
 export function decodePCMStreamToOutputStream(sampleRate: string, input: ChildProcessWithoutNullStreams, output: Writable, maxFileSize: number): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-        const platformName = platform();
-        let executable
-        if (platformName === 'win32')
-            executable = path.join(process.cwd(), 'src', 'ffmpeg-8.1-essentials_build', 'bin', 'ffmpeg.exe')
-        else
-            executable = path.join(process.cwd(), 'src', 'ffmpeg-7.0.2-amd64-static', 'ffmpeg')
+        let settled = false;
+        const settle = (err?: Error) => {
+            if (settled) return;
+            settled = true;
+            err ? reject(err) : resolve();
+        };
 
-        const errorLogsStream = fs.createWriteStream('ffmpeg-errors.log')
+        const platformName = platform();
+        const executable = platformName === 'win32'
+            ? path.join(process.cwd(), 'src', 'ffmpeg-8.1-essentials_build', 'bin', 'ffmpeg.exe')
+            : path.join(process.cwd(), 'src', 'ffmpeg-7.0.2-amd64-static', 'ffmpeg');
 
         const ffmpeg = spawn(executable, [
             "-f", "s16le",
@@ -82,164 +83,163 @@ export function decodePCMStreamToOutputStream(sampleRate: string, input: ChildPr
             "pipe:1",
         ]);
 
+        // Error handlers
+        const stderrChunks: Buffer[] = [];
+        ffmpeg.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+        ffmpeg.on("error", (e) => {
+            console.error("[ffmpeg process]", e)
+            settle(e);
+        });
         ffmpeg.stdout.on("error", (e) => {
-            console.error(e);
-        });
-
-        ffmpeg.stderr.on("data", (data) => {
-            console.error('[ffmpeg]', data.toString());
-        });
+            console.error("[ffmpeg stdout]", e)
+            settle(e)
+        })
 
         ffmpeg.on("close", (code) => {
             if (code !== 0) {
-                return reject(new Error(`FFmpeg exited with code ${code}`));
-            }
+                const stderrOutput = Buffer.concat(stderrChunks).toString();
+                console.error(`[ffmpeg] exited with code ${code}:\n${stderrOutput}`);
 
-            resolve();
+                settle(new Error(`FFmpeg exited with code ${code}`))
+            } else
+                settle();
         });
 
-        ffmpeg.on("error", (e) => {
-            console.log(e);
-            reject(e)
-        });
-
-        ffmpeg.stderr.pipe(errorLogsStream)
-
-        // Feed input
-        if (ffmpeg.stdin.destroyed) {
-            reject(new Error("ffmpeg stdin destroyed"));
-            return;
-        }
+        if (ffmpeg.stdin.destroyed)
+            return settle(new Error("ffmpeg stdin destroyed before use"))
 
         let total = 0;
+        let sizeLimitExceeded = false;
         input.stdout.on("data", (chunk) => {
             total += chunk.length;
+            if (!sizeLimitExceeded && total > maxFileSize) {
+                sizeLimitExceeded = true
 
-            if (total > maxFileSize) {
-                console.log('File size too large...')
-                ffmpeg.kill("SIGKILL");
-                input.stdout.destroy();
+                console.error(`[size] Limit exceeded (${total} bytes), killing ffmpeg...`)
 
-                return;
+                ffmpeg.kill("SIGKILL")
+                input.stdout.destroy()
+
+                settle(new Error(`File size exceeded limit of ${maxFileSize} bytes`))
             }
-        })
-        input.stderr.on("data", data => {
-            console.error("[piper]", data.toString());
         });
-        input.on("error", reject);
 
-        pipeline(
-            input.stdout,
-            ffmpeg.stdin,
-            err => {
-                if (err) reject(err);
+        // Error handlers
+        input.stderr.on("data", (data) => {
+            console.error("[piper]", data.toString())
+        });
+        input.on("error", (e) => {
+            console.error("[piper process]", e)
+            settle(e);
+        });
+
+        pipeline(input.stdout, ffmpeg.stdin, (err) => {
+            if (err && !sizeLimitExceeded) {
+                console.error("[pipeline]", err)
+                settle(err)
             }
-        )
+        });
 
-        ffmpeg.stdout.pipe(output);
-    })
+        ffmpeg.stdout.pipe(output)
+    });
 }
 
 export function decodeVideoStreamToDisk(input: Buffer | Readable, format: string, maxFileSize: number, outputDirectory: string): Promise<void> {
     return new Promise((resolve, reject) => {
-        const platformName = platform();
-        let filePath
-        if (platformName === 'win32')
-            filePath = path.join(process.cwd(), 'src', 'ffmpeg-8.1-essentials_build', 'bin', 'ffmpeg.exe')
-        else
-            filePath = path.join(process.cwd(), 'src', 'ffmpeg-7.0.2-amd64-static', 'ffmpeg')
+        let settled = false;
+        const settle = (err?: Error) => {
+            if (settled) return;
+            settled = true;
+            err ? reject(err) : resolve();
+        };
 
-        const errorLogsStream = fs.createWriteStream('ffmpeg-errors.log')
-        const logsStream = fs.createWriteStream('ffmpeg.log')
+        const platformName = platform();
+        const filePath = platformName === 'win32'
+            ? path.join(process.cwd(), 'src', 'ffmpeg-8.1-essentials_build', 'bin', 'ffmpeg.exe')
+            : path.join(process.cwd(), 'src', 'ffmpeg-7.0.2-amd64-static', 'ffmpeg');
 
         const ffmpeg = spawn(filePath, [
             "-f", format,
-            "-i", 'pipe:0',
-            "-c:v", 'libx264',
-            "-c:a", 'aac',
+            "-i", "pipe:0",
+            "-c:v", "libx264",
+            "-c:a", "aac",
             "-f", "hls",
             "-hls_time", "5",
             "-hls_list_size", "0",
-            "-hls_segment_filename", path.join(outputDirectory, 'segment_%06d.ts'),
-            path.join(outputDirectory, 'index.m3u8')
+            "-hls_segment_filename", path.join(outputDirectory, "segment_%06d.ts"),
+            path.join(outputDirectory, "index.m3u8"),
         ]);
 
-        const chunks: Buffer[] = [];
-
-        ffmpeg.stdout.on("data", (chunk) => {
-            chunks.push(chunk);
+        // Error handlers
+        const stderrChunks: Buffer[] = [];
+        ffmpeg.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+        ffmpeg.on("error", (e) => {
+            console.error("[ffmpeg process]", e);
+            settle(e);
         });
-
         ffmpeg.stdout.on("error", (e) => {
-            console.error(e);
-        });
-
-        ffmpeg.stderr.on("data", (data) => {
-            console.error('[ffmpeg]', data.toString());
+            console.error("[ffmpeg stdout]", e);
+            settle(e);
         });
 
         ffmpeg.on("close", (code) => {
             if (code !== 0) {
-                return reject(new Error(`FFmpeg exited with code ${code}`));
-            }
-
-            resolve();
+                const stderrOutput = Buffer.concat(stderrChunks).toString();
+                console.error(`[ffmpeg] exited with code ${code}:\n${stderrOutput}`);
+                settle(new Error(`FFmpeg exited with code ${code}`));
+            } else
+                settle();
         });
 
-        ffmpeg.on("error", (e) => {
-            console.log(e);
-            reject(e)
-        });
-
-        ffmpeg.stderr.pipe(errorLogsStream)
-
-        ffmpeg.stdout.pipe(logsStream)
-
-        // Feed input
-        if (!ffmpeg.stdin.destroyed) {
-            if (Buffer.isBuffer(input)) {
-                ffmpeg.stdin.write(input);
-                ffmpeg.stdin.end();
-            } else {
-                let total = 0;
-
-                input.on("data", (chunk) => {
-                    total += chunk.length;
-
-                    if (total > maxFileSize) {
-                        console.log('File size too large...')
-                        ffmpeg.kill("SIGKILL");
-                        input.destroy();
-
-                        return;
-                    }
-
-                    ffmpeg.stdin.write(chunk);
-                })
-
-                input.on("end", () => {
-                    ffmpeg.stdin.end();
-                })
-
-                input.pipe(ffmpeg.stdin);
-            }
+        if (ffmpeg.stdin.destroyed) {
+            settle(new Error("ffmpeg stdin destroyed before use"));
+            return;
         }
 
-        reject(new Error("ffmpeg stdin destroyed"));
+        // Feed input
+        if (Buffer.isBuffer(input)) {
+            ffmpeg.stdin.write(input);
+            ffmpeg.stdin.end();
+        } else {
+            let total = 0;
+            let sizeLimitExceeded = false;
+            input.on("data", (chunk) => {
+                total += chunk.length;
+                if (sizeLimitExceeded) return;
+                if (total > maxFileSize) {
+                    sizeLimitExceeded = true;
+                    console.error(`[size] Limit exceeded (${total} bytes), killing ffmpeg`);
+                    ffmpeg.kill("SIGKILL");
+                    input.destroy();
+                    settle(new Error(`File size exceeded limit of ${maxFileSize} bytes`));
+                    return;
+                }
+                ffmpeg.stdin.write(chunk);
+            });
+
+            input.on("end", () => ffmpeg.stdin.end());
+
+            input.on("error", (e) => {
+                console.error("[input stream]", e);
+                settle(e);
+            });
+        }
     });
 }
 
 export function generateThumbnailFromVideoFileToDisk(input: string, outputDirectory: string): Promise<void> {
     return new Promise((resolve, reject) => {
-        const platformName = platform();
-        let filePath
-        if (platformName === 'win32')
-            filePath = path.join(process.cwd(), 'src', 'ffmpeg-8.1-essentials_build', 'bin', 'ffmpeg.exe')
-        else
-            filePath = path.join(process.cwd(), 'src', 'ffmpeg-7.0.2-amd64-static', 'ffmpeg')
+        let settled = false;
+        const settle = (err?: Error) => {
+            if (settled) return;
+            settled = true;
+            err ? reject(err) : resolve();
+        };
 
-        const errorLogsStream = fs.createWriteStream('ffmpeg-errors.log')
-        const logsStream = fs.createWriteStream('ffmpeg.log')
+        const platformName = platform();
+        const filePath = platformName === 'win32'
+            ? path.join(process.cwd(), 'src', 'ffmpeg-8.1-essentials_build', 'bin', 'ffmpeg.exe')
+            : path.join(process.cwd(), 'src', 'ffmpeg-7.0.2-amd64-static', 'ffmpeg');
 
         const ffmpeg = spawn(filePath, [
             "-i", input,
@@ -249,91 +249,75 @@ export function generateThumbnailFromVideoFileToDisk(input: string, outputDirect
             path.join(outputDirectory, 'thumbnail.jpg')
         ]);
 
-        const chunks: Buffer[] = [];
-
-        ffmpeg.stdout.on("data", (chunk) => {
-            chunks.push(chunk);
+        // Error handlers
+        const stderrChunks: Buffer[] = [];
+        ffmpeg.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+        ffmpeg.on("error", (e) => {
+            console.error("[ffmpeg process]", e);
+            settle(e);
         });
-
         ffmpeg.stdout.on("error", (e) => {
-            console.error(e);
-        });
-
-        ffmpeg.stderr.on("data", (data) => {
-            console.error('[ffmpeg]', data.toString());
+            console.error("[ffmpeg stdout]", e);
+            settle(e);
         });
 
         ffmpeg.on("close", (code) => {
             if (code !== 0) {
-                return reject(new Error(`FFmpeg exited with code ${code}`));
+                const stderrOutput = Buffer.concat(stderrChunks).toString();
+                console.error(`[ffmpeg] exited with code ${code}:\n${stderrOutput}`);
+                settle(new Error(`FFmpeg exited with code ${code}`));
+            } else {
+                settle();
             }
-
-            resolve();
         });
-
-        ffmpeg.on("error", (e) => {
-            console.log(e);
-            reject(e)
-        });
-
-        ffmpeg.stderr.pipe(errorLogsStream)
-
-        ffmpeg.stdout.pipe(logsStream)
     });
 }
 
 export function decodeVideoFileToDisk(input: string, outputDirectory: string): Promise<void> {
     return new Promise((resolve, reject) => {
-        const platformName = platform();
-        let filePath
-        if (platformName === 'win32')
-            filePath = path.join(process.cwd(), 'src', 'ffmpeg-8.1-essentials_build', 'bin', 'ffmpeg.exe')
-        else
-            filePath = path.join(process.cwd(), 'src', 'ffmpeg-7.0.2-amd64-static', 'ffmpeg')
+        let settled = false;
+        const settle = (err?: Error) => {
+            if (settled) return;
+            settled = true;
+            err ? reject(err) : resolve();
+        };
 
-        const errorLogsStream = fs.createWriteStream('ffmpeg-errors.log')
-        const logsStream = fs.createWriteStream('ffmpeg.log')
+        const platformName = platform();
+        const filePath = platformName === 'win32'
+            ? path.join(process.cwd(), 'src', 'ffmpeg-8.1-essentials_build', 'bin', 'ffmpeg.exe')
+            : path.join(process.cwd(), 'src', 'ffmpeg-7.0.2-amd64-static', 'ffmpeg');
 
         const ffmpeg = spawn(filePath, [
             "-i", input,
-            "-c:v", 'libx264',
-            "-c:a", 'aac',
+            "-c:v", "libx264",
+            "-c:a", "aac",
             "-f", "hls",
             "-hls_time", "5",
             "-hls_list_size", "0",
-            "-hls_segment_filename", path.join(outputDirectory, 'segment_%06d.ts'),
-            path.join(outputDirectory, 'index.m3u8')
+            "-hls_segment_filename", path.join(outputDirectory, "segment_%06d.ts"),
+            path.join(outputDirectory, "index.m3u8"),
         ]);
 
-        const chunks: Buffer[] = [];
-
-        ffmpeg.stdout.on("data", (chunk) => {
-            chunks.push(chunk);
+        // Error handlers
+        const stderrChunks: Buffer[] = [];
+        ffmpeg.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+        ffmpeg.on("error", (e) => {
+            console.error("[ffmpeg process]", e);
+            settle(e);
         });
-
         ffmpeg.stdout.on("error", (e) => {
-            console.error(e);
-        });
-
-        ffmpeg.stderr.on("data", (data) => {
-            console.error('[ffmpeg]', data.toString());
+            console.error("[ffmpeg stdout]", e);
+            settle(e);
         });
 
         ffmpeg.on("close", (code) => {
             if (code !== 0) {
-                return reject(new Error(`FFmpeg exited with code ${code}`));
+                const stderrOutput = Buffer.concat(stderrChunks).toString();
+                console.error(`[ffmpeg] exited with code ${code}:\n${stderrOutput}`);
+                settle(new Error(`FFmpeg exited with code ${code}`));
+            } else {
+                settle();
             }
-
-            resolve();
         });
-
-        ffmpeg.on("error", (e) => {
-            console.log(e);
-            reject(e)
-        });
-
-        ffmpeg.stderr.pipe(errorLogsStream)
-
-        ffmpeg.stdout.pipe(logsStream)
     });
 }
