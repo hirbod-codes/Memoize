@@ -1,0 +1,31 @@
+import 'package:client/components/Button.dart';
+import 'package:client/theme/ThemeModeNotifier.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class TopBar extends ConsumerWidget implements PreferredSizeWidget {
+  final Widget title;
+
+  const TopBar({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return AppBar(
+      title: title,
+      centerTitle: false,
+      actions: [
+        Button(
+          icon: ref.watch(themeModeProvider).isDark ? Icons.light_mode : Icons.dark_mode,
+          color: ButtonColor.primary,
+          type: ButtonType.text,
+          onPressed: () {
+            ref.read(themeModeProvider.notifier).toggle();
+          },
+        ),
+      ],
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
