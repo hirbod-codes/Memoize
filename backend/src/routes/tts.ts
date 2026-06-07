@@ -4,7 +4,6 @@ import { generalRateLimiter } from '../middlewares/rateLimiting';
 import { Language, languageSchema, getTTSAudioStream, getSampleRate } from '../services/tts';
 import { string } from 'yup';
 import { decodePCMStreamToOutputStream } from '../ffmpeg';
-import { readFileSync } from 'fs';
 
 const router = express.Router();
 
