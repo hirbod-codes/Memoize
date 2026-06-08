@@ -1,4 +1,3 @@
-// tool/update_version.dart
 import 'dart:developer';
 import 'dart:io';
 

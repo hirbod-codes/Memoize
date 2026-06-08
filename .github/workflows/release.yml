@@ -299,7 +299,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
 
       - run: |
           cd client
@@ -343,7 +343,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
 
       - run: |
           cd client
@@ -383,7 +383,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
 
       - name: Install Linux dependencies
         run: |
@@ -428,7 +428,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
 
       - run: |
           cd client
@@ -468,7 +468,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
 
       - run: |
           cd client
@@ -508,7 +508,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
 
       - run: |
           cd client
