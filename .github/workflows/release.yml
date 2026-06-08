@@ -317,8 +317,8 @@ jobs:
       - name: Rename app release
         run: |
           mkdir artifacts
-          cp build/app/outputs/flutter-apk/app-release.apk artifacts/memoize-app-release-${VERSION}.apk
-          cp build/app/outputs/flutter-apk/app-release.aab artifacts/memoize-app-release-${VERSION}.aab
+          cp client/build/app/outputs/flutter-apk/app-release.apk artifacts/memoize-app-release-${VERSION}.apk
+          cp client/build/app/outputs/flutter-apk/app-release.aab artifacts/memoize-app-release-${VERSION}.aab
 
       - name: Upload android artifact
         uses: actions/upload-artifact@v4
@@ -363,7 +363,7 @@ jobs:
 
       - name: Package Windows
         run: |
-          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath memoize-windows-${VERSION}.zip
+          Compress-Archive -Path client/build/windows/x64/runner/Release/* -DestinationPath memoize-windows-${VERSION}.zip
 
       - uses: actions/upload-artifact@v4
         with:
@@ -412,7 +412,7 @@ jobs:
 
       - name: Package Linux
         run: |
-          tar -czf memoize-linux-${VERSION}.tar.gz -C build/linux/x64/release/bundle
+          tar -czf memoize-linux-${VERSION}.tar.gz -C client/build/linux/x64/release/bundle .
 
       - uses: actions/upload-artifact@v4
         with:
@@ -456,7 +456,7 @@ jobs:
 
       - name: Package Web
         run: |
-          zip -r memoize-web-${VERSION}.zip build/web
+          zip -r memoize-web-${VERSION}.zip client/build/web
 
       - uses: actions/upload-artifact@v4
         with:
@@ -502,7 +502,7 @@ jobs:
         run: |
           APP=$(find client/build/macos/Build/Products/Release -name "*.app" | head -1)
           echo "Found app: $APP"
-          ditto -c -k "$APP" "../memoize-macos-${VERSION}.zip"
+          ditto -c -k "$APP" "memoize-macos-${VERSION}.zip"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -547,7 +547,7 @@ jobs:
       - name: Package iOS
         run: |
           cd client/build/ios
-          zip -r ../../memoize-ios-${VERSION}.zip .
+          zip -r ../../../memoize-ios-${VERSION}.zip .
 
       - uses: actions/upload-artifact@v4
         with:
