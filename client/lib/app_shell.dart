@@ -1,12 +1,12 @@
-import 'package:client/components/NavBar.dart';
-import 'package:client/components/TopBar.dart';
+import 'package:client/components/navbar.dart';
+import 'package:client/components/topbar.dart';
 import 'package:flutter/material.dart';
 
 class AppShell extends StatelessWidget {
   final Widget child;
   final Widget title;
 
-  const AppShell({super.key, required this.child, required this.title});
+  const AppShell({super.key, required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {

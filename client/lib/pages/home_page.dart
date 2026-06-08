@@ -1,16 +1,17 @@
 import 'dart:developer';
 
-import 'package:client/components/Button.dart';
+import 'package:client/components/button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class HomePage extends ConsumerStatefulWidget {
+  const HomePage({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomeState extends State<Home> {
+class _HomePageState extends ConsumerState<HomePage> {
   int _counter = 0;
 
   void _incrementCounter() {

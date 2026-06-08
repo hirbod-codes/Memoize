@@ -1,4 +1,5 @@
-import 'package:client/components/Button.dart';
+import 'package:client/auth/auth_controller.dart';
+import 'package:client/components/button.dart';
 import 'package:client/theme/ThemeModeNotifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,14 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
           type: ButtonType.text,
           onPressed: () {
             ref.read(themeModeProvider.notifier).toggle();
+          },
+        ),
+        Button(
+          icon: Icons.logout,
+          color: ButtonColor.error,
+          type: ButtonType.text,
+          onPressed: () {
+            ref.read(authControllerProvider.notifier).logout();
           },
         ),
       ],

@@ -1,4 +1,6 @@
-import 'package:client/GoRouter.dart';
+import 'package:client/go_router.dart';
+import 'package:client/auth/auth_controller.dart';
+import 'package:client/auth/auth_state.dart';
 import 'package:client/theme/AppTheme.dart';
 import 'package:client/theme/ThemeModeNotifier.dart';
 import 'package:flutter/material.dart';
@@ -13,8 +15,14 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
+    final auth = ref.watch(authControllerProvider);
 
-    return MaterialApp.router(routerConfig: goRouter, title: 'Memoize', theme: AppTheme.light(), darkTheme: AppTheme.dark(), themeMode: themeMode);
+    if (auth.status == AuthStatus.loading) {
+      return const MaterialApp(
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
+
+    return MaterialApp.router(routerConfig: goRouter, title: 'Memoize', theme: AppTheme.light(), darkTheme: AppTheme.dark(), themeMode: ref.watch(themeModeProvider), debugShowCheckedModeBanner: false);
   }
 }
