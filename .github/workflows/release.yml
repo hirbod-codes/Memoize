@@ -295,6 +295,7 @@ jobs:
 
       - name: Update version
         run: |
+          cd client
           sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
 
       - uses: subosito/flutter-action@v2
@@ -338,8 +339,15 @@ jobs:
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
       - name: Update version
+        shell: pwsh
         run: |
-          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
+          Set-Location client
+
+          $version = "${env:VERSION}+${{ github.run_number }}"
+
+          (Get-Content pubspec.yaml) `
+            -replace '^version:.*$', "version: $version" |
+            Set-Content pubspec.yaml
 
       - uses: subosito/flutter-action@v2
         with:
@@ -379,6 +387,7 @@ jobs:
 
       - name: Update version
         run: |
+          cd client
           sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
 
       - uses: subosito/flutter-action@v2
@@ -419,6 +428,7 @@ jobs:
 
       - name: Update version
         run: |
+          cd client
           sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
 
       - uses: subosito/flutter-action@v2
