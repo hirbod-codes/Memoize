@@ -54,7 +54,6 @@ class Button extends StatelessWidget {
     }
   }
 
-  // ---------- ELEVATED ----------
   Widget _elevated() {
     return SizedBox(
       width: width,
@@ -67,7 +66,6 @@ class Button extends StatelessWidget {
     );
   }
 
-  // ---------- OUTLINED ----------
   Widget _outlined() {
     return SizedBox(
       width: width,
@@ -84,7 +82,6 @@ class Button extends StatelessWidget {
     );
   }
 
-  // ---------- TEXT ----------
   Widget _text() {
     return TextButton(
       onPressed: isLoading ? null : onPressed,
@@ -93,7 +90,6 @@ class Button extends StatelessWidget {
     );
   }
 
-  // ---------- FLOATING ACTION ----------
   Widget _fab() {
     return FloatingActionButton(
       onPressed: isLoading ? null : onPressed,
@@ -102,7 +98,6 @@ class Button extends StatelessWidget {
     );
   }
 
-  // ---------- COMMON ----------
   Widget _child(Color textColor) {
     if (isLoading) {
       return SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: textColor));
