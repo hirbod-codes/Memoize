@@ -294,9 +294,8 @@ jobs:
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
       - name: Update version
-        run: |
-          cd client
-          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -339,15 +338,8 @@ jobs:
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
       - name: Update version
-        shell: pwsh
-        run: |
-          Set-Location client
-
-          $version = "${env:VERSION}+${{ github.run_number }}"
-
-          (Get-Content pubspec.yaml) `
-            -replace '^version:.*$', "version: $version" |
-            Set-Content pubspec.yaml
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -386,13 +378,17 @@ jobs:
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
       - name: Update version
-        run: |
-          cd client
-          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
 
       - run: |
           cd client
@@ -427,9 +423,8 @@ jobs:
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
       - name: Update version
-        run: |
-          cd client
-          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -468,8 +463,8 @@ jobs:
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
       - name: Update version
-        run: |
-          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -508,8 +503,8 @@ jobs:
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
       - name: Update version
-        run: |
-          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - uses: subosito/flutter-action@v2
         with:
