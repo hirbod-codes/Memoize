@@ -5,7 +5,16 @@
   },
   "build": {
     "production": {
-      "autoIncrement": true
+      "distribution": "store"
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      },
+      "android": {
+        "buildType": "apk"
+      }
     }
   }
 }

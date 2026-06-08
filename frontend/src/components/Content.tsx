@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import { SquareMinus } from "../assets/icons/SquareMinus";
-import { Audio } from "./Content/Audio";
+import { Audio as AudioContent } from "./Content/Audio";
 import { Image } from "./Content/Image";
 import Text from "./Content/Text";
 import { Video } from "./Content/Video";
@@ -8,11 +8,19 @@ import { LeafContext } from "./LeafManager";
 import { Trash2 } from "../assets/icons/Trash2";
 import { Plus } from "../assets/icons/Plus";
 import { Button } from "./Button";
+import { Volume2 } from "../assets/icons/Volume2";
+import { useAuth } from "../contexts/AuthContext";
+import { useNotification } from "../contexts/NotificationContext";
+import { Volume1 } from "../assets/icons/Volume1";
+import { CircularProgress } from "./CircularProgress";
 
 export function Content({ contentIndex }: { contentIndex: number }) {
     const leafContext = useContext(LeafContext)
     if (!leafContext)
         return null
+
+    const { jsonAuthFetch } = useAuth()
+    const { notify } = useNotification()
 
     const isTerm = leafContext.isTerm
     const editing = leafContext.editing
@@ -24,8 +32,45 @@ export function Content({ contentIndex }: { contentIndex: number }) {
 
     const [newStringContent, setNewStringContent] = useState('')
 
+    const [fetchingSound, setFetchingSound] = useState<number | undefined>(undefined)
+    const [playingSound, setPlayingSound] = useState<number | undefined>(undefined)
+    const playSound = async (text: string, index: number) => {
+        try {
+            setFetchingSound(index)
+            const response = await jsonAuthFetch("/api/tts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    text,
+                    language: 'de'
+                }),
+            });
+            setFetchingSound(undefined)
+            if (response === false)
+                return notify('Failed to read text', 3000, 'error')
+
+            const blob = await response.blob();
+            console.log({ blob });
+
+            const audioUrl = URL.createObjectURL(blob);
+
+            const audio = new Audio(audioUrl);
+            setPlayingSound(index)
+            audio.play();
+            audio.onended = () => setPlayingSound(undefined)
+        } catch (error) {
+            console.error(error);
+            setFetchingSound(undefined)
+            setPlayingSound(undefined)
+            notify('Failed to read text', 3000, 'error')
+            return false
+        }
+    }
+
     return (
-        type === 'audioId' ? <Audio contentIndex={contentIndex} /> :
+        type === 'audioId' ? <AudioContent contentIndex={contentIndex} /> :
             (
                 type === 'imageId' ? <Image contentIndex={contentIndex} /> :
                     (
@@ -50,7 +95,17 @@ export function Content({ contentIndex }: { contentIndex: number }) {
 
                                                 {
                                                     values.map((v, i) =>
-                                                        <div key={i} className="rounded-lg border border-outline p-2 flex flex-row items-center">
+                                                        <div key={i} className="rounded-lg border border-outline p-2 flex flex-row items-center gap-2">
+                                                            <Button isIcon variant="text" color={playingSound === i ? 'primary' : 'on-surface'} onClick={() => playSound(v, i)}>
+
+                                                                {
+                                                                    fetchingSound === i
+                                                                        ? <CircularProgress size={20} strokeWidth={1.5} />
+                                                                        : playingSound === i
+                                                                            ? <Volume2 />
+                                                                            : <Volume1 />
+                                                                }
+                                                            </Button>
                                                             <div className="grow">{v}</div>
 
                                                             {/* Delete button */}

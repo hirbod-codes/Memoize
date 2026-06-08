@@ -8,9 +8,7 @@ on:
 permissions:
   contents: write
   packages: write
-  # Needed by semantic release action
   pull-requests: write
-  issues: write
 
 jobs:
   detect-changes:
@@ -19,6 +17,7 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       mobile: ${{ steps.filter.outputs.mobile }}
+      client: ${{ steps.filter.outputs.client }}
 
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +35,8 @@ jobs:
               - 'frontend/**'
             mobile:
               - 'mobile/**'
+            client:
+              - 'client/**'
 
   backend-release:
     runs-on: ubuntu-latest
@@ -157,33 +158,105 @@ jobs:
           name: frontend-dist
           path: dist-${VERSION}.tar.gz
 
-  mobile-release:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.mobile == 'true'
+  # mobile-release:
+  #   needs: detect-changes
+  #   if: needs.detect-changes.outputs.mobile == 'true'
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     version: ${{ steps.semantic.outputs.new_release_version }}
+  #     released: ${{ steps.semantic.outputs.new_release_published }}
+
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 22
+
+  #     - name: Semantic Release (mobile)
+  #       id: semantic
+  #       uses: cycjimmy/semantic-release-action@v4
+  #       with:
+  #         working_directory: mobile
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # mobile-build:
+  #   needs: mobile-release
+  #   if: needs.mobile-release.result == 'success' && needs.mobile-release.outputs.released == 'true' && needs.mobile-release.outputs.version != ''
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 22
+
+  #     - name: Install dependencies
+  #       run: |
+  #         cd mobile
+  #         npm ci
+  #         npm install -g eas-cli
+
+  #     - name: Set Version
+  #       run: |
+  #         echo "VERSION=${{ needs.mobile-release.outputs.version }}" >> $GITHUB_ENV
+
+  #     - name: Build Android (AAB)
+  #       run: |
+  #         cd mobile
+  #         eas build \
+  #           --platform android \
+  #           --profile production \
+  #           --non-interactive \
+  #           --wait \
+  #           --json > android.json
+  #       env:
+  #         EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  #     - name: Extract Android URL
+  #       run: |
+  #         echo "ANDROID_URL=$(jq -r '.[0].artifacts.buildUrl' mobile/android.json)" >> $GITHUB_ENV
+
+  #     - name: Download Android AAB
+  #       run: |
+  #         curl -L "$ANDROID_URL" -o memoize-${VERSION}.aab
+
+  #     - name: Build iOS (IPA)
+  #       run: |
+  #         cd mobile
+  #         eas build \
+  #           --platform ios \
+  #           --profile preview \
+  #           --non-interactive \
+  #           --wait \
+  #           --json > ios.json
+  #       env:
+  #         EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  #     - name: Extract iOS URL
+  #       run: |
+  #         echo "IOS_URL=$(jq -r '.[0].artifacts.buildUrl' mobile/ios.json)" >> $GITHUB_ENV
+
+  #     - name: Download IPA
+  #       run: |
+  #         curl -L "$IOS_URL" -o memoize-${VERSION}.ipa
+
+  #     - name: Upload artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: mobile-build
+  #         path: |
+  #           memoize-${VERSION}.ipa
+  #           memoize-${VERSION}.aab
+
+  client-release:
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.client == 'true'
     outputs:
       version: ${{ steps.semantic.outputs.new_release_version }}
       released: ${{ steps.semantic.outputs.new_release_published }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Semantic Release (mobile)
-        id: semantic
-        uses: cycjimmy/semantic-release-action@v4
-        with:
-          working_directory: mobile
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  mobile-build:
-    needs: mobile-release
-    if: needs.mobile-release.result == 'success' && needs.mobile-release.outputs.released == 'true' && needs.mobile-release.outputs.version != ''
-    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -193,69 +266,287 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd mobile
+          cd client
           npm ci
-          npm install -g eas-cli
+
+      - name: Semantic Release (client)
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          working_directory: client
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  android-build:
+    needs: client-release
+    if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Set Version
         run: |
-          echo "VERSION=${{ needs.mobile-release.outputs.version }}" >> $GITHUB_ENV
+          echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
-      - name: Build Android (AAB)
+      - name: Update version
         run: |
-          cd mobile
-          eas build \
-            --platform android \
-            --profile production \
-            --non-interactive \
-            --wait \
-            --json > android.json
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
 
-      - name: Extract Android URL
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: |
+          cd client
+          flutter pub get
+
+      - run: |
+          cd client
+          flutter build apk --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+          flutter build appbundle --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+
+      - name: Rename app release
         run: |
-          echo "ANDROID_URL=$(jq -r '.[0].artifacts.buildUrl' mobile/android.json)" >> $GITHUB_ENV
+          mkdir artifacts
+          cp build/app/outputs/flutter-apk/app-release.apk artifacts/memoize-app-release-${VERSION}.apk
+          cp build/app/outputs/flutter-apk/app-release.aab artifacts/memoize-app-release-${VERSION}.aab
 
-      - name: Download Android AAB
-        run: |
-          curl -L "$ANDROID_URL" -o memoize-${VERSION}.aab
-
-      - name: Build iOS (IPA)
-        run: |
-          cd mobile
-          eas build \
-            --platform ios \
-            --profile production \
-            --non-interactive \
-            --wait \
-            --json > ios.json
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Extract iOS URL
-        run: |
-          echo "IOS_URL=$(jq -r '.[0].artifacts.buildUrl' mobile/ios.json)" >> $GITHUB_ENV
-
-      - name: Download IPA
-        run: |
-          curl -L "$IOS_URL" -o memoize-${VERSION}.ipa
-
-      - name: Upload artifacts
+      - name: Upload android artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mobile-build
-          path: |
-            memoize-${VERSION}.ipa
-            memoize-${VERSION}.aab
+          name: android
+          path: artifacts/*
+
+  windows-build:
+    needs: client-release
+    if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set Version
+        run: |
+          echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Update version
+        run: |
+          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: |
+          cd client
+          flutter pub get
+
+      - run: |
+          cd client
+          flutter build windows --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+
+      - name: Package Windows
+        run: |
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath memoize-windows-${VERSION}.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: memoize-windows-${VERSION}.zip
+
+  linux-build:
+    needs: client-release
+    if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set Version
+        run: |
+          echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Update version
+        run: |
+          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: |
+          cd client
+          flutter pub get
+
+      - run: |
+          cd client
+          flutter build linux --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+
+      - name: Package Linux
+        run: |
+          tar -czf memoize-linux-${VERSION}.tar.gz -C build/linux/x64/release/bundle
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: memoize-linux-${VERSION}.tar.gz
+
+  web-build:
+    needs: client-release
+    if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set Version
+        run: |
+          echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Update version
+        run: |
+          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: |
+          cd client
+          flutter pub get
+
+      - run: |
+          cd client
+          flutter build web --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+
+      - name: Package Web
+        run: |
+          zip -r memoize-web-${VERSION}.zip build/web
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: memoize-web-${VERSION}.zip
+
+  macos-build:
+    needs: client-release
+    if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set Version
+        run: |
+          echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Update version
+        run: |
+          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: |
+          cd client
+          flutter pub get
+
+      - run: |
+          cd client
+          flutter build macos --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+
+      - name: Package macOS
+        run: |
+          ditto -c -k build/macos/Build/Products/Release/Memoize.app memoize-macos-${VERSION}.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: memoize-macos-${VERSION}.zip
+
+  ios-build:
+    needs: client-release
+    if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set Version
+        run: |
+          echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Update version
+        run: |
+          sed -i "s/^version:.*/version: ${VERSION}+${{ github.run_number }}/" pubspec.yaml
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: |
+          cd client
+          flutter pub get
+
+      - run: |
+          cd client
+          flutter build ios --release --no-codesign --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+
+      - name: Package iOS
+        run: |
+          cd build/ios
+          zip -r ../../memoize-ios-${VERSION}.zip .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios
+          path: memoize-ios-${VERSION}.zip
 
   create-release:
     runs-on: ubuntu-latest
     needs:
-      - backend-build
-      - frontend-build
-      - mobile-build
-    if: always() && ( (needs.backend-build.result == 'success') || (needs.frontend-build.result == 'success') || (needs.mobile-build.result == 'success') )
+      - backend-release
+      - frontend-release
+      - client-release
+      - android-build
+      - windows-build
+      - linux-build
+      - web-build
+      - macos-build
+      - ios-build
+    if: |
+      always() &&
+      (
+        needs.backend-release.outputs.released == 'true' ||
+        needs.frontend-release.outputs.released == 'true' ||
+        needs.client-release.outputs.released == 'true'
+      ) &&
+      needs.android-build.result != 'failure' &&
+      needs.windows-build.result != 'failure' &&
+      needs.linux-build.result != 'failure' &&
+      needs.web-build.result != 'failure' &&
+      needs.macos-build.result != 'failure' &&
+      needs.ios-build.result != 'failure'
 
     steps:
       - uses: actions/checkout@v4
@@ -289,6 +580,6 @@ jobs:
           repository: hirbod-codes/nginx
           event-type: memoize-released
           client-payload: |
-              {
-              "VERSION": "${{ needs.frontend-release.outputs.version }}"
-              }
+            {
+            "VERSION": "${{ needs.frontend-release.outputs.version }}"
+            }

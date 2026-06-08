@@ -67,9 +67,9 @@ export function Button({ children, variant = 'filled', color = 'primary', icon, 
     // To tell tailwind import classes
     // type ColorPalette = 'primary' | 'primary-container' | 'secondary' | 'secondary-container' | 'tertiary' | 'error' | 'surface' | 'on-surface' | 'success' | 'warning';
 
-    //  bg-primary, bg-primary-container, bg-secondary, bg-secondary-container, bg-tertiary, bg-error, bg-surface, bg-success, text-primary, text-primary-container, text-secondary, text-secondary-container, text-tertiary, text-error, text-surface, text-success, bg-on-primary, bg-on-primary-container, bg-on-secondary, bg-on-secondary-container, bg-on-tertiary, bg-on-error, bg-on-surface, bg-on-success, text-on-primary, text-on-primary-container, text-on-secondary, text-on-secondary-container, text-on-tertiary, text-on-error, text-on-surface, text-on-success
+    //  bg-primary bg-primary-container bg-secondary bg-secondary-container bg-tertiary bg-error bg-surface bg-success text-primary text-primary-container text-secondary text-secondary-container text-tertiary text-error text-surface text-success bg-on-primary bg-on-primary-container bg-on-secondary bg-on-secondary-container bg-on-tertiary bg-on-error bg-on-surface bg-on-success text-on-primary text-on-primary-container text-on-secondary text-on-secondary-container text-on-tertiary text-on-error text-on-surface text-on-success
 
-    // border-primary, border-primary-container, border-secondary, border-secondary-container, border-tertiary, border-error, border-surface, border-success, border-on-primary, border-on-primary-container, border-on-secondary, border-on-secondary-container, border-on-tertiary, border-on-error, border-on-surface, border-on-success,
+    // border-primary border-primary-container border-secondary border-secondary-container border-tertiary border-error border-surface border-success border-on-primary border-on-primary-container border-on-secondary border-on-secondary-container border-on-tertiary border-on-error border-on-surface border-on-success
 
     // Dynamic Tailwind mapping based on variant 
     const variantStyles: Record<ButtonVariant, string> = {
