@@ -293,13 +293,13 @@ jobs:
         run: |
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
-      - name: Update version
-        working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Update version
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - run: |
           cd client
@@ -337,13 +337,13 @@ jobs:
         run: |
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
-      - name: Update version
-        working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Update version
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - run: |
           cd client
@@ -377,13 +377,13 @@ jobs:
         run: |
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
-      - name: Update version
-        working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Update version
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - name: Install Linux dependencies
         run: |
@@ -422,13 +422,13 @@ jobs:
         run: |
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
-      - name: Update version
-        working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Update version
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - run: |
           cd client
@@ -462,13 +462,13 @@ jobs:
         run: |
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
-      - name: Update version
-        working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Update version
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - run: |
           cd client
@@ -502,13 +502,13 @@ jobs:
         run: |
           echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
 
-      - name: Update version
-        working-directory: client
-        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Update version
+        working-directory: client
+        run: dart run update_version.dart ${VERSION} ${{ github.run_number }}
 
       - run: |
           cd client
