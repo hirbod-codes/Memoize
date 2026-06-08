@@ -283,6 +283,10 @@ jobs:
     if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
     runs-on: ubuntu-latest
 
+    env:
+      VERSION: ${{ needs.client-release.outputs.version }}
+      BUILD_NUMBER: ${{ github.run_number }}
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -299,7 +303,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart
 
       - run: |
           cd client
@@ -327,6 +331,10 @@ jobs:
     if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
     runs-on: windows-latest
 
+    env:
+      VERSION: ${{ needs.client-release.outputs.version }}
+      BUILD_NUMBER: ${{ github.run_number }}
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -343,7 +351,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart
 
       - run: |
           cd client
@@ -367,6 +375,10 @@ jobs:
     if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
     runs-on: ubuntu-latest
 
+    env:
+      VERSION: ${{ needs.client-release.outputs.version }}
+      BUILD_NUMBER: ${{ github.run_number }}
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -383,7 +395,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart
 
       - name: Install Linux dependencies
         run: |
@@ -412,6 +424,10 @@ jobs:
     if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
     runs-on: ubuntu-latest
 
+    env:
+      VERSION: ${{ needs.client-release.outputs.version }}
+      BUILD_NUMBER: ${{ github.run_number }}
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -428,7 +444,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart
 
       - run: |
           cd client
@@ -452,6 +468,10 @@ jobs:
     if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
     runs-on: macos-latest
 
+    env:
+      VERSION: ${{ needs.client-release.outputs.version }}
+      BUILD_NUMBER: ${{ github.run_number }}
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -468,7 +488,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart
 
       - run: |
           cd client
@@ -480,7 +500,9 @@ jobs:
 
       - name: Package macOS
         run: |
-          ditto -c -k build/macos/Build/Products/Release/Memoize.app memoize-macos-${VERSION}.zip
+          APP=$(find client/build/macos/Build/Products/Release -name "*.app" | head -1)
+          echo "Found app: $APP"
+          ditto -c -k "$APP" "../memoize-macos-${VERSION}.zip"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -491,6 +513,10 @@ jobs:
     needs: client-release
     if: needs.client-release.result == 'success' && needs.client-release.outputs.released == 'true' && needs.client-release.outputs.version != ''
     runs-on: macos-latest
+
+    env:
+      VERSION: ${{ needs.client-release.outputs.version }}
+      BUILD_NUMBER: ${{ github.run_number }}
 
     steps:
       - uses: actions/checkout@v4
@@ -508,7 +534,7 @@ jobs:
 
       - name: Update version
         working-directory: client
-        run: dart run update_flutter_version.dart ${VERSION} ${{ github.run_number }}
+        run: dart run update_flutter_version.dart
 
       - run: |
           cd client
@@ -520,7 +546,7 @@ jobs:
 
       - name: Package iOS
         run: |
-          cd build/ios
+          cd client/build/ios
           zip -r ../../memoize-ios-${VERSION}.zip .
 
       - uses: actions/upload-artifact@v4
