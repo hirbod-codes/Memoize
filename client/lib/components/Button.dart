@@ -88,7 +88,7 @@ class Button extends StatelessWidget {
   Widget _text() {
     return TextButton(
       onPressed: isLoading ? null : onPressed,
-      style: TextButton.styleFrom(foregroundColor: baseColor),
+      style: TextButton.styleFrom(foregroundColor: baseColor, shape: label == null ? CircleBorder() : null),
       child: _child(baseColor),
     );
   }
@@ -112,15 +112,13 @@ class Button extends StatelessWidget {
       return Text(label ?? "");
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18, color: textColor),
-        const SizedBox(width: 8),
-        Text(label ?? ""),
-      ],
-    );
+    List<Widget> children = [Icon(icon, size: 18, color: textColor)];
+    if (label != null) {
+      children.add(const SizedBox(width: 8));
+      children.add(Text(label ?? ""));
+    }
+
+    return Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: children);
   }
 
   RoundedRectangleBorder _shape() {
