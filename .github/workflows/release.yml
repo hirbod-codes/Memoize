@@ -305,11 +305,13 @@ jobs:
         working-directory: client
         run: dart run update_flutter_version.dart
 
-      - run: |
+      - name: Install flutter project dependencies
+        run: |
           cd client
           flutter pub get
 
-      - run: |
+      - name: Build android app
+        run: |
           cd client
           flutter build apk --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
           flutter build appbundle --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
@@ -317,8 +319,8 @@ jobs:
       - name: Rename app release
         run: |
           mkdir artifacts
-          cp client/build/app/outputs/flutter-apk/app-release.apk artifacts/memoize-app-release-${VERSION}.apk
-          cp client/build/app/outputs/flutter-apk/app-release.aab artifacts/memoize-app-release-${VERSION}.aab
+          cp client/build/app/outputs/flutter-apk/app-release.apk artifacts/memoize-app-release-${{ needs.client-release.outputs.version }}.apk
+          cp client/build/app/outputs/flutter-apk/app-release.aab artifacts/memoize-app-release-${{ needs.client-release.outputs.version }}.aab
 
       - name: Upload android artifact
         uses: actions/upload-artifact@v4
@@ -353,22 +355,25 @@ jobs:
         working-directory: client
         run: dart run update_flutter_version.dart
 
-      - run: |
+      - name: Install flutter project dependencies
+        run: |
           cd client
           flutter pub get
 
-      - run: |
+      - name: Build windows app
+        run: |
           cd client
           flutter build windows --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
 
       - name: Package Windows
         run: |
-          Compress-Archive -Path client/build/windows/x64/runner/Release/* -DestinationPath memoize-windows-${VERSION}.zip
+          Compress-Archive -Path client/build/windows/x64/runner/Release/* -DestinationPath memoize-windows-${{ needs.client-release.outputs.version }}.zip
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload windows artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: windows
-          path: memoize-windows-${VERSION}.zip
+          path: memoize-windows-${{ needs.client-release.outputs.version }}.zip
 
   linux-build:
     needs: client-release
@@ -385,10 +390,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Set Version
-        run: |
-          echo "VERSION=${{ needs.client-release.outputs.version }}" >> $GITHUB_ENV
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -402,11 +403,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev
 
-      - run: |
+      - name: Install flutter project dependencies
+        run: |
           cd client
           flutter pub get
 
-      - run: |
+      - name: Build linux app
+        run: |
           cd client
           flutter build linux --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
 
@@ -414,10 +417,11 @@ jobs:
         run: |
           tar -czf memoize-linux-${VERSION}.tar.gz -C client/build/linux/x64/release/bundle .
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload linux artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: linux
-          path: memoize-linux-${VERSION}.tar.gz
+          path: memoize-linux-${{ needs.client-release.outputs.version }}.tar.gz
 
   web-build:
     needs: client-release
@@ -446,22 +450,25 @@ jobs:
         working-directory: client
         run: dart run update_flutter_version.dart
 
-      - run: |
+      - name: Install flutter project dependencies
+        run: |
           cd client
           flutter pub get
 
-      - run: |
+      - name: Build web app
+        run: |
           cd client
           flutter build web --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
 
-      - name: Package Web
+      - name: Package web
         run: |
-          zip -r memoize-web-${VERSION}.zip client/build/web
+          zip -r memoize-web-${{ needs.client-release.outputs.version }}.zip client/build/web
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload web artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: web
-          path: memoize-web-${VERSION}.zip
+          path: memoize-web-${{ needs.client-release.outputs.version }}.zip
 
   macos-build:
     needs: client-release
@@ -490,11 +497,13 @@ jobs:
         working-directory: client
         run: dart run update_flutter_version.dart
 
-      - run: |
+      - name: Install flutter project dependencies
+        run: |
           cd client
           flutter pub get
 
-      - run: |
+      - name: Build macOS app
+        run: |
           cd client
           flutter build macos --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
 
@@ -502,12 +511,13 @@ jobs:
         run: |
           APP=$(find client/build/macos/Build/Products/Release -name "*.app" | head -1)
           echo "Found app: $APP"
-          ditto -c -k "$APP" "memoize-macos-${VERSION}.zip"
+          ditto -c -k "$APP" "memoize-macos-${{ needs.client-release.outputs.version }}.zip"
 
-      - uses: actions/upload-artifact@v4
+      - name: Upoad macOS artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: macos
-          path: memoize-macos-${VERSION}.zip
+          path: memoize-macos-${{ needs.client-release.outputs.version }}.zip
 
   ios-build:
     needs: client-release
@@ -536,23 +546,26 @@ jobs:
         working-directory: client
         run: dart run update_flutter_version.dart
 
-      - run: |
+      - name: Install flutter project dependencies
+        run: |
           cd client
           flutter pub get
 
-      - run: |
+      - name: Build ios app
+        run: |
           cd client
           flutter build ios --release --no-codesign --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
 
       - name: Package iOS
         run: |
           cd client/build/ios
-          zip -r ../../../memoize-ios-${VERSION}.zip .
+          zip -r ../../../memoize-ios-${{ needs.client-release.outputs.version }}.zip .
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload ios artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: ios
-          path: memoize-ios-${VERSION}.zip
+          path: memoize-ios-${{ needs.client-release.outputs.version }}.zip
 
   create-release:
     runs-on: ubuntu-latest
