@@ -13,7 +13,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+<<<<<<< Updated upstream
       "supportsTablet": true
+=======
+      "bundleIdentifier": "ir.hirbodcodes.memoize",
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+>>>>>>> Stashed changes
     },
     "android": {
       "adaptiveIcon": {
