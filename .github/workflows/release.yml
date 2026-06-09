@@ -526,26 +526,27 @@ jobs:
           cd client
           flutter build ios --release --no-codesign --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
 
-      - name: Package iOS
+      - name: Create the unsigned ipa
         run: |
-          cd client/build/ios
-          zip -r ../../../memoize-ios-${{ needs.client-release.outputs.version }}.zip .
+          mkdir Payload
+          mv client/build/ios/iphoneos/Runnder.app/ Payload
+          zip -qq -r -9 memoize-ios-${{ needs.client-release.outputs.version }}.ipa Payload
 
       - name: Create latest copies
         run: |
           mkdir -p latest_artifacts
-          cp memoize-ios-${{ needs.client-release.outputs.version }}.zip latest_artifacts/memoize-ios-latest.zip
+          cp memoize-ios-${{ needs.client-release.outputs.version }}.ipa latest_artifacts/memoize-ios-latest.ipa
 
       - name: Upload latest iOS build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload latest-builds latest_artifacts/memoize-ios-latest.zip --clobber
+        run: gh release upload latest-builds latest_artifacts/memoize-ios-latest.ipa --clobber
 
       - name: Upload ios artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ios
-          path: memoize-ios-${{ needs.client-release.outputs.version }}.zip
+          path: memoize-ios-${{ needs.client-release.outputs.version }}.ipa
 
   create-release:
     runs-on: ubuntu-latest
@@ -584,7 +585,7 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
+          tag_name: ${{ github.run_number }}
           files: artifacts/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

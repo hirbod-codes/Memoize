@@ -27,7 +27,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         mainAxisAlignment: .center,
         spacing: 5,
         children: [
-          const Text('You have pushed the button this many times:'),
+          const Text('You have pushed the button many times:'),
           Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
           Button(
             label: 'Add',
