@@ -82,23 +82,28 @@ jobs:
           cd backend
           npm ci
 
-      - name: Set Version
-        run: |
-          echo "VERSION=${{ needs.backend-release.outputs.version }}" >> $GITHUB_ENV
-
       - name: Build Docker image
         run: |
           cd backend
           echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker build -t ghcr.io/hirbod-codes/memoize/backend:${VERSION} --target production .
-          docker push ghcr.io/hirbod-codes/memoize/backend:${VERSION}
-          docker save ghcr.io/hirbod-codes/memoize/backend:${VERSION} | gzip > backend-image-${VERSION}.tar.gz
+          docker build -t ghcr.io/hirbod-codes/memoize/backend:${{ needs.backend-release.outputs.version }} --target production .
+          docker push ghcr.io/hirbod-codes/memoize/backend:${{ needs.backend-release.outputs.version }}
+          docker save ghcr.io/hirbod-codes/memoize/backend:${{ needs.backend-release.outputs.version }} | gzip > backend-image-${{ needs.backend-release.outputs.version }}.tar.gz
+
+      - name: Create latest copies
+        run: |
+          cp backend-image-${{ needs.backend-release.outputs.version }}.tar.gz backend-image-latest.tar.gz
+
+      - name: Upload latest backend build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload latest-builds backend-image-latest.tar.gz --clobber
 
       - name: Upload backend artifact
         uses: actions/upload-artifact@v4
         with:
           name: backend-image
-          path: backend-image-${VERSION}.tar.gz
+          path: backend-image-${{ needs.backend-release.outputs.version }}.tar.gz
 
   frontend-release:
     needs: detect-changes
@@ -143,113 +148,26 @@ jobs:
           cd frontend
           npm ci
 
-      - name: Set Version
-        run: |
-          echo "VERSION=${{ needs.frontend-release.outputs.version }}" >> $GITHUB_ENV
-
       - name: Build frontend
         run: |
           cd frontend
           npm run build
-          tar -czf ../dist-${VERSION}.tar.gz dist
+          tar -czf ../dist-${{ needs.frontend-release.outputs.version }}.tar.gz dist
+
+      - name: Create latest copies
+        run: |
+          cp dist-${{ needs.frontend-release.outputs.version }}.tar.gz dist-latest.tar.gz
+
+      - name: Upload latest frontend build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload latest-builds dist-latest.tar.gz --clobber
 
       - name: Upload frontend artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: dist-${VERSION}.tar.gz
-
-  # mobile-release:
-  #   needs: detect-changes
-  #   if: needs.detect-changes.outputs.mobile == 'true'
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     version: ${{ steps.semantic.outputs.new_release_version }}
-  #     released: ${{ steps.semantic.outputs.new_release_published }}
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 22
-
-  #     - name: Semantic Release (mobile)
-  #       id: semantic
-  #       uses: cycjimmy/semantic-release-action@v4
-  #       with:
-  #         working_directory: mobile
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # mobile-build:
-  #   needs: mobile-release
-  #   if: needs.mobile-release.result == 'success' && needs.mobile-release.outputs.released == 'true' && needs.mobile-release.outputs.version != ''
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 22
-
-  #     - name: Install dependencies
-  #       run: |
-  #         cd mobile
-  #         npm ci
-  #         npm install -g eas-cli
-
-  #     - name: Set Version
-  #       run: |
-  #         echo "VERSION=${{ needs.mobile-release.outputs.version }}" >> $GITHUB_ENV
-
-  #     - name: Build Android (AAB)
-  #       run: |
-  #         cd mobile
-  #         eas build \
-  #           --platform android \
-  #           --profile production \
-  #           --non-interactive \
-  #           --wait \
-  #           --json > android.json
-  #       env:
-  #         EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-  #     - name: Extract Android URL
-  #       run: |
-  #         echo "ANDROID_URL=$(jq -r '.[0].artifacts.buildUrl' mobile/android.json)" >> $GITHUB_ENV
-
-  #     - name: Download Android AAB
-  #       run: |
-  #         curl -L "$ANDROID_URL" -o memoize-${VERSION}.aab
-
-  #     - name: Build iOS (IPA)
-  #       run: |
-  #         cd mobile
-  #         eas build \
-  #           --platform ios \
-  #           --profile preview \
-  #           --non-interactive \
-  #           --wait \
-  #           --json > ios.json
-  #       env:
-  #         EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-  #     - name: Extract iOS URL
-  #       run: |
-  #         echo "IOS_URL=$(jq -r '.[0].artifacts.buildUrl' mobile/ios.json)" >> $GITHUB_ENV
-
-  #     - name: Download IPA
-  #       run: |
-  #         curl -L "$IOS_URL" -o memoize-${VERSION}.ipa
-
-  #     - name: Upload artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: mobile-build
-  #         path: |
-  #           memoize-${VERSION}.ipa
-  #           memoize-${VERSION}.aab
+          path: dist-${{ needs.frontend-release.outputs.version }}.tar.gz
 
   client-release:
     runs-on: ubuntu-latest
@@ -320,7 +238,18 @@ jobs:
         run: |
           mkdir artifacts
           cp client/build/app/outputs/flutter-apk/app-release.apk artifacts/memoize-app-release-${{ needs.client-release.outputs.version }}.apk
-          cp client/build/app/outputs/flutter-apk/app-release.aab artifacts/memoize-app-release-${{ needs.client-release.outputs.version }}.aab
+          cp client/build/app/outputs/bundle/release/app-release.aab artifacts/memoize-app-release-${{ needs.client-release.outputs.version }}.aab
+
+      - name: Create latest copies
+        run: |
+          mkdir -p latest_artifacts
+          cp artifacts/memoize-app-release-${{ needs.client-release.outputs.version }}.apk latest_artifacts/memoize-app-release-latest.apk
+          cp artifacts/memoize-app-release-${{ needs.client-release.outputs.version }}.aab latest_artifacts/memoize-app-release-latest.aab
+
+      - name: Upload latest android builds
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload latest-builds latest_artifacts/memoize-app-release-latest.apk latest_artifacts/memoize-app-release-latest.aab --clobber
 
       - name: Upload android artifact
         uses: actions/upload-artifact@v4
@@ -369,6 +298,17 @@ jobs:
         run: |
           Compress-Archive -Path client/build/windows/x64/runner/Release/* -DestinationPath memoize-windows-${{ needs.client-release.outputs.version }}.zip
 
+      - name: Create latest copies
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force latest_artifacts
+          Copy-Item "memoize-windows-${{ needs.client-release.outputs.version }}.zip" "latest_artifacts/memoize-windows-latest.zip"
+
+      - name: Upload latest windows build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload latest-builds latest_artifacts/memoize-windows-latest.zip --clobber
+
       - name: Upload windows artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -415,7 +355,17 @@ jobs:
 
       - name: Package Linux
         run: |
-          tar -czf memoize-linux-${VERSION}.tar.gz -C client/build/linux/x64/release/bundle .
+          tar -czf memoize-linux-${{ needs.client-release.outputs.version }}.tar.gz -C client/build/linux/x64/release/bundle .
+
+      - name: Create latest copies
+        run: |
+          mkdir -p latest_artifacts
+          cp memoize-linux-${{ needs.client-release.outputs.version }}.tar.gz latest_artifacts/memoize-linux-latest.tar.gz
+
+      - name: Upload latest linux build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload latest-builds latest_artifacts/memoize-linux-latest.tar.gz --clobber
 
       - name: Upload linux artifacts
         uses: actions/upload-artifact@v4
@@ -463,6 +413,16 @@ jobs:
       - name: Package web
         run: |
           zip -r memoize-web-${{ needs.client-release.outputs.version }}.zip client/build/web
+
+      - name: Create latest copies
+        run: |
+          mkdir -p latest_artifacts
+          cp memoize-web-${{ needs.client-release.outputs.version }}.zip latest_artifacts/memoize-web-latest.zip
+
+      - name: Upload latest web build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload latest-builds latest_artifacts/memoize-web-latest.zip --clobber
 
       - name: Upload web artifacts
         uses: actions/upload-artifact@v4
@@ -513,6 +473,16 @@ jobs:
           echo "Found app: $APP"
           ditto -c -k "$APP" "memoize-macos-${{ needs.client-release.outputs.version }}.zip"
 
+      - name: Create latest copies
+        run: |
+          mkdir -p latest_artifacts
+          cp memoize-macos-${{ needs.client-release.outputs.version }}.zip latest_artifacts/memoize-macos-latest.zip
+
+      - name: Upload latest macOS build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload latest-builds latest_artifacts/memoize-macos-latest.zip --clobber
+
       - name: Upoad macOS artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -560,6 +530,16 @@ jobs:
         run: |
           cd client/build/ios
           zip -r ../../../memoize-ios-${{ needs.client-release.outputs.version }}.zip .
+
+      - name: Create latest copies
+        run: |
+          mkdir -p latest_artifacts
+          cp memoize-ios-${{ needs.client-release.outputs.version }}.zip latest_artifacts/memoize-ios-latest.zip
+
+      - name: Upload latest iOS build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload latest-builds latest_artifacts/memoize-ios-latest.zip --clobber
 
       - name: Upload ios artifacts
         uses: actions/upload-artifact@v4
