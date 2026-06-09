@@ -9,15 +9,15 @@ final goRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const AuthGate(title: Text('Memoize Home Page'), child: HomePage()),
+      builder: (context, state) => const AuthGate(child: HomePage()),
     ),
     GoRoute(
       path: '/notes',
-      builder: (context, state) => const AuthGate(title: Text('Memoize Home Page'), child: HomePage()),
+      builder: (context, state) => const AuthGate(child: HomePage()),
     ),
     GoRoute(
       path: '/settings',
-      builder: (context, state) => const AuthGate(title: Text('Memoize Home Page'), child: SettingsPage()),
+      builder: (context, state) => const AuthGate(child: SettingsPage()),
     ),
   ],
 );

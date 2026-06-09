@@ -7,10 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AuthGate extends ConsumerWidget {
-  final Widget title;
   final Widget child;
+  final Widget? title;
 
-  const AuthGate({super.key, required this.title, required this.child});
+  const AuthGate({super.key, required this.child, this.title});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

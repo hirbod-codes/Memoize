@@ -1,13 +1,13 @@
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/components/button.dart';
-import 'package:client/theme/ThemeModeNotifier.dart';
+import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TopBar extends ConsumerWidget implements PreferredSizeWidget {
-  final Widget title;
+  final Widget? title;
 
-  const TopBar({super.key, required this.title});
+  const TopBar({super.key, this.title});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

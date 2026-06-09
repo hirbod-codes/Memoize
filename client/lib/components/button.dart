@@ -1,4 +1,4 @@
-import 'package:client/theme/AppColors.dart';
+import 'package:client/theme/theme_colors.dart';
 import 'package:flutter/material.dart';
 
 enum ButtonType { elevated, text, outlined, floatingAction }
@@ -26,15 +26,15 @@ class Button extends StatelessWidget {
   static Color resolve(ButtonColor token) {
     switch (token) {
       case ButtonColor.primary:
-        return AppColors.primary;
+        return LightTheme.primary;
       case ButtonColor.secondary:
-        return AppColors.secondary;
+        return LightTheme.secondary;
       case ButtonColor.success:
-        return AppColors.success;
+        return LightTheme.success;
       case ButtonColor.warning:
-        return AppColors.warning;
+        return LightTheme.warning;
       case ButtonColor.error:
-        return AppColors.error;
+        return LightTheme.error;
     }
   }
 
