@@ -529,7 +529,7 @@ jobs:
       - name: Create the unsigned ipa
         run: |
           mkdir Payload
-          mv client/build/ios/iphoneos/Runnder.app/ Payload
+          mv client/build/ios/iphoneos/Runner.app/ Payload
           zip -qq -r -9 memoize-ios-${{ needs.client-release.outputs.version }}.ipa Payload
 
       - name: Create latest copies
