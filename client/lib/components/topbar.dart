@@ -17,7 +17,7 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
       actions: [
         Button(
           icon: ref.watch(themeModeProvider).isDark ? Icons.light_mode : Icons.dark_mode,
-          color: ButtonColor.primary,
+          color: .primary,
           type: ButtonType.text,
           onPressed: () {
             ref.read(themeModeProvider.notifier).toggle();
@@ -25,7 +25,7 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
         Button(
           icon: Icons.logout,
-          color: ButtonColor.error,
+          color: .error,
           type: ButtonType.text,
           onPressed: () {
             ref.read(authControllerProvider.notifier).logout();

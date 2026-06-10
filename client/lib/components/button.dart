@@ -1,72 +1,62 @@
 import 'package:client/theme/theme_colors.dart';
+import 'package:client/theme/theme_mode_notifier.dart';
+import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum ButtonType { elevated, text, outlined, floatingAction }
 
 enum ButtonVariant { filled, outline, ghost }
 
-enum ButtonColor { primary, secondary, success, error, warning }
-
-class Button extends StatelessWidget {
+class Button extends ConsumerWidget {
   final String? label;
   final VoidCallback? onPressed;
 
   final ButtonType type;
-  final ButtonColor color;
+  final ThemeColorName color;
+  final ThemeColorName? onColor;
 
   final bool isLoading;
   final IconData? icon;
 
   final double? width;
-  final double height;
+  final double? height;
   final double radius;
 
-  const Button({super.key, this.label, this.onPressed, this.type = ButtonType.elevated, this.color = ButtonColor.primary, this.isLoading = false, this.icon, this.width, this.height = 48, this.radius = 12});
-
-  static Color resolve(ButtonColor token) {
-    switch (token) {
-      case ButtonColor.primary:
-        return LightTheme.primary;
-      case ButtonColor.secondary:
-        return LightTheme.secondary;
-      case ButtonColor.success:
-        return LightTheme.success;
-      case ButtonColor.warning:
-        return LightTheme.warning;
-      case ButtonColor.error:
-        return LightTheme.error;
-    }
-  }
-
-  Color get baseColor => Button.resolve(color);
+  const Button({super.key, this.label, this.onPressed, this.type = ButtonType.elevated, this.color = ThemeColorName.primary, this.onColor = ThemeColorName.onPrimary, this.isLoading = false, this.icon, this.width, this.height, this.radius = AppRadius.md});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+
+    final baseColor = theme.getThemeColor(color);
+    final fg = onColor != null ? theme.getThemeColor(onColor!) : theme.getThemeOnColor(color);
+
     switch (type) {
       case ButtonType.elevated:
-        return _elevated();
+        return _elevated(baseColor, fg);
       case ButtonType.text:
-        return _text();
+        return _text(baseColor);
       case ButtonType.outlined:
-        return _outlined();
+        return _outlined(baseColor);
       case ButtonType.floatingAction:
-        return _fab();
+        return _fab(baseColor, fg);
     }
   }
 
-  Widget _elevated() {
+  Widget _elevated(Color baseColor, Color fg) {
     return SizedBox(
       width: width,
       height: height,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(backgroundColor: baseColor, foregroundColor: Colors.white, shape: _shape()),
-        child: _child(Colors.white),
+        style: ElevatedButton.styleFrom(backgroundColor: baseColor, foregroundColor: fg, shape: _shape()),
+        child: _child(textColor: fg),
       ),
     );
   }
 
-  Widget _outlined() {
+  Widget _outlined(Color baseColor) {
     return SizedBox(
       width: width,
       height: height,
@@ -77,28 +67,29 @@ class Button extends StatelessWidget {
           side: BorderSide(color: baseColor, width: 1.5),
           shape: _shape(),
         ),
-        child: _child(baseColor),
+        child: _child(textColor: baseColor),
       ),
     );
   }
 
-  Widget _text() {
+  Widget _text(Color baseColor) {
     return TextButton(
       onPressed: isLoading ? null : onPressed,
       style: TextButton.styleFrom(foregroundColor: baseColor, shape: label == null ? CircleBorder() : null),
-      child: _child(baseColor),
+      child: _child(textColor: baseColor),
     );
   }
 
-  Widget _fab() {
+  Widget _fab(Color baseColor, Color fg) {
     return FloatingActionButton(
       onPressed: isLoading ? null : onPressed,
       backgroundColor: baseColor,
+      foregroundColor: fg,
       child: isLoading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : (icon != null ? Icon(icon, color: Colors.white) : const Icon(Icons.add, color: Colors.white)),
     );
   }
 
-  Widget _child(Color textColor) {
+  Widget _child({required Color textColor}) {
     if (isLoading) {
       return SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: textColor));
     }

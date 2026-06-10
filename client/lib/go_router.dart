@@ -1,7 +1,6 @@
 import 'package:client/auth_gate.dart';
 import 'package:client/pages/home_page.dart';
 import 'package:client/pages/settings_page.dart';
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 // GoRouter configuration
