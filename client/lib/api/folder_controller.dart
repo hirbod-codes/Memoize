@@ -43,7 +43,7 @@ class FolderController {
     return folders.map((f) => Folder.fromJson(f)).toList();
   }
 
-  Future<List<Folder>> getPaginated({required int limit, String? search, String? parentId, String? skip}) async {
+  Future<List<Folder>> getPaginated({required int limit, String? search, String? parentId, int? skip}) async {
     final response = await _authDio.get('/api/treeNode/list/?limit=$limit${skip != null ? '&skip=$skip' : ''}${parentId != null ? '&parentId=$parentId' : ''}${search != null ? '&search=$search' : ''}');
 
     final List<dynamic> folders = response.data;

@@ -8,11 +8,11 @@ final goRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const AuthGate(child: HomePage()),
+      builder: (context, state) => const AuthGate(child: MobileHomePage()),
     ),
     GoRoute(
       path: '/notes',
-      builder: (context, state) => const AuthGate(child: HomePage()),
+      builder: (context, state) => const AuthGate(child: MobileHomePage()),
     ),
     GoRoute(
       path: '/settings',

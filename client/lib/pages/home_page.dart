@@ -1,28 +1,70 @@
-import 'dart:developer';
+import 'dart:async';
 
-import 'package:client/api/folder_cotroller.dart';
+import 'package:client/api/folder_controller.dart';
 import 'package:client/api/leaf_controller.dart';
 import 'package:client/api/models/folder.dart';
 import 'package:client/api/models/leaf.dart';
 import 'package:client/components/button.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
-import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class HomePage extends ConsumerStatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
-  ConsumerState<HomePage> createState() => _HomePageState();
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+
+    if (width < 600) {
+      return const MobileHomePage();
+    }
+
+    // Tablet
+    if (width < 1024) {
+      return const MobileHomePage();
+    }
+
+    return MobileHomePage();
+  }
 }
 
-class _HomePageState extends ConsumerState<HomePage> {
+enum Filter { folder, file }
+
+class MobileHomePage extends ConsumerStatefulWidget {
+  const MobileHomePage({super.key});
+
+  @override
+  ConsumerState<MobileHomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends ConsumerState<MobileHomePage> {
   final TextEditingController _searchController = TextEditingController();
-  String _searchText = '';
+  Filter _filter = .folder;
+
+  int _folderSkip = 0;
+  int _fileSkip = 0;
+  bool _hasMore = true;
+
+  Timer? _debouncer;
+  String _search = '';
+
   bool _fetching = false;
+
+  String? _title;
+
+  final List<String> _location = ['root'];
+
   List<Folder> _folders = [];
-  List<Leaf>? _leafs;
+  List<Leaf>? _files;
+
+  bool _editing = false;
+
+  @override
+  void dispose() {
+    _debouncer?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -33,101 +75,322 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _initialize() async {
-    final folderController = ref.read(folderControllerProvider);
+    await _paginate();
+  }
+
+  void _resetSearch() {
+    _debouncer?.cancel();
+    _search = '';
+    _hasMore = true;
+  }
+
+  Future<void> _previousLocation() async {
+    if (_location.length < 2) return;
 
     setState(() {
       _fetching = true;
     });
 
-    final folders = await folderController.getRoot();
+    final lastId = _location.elementAt(_location.length - 2);
+    if (lastId == 'root') {
+      await _paginate(reset: true);
 
-    // to avoid exceptions if the user navigates away before the request completes.
+      if (!mounted) return;
+      setState(() {
+        _location.removeLast();
+        _title = null;
+        _files = [];
+        _filter = .folder;
+        _resetSearch();
+      });
+    } else {
+      final folderController = ref.read(folderControllerProvider);
+      final folder = await folderController.getMany(ids: [lastId]);
+      await _paginate(parentId: lastId, reset: true);
+
+      if (!mounted) return;
+      setState(() {
+        _title = folder[0].title;
+        _location.removeLast();
+        _resetSearch();
+      });
+    }
+  }
+
+  Future<void> _nextLocation(Folder parentFolder) async {
+    setState(() {
+      _fetching = true;
+    });
+
+    await _paginate(parentId: parentFolder.id, reset: true);
+
     if (!mounted) return;
+    setState(() {
+      _title = parentFolder.title;
+      _location.add(parentFolder.id);
+      _fetching = false;
+      _search = '';
+    });
+  }
+
+  void _onSearchChange(String value) {
+    setState(() {
+      _search = value;
+    });
+
+    _debouncer = Timer(.new(milliseconds: 700), () async {
+      _paginate(search: value);
+    });
+  }
+
+  Future<void> _paginate({String? search, int limit = 2, String? parentId, bool reset = false, Filter? filter}) async {
+    if (!reset && !_hasMore) return;
+
+    filter = filter ?? _filter;
 
     setState(() {
-      _folders = folders;
-      _fetching = false;
+      _fetching = true;
+    });
+
+    if (_location.length == 1 || filter == .folder) {
+      final folderController = ref.read(folderControllerProvider);
+
+      final folders = await folderController.getPaginated(limit: limit, parentId: parentId, skip: reset ? 0 : _folderSkip, search: search);
+
+      // to avoid exceptions if the user navigates away before the request completes.
+      if (!mounted) return;
+
+      setState(() {
+        _fetching = false;
+
+        _hasMore = folders.length >= limit;
+
+        if (reset) {
+          _folderSkip = folders.length;
+          _folders = folders;
+        } else {
+          _folderSkip = folders.length + _folderSkip;
+          _folders = [..._folders, ...folders];
+        }
+      });
+    } else if (filter == .file) {
+      final fileController = ref.read(leafControllerProvider);
+
+      final files = await fileController.getPaginated(limit: limit, parentId: parentId!, skip: reset ? 0 : _fileSkip, search: search);
+
+      if (!mounted) return;
+
+      setState(() {
+        _fetching = false;
+
+        _hasMore = files.length >= limit;
+
+        if (reset) {
+          _fileSkip = files.length;
+          _files = files;
+        } else {
+          _fileSkip = files.length + _fileSkip;
+          _files = [...(_files ?? []), ...files];
+        }
+      });
+    }
+  }
+
+  Future<void> _paginateMore() async {
+    await _paginate(search: _search, parentId: _location.last == 'root' ? null : _location.last);
+  }
+
+  Future<void> _onFilterChange(Filter filter) async {
+    if (_location.length < 2) return;
+
+    final lastId = _location.last;
+    if (lastId == 'root') return;
+
+    setState(() {
+      _fetching = true;
+      _filter = filter;
+    });
+
+    await _paginate(parentId: lastId, reset: true);
+
+    if (!mounted) return;
+    setState(() {
+      _resetSearch();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final folderController = ref.read(folderControllerProvider);
-    final leafController = ref.read(leafControllerProvider);
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
-    return Container(
-      width: .infinity,
-      height: .infinity,
-      padding: EdgeInsetsGeometry.all(20),
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.outline),
-        borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
-      ),
-      child: Column(
-        mainAxisAlignment: .start,
-        crossAxisAlignment: .stretch,
-        spacing: 5,
-        children: [
-          TextField(
-            controller: _searchController,
-            decoration: const InputDecoration(labelText: 'Search', prefixIcon: Icon(Icons.search)),
-            onChanged: (value) {
-              setState(() {
-                _searchText = value;
-              });
-            },
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _folders.length,
-              itemBuilder: (context, index) {
-                final item = _folders[index];
+    return Card(
+      elevation: 10,
+      color: theme.surfaceContainer,
+      child: Container(
+        width: .infinity,
+        height: .infinity,
+        padding: EdgeInsetsGeometry.all(20),
+        child: Column(
+          mainAxisAlignment: .start,
+          crossAxisAlignment: .stretch,
+          spacing: 5,
+          children: [
+            // Buttons
+            Row(
+              mainAxisAlignment: _location.length > 1 ? .spaceBetween : .end,
+              children: [
+                if (_location.length > 1) ...[Button(type: .text, iconSize: 28, isLoading: _fetching, icon: Icons.chevron_left, onPressed: _previousLocation)],
+                Button(
+                  type: .text,
+                  iconSize: 24,
+                  icon: _editing ? Icons.remove_red_eye_outlined : Icons.edit_square,
+                  onPressed: () {
+                    setState(() {
+                      _editing = !_editing;
+                    });
+                  },
+                ),
+              ],
+            ),
 
-                return Card(
-                  clipBehavior: Clip.hardEdge,
-                  child: InkWell(
-                    onTap: () async {
-                      setState(() {
-                        _fetching = true;
-                      });
+            if (_title != null) ...[Text(_title!), Divider(height: 1, color: theme.outlineVariant), const SizedBox(height: 8)],
 
-                      final folders = await folderController.getChildren(parentTreeNodeId: item.id);
-                      final leafs = await leafController.getChildren(parentTreeNodeId: item.id);
+            // Search
+            TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(labelText: 'Search', prefixIcon: Icon(Icons.search)),
+              onChanged: _onSearchChange,
+            ),
 
-                      setState(() {
-                        _fetching = false;
-                        _folders = folders;
-                        _leafs = leafs;
-                      });
-                    },
-                    child: Padding(
-                      padding: .all(5),
-                      child: ListTile(
-                        title: Text(item.title),
-                        trailing: Button(
-                          type: .text,
-                          color: .primary,
-                          icon: Icons.chevron_right,
-                        ),
+            const SizedBox(height: 16),
+
+            if (_location.length > 1) ...[
+              const SizedBox(height: 8),
+
+              // Tabs
+              Container(
+                decoration: BoxDecoration(
+                  border: .fromLTRB(bottom: .new(width: 1, color: theme.outlineVariant)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        border: _filter == .folder ? .fromLTRB(bottom: .new(width: 5, color: theme.primary)) : .fromLTRB(bottom: .new(width: 5, color: Colors.transparent)),
+                      ),
+                      child: Button(
+                        label: 'Folders',
+                        width: 100,
+                        height: 40,
+                        radius: 0,
+                        type: .text,
+                        color: _filter == .folder ? .primary : .onSurface,
+                        onPressed: () {
+                          _onFilterChange(.folder);
+                        },
                       ),
                     ),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        border: _filter == .file ? .fromLTRB(bottom: .new(width: 5, color: theme.primary)) : .fromLTRB(bottom: .new(width: 5, color: Colors.transparent)),
+                      ),
+                      child: Button(
+                        label: 'Files',
+                        width: 100,
+                        height: 40,
+                        radius: 0,
+                        type: .text,
+                        color: _filter == .file ? .primary : .onSurface,
+                        onPressed: () {
+                          _onFilterChange(.file);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            if (_fetching) ...[
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: .center,
+                  children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 8),
+
+              // Folders list
+              if (_location.length == 1 || _filter == .folder) ...[
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _folders.length,
+                    itemBuilder: (context, index) {
+                      final item = _folders[index];
+
+                      return Card(
+                        clipBehavior: Clip.hardEdge,
+                        child: InkWell(
+                          onTap: () {
+                            _nextLocation(item);
+                          },
+                          child: Padding(
+                            padding: .all(5),
+                            child: ListTile(
+                              title: Text(item.title),
+                              trailing: Button(type: .text, color: .primary, icon: Icons.chevron_right),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          ),
-          const Text('You have pushed the button this many times:'),
-          Text('0', style: Theme.of(context).textTheme.headlineMedium),
-          Button(
-            label: 'Add',
-            color: .success,
-            type: ButtonType.outlined,
-            onPressed: () {
-              log('clicked');
-            },
-          ),
-        ],
+                ),
+              ],
+
+              // Files list
+              if (_filter == .file) ...[
+                if (_files != null && _files!.isNotEmpty) ...[
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _files!.length,
+                      itemBuilder: (context, index) {
+                        final item = _files![index];
+
+                        return Card(
+                          clipBehavior: Clip.hardEdge,
+                          child: InkWell(
+                            onTap: () async {},
+                            child: Padding(
+                              padding: .all(5),
+                              child: ListTile(
+                                title: Text(item.title),
+                                trailing: Button(type: .text, color: .primary, icon: Icons.chevron_right),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ],
+
+              if (_hasMore) ...[
+                Button(
+                  label: 'Load More',
+                  type: .outlined,
+                  color: .secondary,
+                  onPressed: () {
+                    _paginateMore();
+                  },
+                ),
+              ],
+            ],
+          ],
+        ),
       ),
     );
   }

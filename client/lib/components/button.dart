@@ -21,9 +21,13 @@ class Button extends ConsumerWidget {
 
   final double? width;
   final double? height;
-  final double radius;
 
-  const Button({super.key, this.label, this.onPressed, this.type = ButtonType.elevated, this.color = ThemeColorName.primary, this.onColor = ThemeColorName.onPrimary, this.isLoading = false, this.icon, this.width, this.height, this.radius = AppRadius.md});
+  final double radius;
+  final RoundedRectangleBorder? shape;
+
+  final double? iconSize;
+
+  const Button({super.key, this.label, this.onPressed, this.type = ButtonType.elevated, this.color = ThemeColorName.primary, this.onColor = ThemeColorName.onPrimary, this.isLoading = false, this.icon, this.iconSize = 18, this.width, this.height, this.radius = AppRadius.md, this.shape});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,7 +54,7 @@ class Button extends ConsumerWidget {
       height: height,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(backgroundColor: baseColor, foregroundColor: fg, shape: _shape()),
+        style: ElevatedButton.styleFrom(backgroundColor: baseColor, foregroundColor: fg, shape: shape ?? _shape()),
         child: _child(textColor: fg),
       ),
     );
@@ -65,7 +69,7 @@ class Button extends ConsumerWidget {
         style: OutlinedButton.styleFrom(
           foregroundColor: baseColor,
           side: BorderSide(color: baseColor, width: 1.5),
-          shape: _shape(),
+          shape: shape ?? _shape(),
         ),
         child: _child(textColor: baseColor),
       ),
@@ -75,7 +79,7 @@ class Button extends ConsumerWidget {
   Widget _text(Color baseColor) {
     return TextButton(
       onPressed: isLoading ? null : onPressed,
-      style: TextButton.styleFrom(foregroundColor: baseColor, shape: label == null ? CircleBorder() : null),
+      style: TextButton.styleFrom(foregroundColor: baseColor, shape: label == null && icon != null ? CircleBorder() : shape ?? _shape()),
       child: _child(textColor: baseColor),
     );
   }
@@ -85,20 +89,24 @@ class Button extends ConsumerWidget {
       onPressed: isLoading ? null : onPressed,
       backgroundColor: baseColor,
       foregroundColor: fg,
-      child: isLoading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : (icon != null ? Icon(icon, color: Colors.white) : const Icon(Icons.add, color: Colors.white)),
+      child: isLoading ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: fg)) : (icon != null ? Icon(icon, size: iconSize, color: fg) : Icon(Icons.add, size: iconSize, color: fg)),
     );
   }
 
   Widget _child({required Color textColor}) {
     if (isLoading) {
-      return SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: textColor));
+      return SizedBox(
+        width: iconSize,
+        height: iconSize,
+        child: CircularProgressIndicator(strokeWidth: 2, color: textColor),
+      );
     }
 
     if (icon == null) {
-      return Text(label ?? "");
+      return Text(label ?? "", style: .new(color: textColor));
     }
 
-    List<Widget> children = [Icon(icon, size: 18, color: textColor)];
+    List<Widget> children = [Icon(icon, size: iconSize, color: textColor)];
     if (label != null) {
       children.add(const SizedBox(width: 8));
       children.add(Text(label ?? ""));

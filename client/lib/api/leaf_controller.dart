@@ -32,7 +32,7 @@ class LeafController {
     return leafs.map((f) => Leaf.fromJson(f)).toList();
   }
 
-  Future<List<Leaf>> getPaginated({required int limit, required String parentId, String? search, String? skip}) async {
+  Future<List<Leaf>> getPaginated({required int limit, required String parentId, String? search, int? skip}) async {
     final response = await _authDio.get('/api/leaf/list/?limit=$limit&parentId=$parentId${skip != null ? '&skip=$skip' : ''}${search != null ? '&search=$search' : ''}');
 
     final List<dynamic> leafs = response.data;

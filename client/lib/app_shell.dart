@@ -13,11 +13,10 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
-
     return Scaffold(
+      backgroundColor: theme.surface,
       appBar: TopBar(title: title),
       body: Container(width: .infinity, height: .infinity, padding: EdgeInsetsGeometry.all(20), child: child),
-      // FloatingActionButton(backgroundColor: AppColors.primary, onPressed: _incrementCounter, tooltip: 'Increment', child: const Icon(Icons.add)),
       bottomNavigationBar: NavBar(currentIndex: 0, onChanged: (i) {}),
     );
   }

@@ -1,13 +1,19 @@
 {
     "cSpell.words": [
         "clsx",
+        "debouncer",
         "dotenv",
+        "libx",
+        "LTRB",
         "meili",
         "Meilisearch",
         "Pressable",
+        "pubspec",
         "RGBO",
         "riverpod",
+        "Seedable",
         "springify",
+        "topbar",
         "worklets"
     ]
 }

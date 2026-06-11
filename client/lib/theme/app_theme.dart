@@ -55,13 +55,28 @@ class AppTheme {
         surfaceTint: LightTheme().surfaceTint,
       ),
       textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 14)),
+      appBarTheme: AppBarTheme(elevation: 5, shadowColor: LightTheme().shadow),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: LightTheme().primaryContainer,
+        indicatorColor: LightTheme().primary,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: LightTheme().onPrimary);
+          }
+          return IconThemeData(color: LightTheme().onSurfaceVariant);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return TextStyle(color: LightTheme().primary, fontWeight: FontWeight.w600);
+          }
+          return TextStyle(color: LightTheme().onSurfaceVariant);
+        }),
+      ),
     );
   }
 
   static ThemeData dark() {
     return ThemeData(
-      appBarTheme: AppBarTheme(elevation: 5, shadowColor: Colors.black),
-      navigationBarTheme: NavigationBarThemeData(elevation: 5, shadowColor: Colors.black),
       useMaterial3: true,
       colorScheme: ColorScheme.dark(
         brightness: DarkTheme().brightness,
@@ -113,6 +128,23 @@ class AppTheme {
         surfaceTint: DarkTheme().surfaceTint,
       ),
       textTheme: const TextTheme(bodyMedium: TextStyle(fontSize: 14)),
+      appBarTheme: AppBarTheme(elevation: 5, shadowColor: DarkTheme().shadow),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: DarkTheme().primaryContainer,
+        indicatorColor: DarkTheme().primary,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: DarkTheme().onPrimary);
+          }
+          return IconThemeData(color: DarkTheme().onSurfaceVariant);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return TextStyle(color: DarkTheme().primary, fontWeight: FontWeight.w600);
+          }
+          return TextStyle(color: DarkTheme().onSurfaceVariant);
+        }),
+      ),
     );
   }
 }
