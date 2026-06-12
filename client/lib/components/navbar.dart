@@ -26,6 +26,7 @@ class NavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return NavigationBar(
       selectedIndex: getCurrentIndex(context),
+      height: 70,
       onDestinationSelected: (index) {
         switch (index) {
           case 0:

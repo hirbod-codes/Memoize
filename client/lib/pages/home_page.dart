@@ -5,6 +5,8 @@ import 'package:client/api/leaf_controller.dart';
 import 'package:client/api/models/folder.dart';
 import 'package:client/api/models/leaf.dart';
 import 'package:client/components/button.dart';
+import 'package:client/components/file_manager.dart';
+import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,9 +62,13 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
   bool _editing = false;
 
+  int _deletingFolder = -1;
+  int _deletingFile = -1;
+
   @override
   void dispose() {
     _debouncer?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -81,6 +87,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
   void _resetSearch() {
     _debouncer?.cancel();
     _search = '';
+    _searchController.clear();
     _hasMore = true;
   }
 
@@ -138,8 +145,8 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
       _search = value;
     });
 
-    _debouncer = Timer(.new(milliseconds: 700), () async {
-      _paginate(search: value);
+    _debouncer = Timer(.new(milliseconds: 700), () {
+      _paginate(search: value, reset: true);
     });
   }
 
@@ -219,6 +226,36 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
     });
   }
 
+  Future<void> _removeFolder(Folder folder, int index) async {
+    final folderController = ref.read(folderControllerProvider);
+
+    setState(() {
+      _deletingFolder = index;
+    });
+    await folderController.delete(id: folder.id);
+    if (!mounted) return;
+
+    setState(() {
+      _deletingFolder = -1;
+      _folders = _folders.where((w) => w.id != folder.id).toList();
+    });
+  }
+
+  Future<void> _removeFile(Leaf file, int index) async {
+    final fileController = ref.read(leafControllerProvider);
+
+    setState(() {
+      _deletingFile = index;
+    });
+    await fileController.delete(id: file.id);
+    if (!mounted) return;
+
+    setState(() {
+      _deletingFile = -1;
+      _files = _files?.where((w) => w.id != file.id).toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
@@ -226,14 +263,11 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
     return Card(
       elevation: 10,
       color: theme.surfaceContainer,
-      child: Container(
-        width: .infinity,
-        height: .infinity,
-        padding: EdgeInsetsGeometry.all(20),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
         child: Column(
-          mainAxisAlignment: .start,
+          mainAxisAlignment: .center,
           crossAxisAlignment: .stretch,
-          spacing: 5,
           children: [
             // Buttons
             Row(
@@ -312,83 +346,121 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
               ),
             ],
 
-            if (_fetching) ...[
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: .center,
-                  children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
-                ),
-              ),
-            ] else ...[
-              const SizedBox(height: 8),
+            Expanded(
+              child: ListView(
+                children: [
+                  // Circular progress indicator
+                  if (_fetching)
+                    Row(
+                      mainAxisAlignment: .center,
+                      children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
+                    ),
 
-              // Folders list
-              if (_location.length == 1 || _filter == .folder) ...[
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _folders.length,
-                    itemBuilder: (context, index) {
-                      final item = _folders[index];
-
-                      return Card(
-                        clipBehavior: Clip.hardEdge,
-                        child: InkWell(
-                          onTap: () {
-                            _nextLocation(item);
-                          },
-                          child: Padding(
-                            padding: .all(5),
-                            child: ListTile(
-                              title: Text(item.title),
-                              trailing: Button(type: .text, color: .primary, icon: Icons.chevron_right),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-
-              // Files list
-              if (_filter == .file) ...[
-                if (_files != null && _files!.isNotEmpty) ...[
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _files!.length,
-                      itemBuilder: (context, index) {
-                        final item = _files![index];
-
-                        return Card(
+                  // Folders list
+                  if (!_fetching)
+                    if (_location.length == 1 || _filter == .folder)
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: _folders.length,
+                        itemBuilder: (context, index) => Card(
                           clipBehavior: Clip.hardEdge,
                           child: InkWell(
-                            onTap: () async {},
+                            onTap: () {
+                              _nextLocation(_folders[index]);
+                            },
                             child: Padding(
-                              padding: .all(5),
+                              padding: .all(8),
                               child: ListTile(
-                                title: Text(item.title),
-                                trailing: Button(type: .text, color: .primary, icon: Icons.chevron_right),
+                                title: Text(_folders[index].title),
+                                trailing: Row(
+                                  mainAxisSize: .min,
+                                  children: [
+                                    if (_editing) ...[
+                                      Button(
+                                        isLoading: _deletingFolder == index,
+                                        type: .text,
+                                        color: .error,
+                                        icon: Icons.remove_circle_outline,
+                                        onPressed: () {
+                                          _removeFolder(_folders[index], index);
+                                        },
+                                      ),
+                                    ],
+                                    Button(type: .text, color: .primary, icon: Icons.chevron_right),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ],
+                        ),
+                      ),
 
-              if (_hasMore) ...[
-                Button(
-                  label: 'Load More',
-                  type: .outlined,
-                  color: .secondary,
-                  onPressed: () {
-                    _paginateMore();
-                  },
-                ),
-              ],
-            ],
+                  // Files list
+                  if (!_fetching)
+                    if (_location.length > 1 && _filter == .file && _files != null && _files!.isNotEmpty)
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: _files!.length,
+                        itemBuilder: (context, index) {
+                          final file = _files![index];
+                          return Card(
+                            clipBehavior: Clip.hardEdge,
+                            child: InkWell(
+                              onTap: () {
+                                // _showOverlay(context, theme, file);
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: true,
+                                  builder: (_) => FileManager(
+                                    file: file,
+                                    onClose: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: .all(5),
+                                child: ListTile(
+                                  title: Text(file.title),
+                                  trailing: Row(
+                                    mainAxisSize: .min,
+                                    children: [
+                                      if (_editing) ...[
+                                        Button(
+                                          isLoading: _deletingFile == index,
+                                          type: .text,
+                                          color: .error,
+                                          icon: Icons.remove_circle_outline,
+                                          onPressed: () {
+                                            _removeFile(file, index);
+                                          },
+                                        ),
+                                      ],
+                                      Button(type: .text, color: .primary, icon: Icons.chevron_right),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                ],
+              ),
+            ),
+
+            if (_hasMore)
+              Button(
+                label: 'Load More',
+                type: .outlined,
+                color: .secondary,
+                onPressed: () {
+                  _paginateMore();
+                },
+              ),
           ],
         ),
       ),
