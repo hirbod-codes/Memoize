@@ -1,11 +1,38 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:client/components/button.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class TimeStampEmbed extends Embeddable {
+  const TimeStampEmbed(String value) : super(timeStampType, value);
+
+  static const String timeStampType = 'timeStamp';
+
+  static TimeStampEmbed fromDocument(Document document) => TimeStampEmbed(jsonEncode(document.toDelta().toJson()));
+
+  Document get document => Document.fromJson(jsonDecode(data));
+}
+
+class TimeStampEmbedBuilder extends EmbedBuilder {
+  @override
+  String get key => 'timeStamp';
+
+  @override
+  String toPlainText(Embed node) {
+    return node.value.data;
+  }
+
+  @override
+  Widget build(BuildContext context, EmbedContext embedContext) {
+    return Row(children: [const Icon(Icons.access_time_rounded), Text(embedContext.node.value.data as String)]);
+  }
+}
 
 class TextEditor extends ConsumerStatefulWidget {
   final bool editing;
@@ -19,17 +46,19 @@ class TextEditor extends ConsumerStatefulWidget {
 }
 
 class _TextEditorState extends ConsumerState<TextEditor> {
-  final FocusNode _focusNode = FocusNode();
-  late final QuillController _controller;
-  Timer? _timer = null;
+  final QuillController _controller = () {
+    return QuillController.basic(config: QuillControllerConfig());
+  }();
+  final FocusNode _editorFocusNode = FocusNode();
+  final ScrollController _editorScrollController = ScrollController();
+
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
 
-    _controller = QuillController.basic();
     _controller.readOnly = widget.editing;
-    // _controller.ignoreFocusOnTextChange = true;
 
     try {
       if (widget.json != null && widget.json != '') {
@@ -53,6 +82,8 @@ class _TextEditorState extends ConsumerState<TextEditor> {
   @override
   void dispose() {
     _controller.dispose();
+    _editorScrollController.dispose();
+    _editorFocusNode.dispose();
     _timer?.cancel();
     super.dispose();
   }
@@ -71,22 +102,40 @@ class _TextEditorState extends ConsumerState<TextEditor> {
       padding: const EdgeInsets.all(8.0),
       child: Column(
         crossAxisAlignment: .stretch,
-        spacing: 5,
+        spacing: 7,
         children: [
           Container(
-            decoration: BoxDecoration(
-              border: .all(width: 1, color: theme.outlineVariant),
-              borderRadius: .circular(10),
-            ),
+            decoration: BoxDecoration(borderRadius: .circular(10), color: theme.surface),
             child: QuillSimpleToolbar(
               controller: _controller,
-              config: const QuillSimpleToolbarConfig(toolbarIconCrossAlignment: .center, toolbarIconAlignment: .start),
+              config: QuillSimpleToolbarConfig(
+                toolbarIconCrossAlignment: .center,
+                toolbarIconAlignment: .start,
+                buttonOptions: QuillSimpleToolbarButtonOptions(
+                  base: QuillToolbarBaseButtonOptions(
+                    afterButtonPressed: () {
+                      final isDesktop = const {TargetPlatform.linux, TargetPlatform.windows, TargetPlatform.macOS}.contains(defaultTargetPlatform);
+                      if (isDesktop) {
+                        _editorFocusNode.requestFocus();
+                      }
+                    },
+                  ),
+                ),
+              ),
             ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.all(4),
-            child: QuillEditor.basic(controller: _controller, config: const QuillEditorConfig(minHeight: 40)),
+          Container(
+            decoration: BoxDecoration(borderRadius: .circular(10), color: theme.surface),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: QuillEditor.basic(
+                controller: _controller,
+                focusNode: _editorFocusNode,
+                scrollController: _editorScrollController,
+                config: const QuillEditorConfig(placeholder: 'Start writing your notes...', minHeight: 60, requestKeyboardFocusOnCheckListChanged: true),
+              ),
+            ),
           ),
 
           Row(
