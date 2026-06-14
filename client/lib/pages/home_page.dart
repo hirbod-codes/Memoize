@@ -6,7 +6,6 @@ import 'package:client/api/models/folder.dart';
 import 'package:client/api/models/leaf.dart';
 import 'package:client/components/button.dart';
 import 'package:client/components/file_manager.dart';
-import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -3,13 +3,21 @@ import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/app_theme.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:media_kit/media_kit.dart';
 
 void main() {
-  runApp(ProviderScope(child: const MyApp()));
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (!kIsWeb) {
+    MediaKit.ensureInitialized();
+  }
+
+  runApp(ProviderScope(child: ProviderScope(child: const MyApp())));
 }
 
 class MyApp extends ConsumerWidget {

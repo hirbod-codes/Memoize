@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:client/components/button.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
