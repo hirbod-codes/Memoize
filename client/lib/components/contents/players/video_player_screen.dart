@@ -72,7 +72,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         children: [
           // ── Video frame fills the whole screen ──────────────────────────
           const Positioned.fill(child: VideoSurface()),
-
+      
           // ── Top bar: back button + title ────────────────────────────────
           AnimatedPositioned(
             duration: const Duration(milliseconds: 250),
@@ -82,10 +82,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
             right: 0,
             child: _TopBar(title: widget.title),
           ),
-
+      
           // ── Bottom controls ─────────────────────────────────────────────
           AnimatedPositioned(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut, bottom: _controlsVisible ? 0 : -120, left: 0, right: 0, child: const PlayerControls()),
-
+      
           // ── Center spinner while loading ─────────────────────────────────
           const _CenterLoadingOverlay(),
         ],

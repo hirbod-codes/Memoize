@@ -168,7 +168,7 @@ final class VideoPlayerCommandsProvider
 }
 
 String _$videoPlayerCommandsHash() =>
-    r'df2b3a0a0097d023add6ea045ff278f3c7e673d5';
+    r'6eebe086906ec840a8d3ae8898cc6875324c565d';
 
 abstract class _$VideoPlayerCommands extends $Notifier<void> {
   void build();

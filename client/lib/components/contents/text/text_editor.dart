@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:client/components/button.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
+import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -94,7 +95,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
         children: [
           if (widget.editing)
             Container(
-              decoration: BoxDecoration(borderRadius: .circular(10), color: theme.surface),
+              decoration: BoxDecoration(borderRadius: .circular(AppRadius.md), color: theme.surface),
               child: QuillSimpleToolbar(
                 controller: _controller,
                 config: QuillSimpleToolbarConfig(

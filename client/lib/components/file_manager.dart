@@ -88,8 +88,8 @@ class _FileManager extends ConsumerState<FileManager> {
 
               SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => ContentContainer(content: widget.file.termContents[index], editing: _editing),
                   childCount: widget.file.termContents.length,
+                  (context, index) => ContentContainer(content: widget.file.termContents[index], editing: _editing),
                 ),
               ),
             ],
