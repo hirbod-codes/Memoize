@@ -70,7 +70,7 @@ class JustAudioPlayer implements AppAudioPlayer {
 
   @override
   Future<void> open(String url, {Map<String, String>? headers, String? title, String? artist, String? albumArtUrl}) async {
-    _emit(_state.copyWith(status: AudioPlayerStatus.loading, position: Duration.zero, duration: Duration.zero, error: null, title: title, artist: artist, albumArt: albumArtUrl));
+    _emit(_state.copyWith(status: AudioPlayerStatus.loading, position: Duration.zero, duration: Duration.zero, error: null, title: title, artist: artist, albumArtUrl: albumArtUrl));
 
     try {
       final source = AudioSource.uri(
@@ -90,6 +90,9 @@ class JustAudioPlayer implements AppAudioPlayer {
 
   @override
   Future<void> pause() => _player.pause();
+
+  @override
+  Future<void> togglePlayPause() => _player.playing ? pause() : play();
 
   @override
   Future<void> seek(Duration position) => _player.seek(position);

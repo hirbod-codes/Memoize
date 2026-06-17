@@ -7,9 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class VideoPlayerScreen extends ConsumerStatefulWidget {
-  const VideoPlayerScreen({super.key, required this.url, this.headers, this.title});
+  const VideoPlayerScreen({super.key, required this.videoId, required this.url, this.accessToken, this.headers, this.title});
 
+  final String videoId;
   final String url;
+  final String? accessToken;
   final Map<String, String>? headers;
   final String? title;
 
@@ -31,7 +33,6 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     // Start loading the video
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(videoPlayerProvider).open(widget.url, headers: widget.headers);
-      // ref.read(videoPlayerNotifierProvider.notifier).open(widget.url, headers: widget.headers);
     });
     // Start the auto-hide timer
     _scheduleHide();
@@ -72,7 +73,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         children: [
           // ── Video frame fills the whole screen ──────────────────────────
           const Positioned.fill(child: VideoSurface()),
-      
+
           // ── Top bar: back button + title ────────────────────────────────
           AnimatedPositioned(
             duration: const Duration(milliseconds: 250),
@@ -82,10 +83,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
             right: 0,
             child: _TopBar(title: widget.title),
           ),
-      
+
           // ── Bottom controls ─────────────────────────────────────────────
           AnimatedPositioned(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut, bottom: _controlsVisible ? 0 : -120, left: 0, right: 0, child: const PlayerControls()),
-      
+
           // ── Center spinner while loading ─────────────────────────────────
           const _CenterLoadingOverlay(),
         ],

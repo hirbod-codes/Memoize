@@ -9,12 +9,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (!kIsWeb) {
     MediaKit.ensureInitialized();
+    JustAudioMediaKit.ensureInitialized();
   }
 
   runApp(ProviderScope(child: ProviderScope(child: const MyApp())));

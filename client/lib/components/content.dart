@@ -1,9 +1,10 @@
 import 'package:client/api/models/leaf.dart';
-import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
-import 'package:client/components/contents/players/audio/audio_player_screen.dart';
-import 'package:client/components/contents/players/video_player_screen.dart';
+import 'package:client/components/button.dart';
+import 'package:client/components/contents/audio_container.dart';
+import 'package:client/components/contents/image_container.dart';
 import 'package:client/components/contents/text/text_editor.dart';
+import 'package:client/components/contents/video_container.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,50 +76,87 @@ class _ContentState extends ConsumerState<ContentContainer> {
             _loading = false;
           });
         }
-        return Row(children: [Text('string '), Text(widget.content.value.join(', '))]);
+        return Column(
+          mainAxisAlignment: .start,
+          crossAxisAlignment: .stretch,
+          spacing: 5,
+          children: widget.content.value.map((v) {
+            return Card(
+              child: Padding(padding: const EdgeInsets.all(8.0), child: Text(v)),
+            );
+          }).toList(),
+        );
 
       case .imageId:
-        if (_loading) {
-          setState(() {
-            _loading = false;
-          });
-        }
-        return Row(children: [Text('imageId '), Text(widget.content.value.join(', '))]);
-
-      // case .audioId:
-      //   return Row(children: [Text('audioId '), Text(widget.content.value.join(', '))]);
+        return SingleChildScrollView(
+          scrollDirection: .horizontal,
+          child: Row(
+            mainAxisAlignment: .start,
+            crossAxisAlignment: .center,
+            spacing: 10,
+            children: widget.content.value.map((v) {
+              return SizedBox(
+                width: 300,
+                // height: 700,
+                child: ImageContainer(imageId: v),
+                // child: Stack(
+                //   children: [
+                //     Positioned.fill(child: ImageContainer(imageId: v)),
+                //     Positioned(
+                //       top: 0,
+                //       right: 0,
+                //       width: 50,
+                //       child: Button(color: .errorContainer, onColor: .error, icon: Icons.remove, type: .outlined),
+                //     ),
+                //   ],
+                // ),
+              );
+            }).toList(),
+          ),
+        );
 
       case .videoId:
-        return Row(
-          children: [
-            SizedBox(
-              height: 450,
-              width: 300,
-              child: Container(
-                decoration: BoxDecoration(borderRadius: .circular(AppRadius.md)),
-                child: VideoPlayerScreen(url: '${AppConfig.apiUrl}/api/audio/file/6a2d541bb6a6b7029ff279e6', headers: {'Authorization': 'Bearer $_token!'}),
-                // child: VideoPlayerScreen(url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'),
-              ),
-            ),
-          ],
+        return SingleChildScrollView(
+          scrollDirection: .horizontal,
+          child: Row(
+            mainAxisAlignment: .start,
+            crossAxisAlignment: .start,
+            spacing: 10,
+            children: widget.content.value.map((v) {
+              return SizedBox(
+                width: 300,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: .circular(AppRadius.md),
+                    border: .all(color: Colors.red, width: 1),
+                  ),
+                  child: VideoContainer(videoId: v),
+                ),
+              );
+            }).toList(),
+          ),
         );
 
       case .audioId:
-        return Row(
-          children: [
-            SizedBox(
-              height: 2000,
-              width: 600,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: .circular(AppRadius.md),
-                  border: .all(color: Colors.red, width: 1),
+        return SingleChildScrollView(
+          scrollDirection: .horizontal,
+          child: Row(
+            mainAxisAlignment: .start,
+            crossAxisAlignment: .start,
+            spacing: 10,
+            children: widget.content.value.map((v) {
+              return SizedBox(
+                width: 300,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: .circular(AppRadius.md),
+                    border: .all(color: Colors.red, width: 1),
+                  ),
+                  child: AudioContainer(audioId: v),
                 ),
-                child: AudioPlayerScreen(url: 'https://upload.wikimedia.org/wikipedia/commons/0/04/Beethoven_Moonlight_Sonata_Op._27_No._2.mp3', title: 'saghi'),
-                // child: AudioPlayerScreen(url: '${AppConfig.apiUrl}/api/audio/file/6a2d541bb6a6b7029ff279e6', headers: {'Authorization': 'Bearer $_token!'}, title: 'saghi',),
-              ),
-            ),
-          ],
+              );
+            }).toList(),
+          ),
         );
     }
   }

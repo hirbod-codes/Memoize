@@ -1,3 +1,4 @@
+import 'package:client/app_config.dart';
 import 'package:client/components/contents/players/Audio/audio_player_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:client/components/contents/players/audio/audio_player_interface.dart';
 
 class AudioPlayerScreen extends ConsumerStatefulWidget {
-  const AudioPlayerScreen({super.key, required this.url, this.headers, this.title, this.artist, this.albumArtUrl});
+  const AudioPlayerScreen({super.key, required this.audioId, required this.url, this.accessToken, this.headers, this.title, this.artist, this.albumArtUrl});
 
+  final String audioId;
   final String url;
+  final String? accessToken;
   final Map<String, String>? headers;
   final String? title;
   final String? artist;
@@ -39,44 +42,34 @@ class _AudioPlayerScreenState extends ConsumerState<AudioPlayerScreen> {
         if (state.hasError) {
           return _ErrorView(message: state.error ?? 'Unknown error');
         }
-        return _AudioPlayerBody(state: state);
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: .stretch,
+            children: [
+              const SizedBox(height: 24),
+              _AlbumArt(audioId: widget.audioId, accessToken: widget.accessToken),
+              const SizedBox(height: 40),
+              _TrackInfo(title: state.title, artist: state.artist),
+              const SizedBox(height: 32),
+              Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: .end,
+                    children: [_SpeedControls(state: state)],
+                  ),
+                  _SeekBar(state: state),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _MainControls(state: state),
+              const SizedBox(height: 24),
+              _VolumeControls(state: state),
+              const SizedBox(height: 32),
+            ],
+          ),
+        );
       },
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Main body
-// ---------------------------------------------------------------------------
-
-class _AudioPlayerBody extends ConsumerWidget {
-  const _AudioPlayerBody({required this.state});
-  final AudioPlayerState state;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        children: [
-          const SizedBox(height: 24),
-          _AlbumArt(url: state.albumArt),
-          const SizedBox(height: 40),
-          // Row(
-          //   children: [
-          //     _TrackInfo(title: state.title, artist: state.artist),
-          //     _SpeedControls(state: state),
-          //   ],
-          // ),
-          const SizedBox(height: 32),
-          _SeekBar(state: state),
-          const SizedBox(height: 24),
-          _MainControls(state: state),
-          const SizedBox(height: 24),
-          _VolumeControls(state: state),
-          const SizedBox(height: 32),
-        ],
-      ),
     );
   }
 }
@@ -86,8 +79,9 @@ class _AudioPlayerBody extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 class _AlbumArt extends StatelessWidget {
-  const _AlbumArt({this.url});
-  final String? url;
+  const _AlbumArt({this.audioId, this.accessToken});
+  final String? audioId;
+  final String? accessToken;
 
   @override
   Widget build(BuildContext context) {
@@ -97,10 +91,10 @@ class _AlbumArt extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 32, offset: const Offset(0, 16))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 32, offset: const Offset(0, 16))],
         ),
         clipBehavior: Clip.antiAlias,
-        child: url != null ? Image.network(url!, fit: BoxFit.cover) : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        child: audioId != null && accessToken != null ? Image.network('${AppConfig.apiUrl}/api/audio/coverArt/$audioId', fit: BoxFit.cover, headers: {'Authorization': 'Bearer $accessToken'}) : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }
@@ -117,26 +111,23 @@ class _TrackInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title ?? 'Unknown Track',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            artist ?? 'Unknown Artist',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title ?? 'Unknown Track',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          artist ?? 'Unknown Artist',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }

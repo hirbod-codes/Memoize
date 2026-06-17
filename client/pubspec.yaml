@@ -47,6 +47,9 @@ dependencies:
 
   # Audio — all platforms including web
   just_audio: ^0.9.40
+  # just_audio_windows: ^0.2.0        # Windows — uses WinRT MediaPlayer
+  just_audio_media_kit: ^2.1.0      # Linux (+ optional fallback for Windows/macOS)
+  # media_kit_libs_linux: ^1.0.4      # required alongside just_audio_media_kit on Linux
 
   # Video — native platforms (iOS, Android, macOS, Windows, Linux)
   media_kit: ^1.2.6

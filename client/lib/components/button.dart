@@ -13,6 +13,7 @@ class Button extends ConsumerWidget {
   final VoidCallback? onPressed;
 
   final ButtonType type;
+  final bool isTransparent;
   final ThemeColorName color;
   final ThemeColorName? onColor;
 
@@ -27,14 +28,14 @@ class Button extends ConsumerWidget {
 
   final double? iconSize;
 
-  const Button({super.key, this.label, this.onPressed, this.type = ButtonType.elevated, this.color = ThemeColorName.primary, this.onColor = ThemeColorName.onPrimary, this.isLoading = false, this.icon, this.iconSize = 18, this.width, this.height, this.radius = AppRadius.md, this.shape});
+  const Button({super.key, this.label, this.onPressed, this.type = ButtonType.elevated, this.isTransparent = false, this.color = ThemeColorName.primary, this.onColor = ThemeColorName.onPrimary, this.isLoading = false, this.icon, this.iconSize = 18, this.width, this.height, this.radius = AppRadius.md, this.shape});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
-    final baseColor = theme.getThemeColor(color);
-    final fg = onColor != null ? theme.getThemeColor(onColor!) : theme.getThemeOnColor(color);
+    final baseColor = isTransparent ? Colors.transparent : theme.getThemeColor(color);
+    final fg = onColor != null ? theme.getThemeColor(onColor!) : (isTransparent ? theme.onSurface : theme.getThemeOnColor(color));
 
     switch (type) {
       case ButtonType.elevated:

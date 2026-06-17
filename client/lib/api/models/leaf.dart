@@ -1,3 +1,9 @@
+class LeafPost {
+  final String id;
+
+  LeafPost({required this.id});
+}
+
 enum ContentType { string, richText, imageId, videoId, audioId }
 
 class Content {

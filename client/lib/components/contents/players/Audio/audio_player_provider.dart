@@ -26,11 +26,7 @@ class AudioPlayerCommands extends _$AudioPlayerCommands {
   Future<void> play() async => _player.play();
   Future<void> pause() async => _player.pause();
 
-  Future<void> togglePlayPause() async {
-    final isPlaying = _player.state.isPlaying;
-    if (!ref.mounted) return;
-    isPlaying ? await _player.pause() : await _player.play();
-  }
+  Future<void> togglePlayPause() => _player.togglePlayPause();
 
   Future<void> seek(Duration position) async => _player.seek(position);
   Future<void> setVolume(double volume) async => _player.setVolume(volume);
