@@ -99,17 +99,6 @@ class _ContentState extends ConsumerState<ContentContainer> {
                 width: 300,
                 // height: 700,
                 child: ImageContainer(imageId: v),
-                // child: Stack(
-                //   children: [
-                //     Positioned.fill(child: ImageContainer(imageId: v)),
-                //     Positioned(
-                //       top: 0,
-                //       right: 0,
-                //       width: 50,
-                //       child: Button(color: .errorContainer, onColor: .error, icon: Icons.remove, type: .outlined),
-                //     ),
-                //   ],
-                // ),
               );
             }).toList(),
           ),
