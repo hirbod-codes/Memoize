@@ -4,7 +4,7 @@ import 'package:client/api/audio_controller.dart';
 import 'package:client/api/models/audio.dart';
 import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
-import 'package:client/components/contents/players/Audio/audio_player_provider.dart';
+import 'package:client/components/contents/players/audio/audio_player_provider.dart';
 import 'package:client/components/contents/players/audio/audio_player_screen.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/cupertino.dart';

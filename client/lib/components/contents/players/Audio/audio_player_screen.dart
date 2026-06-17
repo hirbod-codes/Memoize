@@ -1,5 +1,5 @@
 import 'package:client/app_config.dart';
-import 'package:client/components/contents/players/Audio/audio_player_provider.dart';
+import 'package:client/components/contents/players/audio/audio_player_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
