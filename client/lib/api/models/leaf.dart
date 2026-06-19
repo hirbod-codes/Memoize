@@ -12,7 +12,7 @@ class Content {
 
   Content({required this.type, required this.value});
 
-  static ContentType _parseContentType(String value) {
+  static ContentType parseContentType(String value) {
     switch (value) {
       case 'string':
         return ContentType.string;
@@ -29,7 +29,7 @@ class Content {
     }
   }
 
-  static String _stringifyContentType(ContentType value) {
+  static String stringifyContentType(ContentType value) {
     switch (value) {
       case .string:
         return 'string';
@@ -49,14 +49,14 @@ class Content {
   }
 
   factory Content.fromJson(Map<String, dynamic> json) {
-    final type = _parseContentType(json['type'] as String);
+    final type = parseContentType(json['type'] as String);
     final value = (json['value'] as List<dynamic>).cast<String>();
 
     return Content(type: type, value: value);
   }
 
   Map<String, dynamic> toJson() {
-    return {'type': _stringifyContentType(type), 'value': value};
+    return {'type': stringifyContentType(type), 'value': value};
   }
 }
 

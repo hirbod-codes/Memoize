@@ -6,9 +6,9 @@ import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
 import 'package:client/components/contents/players/video_player_provider.dart' hide videoControllerProvider;
 import 'package:client/components/contents/players/video_player_screen.dart';
+import 'package:client/components/global/notification_service.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -59,14 +59,7 @@ class _VideosState extends ConsumerState<VideoContainer> {
   FutureOr<Null> _handleError(dynamic e) {
     if (!mounted) return null;
 
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Failed to fetch Video data.', style: .new(color: theme.onError)),
-        backgroundColor: theme.error,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    NotificationService.showError(context: context, message: 'Failed to fetch audio data.');
 
     setState(() {
       _loading = false;

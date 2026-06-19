@@ -4,6 +4,7 @@ import 'package:client/api/image_controller.dart';
 import 'package:client/api/models/image.dart' show ImageInfo;
 import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
+import 'package:client/components/global/notification_service.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart' hide ImageInfo;
@@ -54,17 +55,9 @@ class _ImagesState extends ConsumerState<ImageContainer> {
   }
 
   FutureOr<Null> _handleError(dynamic e) {
-    print(e);
     if (!mounted) return null;
-
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Failed to fetch Image data.', style: .new(color: theme.onError)),
-        backgroundColor: theme.error,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    
+    NotificationService.showError(context: context, message: 'Failed to fetch audio data.');
 
     setState(() {
       _loading = false;

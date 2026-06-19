@@ -1,8 +1,7 @@
 import 'dart:io';
-import 'package:client/api/leaf_controller.dart';
 import 'package:client/api/video_controller.dart' hide VideoController;
 import 'package:client/components/button.dart';
-import 'package:dio/src/response.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';

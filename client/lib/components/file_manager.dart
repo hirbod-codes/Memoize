@@ -1,10 +1,12 @@
 import 'package:client/api/leaf_controller.dart';
 import 'package:client/api/models/leaf.dart';
-import 'package:client/components/audio_upload_dialog.dart';
+import 'package:client/components/contents/choose_content_type_dialog.dart';
+import 'package:client/components/global/notification_service.dart';
+import 'package:client/components/upload/audio_upload_dialog.dart';
 import 'package:client/components/button.dart';
 import 'package:client/components/content.dart';
-import 'package:client/components/image_upload_dialog.dart';
-import 'package:client/components/video_upload_dialog.dart';
+import 'package:client/components/upload/image_upload_dialog.dart';
+import 'package:client/components/upload/video_upload_dialog.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:dio/dio.dart' show Response;
@@ -27,23 +29,27 @@ class FileManager extends ConsumerStatefulWidget {
 class _FileManager extends ConsumerState<FileManager> {
   bool _editing = false;
   bool _isTerm = true;
+  int? _isAdding;
 
-  Future<void> _onContentAdd(int? index) async {
-    if (index == null) {
-      return;
-    }
+  Future<void> _onContentAdd({int? index}) async {
+    try {
+      Leaf updatedFile = widget.file.copyWith();
+      List<Content> contents;
+      if (_isTerm) {
+        contents = updatedFile.termContents;
+      } else {
+        contents = updatedFile.definitionContents;
+      }
 
-    Leaf updatedFile = widget.file.copyWith();
-    List<Content> contents;
-    if (_isTerm) {
-      contents = updatedFile.termContents;
-    } else {
-      contents = updatedFile.definitionContents;
-    }
+      if (index == null) {
+        setState(() {
+          _isAdding = -1;
+        });
 
-    switch (contents[index].type) {
-      case .string:
-        contents[index].value.add('');
+        ContentType? type = await showDialog<ContentType?>(context: context, builder: (_) => ChooseContentTypeDialog());
+        if (type == null || !mounted) return;
+
+        contents.add(.new(type: type, value: []));
         Response<dynamic> result;
         if (_isTerm) {
           result = await ref.read(leafControllerProvider).patch(id: widget.file.id, termContents: contents);
@@ -52,43 +58,75 @@ class _FileManager extends ConsumerState<FileManager> {
         }
 
         if (result.statusCode != null && result.statusCode! >= 200 && result.statusCode! < 300) {
-          widget.onFileChanged?.call(updatedFile);
+          await widget.onFileChanged?.call(updatedFile);
         }
-        break;
+        setState(() {
+          _isAdding = null;
+        });
 
-      case .richText:
-        contents[index].value.add('');
-        Response<dynamic> result;
-        if (_isTerm) {
-          result = await ref.read(leafControllerProvider).patch(id: widget.file.id, termContents: contents);
-        } else {
-          result = await ref.read(leafControllerProvider).patch(id: widget.file.id, definitionContents: contents);
-        }
+        return;
+      }
 
-        if (result.statusCode != null && result.statusCode! >= 200 && result.statusCode! < 300) {
-          widget.onFileChanged?.call(updatedFile);
-        }
-        break;
+      setState(() {
+        _isAdding = index;
+      });
 
-      case .imageId:
-        String? newId = await showDialog<String?>(context: context, builder: (_) => ImageUploadDialog());
-        if (newId == null || !mounted) return;
+      switch (contents[index].type) {
+        case .string:
+          contents[index].value.add('');
+          Response<dynamic> result;
+          if (_isTerm) {
+            result = await ref.read(leafControllerProvider).patch(id: widget.file.id, termContents: contents);
+          } else {
+            result = await ref.read(leafControllerProvider).patch(id: widget.file.id, definitionContents: contents);
+          }
 
-        contents[index].value.add(newId);
-        widget.onFileChanged?.call(updatedFile);
-        break;
-      case ContentType.videoId:
-        String? newId = await showDialog<String?>(context: context, builder: (_) => VideoUploadDialog());
-        if (newId == null || !mounted) return;
+          if (result.statusCode != null && result.statusCode! >= 200 && result.statusCode! < 300) {
+            await widget.onFileChanged?.call(updatedFile);
+          }
+          break;
 
-        contents[index].value.add(newId);
-        widget.onFileChanged?.call(updatedFile);
-      case ContentType.audioId:
-        String? newId = await showDialog<String?>(context: context, builder: (_) => AudioUploadDialog());
-        if (newId == null || !mounted) return;
+        case .richText:
+          contents[index].value.add('');
+          Response<dynamic> result;
+          if (_isTerm) {
+            result = await ref.read(leafControllerProvider).patch(id: widget.file.id, termContents: contents);
+          } else {
+            result = await ref.read(leafControllerProvider).patch(id: widget.file.id, definitionContents: contents);
+          }
 
-        contents[index].value.add(newId);
-        widget.onFileChanged?.call(updatedFile);
+          if (result.statusCode != null && result.statusCode! >= 200 && result.statusCode! < 300) {
+            await widget.onFileChanged?.call(updatedFile);
+          }
+          break;
+
+        case .imageId:
+          String? newId = await showDialog<String?>(context: context, builder: (_) => ImageUploadDialog());
+          if (newId == null || !mounted) return;
+
+          contents[index].value.add(newId);
+          await widget.onFileChanged?.call(updatedFile);
+          break;
+        case ContentType.videoId:
+          String? newId = await showDialog<String?>(context: context, builder: (_) => VideoUploadDialog());
+          if (newId == null || !mounted) return;
+
+          contents[index].value.add(newId);
+          await widget.onFileChanged?.call(updatedFile);
+        case ContentType.audioId:
+          String? newId = await showDialog<String?>(context: context, builder: (_) => AudioUploadDialog());
+          if (newId == null || !mounted) return;
+
+          contents[index].value.add(newId);
+          await widget.onFileChanged?.call(updatedFile);
+      }
+      if (!mounted) return;
+
+      setState(() {
+        _isAdding = null;
+      });
+    } catch (e) {
+      if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to change content.');
     }
   }
 
@@ -138,26 +176,30 @@ class _FileManager extends ConsumerState<FileManager> {
   }
 
   Future<void> _contentDelete(int index) async {
-    final updatedFile = widget.file.copyWith();
-    if (_isTerm) {
-      updatedFile.termContents.removeAt(index);
-    } else {
-      updatedFile.definitionContents.removeAt(index);
-    }
+    try {
+      final updatedFile = widget.file.copyWith();
+      if (_isTerm) {
+        updatedFile.termContents.removeAt(index);
+      } else {
+        updatedFile.definitionContents.removeAt(index);
+      }
 
-    Response<dynamic> result;
-    if (_isTerm) {
-      result = await ref.read(leafControllerProvider).patch(id: widget.file.id, termContents: updatedFile.termContents);
-    } else {
-      result = await ref.read(leafControllerProvider).patch(id: widget.file.id, definitionContents: updatedFile.definitionContents);
-    }
+      Response<dynamic> result;
+      if (_isTerm) {
+        result = await ref.read(leafControllerProvider).patch(id: widget.file.id, termContents: updatedFile.termContents);
+      } else {
+        result = await ref.read(leafControllerProvider).patch(id: widget.file.id, definitionContents: updatedFile.definitionContents);
+      }
 
-    if (result.statusCode != null && result.statusCode! >= 200 && result.statusCode! < 300) {
-      // setState(() {
-      //   widget.file = updatedFile;
-      // });
+      if (result.statusCode != null && result.statusCode! >= 200 && result.statusCode! < 300) {
+        // setState(() {
+        //   widget.file = updatedFile;
+        // });
 
-      widget.onFileChanged?.call(updatedFile);
+        await widget.onFileChanged?.call(updatedFile);
+      }
+    } catch (e) {
+      if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to remove contents.');
     }
   }
 
@@ -207,33 +249,37 @@ class _FileManager extends ConsumerState<FileManager> {
   }
 
   Future<void> _contentChange(Content content, int index) async {
-    final updatedContents = (_isTerm ? widget.file.termContents : widget.file.definitionContents).map((c) {
-      if (_isTerm) if (c != widget.file.termContents[index]) return c;
-      if (!_isTerm) if (c != widget.file.definitionContents[index]) return c;
+    try {
+      final updatedContents = (_isTerm ? widget.file.termContents : widget.file.definitionContents).map((c) {
+        if (_isTerm) if (c != widget.file.termContents[index]) return c;
+        if (!_isTerm) if (c != widget.file.definitionContents[index]) return c;
 
-      return content;
-    }).toList();
+        return content;
+      }).toList();
 
-    Leaf updatedFile;
-    if (_isTerm) {
-      updatedFile = widget.file.copyWith(termContents: updatedContents);
-    } else {
-      updatedFile = widget.file.copyWith(definitionContents: updatedContents);
-    }
+      Leaf updatedFile;
+      if (_isTerm) {
+        updatedFile = widget.file.copyWith(termContents: updatedContents);
+      } else {
+        updatedFile = widget.file.copyWith(definitionContents: updatedContents);
+      }
 
-    Response<dynamic> result;
-    if (_isTerm) {
-      result = await ref.read(leafControllerProvider).patch(id: widget.file.id, termContents: updatedFile.termContents);
-    } else {
-      result = await ref.read(leafControllerProvider).patch(id: widget.file.id, definitionContents: updatedFile.definitionContents);
-    }
+      Response<dynamic> result;
+      if (_isTerm) {
+        result = await ref.read(leafControllerProvider).patch(id: widget.file.id, termContents: updatedFile.termContents);
+      } else {
+        result = await ref.read(leafControllerProvider).patch(id: widget.file.id, definitionContents: updatedFile.definitionContents);
+      }
 
-    if (result.statusCode != null && result.statusCode! >= 200 && result.statusCode! < 300) {
-      // setState(() {
-      //   widget.file = updatedFile;
-      // });
+      if (result.statusCode != null && result.statusCode! >= 200 && result.statusCode! < 300) {
+        // setState(() {
+        //   widget.file = updatedFile;
+        // });
 
-      await widget.onFileChanged?.call(updatedFile);
+        await widget.onFileChanged?.call(updatedFile);
+      }
+    } catch (e) {
+      if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to change content.');
     }
   }
 
@@ -253,7 +299,7 @@ class _FileManager extends ConsumerState<FileManager> {
               SliverPersistentHeader(
                 pinned: true,
                 delegate: HeaderDelegate(
-                  height: 120,
+                  height: _editing ? 150 : 120,
                   child: Container(
                     decoration: BoxDecoration(color: theme.surface),
                     child: Column(
@@ -306,6 +352,17 @@ class _FileManager extends ConsumerState<FileManager> {
                         // Title
                         Text(widget.file.title),
                         Divider(color: theme.outlineVariant, height: 1),
+
+                        if (_editing)
+                          Button(
+                            isLoading: _isAdding == -1,
+                            type: .outlined,
+                            color: .success,
+                            onPressed: () {
+                              _onContentAdd();
+                            },
+                            label: "Add Content",
+                          ),
                       ],
                     ),
                   ),
@@ -333,8 +390,15 @@ class _FileManager extends ConsumerState<FileManager> {
                             Row(
                               mainAxisAlignment: .spaceBetween,
                               children: [
+                                Button(
+                                  type: .text,
+                                  color: .success,
+                                  icon: Icons.add_circle_outline,
+                                  iconSize: 24,
+                                  isLoading: _isAdding == index,
+                                  onPressed: () => _onContentAdd(index: index),
+                                ),
                                 Button(type: .text, color: .error, icon: Icons.highlight_remove, iconSize: 24, onPressed: () => _onContentDelete(index)),
-                                Button(type: .text, color: .success, icon: Icons.add_circle_outline, iconSize: 24, onPressed: () => _onContentAdd(index)),
                               ],
                             ),
                           ContentContainer(leafId: widget.file.id, contentIndex: index, content: _isTerm ? widget.file.termContents[index] : widget.file.definitionContents[index], editing: _editing, onContentDelete: () => _onContentDelete(index), onContentChanged: (Content content) => _onContentChange(content, index)),
