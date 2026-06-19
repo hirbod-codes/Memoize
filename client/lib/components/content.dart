@@ -1,10 +1,9 @@
 import 'package:client/api/models/leaf.dart';
-import 'package:client/auth/token_storage.dart';
-import 'package:client/components/button.dart';
 import 'package:client/components/contents/audio_container.dart';
 import 'package:client/components/contents/image_container.dart';
 import 'package:client/components/contents/text/text_editor.dart';
 import 'package:client/components/contents/video_container.dart';
+import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,77 +11,108 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class ContentContainer extends ConsumerStatefulWidget {
   final bool editing;
   final Content content;
+  final num contentIndex;
+  final String leafId;
+  final void Function(Content value)? onContentChanged;
+  final void Function()? onContentDelete;
 
-  const ContentContainer({super.key, required this.content, required this.editing});
+  const ContentContainer({super.key, required this.leafId, required this.content, required this.contentIndex, required this.editing, this.onContentChanged, this.onContentDelete});
 
   @override
   ConsumerState<ContentContainer> createState() => _ContentState();
 }
 
 class _ContentState extends ConsumerState<ContentContainer> {
-  bool _loading = true;
-  String? _token;
-
-  @override
-  void initState() {
-    super.initState();
-
-    final storage = ref.read(tokenStorageProvider);
-
-    final future = storage.getAccessToken();
-    future.then((v) {
-      if (!mounted) return;
-
-      setState(() {
-        _loading = false;
-      });
-      if (v != null && v != '') {
-        setState(() {
-          _token = v;
-        });
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return Row(
-        mainAxisAlignment: .center,
-        children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))],
-      );
-    }
+    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
     switch (widget.content.type) {
       case .richText:
-        if (_loading) {
-          setState(() {
-            _loading = false;
-          });
-        }
         return Column(
           mainAxisAlignment: .start,
           crossAxisAlignment: .center,
           children: widget.content.value.map((v) {
-            return Card(
-              child: TextEditor(editing: widget.editing, json: v),
+            return Stack(
+              children: [
+                SizedBox(
+                  width: .infinity,
+                  child: Card(
+                    child: TextEditor(editing: widget.editing, json: v),
+                  ),
+                ),
+                if (widget.editing)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: Icon(Icons.remove),
+                      onPressed: () {
+                            final updatedContent = widget.content.copyWith(value: widget.content.value.where((w) => w != v).toList());
+                            if (updatedContent.value.isEmpty) {
+                              widget.onContentDelete?.call();
+                            } else {
+                              widget.onContentChanged?.call(updatedContent);
+                            }
+                      },
+                      color: theme.error,
+                      padding: .all(4),
+                      constraints: .new(minWidth: 10, minHeight: 10),
+                      iconSize: 18,
+                      style: IconButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          side: BorderSide(color: theme.error),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             );
           }).toList(),
         );
 
       case .string:
-        if (_loading) {
-          setState(() {
-            _loading = false;
-          });
-        }
         return Column(
           mainAxisAlignment: .start,
           crossAxisAlignment: .stretch,
           spacing: 5,
           children: widget.content.value.map((v) {
-            return Card(
-              child: Padding(padding: const EdgeInsets.all(8.0), child: Text(v)),
+            return Stack(
+              children: [
+                SizedBox(
+                  width: .infinity,
+                  child: Card(
+                    child: Padding(padding: const EdgeInsets.all(16), child: Text(v)),
+                  ),
+                ),
+                if (widget.editing)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: Icon(Icons.remove),
+                      onPressed: () {
+                            final updatedContent = widget.content.copyWith(value: widget.content.value.where((w) => w != v).toList());
+                            if (updatedContent.value.isEmpty) {
+                              widget.onContentDelete?.call();
+                            } else {
+                              widget.onContentChanged?.call(updatedContent);
+                            }
+                      },
+                      color: theme.error,
+                      padding: .all(4),
+                      constraints: .new(minWidth: 10, minHeight: 10),
+                      iconSize: 18,
+                      style: IconButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          side: BorderSide(color: theme.error),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             );
           }).toList(),
         );
@@ -97,19 +127,37 @@ class _ContentState extends ConsumerState<ContentContainer> {
             children: widget.content.value.map((v) {
               return SizedBox(
                 width: 300,
-                // height: 700,
-                child: ImageContainer(imageId: v),
-                // child: Stack(
-                //   children: [
-                //     Positioned.fill(child: ImageContainer(imageId: v)),
-                //     Positioned(
-                //       top: 0,
-                //       right: 0,
-                //       width: 50,
-                //       child: Button(color: .errorContainer, onColor: .error, icon: Icons.remove, type: .outlined),
-                //     ),
-                //   ],
-                // ),
+                child: Stack(
+                  children: [
+                    ImageContainer(imageId: v),
+                    if (widget.editing)
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: IconButton(
+                          icon: Icon(Icons.remove),
+                          onPressed: () {
+                            final updatedContent = widget.content.copyWith(value: widget.content.value.where((w) => w != v).toList());
+                            if (updatedContent.value.isEmpty) {
+                              widget.onContentDelete?.call();
+                            } else {
+                              widget.onContentChanged?.call(updatedContent);
+                            }
+                          },
+                          color: theme.error,
+                          padding: .all(4),
+                          constraints: .new(minWidth: 10, minHeight: 10),
+                          iconSize: 18,
+                          style: IconButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              side: BorderSide(color: theme.error),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               );
             }).toList(),
           ),
@@ -125,12 +173,36 @@ class _ContentState extends ConsumerState<ContentContainer> {
             children: widget.content.value.map((v) {
               return SizedBox(
                 width: 300,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: .circular(AppRadius.md),
-                    border: .all(color: Colors.red, width: 1),
-                  ),
-                  child: VideoContainer(videoId: v),
+                child: Stack(
+                  children: [
+                    VideoContainer(videoId: v),
+                    if (widget.editing)
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: IconButton(
+                          icon: Icon(Icons.remove),
+                          onPressed: () {
+                            final updatedContent = widget.content.copyWith(value: widget.content.value.where((w) => w != v).toList());
+                            if (updatedContent.value.isEmpty) {
+                              widget.onContentDelete?.call();
+                            } else {
+                              widget.onContentChanged?.call(updatedContent);
+                            }
+                          },
+                          color: theme.error,
+                          padding: .all(4),
+                          constraints: .new(minWidth: 10, minHeight: 10),
+                          iconSize: 18,
+                          style: IconButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              side: BorderSide(color: theme.error),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               );
             }).toList(),
@@ -147,12 +219,36 @@ class _ContentState extends ConsumerState<ContentContainer> {
             children: widget.content.value.map((v) {
               return SizedBox(
                 width: 300,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: .circular(AppRadius.md),
-                    border: .all(color: Colors.red, width: 1),
-                  ),
-                  child: AudioContainer(audioId: v),
+                child: Stack(
+                  children: [
+                    AudioContainer(audioId: v),
+                    if (widget.editing)
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: IconButton(
+                          icon: Icon(Icons.remove),
+                          onPressed: () {
+                            final updatedContent = widget.content.copyWith(value: widget.content.value.where((w) => w != v).toList());
+                            if (updatedContent.value.isEmpty) {
+                              widget.onContentDelete?.call();
+                            } else {
+                              widget.onContentChanged?.call(updatedContent);
+                            }
+                          },
+                          color: theme.error,
+                          padding: .all(4),
+                          constraints: .new(minWidth: 10, minHeight: 10),
+                          iconSize: 18,
+                          style: IconButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              side: BorderSide(color: theme.error),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               );
             }).toList(),

@@ -408,7 +408,6 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                             clipBehavior: Clip.hardEdge,
                             child: InkWell(
                               onTap: () {
-                                // _showOverlay(context, theme, file);
                                 showDialog(
                                   context: context,
                                   barrierDismissible: true,
@@ -416,6 +415,11 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                                     file: file,
                                     onClose: () {
                                       Navigator.of(context).pop();
+                                    },
+                                    onFileChanged: (updateFile) {
+                                      setState(() {
+                                        _files![index] = updateFile;
+                                      });
                                     },
                                   ),
                                 );

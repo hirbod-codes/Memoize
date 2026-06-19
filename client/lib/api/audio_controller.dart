@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:client/api/models/audio.dart';
 import 'package:client/auth/dio_providers.dart';
 import 'package:dio/dio.dart';
@@ -10,11 +12,13 @@ class AudioController {
 
   AudioController(this.ref);
 
-  // Future<String> create({required String title, required String treeNodeId, required List<Content> termContents, required List<Content> definitionContents}) async {
-  //   final response = await _authDio.post('/api/leaf/', data: {'title': title, 'treeNodeId': treeNodeId, 'termContents': termContents, 'definitionContents': definitionContents});
-
-  //   return response.data['id'];
-  // }
+  Future<Response> post({required String title, required File file, String? fileName, ProgressCallback? onSendProgress}) async {
+    return await _authDio.post(
+      '/api/video/?title=$title&fileName=${fileName ?? file.path.split('/').last}',
+      data: FormData.fromMap({'file': await MultipartFile.fromFile(file.path, filename: file.path.split('/').last)}),
+      onSendProgress: onSendProgress,
+    );
+  }
 
   Future<Audio?> get({required String audioId}) async {
     final response = await _authDio.get('/api/audio/info?audioId=$audioId');
@@ -29,19 +33,6 @@ class AudioController {
 
     return Audio.fromJson(response.data);
   }
-
-  // Future<Response> patch({required String id, String? title, List<Content>? termContents, List<Content>? definitionContents}) async {
-  //   final Map<String, dynamic> data = {'_id': id};
-  //   if (title != null) data['title'] = title;
-  //   if (termContents != null) data['termContents'] = termContents;
-  //   if (definitionContents != null) data['definitionContents'] = definitionContents;
-
-  //   return await _authDio.patch('/api/leaf/', data: data);
-  // }
-
-  // Future<Response> delete({required String id}) async {
-  //   return await _authDio.delete('/api/leaf/?id=$id');
-  // }
 }
 
 final audioControllerProvider = Provider((ref) => AudioController(ref));

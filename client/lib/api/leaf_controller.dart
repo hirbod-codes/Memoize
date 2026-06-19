@@ -11,7 +11,7 @@ class LeafController {
   LeafController(this.ref);
 
   Future<String> create({required String title, required String treeNodeId, required List<Content> termContents, required List<Content> definitionContents}) async {
-    final response = await _authDio.post('/api/leaf/', data: {'title': title, 'treeNodeId': treeNodeId, 'termContents': termContents, 'definitionContents': definitionContents});
+    final response = await _authDio.post('/api/leaf/', data: {'title': title, 'treeNodeId': treeNodeId, 'termContents': termContents.map((c)=>c.toJson()).toList(), 'definitionContents': definitionContents.map((c)=>c.toJson()).toList()});
 
     return response.data['id'];
   }
@@ -43,8 +43,8 @@ class LeafController {
   Future<Response> patch({required String id, String? title, List<Content>? termContents, List<Content>? definitionContents}) async {
     final Map<String, dynamic> data = {'_id': id};
     if (title != null) data['title'] = title;
-    if (termContents != null) data['termContents'] = termContents;
-    if (definitionContents != null) data['definitionContents'] = definitionContents;
+    if (termContents != null) data['termContents'] = termContents.map((c) => c.toJson()).toList();
+    if (definitionContents != null) data['definitionContents'] = definitionContents.map((c) => c.toJson()).toList();
 
     return await _authDio.patch('/api/leaf/', data: data);
   }

@@ -22,4 +22,8 @@ class Folder {
 
     return Folder(id: id, title: title, userId: userId, parentId: parentId, treeNodeIds: treeNodeIds, leafIds: leafIds, createdAt: createdAt, updatedAt: updatedAt);
   }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'userId': userId, 'parentId': parentId, 'title': title, 'leafIds': leafIds, 'treeNodeIds': treeNodeIds, 'createdAt': createdAt, 'updatedAt': updatedAt};
+  }
 }

@@ -7,6 +7,7 @@ import 'package:client/auth/token_storage.dart';
 import 'package:client/components/contents/players/video_player_provider.dart' hide videoControllerProvider;
 import 'package:client/components/contents/players/video_player_screen.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
+import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -86,9 +87,13 @@ class _VideosState extends ConsumerState<VideoContainer> {
     if (_video == null) return Column(mainAxisAlignment: .center, crossAxisAlignment: .center, children: [Text('Video not found.')]);
     if (_token == null) return Column(mainAxisAlignment: .center, crossAxisAlignment: .center, children: [Text('Unauthenticated.')]);
 
-    return ProviderScope(
-      overrides: [videoPlayerCommandsProvider],
-      child: VideoPlayerScreen(videoId: _video!.id, url: '${AppConfig.apiUrl}/api/Video/file/${_video!.id}/index.m3u8', headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
+    return Container(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md), color: Theme.of(context).colorScheme.surfaceContainerHighest),
+      clipBehavior: Clip.antiAlias,
+      child: ProviderScope(
+        overrides: [videoPlayerCommandsProvider],
+        child: VideoPlayerScreen(videoId: _video!.id, url: '${AppConfig.apiUrl}/api/Video/file/${_video!.id}/index.m3u8', headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
+      ),
     );
   }
 }

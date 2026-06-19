@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:client/api/image_controller.dart';
-import 'package:client/api/models/Image.dart';
+import 'package:client/api/models/image.dart' show ImageInfo;
 import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
-import 'package:flutter/cupertino.dart' hide ImageInfo;
 import 'package:flutter/material.dart' hide ImageInfo;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,7 +20,7 @@ class ImageContainer extends ConsumerStatefulWidget {
 
 class _ImagesState extends ConsumerState<ImageContainer> {
   String? _token;
-  dynamic? _image;
+  ImageInfo? _image;
   bool _loading = true;
 
   @override
@@ -30,7 +29,6 @@ class _ImagesState extends ConsumerState<ImageContainer> {
         .read(imageControllerProvider)
         .get(imageId: widget.imageId)
         .then((v) {
-          print('vvvvvvvvvvvvvvvvvv: $v');
           if (!mounted) return;
 
           final storage = ref.read(tokenStorageProvider);
@@ -44,7 +42,7 @@ class _ImagesState extends ConsumerState<ImageContainer> {
                   if (t != null && t != '') {
                     _token = t;
                   }
-                  _image = v as dynamic;
+                  _image = v as ImageInfo;
                   _loading = false;
                 });
               })
@@ -96,18 +94,12 @@ class _ImagesState extends ConsumerState<ImageContainer> {
           mainAxisAlignment: .start,
           crossAxisAlignment: .stretch,
           children: [
-            _image == null || _token == null
-                ? Container(
-                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md)),
-                    child: Icon(Icons.image_rounded, size: 200, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  )
-                : Container(
-                    clipBehavior: .antiAlias,
-                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md)),
-                    child: Image.network('${AppConfig.apiUrl}/api/image/file/${widget.imageId}', fit: .fitWidth, headers: {'Authorization': 'Bearer $_token'}),
-                  ),
+            Container(
+              clipBehavior: .antiAlias,
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md)),
+              child: Image.network('${AppConfig.apiUrl}/api/image/file/${widget.imageId}', fit: .fitWidth, headers: {'Authorization': 'Bearer $_token'}),
+            ),
             if (_image?.title != null) Center(child: Text(_image?.title ?? '')),
-            if (_image == null || _token == null) Center(child: Text('No Image')),
           ],
         ),
       ),
