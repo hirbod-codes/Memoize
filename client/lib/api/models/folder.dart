@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Folder {
   late final String id;
   late final String title;
@@ -10,6 +12,11 @@ class Folder {
 
   Folder({required this.id, required this.title, required this.userId, this.parentId, required this.treeNodeIds, required this.leafIds, required this.createdAt, required this.updatedAt});
 
+  Map<String, dynamic> toJson() => ({'id': id, 'title': title, 'createdAt': createdAt, 'updatedAt': updatedAt});
+
+  @override
+  String toString() => jsonEncode(toJson());
+
   factory Folder.fromJson(Map<String, dynamic> json) {
     final id = json['_id'];
     final userId = json['userId'];
@@ -21,9 +28,5 @@ class Folder {
     final updatedAt = (json['updatedAt'] as num).toInt();
 
     return Folder(id: id, title: title, userId: userId, parentId: parentId, treeNodeIds: treeNodeIds, leafIds: leafIds, createdAt: createdAt, updatedAt: updatedAt);
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'id': id, 'userId': userId, 'parentId': parentId, 'title': title, 'leafIds': leafIds, 'treeNodeIds': treeNodeIds, 'createdAt': createdAt, 'updatedAt': updatedAt};
   }
 }

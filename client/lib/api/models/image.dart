@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class ImageInfo {
   final String id;
   final String title;
@@ -7,6 +9,11 @@ class ImageInfo {
   final int? updatedAt;
 
   ImageInfo({required this.id, required this.contentType, required this.title, required this.fileName, this.createdAt, this.updatedAt});
+
+  Map<String, dynamic> toJson() => ({'id': id, 'contentType': contentType, 'title': title, 'fileName': fileName, 'createdAt': createdAt, 'updatedAt': updatedAt});
+
+  @override
+  String toString() => jsonEncode(toJson());
 
   factory ImageInfo.fromJson(Map<String, dynamic> json) {
     final id = json['_id'];

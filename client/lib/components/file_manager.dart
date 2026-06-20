@@ -12,6 +12,7 @@ import 'package:client/theme/theme_radius.dart';
 import 'package:dio/dio.dart' show Response;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:talker/talker.dart';
 
 import 'header_delegate.dart';
 
@@ -118,6 +119,7 @@ class _FileManager extends ConsumerState<FileManager> {
           await widget.onFileChanged?.call(updatedFile);
       }
     } catch (e) {
+      Talker().error('Failure while trying to add new content.', e);
       if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to add new content.');
     } finally {
       if (mounted) {

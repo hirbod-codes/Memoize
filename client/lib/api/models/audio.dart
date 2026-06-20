@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Audio {
   final String id;
   final String contentType;
@@ -22,4 +24,9 @@ class Audio {
 
     return Audio(id: id, contentType: contentType, title: title, file: file, musical: musical, metadata: metadata, createdAt: createdAt, updatedAt: updatedAt);
   }
+
+  Map<String, dynamic> toJson() => ({'id': id, 'contentType': contentType, 'title': title, 'file': file, 'musical': musical, 'metadata': metadata, 'createdAt': createdAt, 'updatedAt': updatedAt});
+
+  @override
+  String toString() => jsonEncode(toJson());
 }

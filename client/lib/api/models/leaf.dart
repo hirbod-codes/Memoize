@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class LeafPost {
   final String id;
 
@@ -45,18 +47,19 @@ class Content {
   }
 
   Content copyWith({ContentType? type, List<String>? value}) {
-    return Content(type: type ?? this.type, value: value ?? this.value);
+    return Content(type: type ?? this.type, value: value ?? [...this.value]);
   }
+
+  Map<String, dynamic> toJson() => ({'type': stringifyContentType(type), 'value': value});
+
+  @override
+  String toString() => jsonEncode(toJson());
 
   factory Content.fromJson(Map<String, dynamic> json) {
     final type = parseContentType(json['type'] as String);
     final value = (json['value'] as List<dynamic>).cast<String>();
 
     return Content(type: type, value: value);
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'type': stringifyContentType(type), 'value': value};
   }
 }
 
@@ -73,7 +76,7 @@ class Leaf {
   Leaf({required this.id, required this.userId, required this.treeNodeId, required this.title, required this.termContents, required this.definitionContents, required this.createdAt, required this.updatedAt});
 
   Leaf copyWith({String? id, String? title, List<Content>? termContents, List<Content>? definitionContents}) {
-    return Leaf(id: id ?? this.id, title: title ?? this.title, termContents: termContents ?? this.termContents, definitionContents: definitionContents ?? this.definitionContents, userId: userId, treeNodeId: treeNodeId, createdAt: createdAt, updatedAt: updatedAt);
+    return Leaf(id: id ?? this.id, title: title ?? this.title, termContents: termContents ?? this.termContents.map((m) => m.copyWith()).toList(), definitionContents: definitionContents ?? this.definitionContents.map((m) => m.copyWith()).toList(), userId: userId, treeNodeId: treeNodeId, createdAt: createdAt, updatedAt: updatedAt);
   }
 
   factory Leaf.fromJson(Map<String, dynamic> json) {

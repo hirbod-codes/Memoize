@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Video {
   final String id;
   final String title;
@@ -5,6 +7,11 @@ class Video {
   final int? updatedAt;
 
   Video({required this.id, required this.title, required this.createdAt, required this.updatedAt});
+
+  Map<String, dynamic> toJson() => ({'id': id, 'title': title, 'createdAt': createdAt, 'updatedAt': updatedAt});
+
+  @override
+  String toString() => jsonEncode(toJson());
 
   factory Video.fromJson(Map<String, dynamic> json) {
     final id = json['_id'];
