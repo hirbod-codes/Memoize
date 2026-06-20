@@ -27,8 +27,10 @@ class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: .start,
+            spacing: 10,
             children: [
-              const Text("Upload Video", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text("Choose new content", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
               const SizedBox(height: 16),
 

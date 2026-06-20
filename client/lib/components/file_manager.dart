@@ -60,9 +60,6 @@ class _FileManager extends ConsumerState<FileManager> {
         if (result.statusCode != null && result.statusCode! >= 200 && result.statusCode! < 300) {
           await widget.onFileChanged?.call(updatedFile);
         }
-        setState(() {
-          _isAdding = null;
-        });
 
         return;
       }
@@ -120,13 +117,14 @@ class _FileManager extends ConsumerState<FileManager> {
           contents[index].value.add(newId);
           await widget.onFileChanged?.call(updatedFile);
       }
-      if (!mounted) return;
-
-      setState(() {
-        _isAdding = null;
-      });
     } catch (e) {
-      if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to change content.');
+      if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to add new content.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAdding = null;
+        });
+      }
     }
   }
 

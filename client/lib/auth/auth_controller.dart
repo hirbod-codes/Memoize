@@ -31,7 +31,7 @@ class AuthController extends Notifier<AuthState> {
     }
 
     try {
-      final result = await _refresh(refreshToken);
+      final result = await refresh(refreshToken);
 
       await _storage.saveAccessToken(result.accessToken);
 
@@ -43,7 +43,7 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  Future<RefreshResponse> _refresh(String refreshToken) async {
+  Future<RefreshResponse> refresh(String refreshToken) async {
     final response = await _authDio.post('/api/auth/refresh', data: {'refreshToken': refreshToken, 'noCookies': 'true'});
 
     return RefreshResponse(accessToken: response.data['accessToken']);
@@ -62,13 +62,13 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    state = const AuthState(AuthStatus.unauthenticated);
+
     final refreshToken = await _storage.getRefreshToken();
     final accessToken = await _storage.getAccessToken();
     await _storage.clear();
 
     if (refreshToken != null) await _dio.post('/api/auth/logout', data: {'refreshToken': refreshToken, 'accessToken': accessToken});
-
-    state = const AuthState(AuthStatus.unauthenticated);
   }
 }
 
