@@ -4,7 +4,7 @@ import 'package:client/components/contents/choose_content_type_dialog.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/components/upload/audio_upload_dialog.dart';
 import 'package:client/components/button.dart';
-import 'package:client/components/content.dart';
+import 'package:client/components/content_container.dart';
 import 'package:client/components/upload/image_upload_dialog.dart';
 import 'package:client/components/upload/video_upload_dialog.dart';
 import 'package:client/theme/theme_mode_notifier.dart';

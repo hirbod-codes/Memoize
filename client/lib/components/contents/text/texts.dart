@@ -22,7 +22,7 @@ class _TextsState extends ConsumerState<Texts> {
 
         return Card(
           clipBehavior: Clip.hardEdge,
-          child: TextEditor(editing: widget.editing, json: item),
+          child: TextEditor(editing: widget.editing, json: item, onSave: save),
         );
       },
     );

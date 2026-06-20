@@ -8,11 +8,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 class TextEditor extends ConsumerStatefulWidget {
   final bool editing;
   final String? json;
-  final Function? onSave;
+  final Future<void> Function(List<Map<String, dynamic>> json)? onSave;
 
   const TextEditor({super.key, required this.editing, this.json, this.onSave});
 
@@ -44,8 +45,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
       }
     } catch (e) {
       _controller.document = .new();
-      print('\nerror!');
-      print(e);
+      Talker().error('Failure while trying to parse input json for the rich text editor, falling back to empty content for the editor.', e);
     }
 
     _controller.addListener(() {
@@ -53,7 +53,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
         _hasChanged = true;
       });
       _timer?.cancel();
-      _timer = Timer(.new(milliseconds: 700), () {
+      _timer = Timer(.new(seconds: 2), () {
         _onSave();
       });
     });
@@ -68,15 +68,17 @@ class _TextEditorState extends ConsumerState<TextEditor> {
     super.dispose();
   }
 
-  void _onSave() {
+  Future<void> _onSave() async {
     if (!widget.editing) return;
 
     setState(() {
       _saving = true;
     });
+
     final json = _controller.document.toDelta().toJson();
-    print(json);
-    if (widget.onSave != null) widget.onSave!(json);
+
+    await widget.onSave?.call(json);
+
     setState(() {
       _hasChanged = false;
       _saving = false;
