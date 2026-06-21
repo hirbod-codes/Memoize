@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 class ImageInfo {
-  final String id;
-  final String title;
-  final String fileName;
-  final String contentType;
-  final int? createdAt;
-  final int? updatedAt;
+  String id;
+  String title;
+  String fileName;
+  String contentType;
+  int? createdAt;
+  int? updatedAt;
 
   ImageInfo({required this.id, required this.contentType, required this.title, required this.fileName, this.createdAt, this.updatedAt});
 

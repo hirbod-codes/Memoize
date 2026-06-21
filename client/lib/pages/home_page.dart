@@ -4,6 +4,7 @@ import 'package:client/api/folder_controller.dart';
 import 'package:client/api/leaf_controller.dart';
 import 'package:client/api/models/folder.dart';
 import 'package:client/api/models/leaf.dart';
+import 'package:client/api/providers/folders_and_files.dart';
 import 'package:client/components/button.dart';
 import 'package:client/components/file_manager.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
@@ -56,9 +57,6 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
   final List<String> _location = ['root'];
 
-  List<Folder> _folders = [];
-  List<Leaf>? _files;
-
   bool _editing = false;
 
   int _deletingFolder = -1;
@@ -105,7 +103,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
       setState(() {
         _location.removeLast();
         _title = null;
-        _files = [];
+        ref.read(foldersAndFilesProvider.notifier).setFiles([]);
         _filter = .folder;
         _resetSearch();
       });
@@ -173,10 +171,10 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
         if (reset) {
           _folderSkip = folders.length;
-          _folders = folders;
+          ref.read(foldersAndFilesProvider.notifier).setFolders(folders);
         } else {
           _folderSkip = folders.length + _folderSkip;
-          _folders = [..._folders, ...folders];
+          ref.read(foldersAndFilesProvider.notifier).setFolders([...(ref.read(foldersAndFilesProvider).folders ?? []), ...folders]);
         }
       });
     } else if (filter == .file) {
@@ -193,10 +191,10 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
         if (reset) {
           _fileSkip = files.length;
-          _files = files;
+          ref.read(foldersAndFilesProvider.notifier).setFiles(files);
         } else {
           _fileSkip = files.length + _fileSkip;
-          _files = [...(_files ?? []), ...files];
+          ref.read(foldersAndFilesProvider.notifier).setFiles([...(ref.read(foldersAndFilesProvider).files ?? []), ...files]);
         }
       });
     }
@@ -236,7 +234,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
     setState(() {
       _deletingFolder = -1;
-      _folders = _folders.where((w) => w.id != folder.id).toList();
+      ref.read(foldersAndFilesProvider.notifier).removeFolderById(folder.id);
     });
   }
 
@@ -251,13 +249,18 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
     setState(() {
       _deletingFile = -1;
-      _files = _files?.where((w) => w.id != file.id).toList();
+      ref.read(foldersAndFilesProvider.notifier).removeFileById(file.id);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+
+    FoldersAndFiles p = ref.watch(foldersAndFilesProvider.notifier);
+    FoldersAndFilesState pState = ref.watch(foldersAndFilesProvider);
+    final folders = pState.folders ?? [];
+    final files = pState.files;
 
     return Card(
       elevation: 10,
@@ -361,17 +364,17 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                       ListView.builder(
                         shrinkWrap: true,
                         physics: NeverScrollableScrollPhysics(),
-                        itemCount: _folders.length,
+                        itemCount: folders.length,
                         itemBuilder: (context, index) => Card(
                           clipBehavior: Clip.hardEdge,
                           child: InkWell(
                             onTap: () {
-                              _nextLocation(_folders[index]);
+                              _nextLocation(folders[index]);
                             },
                             child: Padding(
                               padding: .all(8),
                               child: ListTile(
-                                title: Text(_folders[index].title),
+                                title: Text(folders[index].title),
                                 trailing: Row(
                                   mainAxisSize: .min,
                                   children: [
@@ -382,7 +385,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                                         color: .error,
                                         icon: Icons.remove_circle_outline,
                                         onPressed: () {
-                                          _removeFolder(_folders[index], index);
+                                          _removeFolder(folders[index], index);
                                         },
                                       ),
                                     ],
@@ -397,17 +400,18 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
                   // Files list
                   if (!_fetching)
-                    if (_location.length > 1 && _filter == .file && _files != null && _files!.isNotEmpty)
+                    if (_location.length > 1 && _filter == .file && files != null && files.isNotEmpty)
                       ListView.builder(
                         shrinkWrap: true,
                         physics: NeverScrollableScrollPhysics(),
-                        itemCount: _files!.length,
+                        itemCount: files.length,
                         itemBuilder: (context, index) {
-                          final file = _files![index];
+                          final file = files[index];
                           return Card(
                             clipBehavior: Clip.hardEdge,
                             child: InkWell(
                               onTap: () {
+                                p.setFileIndex(index);
                                 showDialog(
                                   context: context,
                                   barrierDismissible: true,
@@ -415,12 +419,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                                     file: file,
                                     onClose: () {
                                       Navigator.of(context).pop();
-                                    },
-                                    onFileChanged: (updateFile) {
-                                      setState(() {
-                                        _files![index] = updateFile;
-                                      });
-                                    },
+                                    }
                                   ),
                                 );
                               },

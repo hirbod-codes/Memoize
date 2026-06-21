@@ -18,10 +18,9 @@ class FolderController {
 
     final Map<String, dynamic> data = {'title': title};
     if (parentId != null) data['parentId'] = parentId;
-
     Talker().info('input data: ${jsonEncode(data)}');
 
-    final response = await _authDio.post('/api/treeNode/', data: data);
+    final response = await _authDio.post('/api/treeNode/', data: {'treeNode': data});
     Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
 
     Talker().info('FolderController.create call ended');
@@ -70,7 +69,7 @@ class FolderController {
     if (treeNodeIds != null) data['treeNodeIds'] = treeNodeIds;
     if (leafIds != null) data['leafIds'] = leafIds;
 
-    return await _authDio.patch('/api/treeNode/', data: data);
+    return await _authDio.patch('/api/treeNode/', data: {'treeNode': data});
   }
 
   Future<Response> delete({required String id}) async {

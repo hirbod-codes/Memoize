@@ -19,7 +19,7 @@ class LeafController {
     var data = {'title': title, 'treeNodeId': treeNodeId, 'termContents': termContents.map((c) => c.toJson()).toList(), 'definitionContents': definitionContents.map((c) => c.toJson()).toList()};
     Talker().info('input data: ${jsonEncode(data)}');
 
-    final response = await _authDio.post('/api/leaf/', data: data);
+    final response = await _authDio.post('/api/leaf/', data: {'leaf': data});
     Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
 
     Talker().info('LeafController.create call ended');
@@ -72,7 +72,7 @@ class LeafController {
 
     Talker().info('input data: ${jsonEncode(data)}');
 
-    final response = await _authDio.patch('/api/leaf/', data: data);
+    final response = await _authDio.patch('/api/leaf/', data: {'leaf': data});
     Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
 
     Talker().info('LeafController.patch call ended');

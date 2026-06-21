@@ -1,14 +1,14 @@
 import 'dart:convert';
 
 class Audio {
-  final String id;
-  final String contentType;
-  final String title;
-  final dynamic file;
-  final dynamic musical;
-  final dynamic metadata;
-  final int createdAt;
-  final int updatedAt;
+  String id;
+  String contentType;
+  String title;
+  dynamic file;
+  dynamic musical;
+  dynamic metadata;
+  int createdAt;
+  int updatedAt;
 
   Audio({required this.id, required this.contentType, required this.title, required this.file, required this.musical, required this.metadata, required this.createdAt, required this.updatedAt});
 

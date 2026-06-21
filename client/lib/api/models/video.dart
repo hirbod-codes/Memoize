@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 class Video {
-  final String id;
-  final String title;
-  final int? createdAt;
-  final int? updatedAt;
+  String id;
+  String title;
+  int? createdAt;
+  int? updatedAt;
 
   Video({required this.id, required this.title, required this.createdAt, required this.updatedAt});
 

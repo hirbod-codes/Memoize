@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:client/api/models/leaf.dart';
+import 'package:client/api/providers/folders_and_files.dart';
 import 'package:client/components/contents/audio_container.dart';
 import 'package:client/components/contents/image_container.dart';
 import 'package:client/components/contents/text/text_editor.dart';
 import 'package:client/components/contents/video_container.dart';
+import 'package:client/components/global/notification_service.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart';
@@ -11,12 +15,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class ContentContainer extends ConsumerStatefulWidget {
   final bool editing;
   final Content content;
-  final num contentIndex;
+  final int contentIndex;
   final String leafId;
-  final Future<void> Function(Content value)? onContentChanged;
-  final Future<void> Function()? onContentDelete;
 
-  const ContentContainer({super.key, required this.leafId, required this.content, required this.contentIndex, required this.editing, this.onContentChanged, this.onContentDelete});
+  const ContentContainer({super.key, required this.leafId, required this.content, required this.contentIndex, required this.editing});
 
   @override
   ConsumerState<ContentContainer> createState() => _ContentState();
@@ -45,13 +47,16 @@ class _ContentState extends ConsumerState<ContentContainer> {
                   _isRemoving.add(index);
                 });
 
-                final updatedContent = widget.content.copyWith(value: widget.content.value.where((w) => w != value).toList());
-                if (updatedContent.value.isEmpty) {
-                  await widget.onContentDelete?.call();
-                } else {
-                  await widget.onContentChanged?.call(updatedContent);
-                }
+                FoldersAndFilesStateResponse result = await ref.read(foldersAndFilesProvider.notifier).removeContentValue(widget.contentIndex, index);
                 if (!mounted) return;
+
+                if (result.status == .failure) {
+                  if (mounted) NotificationService.showError(context: context, message: result.message ?? 'Failure while trying to remove content.');
+                }
+
+                if (result.status == .success) {
+                  if (mounted) NotificationService.showSuccess(context: context, message: 'Successfully removed content.');
+                }
 
                 setState(() {
                   _isRemoving.remove(index);
@@ -75,13 +80,31 @@ class _ContentState extends ConsumerState<ContentContainer> {
         return Column(
           mainAxisAlignment: .start,
           crossAxisAlignment: .center,
-          children: widget.content.value.map((v) {
+          children: widget.content.value.asMap().entries.map((e) {
+            final contentValueIndex = e.key;
+            final v = e.value;
+
             return Stack(
               children: [
                 SizedBox(
                   width: .infinity,
                   child: Card(
-                    child: TextEditor(editing: widget.editing, json: v),
+                    child: TextEditor(
+                      editing: widget.editing,
+                      json: v,
+                      onSave: (json) async {
+                        FoldersAndFilesStateResponse result = await ref.read(foldersAndFilesProvider.notifier).setContentValue(jsonEncode(json), widget.contentIndex, contentValueIndex);
+                        if (!mounted) return;
+
+                        if (result.status == .failure) {
+                          if (mounted) NotificationService.showError(context: context, message: result.message ?? 'Failure while trying to remove content.');
+                        }
+
+                        if (result.status == .success) {
+                          if (mounted) NotificationService.showSuccess(context: context, message: 'Successfully removed content.');
+                        }
+                      },
+                    ),
                   ),
                 ),
                 if (widget.editing) Positioned(top: 8, right: 8, child: removeIcon(v)),

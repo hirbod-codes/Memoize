@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 class LeafPost {
-  final String id;
+  String id;
 
   LeafPost({required this.id});
 }
@@ -9,8 +9,8 @@ class LeafPost {
 enum ContentType { string, richText, imageId, videoId, audioId }
 
 class Content {
-  final ContentType type;
-  final List<String> value;
+  ContentType type;
+  List<String> value;
 
   Content({required this.type, required this.value});
 
@@ -64,16 +64,20 @@ class Content {
 }
 
 class Leaf {
-  late final String id;
-  late final String userId;
-  late final String treeNodeId;
-  late final String title;
-  late final List<Content> termContents;
-  late final List<Content> definitionContents;
-  late final int createdAt;
-  late final int updatedAt;
+  late String id;
+  late String userId;
+  late String treeNodeId;
+  late String title;
+  late List<Content> termContents;
+  late List<Content> definitionContents;
+  late int createdAt;
+  late int updatedAt;
 
   Leaf({required this.id, required this.userId, required this.treeNodeId, required this.title, required this.termContents, required this.definitionContents, required this.createdAt, required this.updatedAt});
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'userId': userId, 'treeNodeId': treeNodeId, 'title': title, 'termContents': termContents.map((m) => m.toJson()).toList(), 'definitionContents': definitionContents.map((m) => m.toJson()).toList(), 'createdAt': createdAt, 'updatedAt': updatedAt};
+  }
 
   Leaf copyWith({String? id, String? title, List<Content>? termContents, List<Content>? definitionContents}) {
     return Leaf(id: id ?? this.id, title: title ?? this.title, termContents: termContents ?? this.termContents.map((m) => m.copyWith()).toList(), definitionContents: definitionContents ?? this.definitionContents.map((m) => m.copyWith()).toList(), userId: userId, treeNodeId: treeNodeId, createdAt: createdAt, updatedAt: updatedAt);
@@ -90,9 +94,5 @@ class Leaf {
     final updatedAt = (json['updatedAt'] as num).toInt();
 
     return Leaf(id: id, userId: userId, treeNodeId: treeNodeId, title: title, termContents: termContents, definitionContents: definitionContents, createdAt: createdAt, updatedAt: updatedAt);
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'id': id, 'userId': userId, 'treeNodeId': treeNodeId, 'title': title, 'termContents': termContents.map((m) => m.toJson()).toList(), 'definitionContents': definitionContents.map((m) => m.toJson()).toList(), 'createdAt': createdAt, 'updatedAt': updatedAt};
   }
 }
