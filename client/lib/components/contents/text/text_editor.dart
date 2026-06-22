@@ -71,22 +71,36 @@ class _TextEditorState extends ConsumerState<TextEditor> {
   Future<void> _onSave() async {
     if (!widget.editing) return;
 
-    setState(() {
-      _saving = true;
-    });
+    if (_saving) return;
 
-    final json = _controller.document.toDelta().toJson();
+    try {
+      setState(() {
+        _saving = true;
+      });
 
-    await widget.onSave?.call(json);
+      final json = _controller.document.toDelta().toJson();
 
-    setState(() {
-      _hasChanged = false;
-      _saving = false;
-    });
+      await widget.onSave?.call(json);
+      if (!mounted) return;
+
+      setState(() {
+        _hasChanged = false;
+        _saving = false;
+      });
+    } catch (e) {
+      Talker().error('The _onSave method in TextEditor widget throws an error', e);
+      if (!mounted) return;
+
+      setState(() {
+        _saving = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    _controller.readOnly = !widget.editing;
+
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
     return Padding(

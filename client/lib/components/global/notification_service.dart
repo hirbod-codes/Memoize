@@ -9,7 +9,7 @@ class NotificationService {
 
     final overlay = Overlay.of(context);
 
-    late OverlayEntry entry;
+    OverlayEntry? entry;
 
     entry = OverlayEntry(
       builder: (_) => Positioned(
@@ -32,7 +32,7 @@ class NotificationService {
                   icon: Icons.close,
                   color: .onError,
                   onPressed: () {
-                    entry.remove();
+                    entry?.remove();
                   },
                 ),
               ],
@@ -45,7 +45,7 @@ class NotificationService {
     overlay.insert(entry);
 
     Future.delayed(duration ?? const Duration(seconds: 6), () {
-      entry.remove();
+      entry?.remove();
     });
   }
 

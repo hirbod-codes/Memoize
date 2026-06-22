@@ -34,13 +34,12 @@ class _ContentState extends ConsumerState<ContentContainer> {
   Widget build(BuildContext context) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
-    Widget removeIcon(String value) {
-      return _isRemoving.contains(widget.content.value.indexOf(value))
+    Widget removeIcon(String value, int index) {
+      return _isRemoving.contains(index)
           ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))
           : IconButton(
               icon: Icon(Icons.remove),
               onPressed: () async {
-                int index = widget.content.value.indexOf(value);
                 if (_isRemoving.contains(index)) return;
 
                 setState(() {
@@ -107,7 +106,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                     ),
                   ),
                 ),
-                if (widget.editing) Positioned(top: 8, right: 8, child: removeIcon(v)),
+                if (widget.editing) Positioned(top: 8, right: 8, child: removeIcon(v, contentValueIndex)),
               ],
             );
           }).toList(),
@@ -118,7 +117,10 @@ class _ContentState extends ConsumerState<ContentContainer> {
           mainAxisAlignment: .start,
           crossAxisAlignment: .stretch,
           spacing: 5,
-          children: widget.content.value.map((v) {
+          children: widget.content.value.asMap().entries.map((e) {
+            final contentValueIndex = e.key;
+            final v = e.value;
+
             return Stack(
               children: [
                 SizedBox(
@@ -127,7 +129,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                     child: Padding(padding: const EdgeInsets.all(16), child: Text(v)),
                   ),
                 ),
-                if (widget.editing) Positioned(top: 8, right: 8, child: removeIcon(v)),
+                if (widget.editing) Positioned(top: 8, right: 8, child: removeIcon(v, contentValueIndex)),
               ],
             );
           }).toList(),
@@ -140,13 +142,16 @@ class _ContentState extends ConsumerState<ContentContainer> {
             mainAxisAlignment: .start,
             crossAxisAlignment: .center,
             spacing: 10,
-            children: widget.content.value.map((v) {
+            children: widget.content.value.asMap().entries.map((e) {
+              final contentValueIndex = e.key;
+              final v = e.value;
+
               return SizedBox(
                 width: 300,
                 child: Stack(
                   children: [
                     ImageContainer(imageId: v),
-                    if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v)),
+                    if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v, contentValueIndex)),
                   ],
                 ),
               );
@@ -161,13 +166,16 @@ class _ContentState extends ConsumerState<ContentContainer> {
             mainAxisAlignment: .start,
             crossAxisAlignment: .start,
             spacing: 10,
-            children: widget.content.value.map((v) {
+            children: widget.content.value.asMap().entries.map((e) {
+              final contentValueIndex = e.key;
+              final v = e.value;
+
               return SizedBox(
                 width: 300,
                 child: Stack(
                   children: [
                     VideoContainer(videoId: v),
-                    if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v)),
+                    if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v, contentValueIndex)),
                   ],
                 ),
               );
@@ -182,13 +190,16 @@ class _ContentState extends ConsumerState<ContentContainer> {
             mainAxisAlignment: .start,
             crossAxisAlignment: .start,
             spacing: 10,
-            children: widget.content.value.map((v) {
+            children: widget.content.value.asMap().entries.map((e) {
+              final contentValueIndex = e.key;
+              final v = e.value;
+
               return SizedBox(
                 width: 300,
                 child: Stack(
                   children: [
                     AudioContainer(audioId: v),
-                    if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v)),
+                    if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v, contentValueIndex)),
                   ],
                 ),
               );
