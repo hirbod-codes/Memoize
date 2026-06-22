@@ -11,6 +11,7 @@ import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 class ContentContainer extends ConsumerStatefulWidget {
   final bool editing;
@@ -25,10 +26,25 @@ class ContentContainer extends ConsumerStatefulWidget {
 }
 
 class _ContentState extends ConsumerState<ContentContainer> {
-  /// To Do:
-  /// Add handlers for failures.
-  /// Update backend
   final List<int> _isRemoving = [];
+  final List<int> _isUpdatingString = [];
+
+  late List<TextEditingController> stringControllers = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    stringControllers = widget.content.value.map((v) => TextEditingController(text: v)).toList();
+  }
+
+  @override
+  void dispose() {
+    for (final controller in stringControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,30 +52,36 @@ class _ContentState extends ConsumerState<ContentContainer> {
 
     Widget removeIcon(String value, int index) {
       return _isRemoving.contains(index)
-          ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))
+          ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.error))
           : IconButton(
               icon: Icon(Icons.remove),
               onPressed: () async {
-                if (_isRemoving.contains(index)) return;
+                FoldersAndFilesStateResponse? result;
+                try {
+                  if (_isRemoving.contains(index)) return;
 
-                setState(() {
-                  _isRemoving.add(index);
-                });
+                  setState(() {
+                    _isRemoving.add(index);
+                  });
 
-                FoldersAndFilesStateResponse result = await ref.read(foldersAndFilesProvider.notifier).removeContentValue(widget.contentIndex, index);
-                if (!mounted) return;
-
-                if (result.status == .failure) {
-                  if (mounted) NotificationService.showError(context: context, message: result.message ?? 'Failure while trying to remove content.');
+                  result = await ref.read(foldersAndFilesProvider.notifier).removeContentValue(widget.contentIndex, index);
+                  if (!mounted) return;
+                } catch (e) {
+                  Talker().error('Failure while trying to remove content.', e);
+                  if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to remove content.');
+                } finally {
+                  if (mounted) {
+                    if (result?.status == .failure) {
+                      NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to remove content.');
+                    }
+                    if (result?.status == .success) {
+                      NotificationService.showSuccess(context: context, message: 'Successfully removed content.');
+                    }
+                    setState(() {
+                      _isRemoving.remove(index);
+                    });
+                  }
                 }
-
-                if (result.status == .success) {
-                  if (mounted) NotificationService.showSuccess(context: context, message: 'Successfully removed content.');
-                }
-
-                setState(() {
-                  _isRemoving.remove(index);
-                });
               },
               color: theme.error,
               padding: .all(4),
@@ -121,17 +143,83 @@ class _ContentState extends ConsumerState<ContentContainer> {
             final contentValueIndex = e.key;
             final v = e.value;
 
-            return Stack(
-              children: [
-                SizedBox(
-                  width: .infinity,
-                  child: Card(
-                    child: Padding(padding: const EdgeInsets.all(16), child: Text(v)),
+            if (widget.editing) {
+              return Stack(
+                children: [
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        controller: stringControllers[contentValueIndex],
+                        decoration: InputDecoration(labelText: 'Title'),
+                      ),
+                    ),
                   ),
+
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Row(
+                      crossAxisAlignment: .center,
+                      spacing: 5,
+                      children: [
+                        if (_isUpdatingString.contains(contentValueIndex)) SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.success)),
+                        if (!_isUpdatingString.contains(contentValueIndex))
+                          IconButton(
+                            icon: Icon(Icons.done),
+                            onPressed: () async {
+                              FoldersAndFilesStateResponse? result;
+                              try {
+                                if (_isUpdatingString.contains(contentValueIndex)) return;
+
+                                setState(() {
+                                  _isUpdatingString.add(contentValueIndex);
+                                });
+
+                                result = await ref.read(foldersAndFilesProvider.notifier).setContentValue(stringControllers[contentValueIndex].text.trim(), widget.contentIndex, contentValueIndex);
+                                if (!mounted) return;
+                              } catch (e) {
+                                Talker().error('onPressed function in done IconButton throws an error.', e);
+                                if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to update content.');
+                              } finally {
+                                if (mounted) {
+                                  if (result?.status == .failure) {
+                                    NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to update content.');
+                                  }
+                                  if (result?.status == .success) {
+                                    NotificationService.showSuccess(context: context, message: 'Successfully update content.');
+                                  }
+                                  setState(() {
+                                    _isUpdatingString.remove(contentValueIndex);
+                                  });
+                                }
+                              }
+                            },
+                            color: theme.success,
+                            padding: .all(4),
+                            constraints: .new(minWidth: 10, minHeight: 10),
+                            iconSize: 18,
+                            style: IconButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                side: BorderSide(color: theme.success),
+                              ),
+                            ),
+                          ),
+                        removeIcon(v, contentValueIndex),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            } else {
+              return SizedBox(
+                width: .infinity,
+                child: Card(
+                  child: Padding(padding: const EdgeInsets.all(16), child: Text(v)),
                 ),
-                if (widget.editing) Positioned(top: 8, right: 8, child: removeIcon(v, contentValueIndex)),
-              ],
-            );
+              );
+            }
           }).toList(),
         );
 

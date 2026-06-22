@@ -40,6 +40,7 @@ class _FolderFileCreateDialogState extends ConsumerState<FolderFileCreateDialog>
               TextField(
                 controller: titleController,
                 decoration: const InputDecoration(labelText: 'Title'),
+                onChanged: (_) => setState(() {}),
               ),
 
               const SizedBox(height: 16),

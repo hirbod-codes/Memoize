@@ -82,7 +82,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
   }
 
   Future<void> _initialize() async {
-    await _paginate();
+    await _paginate(reset: true);
   }
 
   void _resetSearch() {
@@ -151,7 +151,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
     });
   }
 
-  Future<void> _paginate({String? search, int limit = 2, String? parentId, bool reset = false, Filter? filter}) async {
+  Future<void> _paginate({String? search, int limit = 10, String? parentId, bool reset = false, Filter? filter}) async {
     if (!reset && !_hasMore) return;
 
     try {
@@ -266,7 +266,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
     FoldersAndFilesStateResponse? result;
     try {
       setState(() {
-        _adding = false;
+        _adding = true;
       });
 
       String? title = await showDialog(
@@ -350,7 +350,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
             const SizedBox(height: 16),
 
             // Add new Button
-            if (_editing) Button(type: .elevated, color: .success, icon: Icons.add, label: 'Add New', onPressed: _addNew),
+            if (_editing) Button(type: .elevated, color: .success, icon: Icons.add, label: 'Add New', onPressed: _addNew, isLoading: _adding),
 
             // Tabs
             if (_location.length > 1) ...[
