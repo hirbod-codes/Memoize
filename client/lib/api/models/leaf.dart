@@ -65,15 +65,15 @@ class Content {
 
 class Leaf {
   late String id;
-  late String userId;
+  late String? userId;
   late String treeNodeId;
   late String title;
   late List<Content> termContents;
   late List<Content> definitionContents;
-  late int createdAt;
-  late int updatedAt;
+  late int? createdAt;
+  late int? updatedAt;
 
-  Leaf({required this.id, required this.userId, required this.treeNodeId, required this.title, required this.termContents, required this.definitionContents, required this.createdAt, required this.updatedAt});
+  Leaf({required this.id, this.userId, required this.treeNodeId, required this.title, required this.termContents, required this.definitionContents, this.createdAt, this.updatedAt});
 
   Map<String, dynamic> toJson() {
     return {'id': id, 'userId': userId, 'treeNodeId': treeNodeId, 'title': title, 'termContents': termContents.map((m) => m.toJson()).toList(), 'definitionContents': definitionContents.map((m) => m.toJson()).toList(), 'createdAt': createdAt, 'updatedAt': updatedAt};

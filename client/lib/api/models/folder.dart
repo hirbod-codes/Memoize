@@ -3,14 +3,14 @@ import 'dart:convert';
 class Folder {
   late String id;
   late String title;
-  late String userId;
+  late String? userId;
   late String? parentId;
   late List<String> treeNodeIds;
   late List<String> leafIds;
-  late int createdAt;
-  late int updatedAt;
+  late int? createdAt;
+  late int? updatedAt;
 
-  Folder({required this.id, required this.title, required this.userId, this.parentId, required this.treeNodeIds, required this.leafIds, required this.createdAt, required this.updatedAt});
+  Folder({required this.id, required this.title, this.userId, this.parentId, required this.treeNodeIds, required this.leafIds, this.createdAt, this.updatedAt});
 
   Map<String, dynamic> toJson() => ({'id': id, 'title': title, 'createdAt': createdAt, 'updatedAt': updatedAt});
 

@@ -6,10 +6,13 @@ import 'package:client/api/models/folder.dart';
 import 'package:client/api/models/leaf.dart';
 import 'package:client/api/providers/folders_and_files.dart';
 import 'package:client/components/button.dart';
+import 'package:client/components/dialogs/folder_file_create_dialog.dart';
 import 'package:client/components/file_manager.dart';
+import 'package:client/components/global/notification_service.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -52,6 +55,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
   String _search = '';
 
   bool _fetching = false;
+  bool _adding = false;
 
   String? _title;
 
@@ -97,7 +101,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
     final lastId = _location.elementAt(_location.length - 2);
     if (lastId == 'root') {
-      await _paginate(reset: true);
+      await _paginate(reset: true, filter: .folder);
 
       if (!mounted) return;
       setState(() {
@@ -150,53 +154,56 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
   Future<void> _paginate({String? search, int limit = 2, String? parentId, bool reset = false, Filter? filter}) async {
     if (!reset && !_hasMore) return;
 
-    filter = filter ?? _filter;
-
-    setState(() {
-      _fetching = true;
-    });
-
-    if (_location.length == 1 || filter == .folder) {
-      final folderController = ref.read(folderControllerProvider);
-
-      final folders = await folderController.getPaginated(limit: limit, parentId: parentId, skip: reset ? 0 : _folderSkip, search: search);
-
-      // to avoid exceptions if the user navigates away before the request completes.
-      if (!mounted) return;
+    try {
+      filter = filter ?? _filter;
 
       setState(() {
-        _fetching = false;
-
-        _hasMore = folders.length >= limit;
-
-        if (reset) {
-          _folderSkip = folders.length;
-          ref.read(foldersAndFilesProvider.notifier).setFolders(folders);
-        } else {
-          _folderSkip = folders.length + _folderSkip;
-          ref.read(foldersAndFilesProvider.notifier).setFolders([...(ref.read(foldersAndFilesProvider).folders ?? []), ...folders]);
-        }
+        _fetching = true;
       });
-    } else if (filter == .file) {
-      final fileController = ref.read(leafControllerProvider);
 
-      final files = await fileController.getPaginated(limit: limit, parentId: parentId!, skip: reset ? 0 : _fileSkip, search: search);
+      if (_location.length == 1 || filter == .folder) {
+        final folderController = ref.read(folderControllerProvider);
 
-      if (!mounted) return;
+        final folders = await folderController.getPaginated(limit: limit, parentId: parentId, skip: reset ? 0 : _folderSkip, search: search);
+        if (!mounted) return;
 
-      setState(() {
-        _fetching = false;
+        setState(() {
+          _hasMore = folders.length >= limit;
 
-        _hasMore = files.length >= limit;
+          if (reset) {
+            _folderSkip = folders.length;
+            ref.read(foldersAndFilesProvider.notifier).setFolders(folders);
+          } else {
+            _folderSkip = folders.length + _folderSkip;
+            ref.read(foldersAndFilesProvider.notifier).setFolders([...(ref.read(foldersAndFilesProvider).folders ?? []), ...folders]);
+          }
+        });
+      } else if (filter == .file) {
+        final fileController = ref.read(leafControllerProvider);
 
-        if (reset) {
-          _fileSkip = files.length;
-          ref.read(foldersAndFilesProvider.notifier).setFiles(files);
-        } else {
-          _fileSkip = files.length + _fileSkip;
-          ref.read(foldersAndFilesProvider.notifier).setFiles([...(ref.read(foldersAndFilesProvider).files ?? []), ...files]);
-        }
-      });
+        final files = await fileController.getPaginated(limit: limit, parentId: parentId!, skip: reset ? 0 : _fileSkip, search: search);
+        if (!mounted) return;
+
+        setState(() {
+          _hasMore = files.length >= limit;
+
+          if (reset) {
+            _fileSkip = files.length;
+            ref.read(foldersAndFilesProvider.notifier).setFiles(files);
+          } else {
+            _fileSkip = files.length + _fileSkip;
+            ref.read(foldersAndFilesProvider.notifier).setFiles([...(ref.read(foldersAndFilesProvider).files ?? []), ...files]);
+          }
+        });
+      }
+    } catch (e, st) {
+      Talker().error('The _paginate method in HomePage widget throws an error.', e, st);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _fetching = false;
+        });
+      }
     }
   }
 
@@ -253,6 +260,46 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
     });
   }
 
+  Future<void> _addNew() async {
+    if (_adding) return;
+
+    FoldersAndFilesStateResponse? result;
+    try {
+      setState(() {
+        _adding = false;
+      });
+
+      String? title = await showDialog(
+        context: context,
+        builder: (builderContext) {
+          return FolderFileCreateDialog();
+        },
+      );
+      if (title == null) return;
+
+      FoldersAndFiles p = ref.watch(foldersAndFilesProvider.notifier);
+      if (_location.last == 'root' || _filter == .folder) {
+        result = await p.addFolder(title, _location.last == 'root' ? null : _location.last);
+      } else {
+        result = await p.addFile(title, _location.last);
+      }
+    } catch (e, st) {
+      Talker().error('The _addNew method in HomePage widget throws an error.', e, st);
+    } finally {
+      if (mounted) {
+        if (result?.status == .failure) {
+          NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to add one ${_filter == .folder ? 'folder' : 'file'}.');
+        }
+        if (result?.status == .success) {
+          NotificationService.showSuccess(context: context, message: 'Successfully added one ${_filter == .folder ? 'folder' : 'file'}.');
+        }
+        setState(() {
+          _adding = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
@@ -271,11 +318,13 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
           mainAxisAlignment: .center,
           crossAxisAlignment: .stretch,
           children: [
-            // Buttons
+            // Top Buttons
             Row(
               mainAxisAlignment: _location.length > 1 ? .spaceBetween : .end,
               children: [
+                // Back Button
                 if (_location.length > 1) ...[Button(type: .text, iconSize: 28, isLoading: _fetching, icon: Icons.chevron_left, onPressed: _previousLocation)],
+                // Edit Button
                 Button(
                   type: .text,
                   iconSize: 24,
@@ -300,10 +349,13 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
             const SizedBox(height: 16),
 
+            // Add new Button
+            if (_editing) Button(type: .elevated, color: .success, icon: Icons.add, label: 'Add New', onPressed: _addNew),
+
+            // Tabs
             if (_location.length > 1) ...[
               const SizedBox(height: 8),
 
-              // Tabs
               Container(
                 decoration: BoxDecoration(
                   border: .fromLTRB(bottom: .new(width: 1, color: theme.outlineVariant)),
@@ -419,7 +471,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                                     file: file,
                                     onClose: () {
                                       Navigator.of(context).pop();
-                                    }
+                                    },
                                   ),
                                 );
                               },

@@ -43,6 +43,29 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
   void setFolderIndex(int index) => state = state.copyWith(folderIndex: index);
 
+  Future<FoldersAndFilesStateResponse> addFolder(String title, String? parentId) async {
+    try {
+      Talker().info('FoldersAndFiles.addFolder is called...');
+
+      if (state.folders == null) return .new(status: .failure, message: 'No folders found!');
+
+      // Send request
+      String newId = await ref.read(folderControllerProvider).create(title: title, parentId: parentId);
+
+      return _persist(
+        errorMessage: 'Failure while trying to add new folder.',
+        update: () {
+          state.folders!.add(.new(id: newId, title: title, treeNodeIds: [], leafIds: []));
+        },
+      );
+    } catch (e) {
+      Talker().error('FoldersAndFiles.addFolder throws an error', e);
+      return .new(status: .failure, message: 'Failure while trying to add new folder.', error: e);
+    } finally {
+      Talker().info('FoldersAndFiles.addFolder call ended');
+    }
+  }
+
   Future<FoldersAndFilesStateResponse> setFolder(Folder folder) async {
     try {
       Talker().info('FoldersAndFiles.setFolder is called...');
@@ -72,30 +95,6 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       return .new(status: .failure, message: 'Failure while trying to update folder.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.setFolder call ended');
-    }
-  }
-
-  Future<FoldersAndFilesStateResponse> addFolder(Folder folder) async {
-    try {
-      Talker().info('FoldersAndFiles.addFolder is called...');
-
-      if (state.folders == null) return .new(status: .failure, message: 'No folders found!');
-
-      // Send request
-      String newId = await ref.read(folderControllerProvider).create(title: folder.title, parentId: folder.parentId);
-      folder.id = newId;
-
-      return _persist(
-        errorMessage: 'Failure while trying to add new folder.',
-        update: () {
-          state.folders!.add(folder);
-        },
-      );
-    } catch (e) {
-      Talker().error('FoldersAndFiles.addFolder throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to add new folder.', error: e);
-    } finally {
-      Talker().info('FoldersAndFiles.addFolder call ended');
     }
   }
 
@@ -160,6 +159,29 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
   void setFiles(List<Leaf> files) => state = state.copyWith(files: files);
 
   void setFileIndex(int index) => state = state.copyWith(fileIndex: index);
+
+  Future<FoldersAndFilesStateResponse> addFile(String title, String treeNodeId) async {
+    try {
+      Talker().info('FoldersAndFiles.addFile is called...');
+
+      if (state.files == null) return .new(status: .failure, message: 'No files found!');
+
+      // Send request
+      String newId = await ref.read(leafControllerProvider).create(title: title, treeNodeId: treeNodeId, termContents: [], definitionContents: []);
+
+      return _persist(
+        errorMessage: 'Failure while trying to add new file.',
+        update: () {
+          state.files!.add(.new(id: newId, treeNodeId: treeNodeId, title: title, termContents: [], definitionContents: []));
+        },
+      );
+    } catch (e) {
+      Talker().error('FoldersAndFiles.addFile throws an error', e);
+      return .new(status: .failure, message: 'Failure while trying to add new file.', error: e);
+    } finally {
+      Talker().info('FoldersAndFiles.addFile call ended');
+    }
+  }
 
   Future<FoldersAndFilesStateResponse> setFile(Leaf file) async {
     try {
@@ -247,30 +269,6 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       return .new(status: .failure, message: 'Failure while trying to remove file.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.removeFileById call ended');
-    }
-  }
-
-  Future<FoldersAndFilesStateResponse> addFile(Leaf file) async {
-    try {
-      Talker().info('FoldersAndFiles.addFile is called...');
-
-      if (state.files == null) return .new(status: .failure, message: 'No files found!');
-
-      // Send request
-      String newId = await ref.read(leafControllerProvider).create(title: file.title, treeNodeId: file.treeNodeId, termContents: file.termContents, definitionContents: file.definitionContents);
-      file.id = newId;
-
-      return _persist(
-        errorMessage: 'Failure while trying to add new file.',
-        update: () {
-          state.files!.add(file);
-        },
-      );
-    } catch (e) {
-      Talker().error('FoldersAndFiles.addFile throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to add new file.', error: e);
-    } finally {
-      Talker().info('FoldersAndFiles.addFile call ended');
     }
   }
 
