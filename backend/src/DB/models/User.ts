@@ -12,6 +12,7 @@ export const userSchema = object().required().stripUnknown().strict(true).shape(
     username: string().optional(),
     phoneNumber: string().optional().matches(/^09[0-9]{9}$/),
     email: string().optional().email(),
+    avatarKey: string().optional(),
     password: string().required(),
     refreshToken: string().optional(),
     createdAt: number().optional(),

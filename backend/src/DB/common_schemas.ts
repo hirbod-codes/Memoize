@@ -14,6 +14,7 @@ declare module 'yup' {
 
     interface StringSchema {
         objectIdString(): this;
+        nonUndefined(): this;
     }
 }
 
@@ -42,6 +43,10 @@ export const addYupMethods = () => {
 
     addMethod(string as any, 'objectIdString', function (message = 'Invalid id provided') {
         return this.test('object-id', message, (v: any) => v === null || v === undefined || ObjectId.isValid(v)).label('Id')
+    })
+
+    addMethod(string as any, 'nonUndefined', function (message = 'Undefined string provided') {
+        return this.test('string', message, (v: any) => v !== undefined)
     })
 }
 

@@ -5,11 +5,9 @@ import { auth, authorization } from '../middlewares/auth';
 import { VideoFileRepository } from '../DB/repositories/VideoFileRepository';
 import { ThumbnailRepository } from '../DB/repositories/ThumbnailRepository';
 import path from 'path';
-import { decodeVideoFileToDisk, decodeVideoStreamToDisk, generateThumbnailFromVideoFileToDisk } from '../ffmpeg';
+import { decodeVideoFileToDisk, generateThumbnailFromVideoFileToDisk } from '../ffmpeg';
 import VideoRepository from '../DB/repositories/VideoRepository';
 import { MongoDB } from '../DB/mongodb';
-import { streamToBuffer } from '../utils';
-import { Readable } from 'stream';
 
 const router = express.Router();
 

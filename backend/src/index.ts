@@ -10,19 +10,16 @@ import dotenv from 'dotenv';
 import { getBooleanEnv, getIntegerEnv, getStringEnv, tryAndWait } from './utils';
 
 import { Meilisearch } from 'meilisearch'
+import { setupSearch } from './DB/meilisearch';
+
 import { MongoDB } from './DB/mongodb';
 import { UserRepository } from './DB/repositories/UserRepository';
 import { InvalidTokensRepository } from './DB/repositories/InvalidTokensRepository';
-import { AudioFileRepository } from './DB/repositories/AudioFileRepository';
-import { AvatarRepository } from './DB/repositories/AvatarRepository';
-import { ImageRepository } from './DB/repositories/ImageRepository';
 import LeafRepository from './DB/repositories/LeafRepository';
 import TreeNodeRepository from './DB/repositories/TreeNodeRepository';
-import { VideoFileRepository } from './DB/repositories/VideoFileRepository';
-import { ThumbnailRepository } from './DB/repositories/ThumbnailRepository';
-import { CoverArtRepository } from './DB/repositories/CoverArtRepository';
 import VideoRepository from './DB/repositories/VideoRepository';
-import { setupSearch } from './DB/meilisearch';
+import AudioRepository from './DB/repositories/AudioRepository';
+import ImageRepository from './DB/repositories/ImageRepository';
 
 import { runCronjobs } from './cronjobs';
 import { jsonResponseLogger, streamResponseLogger } from './middlewares/responseLogger';
@@ -96,13 +93,9 @@ export const s3 = new S3Client({
 
         db.addRepository(new UserRepository())
         db.addRepository(new InvalidTokensRepository())
-        db.addRepository(new AvatarRepository())
+        db.addRepository(new AudioRepository())
         db.addRepository(new ImageRepository())
         db.addRepository(new VideoRepository())
-        db.addRepository(new VideoFileRepository())
-        db.addRepository(new ThumbnailRepository())
-        db.addRepository(new AudioFileRepository())
-        db.addRepository(new CoverArtRepository())
         db.addRepository(new LeafRepository())
         db.addRepository(new TreeNodeRepository())
 

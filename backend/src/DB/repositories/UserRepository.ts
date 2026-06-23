@@ -106,4 +106,13 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
             return false
         }
     }
+
+    async updateAvatarKey(id: string, avatarKey: string) {
+        try {
+            return await UserRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(id) }, { $set: { avatarKey, updatedAt: Date.now() } })
+        } catch (err) {
+            console.error(err)
+            return false
+        }
+    }
 }
