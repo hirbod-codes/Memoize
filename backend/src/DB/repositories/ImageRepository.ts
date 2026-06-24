@@ -3,7 +3,7 @@ import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
-import { collectionName, Image } from '../models/Image';
+import { collectionName, Image, ImageUpdate } from '../models/Image';
 
 class ImageRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -62,6 +62,10 @@ class ImageRepository implements IRepository, ISeedable, IDropable {
         return (await ImageRepository.collection!.find({ _id: ObjectId.createFromHexString(imageId), userId }, { session: this.session }).toArray())[0]
     }
 
+    async getForUserByTitle(title: string, userId: string) {
+        return (await ImageRepository.collection!.find({ title, userId }, { session: this.session }).toArray())[0]
+    }
+
     async getManyForUser(leafIds: string[], userId: string): Promise<Image[]> {
         return await ImageRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
@@ -78,8 +82,8 @@ class ImageRepository implements IRepository, ISeedable, IDropable {
         return await ImageRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(imageId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
     }
 
-    async makePermanent(imageId: string) {
-        return await ImageRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(imageId) }, { $set: { temporary: true, updatedAt: Date.now() } }, { session: this.session })
+    async unsafeUpdate(audioId: string, userId: string, updates: ImageUpdate) {
+        return await ImageRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(audioId), userId }, { $set: { ...updates, updatedAt: Date.now() } }, { session: this.session })
     }
 
     async delete(id: string): Promise<DeleteResult> {

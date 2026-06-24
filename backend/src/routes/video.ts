@@ -89,7 +89,6 @@ router.post('/', auth, authorization, async (req, res) => {
             splitter.resume();
 
             console.log("Uploading video file...");
-
             const uploadPromise = swallow((async () => {
                 await decodeVideoStreamToRamSegments({
                     title,
@@ -228,11 +227,12 @@ router.post('/', auth, authorization, async (req, res) => {
                     console.error('Failed to remove temp thumbnail file:', unlinkErr);
                 });
             }
-            console.log('------------end------------');
         }
     } catch (err) {
         console.error(err)
         res.status(500).json({ message: 'Error uploading video file' });
+    } finally {
+        console.log('------------end------------')
     }
 });
 
@@ -312,6 +312,8 @@ router.get('/file/:videoId', auth, async (req, res) => {
         }));
 
         const stream = result.Body as any;
+        if (stream === undefined || stream === null)
+            return res.status(404).send();
 
         const contentLength = result.ContentLength;
 
@@ -322,10 +324,10 @@ router.get('/file/:videoId', auth, async (req, res) => {
         res.setHeader("Content-Length", contentLength ?? "");
 
         stream.pipe(res);
-
-        console.log('------------end------------')
     } catch (err) {
         res.status(500).json({ message: 'Error getting video file' });
+    } finally {
+        console.log('------------end------------')
     }
 });
 
@@ -365,10 +367,23 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
             ResponseContentDisposition: download ? `attachment; filename="${video.thumbnailFileName}"` : undefined,
         }));
 
-        (result.Body as any).pipe(res)
-        console.log('------------end------------')
+        const stream = result.Body as any;
+        if (stream === undefined || stream === null)
+            return res.status(404).send();
+
+        const contentLength = result.ContentLength;
+
+        res.setHeader("Accept-Ranges", "bytes");
+        res.setHeader("Content-Type", result.ContentType || "application/octet-stream");
+
+        res.status(200);
+        res.setHeader("Content-Length", contentLength ?? "");
+
+        (stream as any).pipe(res);
     } catch (err) {
         res.status(500).json({ message: 'Error getting video file' });
+    } finally {
+        console.log('------------end------------')
     }
 });
 
@@ -429,10 +444,10 @@ router.delete('/:videoId', auth, authorization, async (req, res) => {
             return res.status(500).send()
 
         res.status(200).send();
-
-        console.log('------------end------------')
     } catch (err) {
         res.status(500).json({ message: 'Error deleting video' });
+    } finally {
+        console.log('------------end------------')
     }
 });
 

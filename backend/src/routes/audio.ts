@@ -1,5 +1,4 @@
 import express from 'express';
-import { PassThrough } from 'stream';
 import { string, ValidationError } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
 import { s3 } from '..';
@@ -8,7 +7,7 @@ import AudioRepository from '../DB/repositories/AudioRepository';
 import * as mm from "music-metadata";
 import { fileTypeFromBuffer } from "file-type";
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { contentType, extension } from "mime-types";
+import { extension } from "mime-types";
 import { teeStream } from '../lib/stream';
 
 const router = express.Router();
@@ -62,6 +61,13 @@ router.post('/', auth, authorization, async (req, res) => {
 
         let metadata, contentType: string = '', cover, coverExists
         try {
+            req.on('error', (err) => {
+                console.error('Request stream error:', err);
+                splitter.destroy(err);
+            });
+            req.pipe(splitter);
+            splitter.resume();
+
             console.log("Uploading audio file...");
             uploadAudio = new Upload({
                 client: s3,
@@ -71,15 +77,15 @@ router.post('/', auth, authorization, async (req, res) => {
                     Body: s3Stream
                 }
             });
-            const uploadPromise = uploadAudio.done();
+            const uploadPromise = swallow(uploadAudio.done());
 
             console.log("Extracting audio file info...");
-            const metadataPromise = mm.parseStream(metaStream, {
+            const metadataPromise = swallow(mm.parseStream(metaStream, {
                 mimeType: req.headers["content-type"] as string
-            });
+            }));
 
             console.log("Extracting audio file content type...");
-            const contentTypePromise = (async () => {
+            const contentTypePromise = swallow((async () => {
                 const chunks: Buffer[] = [];
                 let total = 0;
                 const maxBytes = 8192;
@@ -102,7 +108,7 @@ router.post('/', auth, authorization, async (req, res) => {
                 const result = await fileTypeFromBuffer(head);
 
                 return result?.mime ?? "application/octet-stream";
-            })();
+            })());
 
             console.log("Waiting for streams to finish...");
             [, metadata, contentType] = await Promise.all([
@@ -150,8 +156,6 @@ router.post('/', auth, authorization, async (req, res) => {
             } catch (abortErr) { console.error('Failed to abort cover art upload:', abortErr); }
 
             return res.status(500).json({ message: 'Error uploading video file' });
-        } finally {
-            console.log('------------end------------');
         }
 
         const r = await audioRepository.unsafeUpdate(audioInsertResult.insertedId.toString(), userId, { contentType, temporary: false, coverArtKey: coverExists ? coverArtBucketKey : undefined, coverArtFileName: coverExists ? `${title}.${extension(cover!.mime)}` : undefined })
@@ -204,10 +208,10 @@ router.get('/info/', auth, async (req, res) => {
         console.log({ result })
 
         res.status(200).json(result)
-
-        console.log('------------end------------')
     } catch (err) {
         res.status(500).json({ message: 'Error getting audio' });
+    } finally {
+        console.log('------------end------------')
     }
 });
 
@@ -268,10 +272,10 @@ router.get('/file/:audioId', auth, async (req, res) => {
         }
 
         stream.pipe(res);
-
-        console.log('------------end------------')
     } catch (err) {
         res.status(500).json({ message: 'Error getting audio file' });
+    } finally {
+        console.log('------------end------------')
     }
 });
 
@@ -311,10 +315,23 @@ router.get('/coverArt/:audioId', auth, async (req, res) => {
             ResponseContentDisposition: download ? `attachment; filename="${audio.coverArtFileName}"` : undefined,
         }));
 
-        (result.Body as any).pipe(res)
-        console.log('------------end------------')
+        const stream = result.Body as any;
+        if (stream === undefined || stream === null)
+            return res.status(404).send();
+
+        const contentLength = result.ContentLength;
+
+        res.setHeader("Accept-Ranges", "bytes");
+        res.setHeader("Content-Type", result.ContentType || "application/octet-stream");
+
+        res.status(200);
+        res.setHeader("Content-Length", contentLength ?? "");
+
+        (stream as any).pipe(res);
     } catch (err) {
         res.status(500).json({ message: 'Error getting audio file' });
+    } finally {
+        console.log('------------end------------')
     }
 });
 
@@ -375,10 +392,10 @@ router.delete('/:audioId', auth, authorization, async (req, res) => {
             return res.status(500).send()
 
         res.status(200).send();
-
-        console.log('------------end------------')
     } catch (err) {
         res.status(500).json({ message: 'Error deleting audio' });
+    } finally {
+        console.log('------------end------------')
     }
 });
 
