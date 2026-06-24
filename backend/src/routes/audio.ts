@@ -8,18 +8,14 @@ import AudioRepository from '../DB/repositories/AudioRepository';
 import * as mm from "music-metadata";
 import { fileTypeFromBuffer } from "file-type";
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { extension } from "mime-types";
+import { contentType, extension } from "mime-types";
+import { teeStream } from '../lib/stream';
 
 const router = express.Router();
 
 router.post('/', auth, authorization, async (req, res) => {
-    let uploadAudio: Upload | null = null, uploadCoverArt: Upload | null = null;
-    const s3Stream = new PassThrough();
-    const metaStream = new PassThrough();
-    const typeStream = new PassThrough();
-
     try {
-        console.log('/api/audio/upload', 'POST')
+        console.log('/api/audio', 'POST')
 
         console.log('Validating...')
         let fileName: string | undefined, title: string | undefined
@@ -53,111 +49,123 @@ router.post('/', auth, authorization, async (req, res) => {
             return res.status(500).json({ ok: false, message: 'Audio info creation failed' })
 
         console.log("Splitting req stream...");
-        req.pipe(s3Stream);
-        req.pipe(metaStream);
-        req.pipe(typeStream);
+        let uploadAudio: Upload | null = null
+        let uploadCoverArt: Upload | null = null;
 
-        console.log("Uploading audio file...");
-        uploadAudio = new Upload({
-            client: s3,
-            params: {
-                Bucket: "memoize",
-                Key: audioFileBucketKey,
-                Body: s3Stream
-            }
-        });
-        const uploadPromise = uploadAudio.done();
+        const { splitter, createBranch } = teeStream();
 
-        console.log("Extracting audio file info...");
-        const metadataPromise = mm.parseStream(metaStream, {
-            mimeType: req.headers["content-type"] as string
-        });
+        const s3Stream = createBranch();
+        const metaStream = createBranch();
+        const typeStream = createBranch();
 
-        console.log("Extracting audio file content type...");
-        const contentTypePromise = (async () => {
-            const chunks: Buffer[] = [];
-            let total = 0;
-            const maxBytes = 8192;
+        const swallow = <T>(p: Promise<T>) => { p.catch(() => { }); return p; };
 
-            for await (const chunk of typeStream) {
-                const buffer = Buffer.isBuffer(chunk)
-                    ? chunk
-                    : Buffer.from(chunk);
-
-                chunks.push(buffer);
-                total += buffer.length;
-
-                if (total >= maxBytes) {
-                    break;
-                }
-            }
-
-            const head = Buffer.concat(chunks, total);
-
-            const result = await fileTypeFromBuffer(head);
-
-            return result?.mime ?? "application/octet-stream";
-        })();
-
-        console.log("Waiting for streams to finish...");
-        const [uploadResult, metadata, contentType] = await Promise.all([
-            uploadPromise,
-            metadataPromise,
-            contentTypePromise,
-        ]);
-
-        console.log("Metadata:", metadata.common);
-
-        const common = metadata.common;
-        console.log({ metadata });
-
-        const cover = common.picture?.[0]
-            ? {
-                data: common.picture[0].data,
-                mime: common.picture[0].format
-            }
-            : null;
-        const coverExists = cover && cover.data && cover.mime
-        console.log({ coverExists, cover_mime: cover?.mime });
-
-        if (coverExists) {
-            uploadCoverArt = new Upload({
+        let metadata, contentType: string = '', cover, coverExists
+        try {
+            console.log("Uploading audio file...");
+            uploadAudio = new Upload({
                 client: s3,
                 params: {
                     Bucket: "memoize",
-                    Key: coverArtBucketKey,
-                    Body: cover?.data
+                    Key: audioFileBucketKey,
+                    Body: s3Stream
                 }
             });
-            await uploadCoverArt.done();
+            const uploadPromise = uploadAudio.done();
+
+            console.log("Extracting audio file info...");
+            const metadataPromise = mm.parseStream(metaStream, {
+                mimeType: req.headers["content-type"] as string
+            });
+
+            console.log("Extracting audio file content type...");
+            const contentTypePromise = (async () => {
+                const chunks: Buffer[] = [];
+                let total = 0;
+                const maxBytes = 8192;
+
+                for await (const chunk of typeStream) {
+                    const buffer = Buffer.isBuffer(chunk)
+                        ? chunk
+                        : Buffer.from(chunk);
+
+                    chunks.push(buffer);
+                    total += buffer.length;
+
+                    if (total >= maxBytes) {
+                        break;
+                    }
+                }
+
+                const head = Buffer.concat(chunks, total);
+
+                const result = await fileTypeFromBuffer(head);
+
+                return result?.mime ?? "application/octet-stream";
+            })();
+
+            console.log("Waiting for streams to finish...");
+            [, metadata, contentType] = await Promise.all([
+                uploadPromise,
+                metadataPromise,
+                contentTypePromise,
+            ]);
+
+            console.log("Metadata:", metadata.common);
+
+            const common = metadata.common;
+            console.log({ metadata });
+
+            cover = common.picture?.[0]
+                ? {
+                    data: common.picture[0].data,
+                    mime: common.picture[0].format
+                }
+                : null;
+            coverExists = cover && cover.data && cover.mime
+            console.log({ coverExists, cover_mime: cover?.mime });
+
+            if (coverExists) {
+                uploadCoverArt = new Upload({
+                    client: s3,
+                    params: {
+                        Bucket: "memoize",
+                        Key: coverArtBucketKey,
+                        Body: cover?.data
+                    }
+                });
+                await uploadCoverArt.done();
+            }
+        } catch (err) {
+            console.error(err);
+
+            splitter.destroy();
+
+            try {
+                await uploadAudio?.abort();
+            } catch (abortErr) { console.error('Failed to abort segment/playlist uploads:', abortErr); }
+
+            try {
+                await uploadCoverArt?.abort();
+            } catch (abortErr) { console.error('Failed to abort cover art upload:', abortErr); }
+
+            return res.status(500).json({ message: 'Error uploading video file' });
+        } finally {
+            console.log('------------end------------');
         }
 
-        const r = await audioRepository.unsafeUpdate(audioInsertResult.insertedId.toString(), userId, { contentType, temporary: false, coverArtKey: coverExists ? coverArtBucketKey : undefined, coverArtFileName: coverExists ? `${title}.${extension(cover.mime)}` : undefined })
+        const r = await audioRepository.unsafeUpdate(audioInsertResult.insertedId.toString(), userId, { contentType, temporary: false, coverArtKey: coverExists ? coverArtBucketKey : undefined, coverArtFileName: coverExists ? `${title}.${extension(cover!.mime)}` : undefined })
         if (!r.acknowledged || r.matchedCount !== 1) {
             await uploadAudio.abort();
             return res.status(500).json({ ok: false, message: 'Audio info update failed' });
         }
 
         res.status(201).json({ id: audioInsertResult });
-
-        console.log('------------end------------')
     } catch (err) {
-        try {
-            if (uploadAudio)
-                await uploadAudio.abort();
-
-            if (uploadCoverArt)
-                await uploadCoverArt.abort();
-        } catch (_) { console.error('Failure while trying to abort uploads.'); }
-
-        try {
-            s3Stream.destroy(err as Error);
-            metaStream.destroy(err as Error);
-            typeStream.destroy(err as Error);
-        } catch (_) { console.error('Failure while trying to destroy streams.'); }
-
         console.error(err)
-        res.status(500).json({ message: 'Error uploading audio file' });
+        return res.status(500).json({ message: 'Error uploading video file' });
+    } finally {
+        console.log('------------end------------');
     }
 })
 

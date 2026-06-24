@@ -11,16 +11,35 @@ const post = {
 export const videoPostSchema = object().shape(post).required()
 
 const create = {
-    title: string().required().label('Title'),
     userId: likeObjectId.required(),
     contentType: string().required(),
-    bucketKey: string().required().url(),
+    title: string().required().label('Title'),
+    fileName: string().required().label('File name'),
+    thumbnailFileName: string().optional().label('Thumbnail file name'),
+    bucketKey: string().required().url(), // video/<userId>/<fileName>
+    thumbnailKey: string().optional().url(), // video/cover_art/<userId>/<title>
     temporary: boolean().required(),
 }
 export const videoCreateSchema = object().shape(create).required()
 
-const update = {
+const patch = {
     title: string().required().label('Title'),
+}
+export const videoPatchSchema = object().shape(patch).required()
+
+const update = {
+    schemaVersion: string().optional().min(6).max(20),
+    userId: likeObjectId.optional(),
+
+    contentType: string().optional(),
+    title: string().optional().label('Title'),
+    fileName: string().optional().label('File name'),
+    thumbnailFileName: string().optional().label('Thumbnail file name'),
+
+    bucketKey: string().optional().url(), // video/<userId>/<fileName>
+    thumbnailKey: string().optional().url(), // video/cover_art/<userId>/<title>
+
+    temporary: boolean().optional(),
 }
 export const videoUpdateSchema = object().shape(update).required()
 
@@ -31,12 +50,12 @@ export const videoSchema = object().shape({
     userId: likeObjectId.required(),
 
     contentType: string().required(),
-
-    thumbnailKey: string().optional(),
-
     title: string().required().label('Title'),
+    fileName: string().required().label('File name'),
+    thumbnailFileName: string().optional().label('Thumbnail file name'),
 
-    bucketKey: string().required().url(), // audio/<userId>/<fileName>
+    bucketKey: string().required().url(), // video/<userId>/<fileName>
+    thumbnailKey: string().optional().url(), // video/cover_art/<userId>/<title>
 
     temporary: boolean().required(),
 
@@ -46,5 +65,6 @@ export const videoSchema = object().shape({
 
 export type VideoPost = InferType<typeof videoPostSchema>
 export type VideoCreate = InferType<typeof videoCreateSchema>
+export type VideoPatch = InferType<typeof videoPatchSchema>
 export type VideoUpdate = InferType<typeof videoUpdateSchema>
 export type Video = InferType<typeof videoSchema>

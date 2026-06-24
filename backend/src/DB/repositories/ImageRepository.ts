@@ -32,7 +32,7 @@ class ImageRepository implements IRepository, ISeedable, IDropable {
         const indexes = await db.collection(collectionName).indexes()
 
         if (indexes.find(i => i.name === 'title') === undefined)
-            await db.createIndex(collectionName, { title: 1 }, { unique: true, name: 'title' })
+            await db.createIndex(collectionName, { title: 1, userId: 1 }, { unique: true, name: 'title' })
 
         if (indexes.find(i => i.name === 'userId') === undefined)
             await db.createIndex(collectionName, { userId: 1 }, { name: 'userId' })
