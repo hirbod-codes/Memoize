@@ -3,7 +3,7 @@ import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
-import { collectionName, Video, VideoUpdate } from '../models/Video';
+import { collectionName, Video, VideoCreate, VideoUpdate } from '../models/Video';
 
 class VideoRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -50,7 +50,7 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
         await db.dropCollection(collectionName)
     }
 
-    async insert(video: Video): Promise<InsertOneResult> {
+    async insert(video: VideoCreate): Promise<InsertOneResult> {
         return await VideoRepository.collection!.insertOne({ ...video, updatedAt: Date.now(), createdAt: Date.now() }, { session: this.session })
     }
 
@@ -72,6 +72,10 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
 
     async getByUserId(userId: string) {
         return await VideoRepository.collection!.find({ userId }, { session: this.session }).toArray()
+    }
+
+    getTemporariesFromCursor(fromTsMs: number) {
+        return VideoRepository.collection!.find({ temporary: true, updatedAt: { $gte: fromTsMs } })
     }
 
     getFromCursor(fromTsMs: number) {

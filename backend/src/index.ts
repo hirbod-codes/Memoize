@@ -52,6 +52,7 @@ export const meilisearchKey = getStringEnv('MEILISEARCH_KEY', 'The Meilisearch k
 export const meilisearchHost = getStringEnv('MEILISEARCH_HOST', 'The Meilisearch host environment variable is not provided')!
 export const meilisearchPort = getIntegerEnv('MEILISEARCH_PORT', 'The Meilisearch port environment variable is not provided')!
 
+export const BUCKET_NAME = 'memoize'
 export const s3Endpoint = getStringEnv('S3_STORAGE_ENDPOINT', 'The S3 storage endpoint environment variable is not provided')!
 export const s3AccessKey = getStringEnv('S3_STORAGE_ACCESS_KEY', 'The S3 storage access key environment variable is not provided')!
 export const s3SecretKey = getStringEnv('S3_STORAGE_SECRET_KEY', 'The S3 storage secret key environment variable is not provided')!

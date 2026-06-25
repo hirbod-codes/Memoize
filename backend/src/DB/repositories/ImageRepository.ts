@@ -78,6 +78,10 @@ class ImageRepository implements IRepository, ISeedable, IDropable {
         return ImageRepository.collection!.find({ updatedAt: { $gte: fromTsMs } })
     }
 
+    getTemporariesFromCursor(fromTsMs: number) {
+        return ImageRepository.collection!.find({ temporary: true, updatedAt: { $gte: fromTsMs } })
+    }
+
     async updateTitle(imageId: string, title: string) {
         return await ImageRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(imageId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
     }

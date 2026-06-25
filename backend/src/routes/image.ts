@@ -1,7 +1,7 @@
 import express from 'express';
 import { string, ValidationError } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
-import { s3 } from '..';
+import { BUCKET_NAME, s3 } from '..';
 import { Upload } from "@aws-sdk/lib-storage";
 import ImageRepository from '../DB/repositories/ImageRepository';
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
@@ -49,7 +49,7 @@ router.post('/', auth, authorization, async (req, res) => {
             uploadImage = new Upload({
                 client: s3,
                 params: {
-                    Bucket: "memoize",
+                    Bucket: BUCKET_NAME,
                     Key: imageFileBucketKey,
                     Body: req
                 }
@@ -155,7 +155,7 @@ router.get('/file/:imageId', auth, async (req, res) => {
         console.log({ image })
 
         const result = await s3.send(new GetObjectCommand({
-            Bucket: "memoize",
+            Bucket: BUCKET_NAME,
             Key: image.bucketKey,
             ResponseContentDisposition: download ? `attachment; filename="${image.fileName}"` : undefined,
         }));
@@ -216,7 +216,7 @@ router.delete('/:imageId', auth, authorization, async (req, res) => {
         console.log("Deleting image file in the bucket storage...");
         await s3.send(
             new DeleteObjectCommand({
-                Bucket: "memoize",
+                Bucket: BUCKET_NAME,
                 Key: image.bucketKey
             })
         );

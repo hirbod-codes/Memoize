@@ -1,7 +1,7 @@
 import express from 'express';
 import { string, ValidationError } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
-import { s3 } from '..';
+import { BUCKET_NAME, s3 } from '..';
 import { Upload } from "@aws-sdk/lib-storage";
 import AudioRepository from '../DB/repositories/AudioRepository';
 import * as mm from "music-metadata";
@@ -72,7 +72,7 @@ router.post('/', auth, authorization, async (req, res) => {
             uploadAudio = new Upload({
                 client: s3,
                 params: {
-                    Bucket: "memoize",
+                    Bucket: BUCKET_NAME,
                     Key: audioFileBucketKey,
                     Body: s3Stream
                 }
@@ -135,7 +135,7 @@ router.post('/', auth, authorization, async (req, res) => {
                 uploadCoverArt = new Upload({
                     client: s3,
                     params: {
-                        Bucket: "memoize",
+                        Bucket: BUCKET_NAME,
                         Key: coverArtBucketKey,
                         Body: cover?.data
                     }
@@ -248,7 +248,7 @@ router.get('/file/:audioId', auth, async (req, res) => {
         const range = req.headers.range;
 
         const result = await s3.send(new GetObjectCommand({
-            Bucket: "memoize",
+            Bucket: BUCKET_NAME,
             Key: audio.bucketKey,
             Range: download ? undefined : range,
             ResponseContentDisposition: download ? `attachment; filename="${audio.fileName}"` : undefined,
@@ -310,7 +310,7 @@ router.get('/coverArt/:audioId', auth, async (req, res) => {
         console.log({ audio })
 
         const result = await s3.send(new GetObjectCommand({
-            Bucket: "memoize",
+            Bucket: BUCKET_NAME,
             Key: audio.coverArtKey,
             ResponseContentDisposition: download ? `attachment; filename="${audio.coverArtFileName}"` : undefined,
         }));
@@ -371,7 +371,7 @@ router.delete('/:audioId', auth, authorization, async (req, res) => {
         console.log("Deleting audio file in the bucket storage...");
         await s3.send(
             new DeleteObjectCommand({
-                Bucket: "memoize",
+                Bucket: BUCKET_NAME,
                 Key: audio.bucketKey
             })
         );
@@ -380,7 +380,7 @@ router.delete('/:audioId', auth, authorization, async (req, res) => {
             console.log("Deleting audio file cover art in the bucket storage...");
             await s3.send(
                 new DeleteObjectCommand({
-                    Bucket: "memoize",
+                    Bucket: BUCKET_NAME,
                     Key: audio.coverArtKey
                 })
             );

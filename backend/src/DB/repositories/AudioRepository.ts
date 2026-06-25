@@ -78,6 +78,10 @@ class AudioRepository implements IRepository, ISeedable, IDropable {
         return AudioRepository.collection!.find({ updatedAt: { $gte: fromTsMs } })
     }
 
+    getTemporariesFromCursor(fromTsMs: number) {
+        return AudioRepository.collection!.find({ temporary: true, updatedAt: { $gte: fromTsMs } })
+    }
+
     async updateTitle(audioId: string, title: string) {
         return await AudioRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(audioId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
     }

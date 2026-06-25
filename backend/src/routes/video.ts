@@ -1,7 +1,7 @@
 import express from 'express';
 import { string, ValidationError } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
-import { s3 } from '..';
+import { BUCKET_NAME, s3 } from '..';
 import { Upload } from "@aws-sdk/lib-storage";
 import VideoRepository from '../DB/repositories/VideoRepository';
 import { fileTypeFromBuffer } from "file-type";
@@ -99,7 +99,7 @@ router.post('/', auth, authorization, async (req, res) => {
                         const upload = new Upload({
                             client: s3,
                             params: {
-                                Bucket: "memoize",
+                                Bucket: BUCKET_NAME,
                                 Key: segmentKey,
                                 Body: stream,
                                 ContentType: "video/mp2t",
@@ -117,7 +117,7 @@ router.post('/', auth, authorization, async (req, res) => {
                         const upload = new Upload({
                             client: s3,
                             params: {
-                                Bucket: "memoize",
+                                Bucket: BUCKET_NAME,
                                 Key: playlistBucketKey,
                                 Body: m3u8Contents,
                                 ContentType: "application/vnd.apple.mpegurl",
@@ -192,7 +192,7 @@ router.post('/', auth, authorization, async (req, res) => {
             uploadThumbnail = new Upload({
                 client: s3,
                 params: {
-                    Bucket: "memoize",
+                    Bucket: BUCKET_NAME,
                     Key: thumbnailBucketKey,
                     Body: fs.createReadStream(thumbnailFile)
                 }
@@ -307,7 +307,7 @@ router.get('/file/:videoId', auth, async (req, res) => {
         console.log({ video })
 
         const result = await s3.send(new GetObjectCommand({
-            Bucket: "memoize",
+            Bucket: BUCKET_NAME,
             Key: video.bucketKey,
         }));
 
@@ -362,7 +362,7 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
         console.log({ video })
 
         const result = await s3.send(new GetObjectCommand({
-            Bucket: "memoize",
+            Bucket: BUCKET_NAME,
             Key: video.thumbnailKey,
             ResponseContentDisposition: download ? `attachment; filename="${video.thumbnailFileName}"` : undefined,
         }));
@@ -423,7 +423,7 @@ router.delete('/:videoId', auth, authorization, async (req, res) => {
         console.log("Deleting video file in the bucket storage...");
         await s3.send(
             new DeleteObjectCommand({
-                Bucket: "memoize",
+                Bucket: BUCKET_NAME,
                 Key: video.bucketKey
             })
         );
@@ -432,7 +432,7 @@ router.delete('/:videoId', auth, authorization, async (req, res) => {
             console.log("Deleting video file thumbnail in the bucket storage...");
             await s3.send(
                 new DeleteObjectCommand({
-                    Bucket: "memoize",
+                    Bucket: BUCKET_NAME,
                     Key: video.thumbnailKey
                 })
             );
