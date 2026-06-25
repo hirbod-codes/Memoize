@@ -37,7 +37,7 @@ router.post('/', auth, authorization, async (req, res) => {
         const imageFileBucketKey = `image/${userId}/${title}`
 
         console.log("Inserting image...");
-        const imageInsertResult = await imageRepository.insert({ title, fileName, contentType: "application/octet-stream", userId, bucketKey: imageFileBucketKey, temporary: true })
+        const imageInsertResult = await imageRepository.insert({ title, fileName, contentType: "image/jpg", userId, bucketKey: imageFileBucketKey, temporary: true })
         console.log("Image insert result", imageInsertResult);
         if (!imageInsertResult.acknowledged || !imageInsertResult.insertedId)
             return res.status(500).json({ ok: false, message: 'Image info creation failed' })
@@ -132,7 +132,7 @@ router.get('/file/:imageId', auth, async (req, res) => {
         let imageId: string | undefined = undefined, download: boolean = false
         try {
             imageId = await string().objectIdString().required().label('Image id').validate(req.params.imageId?.toString())
-            let temp = await string().optional().label('Download').validate(req.params.download?.toString())
+            let temp = await string().optional().label('Download').validate(req.query.download?.toString())
             download = temp === 'true';
         } catch (err) {
             console.error(err)
@@ -166,8 +166,7 @@ router.get('/file/:imageId', auth, async (req, res) => {
 
         const contentLength = result.ContentLength;
 
-        res.setHeader("Accept-Ranges", "bytes");
-        res.setHeader("Content-Type", result.ContentType || "application/octet-stream");
+        res.setHeader("Content-Type", result.ContentType || "image/jpg");
 
         res.status(200);
         res.setHeader("Content-Length", contentLength ?? "");
@@ -227,7 +226,6 @@ router.delete('/:imageId', auth, authorization, async (req, res) => {
             return res.status(500).send()
 
         res.status(200).send();
-
     } catch (err) {
         res.status(500).json({ message: 'Error deleting image' });
     } finally {

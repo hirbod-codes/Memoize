@@ -7,12 +7,18 @@ import { Audio } from './DB/models/Audio'
 import AudioRepository from './DB/repositories/AudioRepository'
 import ImageRepository from './DB/repositories/ImageRepository'
 import { Image } from './DB/models/Image'
+import { User } from './DB/models/User'
+import { UserRepository } from './DB/repositories/UserRepository'
 
 export const runCronjobs = async () => {
     // Schedule: every 12 hours
     // "0 0 */12 * * *" => second, minute, hour, day, month, weekday
     cron.schedule('0 0 */12 * * *', async () => {
         console.log('Sending delete requests for temporary contents...');
+
+        const from = Date.now() - (14 * 60 * 60)
+
+        const userRepo = new UserRepository()
 
         const videoRepo = new VideoRepository()
         const imageRepo = new ImageRepository()
@@ -42,7 +48,13 @@ export const runCronjobs = async () => {
                 .catch(e => console.error(e))
         }
 
-        const from = Date.now() - (14 * 60 * 60)
+        const deleteAvatar = async (userId: string) => {
+            console.log(`Deleting avatar of user id: ${userId} ...`);
+
+            userRepo.unsafeUpdate(userId, { avatarKey: undefined, temporaryAvatar: false })
+                .then(userRepoDeleteAvatarResult => console.log({ userRepoDeleteAvatarResult }))
+                .catch(e => console.error(e))
+        }
 
         const objectExistsInS3 = async (key: string): Promise<boolean> => {
             try {
@@ -78,6 +90,16 @@ export const runCronjobs = async () => {
                 console.error(e)
             }
         }
+
+        console.log('Deleting dangling avatar files...');
+        const handleAvatarRemove = async (user: User) => {
+            if (user.avatarKey)
+                await deleteObjectIfExists(user.avatarKey)
+            deleteAvatar(user._id!.toString())
+        }
+        let userCursor = userRepo.getTemporaryAvatarFromCursor(from)
+        for await (const user of userCursor)
+            handleAvatarRemove(user)
 
         console.log('Deleting dangling video files...');
         const handleVideoRemove = async (video: Video) => {

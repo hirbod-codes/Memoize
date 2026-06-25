@@ -2,7 +2,7 @@ import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId,
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
-import { collectionName, User } from '../models/User';
+import { collectionName, User, UserUpdate } from '../models/User';
 import { MongoDB } from '../mongodb';
 
 export class UserRepository implements IRepository, ISeedable, IDropable {
@@ -98,6 +98,10 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    getTemporaryAvatarFromCursor(fromTsMs: number) {
+        return UserRepository.collection!.find({ temporaryAvatar: true, updatedAt: { $gte: fromTsMs } })
+    }
+
     async updateRefreshToken(id: string, refreshToken: string) {
         try {
             return await UserRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(id) }, { $set: { refreshToken: refreshToken } })
@@ -114,5 +118,9 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
             console.error(err)
             return false
         }
+    }
+
+    async unsafeUpdate(userId: string, updates: UserUpdate) {
+        return await UserRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(userId) }, { $set: { ...updates, updatedAt: Date.now() } }, { session: this.session })
     }
 }

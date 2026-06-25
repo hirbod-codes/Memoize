@@ -339,7 +339,7 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
         let videoId: string | undefined = undefined, download: boolean = false
         try {
             videoId = await string().objectIdString().required().label('Video id').validate(req.params.videoId?.toString())
-            let temp = await string().optional().label('Download').validate(req.params.download?.toString())
+            let temp = await string().optional().label('Download').validate(req.query.download?.toString())
             download = temp === 'true';
         } catch (err) {
             console.error(err)

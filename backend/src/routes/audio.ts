@@ -132,6 +132,7 @@ router.post('/', auth, authorization, async (req, res) => {
             console.log({ coverExists, cover_mime: cover?.mime });
 
             if (coverExists) {
+                console.log("Uploading cover art...");
                 uploadCoverArt = new Upload({
                     client: s3,
                     params: {
@@ -158,8 +159,10 @@ router.post('/', auth, authorization, async (req, res) => {
             return res.status(500).json({ message: 'Error uploading video file' });
         }
 
-        const r = await audioRepository.unsafeUpdate(audioInsertResult.insertedId.toString(), userId, { contentType, temporary: false, coverArtKey: coverExists ? coverArtBucketKey : undefined, coverArtFileName: coverExists ? `${title}.${extension(cover!.mime)}` : undefined })
-        if (!r.acknowledged || r.matchedCount !== 1) {
+        console.log("Making final changes to video document in db...");
+        const unsafeUpdateResult = await audioRepository.unsafeUpdate(audioInsertResult.insertedId.toString(), userId, { contentType, temporary: false, coverArtKey: coverExists ? coverArtBucketKey : undefined, coverArtFileName: coverExists ? `${title}.${extension(cover!.mime)}` : undefined })
+        console.log({ r: unsafeUpdateResult });
+        if (!unsafeUpdateResult.acknowledged || unsafeUpdateResult.matchedCount !== 1) {
             await uploadAudio.abort();
             return res.status(500).json({ ok: false, message: 'Audio info update failed' });
         }
@@ -223,7 +226,7 @@ router.get('/file/:audioId', auth, async (req, res) => {
         let audioId: string | undefined = undefined, download: boolean = false
         try {
             audioId = await string().objectIdString().required().label('Audio id').validate(req.params.audioId?.toString())
-            let temp = await string().optional().label('Download').validate(req.params.download?.toString())
+            let temp = await string().optional().label('Download').validate(req.query.download?.toString())
             download = temp === 'true';
         } catch (err) {
             console.error(err)
@@ -287,7 +290,7 @@ router.get('/coverArt/:audioId', auth, async (req, res) => {
         let audioId: string | undefined = undefined, download: boolean = false
         try {
             audioId = await string().objectIdString().required().label('Audio id').validate(req.params.audioId?.toString())
-            let temp = await string().optional().label('Download').validate(req.params.download?.toString())
+            let temp = await string().optional().label('Download').validate(req.query.download?.toString())
             download = temp === 'true';
         } catch (err) {
             console.error(err)
