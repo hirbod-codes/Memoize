@@ -39,7 +39,16 @@ export function teeStream() {
                 const onDrain = () => { cleanup(); onBranchReady(); };
                 const onCloseOrError = () => { cleanup(); onBranchReady(); };
 
-                if (s.write(chunk)) {
+                let wrote = false;
+                try {
+                    wrote = s.write(chunk);
+                } catch {
+                    // stream was destroyed mid-flight; don't count on it further
+                    onBranchReady();
+                    continue;
+                }
+
+                if (wrote) {
                     onBranchReady();
                 } else {
                     s.once('drain', onDrain);

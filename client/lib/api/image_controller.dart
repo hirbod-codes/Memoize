@@ -6,6 +6,7 @@ import 'package:client/auth/dio_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker/talker.dart';
+import 'package:path/path.dart' as p;
 
 class ImageController {
   final Ref ref;
@@ -18,8 +19,8 @@ class ImageController {
     Talker().info('ImageController.post is called...');
 
     final response = await _authDio.post(
-      '/api/image/?title=$title&fileName=${fileName ?? file.path.split('/').last}',
-      data: FormData.fromMap({'file': await MultipartFile.fromFile(file.path, filename: file.path.split('/').last)}),
+      '/api/image/?title=$title&fileName=${fileName ?? p.basename(file.path)}',
+      data: await file.readAsBytes(),
       onSendProgress: onSendProgress,
     );
     Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');

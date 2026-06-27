@@ -90,17 +90,21 @@ router.post('/', auth, authorization, async (req, res) => {
                 let total = 0;
                 const maxBytes = 8192;
 
-                for await (const chunk of typeStream) {
-                    const buffer = Buffer.isBuffer(chunk)
-                        ? chunk
-                        : Buffer.from(chunk);
+                try {
+                    for await (const chunk of typeStream) {
+                        const buffer = Buffer.isBuffer(chunk)
+                            ? chunk
+                            : Buffer.from(chunk);
 
-                    chunks.push(buffer);
-                    total += buffer.length;
+                        chunks.push(buffer);
+                        total += buffer.length;
 
-                    if (total >= maxBytes) {
-                        break;
+                        if (total >= maxBytes) {
+                            break;
+                        }
                     }
+                } finally {
+                    if (!typeStream.destroyed) typeStream.destroy();
                 }
 
                 const head = Buffer.concat(chunks, total);
@@ -167,7 +171,7 @@ router.post('/', auth, authorization, async (req, res) => {
             return res.status(500).json({ ok: false, message: 'Audio info update failed' });
         }
 
-        res.status(201).json({ id: audioInsertResult });
+        res.status(201).json({ id: audioInsertResult.insertedId.toString() });
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Error uploading video file' });

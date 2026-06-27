@@ -5,6 +5,8 @@ import { BUCKET_NAME, s3 } from '..';
 import { Upload } from "@aws-sdk/lib-storage";
 import ImageRepository from '../DB/repositories/ImageRepository';
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { fileTypeFromBuffer } from 'file-type';
+import { teeStream } from '../lib/stream';
 
 const router = express.Router();
 
@@ -42,38 +44,91 @@ router.post('/', auth, authorization, async (req, res) => {
         if (!imageInsertResult.acknowledged || !imageInsertResult.insertedId)
             return res.status(500).json({ ok: false, message: 'Image info creation failed' })
 
-        let uploadImage: Upload | null = null
+        const { splitter, createBranch } = teeStream();
 
+        const s3Stream = createBranch();
+        const typeStream = createBranch();
+
+        const swallow = <T>(p: Promise<T>) => { p.catch(() => { }); return p; };
+
+        let uploadImage: Upload | null = null, contentType: string | null = null
         try {
+            req.on('error', (err) => {
+                console.error('Request stream error:', err);
+                splitter.destroy(err);
+            });
+            req.pipe(splitter);
+            splitter.resume();
+
             console.log("Uploading image file...");
             uploadImage = new Upload({
                 client: s3,
                 params: {
                     Bucket: BUCKET_NAME,
                     Key: imageFileBucketKey,
-                    Body: req
+                    Body: s3Stream
                 }
             });
-            await uploadImage.done();
+            const uploadPromise = swallow((async () => {
+                await uploadImage.done();
+                console.log("Done uploading image file");
+            })());
+
+            console.log("Extracting audio file content type...");
+            const contentTypePromise = swallow((async () => {
+                const chunks: Buffer[] = [];
+                let total = 0;
+                const maxBytes = 8192;
+
+                try {
+                    for await (const chunk of typeStream) {
+                        const buffer = Buffer.isBuffer(chunk)
+                            ? chunk
+                            : Buffer.from(chunk);
+
+                        chunks.push(buffer);
+                        total += buffer.length;
+
+                        if (total >= maxBytes) {
+                            break;
+                        }
+                    }
+                } finally {
+                    if (!typeStream.destroyed) typeStream.destroy();
+                }
+
+                const head = Buffer.concat(chunks, total);
+
+                const result = await fileTypeFromBuffer(head);
+
+                console.log("Done extracting audio file content type");
+                return result?.mime ?? "application/octet-stream";
+            })());
+
+            console.log("Waiting for streams to finish...");
+            [, contentType] = await Promise.all([
+                uploadPromise,
+                contentTypePromise,
+            ]);
         } catch (err) {
             console.error(err);
+
+            splitter.destroy();
 
             try {
                 await uploadImage?.abort();
             } catch (abortErr) { console.error('Failed to abort segment/playlist uploads:', abortErr); }
 
             return res.status(500).json({ message: 'Error uploading video file' });
-        } finally {
-            console.log('------------end------------');
         }
 
-        const r = await imageRepository.unsafeUpdate(imageInsertResult.insertedId.toString(), userId, { contentType: req.headers['content-type'] ?? "image/jpg", temporary: false })
+        const r = await imageRepository.unsafeUpdate(imageInsertResult.insertedId.toString(), userId, { contentType: contentType ?? "application/octet-stream", temporary: false })
         if (!r.acknowledged || r.matchedCount !== 1) {
             await uploadImage.abort();
             return res.status(500).json({ ok: false, message: 'Image info update failed' });
         }
 
-        res.status(201).json({ id: imageInsertResult });
+        res.status(201).json({ id: imageInsertResult.insertedId.toString() });
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Error uploading video file' });
@@ -90,7 +145,7 @@ router.get('/info/', auth, async (req, res) => {
         let imageId: string | undefined = undefined
         let title: string | undefined = undefined
         try {
-            imageId = await string().objectIdString().optional().label('Image id').validate(req.query.imageId?.toString())
+            imageId = await string().objectIdString().optional().label('Image id').validate(req.query.id?.toString())
             title = await string().optional().label('Title').validate(req.query.title?.toString())
 
             if (imageId === undefined && title === undefined) {
@@ -113,8 +168,9 @@ router.get('/info/', auth, async (req, res) => {
             result = await imageRepository.getForUser(imageId, userId)
         else
             result = await imageRepository.getForUserByTitle(title!, userId)
-
         console.log({ result })
+        if (!result)
+            return res.status(404).send()
 
         res.status(200).json(result)
 
@@ -165,8 +221,6 @@ router.get('/file/:imageId', auth, async (req, res) => {
             return res.status(404).send();
 
         const contentLength = result.ContentLength;
-
-        res.setHeader("Content-Type", result.ContentType || "image/jpg");
 
         res.status(200);
         res.setHeader("Content-Length", contentLength ?? "");

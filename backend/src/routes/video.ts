@@ -204,8 +204,6 @@ router.post('/', auth, authorization, async (req, res) => {
             if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
                 return res.status(500).json({ ok: false, message: 'Video info update failed' });
             }
-
-            return res.status(201).json({ id: videoId });
         } catch (err) {
             console.error(err);
 
@@ -228,6 +226,8 @@ router.post('/', auth, authorization, async (req, res) => {
                 });
             }
         }
+
+        return res.status(201).json({ id: videoId });
     } catch (err) {
         console.error(err)
         res.status(500).json({ message: 'Error uploading video file' });

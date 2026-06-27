@@ -95,7 +95,7 @@ class _AudiosState extends ConsumerState<AudioContainer> {
       clipBehavior: Clip.antiAlias,
       child: ProviderScope(
         overrides: [audioPlayerCommandsProvider],
-        child: AudioPlayerScreen(audioId: _audio!.id, url: '${AppConfig.apiUrl}/api/audio/file/${_audio!.id}', headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _audio!.title, artist: _audio!.metadata?.artists?[0]),
+        child: AudioPlayerScreen(audioId: _audio!.id, url: '${AppConfig.apiUrl}/api/audio/file/${_audio!.id}', headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _audio!.title),
       ),
     );
   }

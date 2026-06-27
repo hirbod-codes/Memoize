@@ -290,6 +290,11 @@ class _FileManager extends ConsumerState<FileManager> {
                         crossAxisAlignment: .stretch,
                         spacing: 10,
                         children: [
+                          Row(
+                            children: [
+                              IconButton(onPressed: () {}, icon: Icon(Icons.image)),
+                            ],
+                          ),
                           if (_editing)
                             Row(
                               mainAxisAlignment: .spaceBetween,

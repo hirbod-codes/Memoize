@@ -26,6 +26,8 @@ class _ImagesState extends ConsumerState<ImageContainer> {
 
   @override
   void initState() {
+    super.initState();
+
     ref
         .read(imageControllerProvider)
         .get(imageId: widget.imageId)
@@ -50,13 +52,11 @@ class _ImagesState extends ConsumerState<ImageContainer> {
               .catchError(_handleError);
         })
         .catchError(_handleError);
-
-    super.initState();
   }
 
   FutureOr<Null> _handleError(dynamic e) {
     if (!mounted) return null;
-    
+
     NotificationService.showError(context: context, message: 'Failed to fetch audio data.');
 
     setState(() {
@@ -90,7 +90,7 @@ class _ImagesState extends ConsumerState<ImageContainer> {
             Container(
               clipBehavior: .antiAlias,
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md)),
-              child: Image.network('${AppConfig.apiUrl}/api/image/file/${widget.imageId}', fit: .fitWidth, headers: {'Authorization': 'Bearer $_token'}),
+              child: Image.network('${AppConfig.apiUrl}/api/image/file/${widget.imageId}', fit: .fitWidth, headers: {'Authorization': 'Bearer $_token'}, ),
             ),
             if (_image?.title != null) Center(child: Text(_image?.title ?? '')),
           ],

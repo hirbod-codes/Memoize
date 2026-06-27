@@ -17,9 +17,9 @@ class ImageInfo {
 
   factory ImageInfo.fromJson(Map<String, dynamic> json) {
     final id = json['_id'];
-    final fileName = json['filename'];
-    final title = json['metadata']?['title'];
-    final contentType = json['metadata']?['contentType'];
+    final fileName = json['fileName'];
+    final title = json['title'];
+    final contentType = json['contentType'];
     final createdAt = (json['metadata']?['createdAt'] as num?)?.toInt();
     final updatedAt = (json['metadata']?['updatedAt'] as num?)?.toInt();
 
