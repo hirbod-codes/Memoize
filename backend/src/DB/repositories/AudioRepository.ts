@@ -55,27 +55,27 @@ class AudioRepository implements IRepository, ISeedable, IDropable {
     }
 
     async get(id: string): Promise<Audio> {
-        return (await AudioRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
+        return (await AudioRepository.collection!.find({ temporary: false, _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
     async getForUser(audioId: string, userId: string): Promise<Audio> {
-        return (await AudioRepository.collection!.find({ _id: ObjectId.createFromHexString(audioId), userId }, { session: this.session }).toArray())[0]
+        return (await AudioRepository.collection!.find({ temporary: false, _id: ObjectId.createFromHexString(audioId), userId }, { session: this.session }).toArray())[0]
     }
 
     async getForUserByTitle(title: string, userId: string): Promise<Audio> {
-        return (await AudioRepository.collection!.find({ title, userId }, { session: this.session }).toArray())[0]
+        return (await AudioRepository.collection!.find({ temporary: false, title, userId }, { session: this.session }).toArray())[0]
     }
 
     async getManyForUser(leafIds: string[], userId: string): Promise<Audio[]> {
-        return await AudioRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
+        return await AudioRepository.collection!.find({ temporary: false, _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
 
     async getByUserId(userId: string) {
-        return await AudioRepository.collection!.find({ userId }, { session: this.session }).toArray()
+        return await AudioRepository.collection!.find({ temporary: false, userId }, { session: this.session }).toArray()
     }
 
     getFromCursor(fromTsMs: number) {
-        return AudioRepository.collection!.find({ updatedAt: { $gte: fromTsMs } })
+        return AudioRepository.collection!.find({ temporary: false, updatedAt: { $gte: fromTsMs } })
     }
 
     getTemporariesFromCursor(fromTsMs: number) {
@@ -83,7 +83,7 @@ class AudioRepository implements IRepository, ISeedable, IDropable {
     }
 
     async updateTitle(audioId: string, title: string) {
-        return await AudioRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(audioId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
+        return await AudioRepository.collection!.updateOne({ temporary: false, _id: ObjectId.createFromHexString(audioId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
     }
 
     async unsafeUpdate(audioId: string, userId: string, updates: AudioUpdate) {

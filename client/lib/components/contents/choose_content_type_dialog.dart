@@ -38,7 +38,7 @@ class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
                 initialValue: selected,
                 decoration: const InputDecoration(labelText: 'Option', border: OutlineInputBorder()),
                 items: ContentType.values.map((m) {
-                  return DropdownMenuItem(value: m, child: Text(Content.stringifyContentType(m)));
+                  return DropdownMenuItem(value: m, child: Text(Content.stringifyContentType(m).replaceAll('Id', '')));
                 }).toList(),
                 onChanged: (value) {
                   if (value != null) {

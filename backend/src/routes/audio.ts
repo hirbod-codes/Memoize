@@ -9,6 +9,8 @@ import { fileTypeFromBuffer } from "file-type";
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { extension } from "mime-types";
 import { teeStream } from '../lib/stream';
+import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
+import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
 
 const router = express.Router();
 
@@ -17,6 +19,7 @@ router.post('/', auth, authorization, async (req, res) => {
         console.log('/api/audio', 'POST')
 
         console.log('Validating...')
+        // ------------------------------------------------------------------------- Validating...
         let fileName: string | undefined, title: string | undefined
         try {
             title = await string().required().label('Title').validate(req.query.title?.toString())
@@ -34,6 +37,7 @@ router.post('/', auth, authorization, async (req, res) => {
         const audioRepository = new AudioRepository()
 
         console.log("Checking weather title already exists...");
+        // ------------------------------------------------------------------------- Checking weather title already exists...
         const audio = await audioRepository.getForUserByTitle(title, userId);
         if (audio)
             return res.status(400).json({ message: 'Audio title must be unique.' });
@@ -42,33 +46,54 @@ router.post('/', auth, authorization, async (req, res) => {
         const coverArtBucketKey = `audio/cover_art/${userId}/${title}`
 
         console.log("Inserting audio...");
+        // ------------------------------------------------------------------------- Inserting audio...
         const audioInsertResult = await audioRepository.insert({ title, fileName, contentType: "application/octet-stream", userId, bucketKey: audioFileBucketKey, temporary: true })
         console.log("Audio insert result", audioInsertResult);
         if (!audioInsertResult.acknowledged || !audioInsertResult.insertedId)
             return res.status(500).json({ ok: false, message: 'Audio info creation failed' })
 
         console.log("Splitting req stream...");
-        let uploadAudio: Upload | null = null
-        let uploadCoverArt: Upload | null = null;
-
+        // ------------------------------------------------------------------------- Splitting req stream...
         const { splitter, createBranch } = teeStream();
 
         const s3Stream = createBranch();
-        const metaStream = createBranch();
+        const metadataStream = createBranch();
         const typeStream = createBranch();
 
-        const swallow = <T>(p: Promise<T>) => { p.catch(() => { }); return p; };
+        const swallow = <T>(p: Promise<T>) => { p.catch((e) => { console.error('swallow throws an error.', e); }); return p; };
 
-        let metadata, contentType: string = '', cover, coverExists
+        let uploadAudio: Upload | null = null
+        let uploadCoverArt: Upload | null = null;
+        let metadata
+        let contentType: string = ''
+        let cover
+        let coverExists
+
+        let totalBytes = 0;
+        let sizeLimitError: MaxFileSizeExceededError | null = null;
+        const minFileSize = 10 * 1024
+        const maxFileSize = 2 * 1024 * 1024 * 1024
         try {
+            splitter.on('error', () => { });
             req.on('error', (err) => {
                 console.error('Request stream error:', err);
                 splitter.destroy(err);
+            });
+            req.on('data', (chunk: Buffer) => {
+                totalBytes += chunk.length;
+                if (sizeLimitError) return; // already tripped, ignore further chunks
+                if (totalBytes > maxFileSize) {
+                    sizeLimitError = new MaxFileSizeExceededError(maxFileSize, totalBytes);
+                    console.error(`[size] Max limit exceeded (${totalBytes} bytes), aborting`);
+                    req.destroy(sizeLimitError);
+                    splitter.destroy(sizeLimitError);
+                }
             });
             req.pipe(splitter);
             splitter.resume();
 
             console.log("Uploading audio file...");
+            // ------------------------------------------------------------------------- Uploading audio file...
             uploadAudio = new Upload({
                 client: s3,
                 params: {
@@ -80,15 +105,22 @@ router.post('/', auth, authorization, async (req, res) => {
             const uploadPromise = swallow(uploadAudio.done());
 
             console.log("Extracting audio file info...");
-            const metadataPromise = swallow(mm.parseStream(metaStream, {
-                mimeType: req.headers["content-type"] as string
-            }));
+            // ------------------------------------------------------------------------- Extracting audio file info...
+            const metadataPromise = swallow((async () => {
+                try {
+                    return await mm.parseStream(metadataStream, {
+                        mimeType: req.headers["content-type"] as string
+                    })
+                } finally {
+                    if (!metadataStream.destroyed) metadataStream.destroy()
+                }
+            })());
 
             console.log("Extracting audio file content type...");
+            // ------------------------------------------------------------------------- Extracting audio file content type...
             const contentTypePromise = swallow((async () => {
                 const chunks: Buffer[] = [];
                 let total = 0;
-                const maxBytes = 8192;
 
                 try {
                     for await (const chunk of typeStream) {
@@ -99,7 +131,7 @@ router.post('/', auth, authorization, async (req, res) => {
                         chunks.push(buffer);
                         total += buffer.length;
 
-                        if (total >= maxBytes) {
+                        if (total >= maxFileSize) {
                             break;
                         }
                     }
@@ -115,16 +147,21 @@ router.post('/', auth, authorization, async (req, res) => {
             })());
 
             console.log("Waiting for streams to finish...");
+            // ------------------------------------------------------------------------- Waiting for streams to finish...
             [, metadata, contentType] = await Promise.all([
                 uploadPromise,
                 metadataPromise,
                 contentTypePromise,
             ]);
 
-            console.log("Metadata:", metadata.common);
+            if (sizeLimitError)
+                throw sizeLimitError;
+
+            if (totalBytes < minFileSize)
+                throw new MinFileSizeNotMetError(minFileSize, totalBytes);
 
             const common = metadata.common;
-            console.log({ metadata });
+            console.log({ metadata, common });
 
             cover = common.picture?.[0]
                 ? {
@@ -160,10 +197,18 @@ router.post('/', auth, authorization, async (req, res) => {
                 await uploadCoverArt?.abort();
             } catch (abortErr) { console.error('Failed to abort cover art upload:', abortErr); }
 
+            if (err instanceof MaxFileSizeExceededError) {
+                return res.status(413).json({ errors: [err.message] });
+            }
+            if (err instanceof MinFileSizeNotMetError) {
+                return res.status(400).json({ errors: [err.message] });
+            }
+
             return res.status(500).json({ message: 'Error uploading video file' });
         }
 
         console.log("Making final changes to video document in db...");
+        // ------------------------------------------------------------------------- Making final changes to video document in db...
         const unsafeUpdateResult = await audioRepository.unsafeUpdate(audioInsertResult.insertedId.toString(), userId, { contentType, temporary: false, coverArtKey: coverExists ? coverArtBucketKey : undefined, coverArtFileName: coverExists ? `${title}.${extension(cover!.mime)}` : undefined })
         console.log({ r: unsafeUpdateResult });
         if (!unsafeUpdateResult.acknowledged || unsafeUpdateResult.matchedCount !== 1) {

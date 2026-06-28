@@ -6,6 +6,7 @@ import 'package:client/auth/dio_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker/talker.dart';
+import 'package:path/path.dart' as p;
 
 class AudioController {
   final Ref ref;
@@ -17,11 +18,7 @@ class AudioController {
   Future<Response> post({required String title, required File file, String? fileName, ProgressCallback? onSendProgress}) async {
     Talker().info('AudioController.post is called...');
 
-    final response = await _authDio.post(
-      '/api/video/?title=$title&fileName=${fileName ?? file.path.split('/').last}',
-      data: FormData.fromMap({'file': await MultipartFile.fromFile(file.path, filename: file.path.split('/').last)}),
-      onSendProgress: onSendProgress,
-    );
+    final response = await _authDio.post('/api/audio/?title=$title&fileName=${fileName ?? p.basename(file.path)}', data: await file.readAsBytes(), onSendProgress: onSendProgress);
     Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
 
     Talker().info('AudioController.post call ended');

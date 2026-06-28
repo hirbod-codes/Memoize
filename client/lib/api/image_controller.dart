@@ -18,11 +18,7 @@ class ImageController {
   Future<Response> post({required String title, required File file, String? fileName, ProgressCallback? onSendProgress}) async {
     Talker().info('ImageController.post is called...');
 
-    final response = await _authDio.post(
-      '/api/image/?title=$title&fileName=${fileName ?? p.basename(file.path)}',
-      data: await file.readAsBytes(),
-      onSendProgress: onSendProgress,
-    );
+    final response = await _authDio.post('/api/image/?title=$title&fileName=${fileName ?? p.basename(file.path)}', data: await file.readAsBytes(), onSendProgress: onSendProgress);
     Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
 
     Talker().info('ImageController.post call ended');

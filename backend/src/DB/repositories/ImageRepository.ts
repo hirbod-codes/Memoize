@@ -55,27 +55,27 @@ class ImageRepository implements IRepository, ISeedable, IDropable {
     }
 
     async get(id: string): Promise<Image> {
-        return (await ImageRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
+        return (await ImageRepository.collection!.find({ temporary: false, _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
     async getForUser(imageId: string, userId: string): Promise<Image> {
-        return (await ImageRepository.collection!.find({ _id: ObjectId.createFromHexString(imageId), userId }, { session: this.session }).toArray())[0]
+        return (await ImageRepository.collection!.find({ temporary: false, _id: ObjectId.createFromHexString(imageId), userId }, { session: this.session }).toArray())[0]
     }
 
     async getForUserByTitle(title: string, userId: string) {
-        return (await ImageRepository.collection!.find({ title, userId }, { session: this.session }).toArray())[0]
+        return (await ImageRepository.collection!.find({ temporary: false, title, userId }, { session: this.session }).toArray())[0]
     }
 
     async getManyForUser(leafIds: string[], userId: string): Promise<Image[]> {
-        return await ImageRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
+        return await ImageRepository.collection!.find({ temporary: false, _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
 
     async getByUserId(userId: string) {
-        return await ImageRepository.collection!.find({ userId }, { session: this.session }).toArray()
+        return await ImageRepository.collection!.find({ temporary: false, userId }, { session: this.session }).toArray()
     }
 
     getFromCursor(fromTsMs: number) {
-        return ImageRepository.collection!.find({ updatedAt: { $gte: fromTsMs } })
+        return ImageRepository.collection!.find({ temporary: false, updatedAt: { $gte: fromTsMs } })
     }
 
     getTemporariesFromCursor(fromTsMs: number) {
@@ -83,7 +83,7 @@ class ImageRepository implements IRepository, ISeedable, IDropable {
     }
 
     async updateTitle(imageId: string, title: string) {
-        return await ImageRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(imageId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
+        return await ImageRepository.collection!.updateOne({ temporary: false, _id: ObjectId.createFromHexString(imageId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
     }
 
     async unsafeUpdate(audioId: string, userId: string, updates: ImageUpdate) {

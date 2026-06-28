@@ -13,6 +13,8 @@ import { promises as fsp } from "fs";
 import path from 'path'
 import { teeStream } from '../lib/stream';
 import { decodeVideoStreamToRamSegments } from '../ffmpeg';
+import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
+import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
 
 const router = express.Router();
 
@@ -21,8 +23,9 @@ ffmpeg.setFfprobePath(ffprobe.path);
 router.post('/', auth, authorization, async (req, res) => {
     try {
         console.log('/api/video/', 'POST');
-        console.log('Validating...');
 
+        console.log('Validating...');
+        // ------------------------------------------------------------------------- Validating...
         let title: string, fileName: string;
         try {
             title = await string().required().label('Title').validate(req.query.title?.toString());
@@ -40,6 +43,7 @@ router.post('/', auth, authorization, async (req, res) => {
         const videoRepository = new VideoRepository();
 
         console.log("Checking whether title already exists...");
+        // ------------------------------------------------------------------------- Checking whether title already exists...
         const existing = await videoRepository.getForUserByTitle(title, userId);
         if (existing) {
             return res.status(400).json({ message: 'Video title must be unique.' });
@@ -50,6 +54,7 @@ router.post('/', auth, authorization, async (req, res) => {
         const playlistBucketKey = `${videoFileBucketKey}/index.m3u8`;
 
         console.log("Inserting video...");
+        // ------------------------------------------------------------------------- Inserting video...
         const videoInsertResult = await videoRepository.insert({
             title,
             fileName,
@@ -65,35 +70,54 @@ router.post('/', auth, authorization, async (req, res) => {
         const videoId = videoInsertResult.insertedId.toString();
 
         console.log("Splitting req stream...");
-        let playlistUpload: Upload | null = null;
-        let uploadThumbnail: Upload | null = null;
-        let thumbnailFile: string | null = null;
-
+        // ------------------------------------------------------------------------- Splitting req stream...
         const { splitter, createBranch } = teeStream();
         const s3Stream = createBranch();
         const metadataStream = createBranch();
         const typeStream = createBranch();
         const ffmpegStream = createBranch();
 
-        const swallow = <T>(p: Promise<T>) => { p.catch(() => { }); return p; };
+        const swallow = <T>(p: Promise<T>) => { p.catch((e) => { console.error('swallow throws an error.', e); }); return p; };
 
         const segmentUploads: Upload[] = [];
         const segmentUploadPromises: Promise<any>[] = [];
 
+        let playlistUpload: Upload | null = null;
+        let uploadThumbnail: Upload | null = null;
+        let thumbnailFile: string | null = null;
+
+        let totalBytes = 0;
+        let sizeLimitError: MaxFileSizeExceededError | null = null;
+        let minFileSize = 10 * 1024
+        let maxFileSize = 2 * 1024 * 1024 * 1024
+
         try {
+            splitter.on('error', () => { });
             req.on('error', (err) => {
                 console.error('Request stream error:', err);
                 splitter.destroy(err);
+            });
+            req.on('data', (chunk: Buffer) => {
+                totalBytes += chunk.length;
+                if (sizeLimitError) return; // already tripped, ignore further chunks
+                if (totalBytes > maxFileSize) {
+                    sizeLimitError = new MaxFileSizeExceededError(maxFileSize, totalBytes);
+                    console.error(`[size] Max limit exceeded (${totalBytes} bytes), aborting`);
+                    req.destroy(sizeLimitError);
+                    splitter.destroy(sizeLimitError);
+                }
             });
             req.pipe(splitter);
             splitter.resume();
 
             console.log("Uploading video file...");
+            // ------------------------------------------------------------------------- Uploading video file...
             const uploadPromise = swallow((async () => {
                 await decodeVideoStreamToRamSegments({
                     title,
                     input: s3Stream,
-                    maxFileSize: 0,
+                    minFileSize,
+                    maxFileSize,
                     onSegment: ({ filename, index, stream }) => {
                         const segmentKey = `${videoFileBucketKey}/${filename}`;
                         const upload = new Upload({
@@ -138,14 +162,22 @@ router.post('/', auth, authorization, async (req, res) => {
             })());
 
             console.log("Extracting video file metadata...");
-            const metadataPromise: Promise<ffmpeg.FfprobeData> = swallow(new Promise((resolve, reject) => {
-                ffmpeg(metadataStream).ffprobe((err, data) => {
-                    if (err) return reject(err);
-                    resolve(data);
-                });
-            }));
+            // ------------------------------------------------------------------------- Extracting video file metadata...
+            const metadataPromise: Promise<ffmpeg.FfprobeData> = swallow((async () => {
+                try {
+                    return await new Promise((resolve, reject) => {
+                        ffmpeg(metadataStream).ffprobe((err, data) => {
+                            if (err) return reject(err);
+                            resolve(data);
+                        });
+                    })
+                } finally {
+                    if (!metadataStream.destroyed) metadataStream.destroy()
+                }
+            })());
 
             console.log("Extracting video file content type...");
+            // ------------------------------------------------------------------------- Extracting video file content type...
             const contentTypePromise: Promise<string> = swallow((async () => {
                 const chunks: Buffer[] = [];
                 let total = 0;
@@ -166,25 +198,41 @@ router.post('/', auth, authorization, async (req, res) => {
             })());
 
             console.log("Generating video file thumbnail...");
+            // ------------------------------------------------------------------------- Generating video file thumbnail...
             const thumbnailFileDirectory = path.join('tmp', userId);
             await fsp.mkdir(thumbnailFileDirectory, { recursive: true });
+
             const thumbnailFileName = `${title}_${Date.now()}.jpg`;
             const outputPath = path.join(thumbnailFileDirectory, thumbnailFileName);
             console.log({ outputPath });
 
-            const thumbnailPromise: Promise<string> = swallow(new Promise((resolve, reject) => {
-                ffmpeg(ffmpegStream).screenshots({ count: 1, folder: thumbnailFileDirectory, filename: thumbnailFileName, size: "320x240" })
-                    .on("end", () => resolve(outputPath))
-                    .on("error", reject);
-            }));
+            const thumbnailPromise: Promise<string> = swallow((async () => {
+                try {
+                    return await new Promise((resolve, reject) => {
+                        ffmpeg(ffmpegStream).screenshots({ count: 1, folder: thumbnailFileDirectory, filename: thumbnailFileName, size: "320x240", timestamps: ['1'] })
+                            .on("end", () => resolve(outputPath))
+                            .on("error", reject);
+                    })
+                } finally {
+                    if (!metadataStream.destroyed) metadataStream.destroy()
+                }
+            })());
 
             console.log("Waiting for streams to finish...");
+            // ------------------------------------------------------------------------- Waiting for streams to finish...
             const [, metadata, contentType, thumbnailResult] = await Promise.all([
                 uploadPromise,
                 metadataPromise,
                 contentTypePromise,
                 thumbnailPromise,
             ]);
+
+            if (sizeLimitError)
+                throw sizeLimitError;
+
+            if (totalBytes < minFileSize)
+                throw new MinFileSizeNotMetError(minFileSize, totalBytes);
+
             thumbnailFile = thumbnailResult;
             console.log({ metadata, contentType, thumbnailFile });
 
@@ -218,7 +266,14 @@ router.post('/', auth, authorization, async (req, res) => {
                 await uploadThumbnail?.abort();
             } catch (abortErr) { console.error('Failed to abort cover art upload:', abortErr); }
 
-            return res.status(500).json({ message: 'Error uploading video file' });
+            if (err instanceof MaxFileSizeExceededError) {
+                return res.status(413).json({ errors: [err.message] });
+            }
+            if (err instanceof MinFileSizeNotMetError) {
+                return res.status(400).json({ errors: [err.message] });
+            }
+
+            return res.status(500).json({ errors: ['Error uploading video file'] });
         } finally {
             if (thumbnailFile) {
                 fsp.unlink(thumbnailFile).catch((unlinkErr) => {
@@ -230,7 +285,7 @@ router.post('/', auth, authorization, async (req, res) => {
         return res.status(201).json({ id: videoId });
     } catch (err) {
         console.error(err)
-        res.status(500).json({ message: 'Error uploading video file' });
+        res.status(500).json({ errors: ['Error uploading video file'] });
     } finally {
         console.log('------------end------------')
     }

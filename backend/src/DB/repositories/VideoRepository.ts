@@ -55,23 +55,23 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
     }
 
     async get(id: string): Promise<Video> {
-        return (await VideoRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
+        return (await VideoRepository.collection!.find({ temporary: false, _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
     async getForUser(videoId: string, userId: string): Promise<Video> {
-        return (await VideoRepository.collection!.find({ _id: ObjectId.createFromHexString(videoId), userId }, { session: this.session }).toArray())[0]
+        return (await VideoRepository.collection!.find({ temporary: false, _id: ObjectId.createFromHexString(videoId), userId }, { session: this.session }).toArray())[0]
     }
 
     async getForUserByTitle(title: string, userId: string) {
-        return (await VideoRepository.collection!.find({ title, userId }, { session: this.session }).toArray())[0]
+        return (await VideoRepository.collection!.find({ temporary: false, title, userId }, { session: this.session }).toArray())[0]
     }
 
     async getManyForUser(leafIds: string[], userId: string): Promise<Video[]> {
-        return await VideoRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
+        return await VideoRepository.collection!.find({ temporary: false, _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
 
     async getByUserId(userId: string) {
-        return await VideoRepository.collection!.find({ userId }, { session: this.session }).toArray()
+        return await VideoRepository.collection!.find({ temporary: false, userId }, { session: this.session }).toArray()
     }
 
     getTemporariesFromCursor(fromTsMs: number) {
@@ -79,11 +79,11 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
     }
 
     getFromCursor(fromTsMs: number) {
-        return VideoRepository.collection!.find({ updatedAt: { $gte: fromTsMs } })
+        return VideoRepository.collection!.find({ temporary: false, updatedAt: { $gte: fromTsMs } })
     }
 
     async updateTitle(videoId: string, title: string) {
-        return await VideoRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(videoId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
+        return await VideoRepository.collection!.updateOne({ temporary: false, _id: ObjectId.createFromHexString(videoId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
     }
 
     async unsafeUpdate(audioId: string, userId: string, updates: VideoUpdate) {

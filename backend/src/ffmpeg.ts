@@ -5,6 +5,8 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import { promises as fsp } from "fs";
+import { MaxFileSizeExceededError } from "./errors/MaxFileSizeExceededError";
+import { MinFileSizeNotMetError } from "./errors/MinFileSizeNotMetError";
 
 
 export function decodeToPCM(input: Buffer | Readable): Promise<Float32Array> {
@@ -336,6 +338,7 @@ export interface DecodeStreamHlsToRamOptions {
     title: string;
     input: Buffer | Readable;
     maxFileSize: number;
+    minFileSize: number;
     segmentSeconds?: number;
     /** Directory backed by tmpfs (Linux/Mac) — see setup notes below. Falls back to OS temp dir if not tmpfs/not Linux. */
     ramDir?: string;
@@ -354,8 +357,16 @@ function resolveWorkDir(preferred?: string): string {
 }
 
 export function decodeVideoStreamToRamSegments(opts: DecodeStreamHlsToRamOptions): Promise<void> {
-    const { input, maxFileSize, onSegment, onPlaylist, title } = opts;
+    const { input, maxFileSize, minFileSize, onSegment, onPlaylist, title } = opts;
     const segmentSeconds = opts.segmentSeconds ?? 5;
+
+    if (typeof maxFileSize !== "number" || maxFileSize <= 0) {
+        throw Error('Invalid maxFileSize provided');
+    }
+
+    if (typeof minFileSize !== "number" || minFileSize <= 0 || minFileSize >= maxFileSize) {
+        throw Error('Invalid minFileSize provided');
+    }
 
     return new Promise(async (resolve, reject) => {
         let settled = false;
@@ -498,6 +509,15 @@ export function decodeVideoStreamToRamSegments(opts: DecodeStreamHlsToRamOptions
         }
 
         if (Buffer.isBuffer(input)) {
+            if (input.length < minFileSize) {
+                settle(new MinFileSizeNotMetError(minFileSize, input.length));
+                return;
+            }
+            if (input.length > maxFileSize) {
+                settle(new MaxFileSizeExceededError(maxFileSize, input.length));
+                return;
+            }
+
             ffmpeg.stdin.write(input);
             ffmpeg.stdin.end();
         } else {
@@ -511,12 +531,21 @@ export function decodeVideoStreamToRamSegments(opts: DecodeStreamHlsToRamOptions
                     console.error(`[size] Limit exceeded (${total} bytes), killing ffmpeg`);
                     ffmpeg.kill("SIGKILL");
                     input.destroy();
-                    settle(new Error(`File size exceeded limit of ${maxFileSize} bytes`));
+                    settle(new MaxFileSizeExceededError(maxFileSize, total));
                     return;
                 }
                 ffmpeg.stdin.write(chunk);
             });
-            input.on("end", () => ffmpeg.stdin.end());
+            input.on("end", () => {
+                if (sizeLimitExceeded) return; // already settled
+                if (total < minFileSize) {
+                    console.error(`[size] Min limit not met (${total} bytes), killing ffmpeg`);
+                    ffmpeg.kill("SIGKILL");
+                    settle(new MinFileSizeNotMetError(minFileSize, total));
+                    return;
+                }
+                ffmpeg.stdin.end();
+            });
             input.on("error", (e) => {
                 console.error("[input stream]", e);
                 settle(e);

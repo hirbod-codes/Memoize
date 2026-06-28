@@ -7,6 +7,8 @@ import ImageRepository from '../DB/repositories/ImageRepository';
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { fileTypeFromBuffer } from 'file-type';
 import { teeStream } from '../lib/stream';
+import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
+import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
 
 const router = express.Router();
 
@@ -14,7 +16,8 @@ router.post('/', auth, authorization, async (req, res) => {
     try {
         console.log('/api/image', 'POST')
 
-        console.log('Validating...')
+        console.log('Validating...');
+        // ------------------------------------------------------------------------- Validating...
         let fileName: string | undefined, title: string | undefined
         try {
             title = await string().required().label('Title').validate(req.query.title?.toString())
@@ -32,6 +35,7 @@ router.post('/', auth, authorization, async (req, res) => {
         const imageRepository = new ImageRepository()
 
         console.log("Checking weather title already exists...");
+        // ------------------------------------------------------------------------- Checking weather title already exists...
         const image = await imageRepository.getForUserByTitle(title, userId);
         if (image)
             return res.status(400).json({ message: 'Image title must be unique.' });
@@ -39,28 +43,49 @@ router.post('/', auth, authorization, async (req, res) => {
         const imageFileBucketKey = `image/${userId}/${title}`
 
         console.log("Inserting image...");
+        // ------------------------------------------------------------------------- Inserting image...
         const imageInsertResult = await imageRepository.insert({ title, fileName, contentType: "image/jpg", userId, bucketKey: imageFileBucketKey, temporary: true })
         console.log("Image insert result", imageInsertResult);
         if (!imageInsertResult.acknowledged || !imageInsertResult.insertedId)
             return res.status(500).json({ ok: false, message: 'Image info creation failed' })
 
+        console.log("Splitting req stream...");
+        // ------------------------------------------------------------------------- Splitting req stream...
         const { splitter, createBranch } = teeStream();
 
         const s3Stream = createBranch();
         const typeStream = createBranch();
 
-        const swallow = <T>(p: Promise<T>) => { p.catch(() => { }); return p; };
+        const swallow = <T>(p: Promise<T>) => { p.catch((e) => { console.error('swallow throws an error.', e); }); return p; };
 
-        let uploadImage: Upload | null = null, contentType: string | null = null
+        let uploadImage: Upload | null = null
+        let contentType: string | null = null
+
+        let totalBytes = 0;
+        let sizeLimitError: MaxFileSizeExceededError | null = null;
+        const minFileSize = 10 * 1024
+        const maxFileSize = 2 * 1024 * 1024 * 1024
         try {
+            splitter.on('error', () => { });
             req.on('error', (err) => {
                 console.error('Request stream error:', err);
                 splitter.destroy(err);
+            });
+            req.on('data', (chunk: Buffer) => {
+                totalBytes += chunk.length;
+                if (sizeLimitError) return; // already tripped, ignore further chunks
+                if (totalBytes > maxFileSize) {
+                    sizeLimitError = new MaxFileSizeExceededError(maxFileSize, totalBytes);
+                    console.error(`[size] Max limit exceeded (${totalBytes} bytes), aborting`);
+                    req.destroy(sizeLimitError);
+                    splitter.destroy(sizeLimitError);
+                }
             });
             req.pipe(splitter);
             splitter.resume();
 
             console.log("Uploading image file...");
+            // ------------------------------------------------------------------------- Uploading image file...
             uploadImage = new Upload({
                 client: s3,
                 params: {
@@ -75,6 +100,7 @@ router.post('/', auth, authorization, async (req, res) => {
             })());
 
             console.log("Extracting audio file content type...");
+            // ------------------------------------------------------------------------- Extracting audio file content type...
             const contentTypePromise = swallow((async () => {
                 const chunks: Buffer[] = [];
                 let total = 0;
@@ -106,10 +132,17 @@ router.post('/', auth, authorization, async (req, res) => {
             })());
 
             console.log("Waiting for streams to finish...");
+            // ------------------------------------------------------------------------- Waiting for streams to finish...
             [, contentType] = await Promise.all([
                 uploadPromise,
                 contentTypePromise,
             ]);
+
+            if (sizeLimitError)
+                throw sizeLimitError;
+
+            if (totalBytes < minFileSize)
+                throw new MinFileSizeNotMetError(minFileSize, totalBytes);
         } catch (err) {
             console.error(err);
 
@@ -118,6 +151,13 @@ router.post('/', auth, authorization, async (req, res) => {
             try {
                 await uploadImage?.abort();
             } catch (abortErr) { console.error('Failed to abort segment/playlist uploads:', abortErr); }
+
+            if (err instanceof MaxFileSizeExceededError) {
+                return res.status(413).json({ errors: [err.message] });
+            }
+            if (err instanceof MinFileSizeNotMetError) {
+                return res.status(400).json({ errors: [err.message] });
+            }
 
             return res.status(500).json({ message: 'Error uploading video file' });
         }
