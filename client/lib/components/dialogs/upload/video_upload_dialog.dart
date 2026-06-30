@@ -19,6 +19,7 @@ class VideoUploadDialog extends ConsumerStatefulWidget {
 class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
   final ImagePicker _picker = ImagePicker();
   final titleController = TextEditingController();
+  final ValueNotifier<bool> _titleHasText = ValueNotifier(false);
 
   Player? _player;
   VideoController? _controller;
@@ -26,33 +27,59 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
   File? _videoFile;
   bool _loading = false;
 
+  bool _picking = false;
+
+  double? _uploadProgress;
+
+  @override
+  void initState() {
+    super.initState();
+    titleController.addListener(() {
+      _titleHasText.value = titleController.text.trim().isNotEmpty;
+    });
+  }
+
   @override
   void dispose() {
     titleController.dispose();
+    _titleHasText.dispose();
     _player?.dispose();
     super.dispose();
   }
 
   Future<void> _pickVideo(ImageSource source) async {
-    final XFile? picked = await _picker.pickVideo(source: source, maxDuration: const Duration(minutes: 10));
+    if (_picking) return;
+    _picking = true;
 
-    if (picked == null) return;
+    try {
+      final XFile? picked = await _picker.pickVideo(source: source, maxDuration: const Duration(minutes: 10)).timeout(const Duration(minutes: 2), onTimeout: () => null);
+      if (picked == null) return;
 
-    final file = File(picked.path);
+      final file = File(picked.path);
 
-    // Dispose previous player safely
-    await _player?.dispose();
+      // Dispose previous player safely
+      final oldPlayer = _player;
+      final player = Player();
+      final controller = VideoController(player);
+      await player.open(Media(file.path));
 
-    final player = Player();
-    final controller = VideoController(player);
+      if (!mounted) {
+        await player.dispose();
+        return;
+      }
 
-    await player.open(Media(file.path));
+      await _player?.dispose();
 
-    setState(() {
-      _videoFile = file;
-      _player = player;
-      _controller = controller;
-    });
+      setState(() {
+        _videoFile = file;
+        _player = player;
+        _controller = controller;
+      });
+
+      await oldPlayer?.dispose();
+    } finally {
+      _picking = false;
+    }
   }
 
   bool isButtonDisabled() => _videoFile == null || titleController.text.trim().isEmpty;
@@ -60,16 +87,33 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
   Future<void> _upload() async {
     if (isButtonDisabled()) return;
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _uploadProgress = 0;
+    });
 
     try {
-      Response<dynamic> res = await ref.read(videoControllerProvider).post(title: titleController.text.trim(), file: _videoFile!);
+      Response<dynamic> res = await ref
+          .read(videoControllerProvider)
+          .post(
+            title: titleController.text.trim(),
+            file: _videoFile!,
+            onSendProgress: (sent, total) {
+              if (!mounted || total <= 0) return;
+              setState(() => _uploadProgress = sent / total);
+            },
+          );
       if (res.statusCode == null || res.statusCode! < 200 || res.statusCode! > 299) return;
       if (!mounted) return;
 
       Navigator.pop(context, res.data['id']);
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _uploadProgress = null;
+        });
+      }
     }
   }
 
@@ -84,6 +128,14 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (_uploadProgress != null) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(value: _uploadProgress! > 0 ? _uploadProgress : null, minHeight: 6),
+                ),
+                const SizedBox(height: 12),
+              ],
+
               const Text("Upload Video", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
               const SizedBox(height: 16),
@@ -117,9 +169,9 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  TextButton.icon(onPressed: () => _pickVideo(ImageSource.gallery), icon: const Icon(Icons.video_library), label: const Text("Gallery")),
+                  TextButton.icon(onPressed: _loading ? null : () => _pickVideo(ImageSource.gallery), icon: const Icon(Icons.video_library), label: const Text("Gallery")),
 
-                  TextButton.icon(onPressed: () => _pickVideo(ImageSource.camera), icon: const Icon(Icons.videocam), label: const Text("Camera")),
+                  TextButton.icon(onPressed: _loading ? null : () => _pickVideo(ImageSource.camera), icon: const Icon(Icons.videocam), label: const Text("Camera")),
                 ],
               ),
 
@@ -133,7 +185,13 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
 
                   const SizedBox(width: 8),
 
-                  Button(type: .elevated, color: .secondary, onPressed: isButtonDisabled() ? null : _upload, isLoading: _loading, label: "Upload"),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: _titleHasText,
+                    builder: (context, hasText, _) {
+                      final disabled = _videoFile == null || !hasText;
+                      return Button(type: .elevated, color: .secondary, onPressed: disabled ? null : _upload, isLoading: _loading, label: "Upload");
+                    },
+                  ),
                 ],
               ),
             ],

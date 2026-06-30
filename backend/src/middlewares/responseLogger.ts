@@ -134,7 +134,7 @@ export function streamResponseLogger(req: Request, res: Response, next: NextFunc
 
         next();
     } catch (e) {
-        console.error('Caught error in json response logger', e)
+        console.error('Caught error in stream response logger', e)
 
         next();
     }

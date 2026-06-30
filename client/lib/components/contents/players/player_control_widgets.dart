@@ -1,20 +1,24 @@
 import 'package:client/components/contents/players/player_interface.dart';
-import 'package:client/components/contents/players/video_player_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class PlayerControls extends ConsumerWidget {
-  const PlayerControls({super.key});
+class PlayerControls extends StatelessWidget {
+  final AppVideoPlayer player;
+  final PlayerState state;
+
+  const PlayerControls({super.key, required this.state, required this.player});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final stateAsync = ref.watch(playerStateProvider);
+  Widget build(BuildContext context) {
+    switch (state.status) {
+      case .loading:
+        return const _ControlsShell(child: _LoadingIndicator());
 
-    return stateAsync.when(
-      loading: () => const _ControlsShell(child: _LoadingIndicator()),
-      error: (e, _) => _ControlsShell(child: _ErrorLabel(message: e.toString())),
-      data: (state) => _ControlsShell(child: _Controls(state: state)),
-    );
+      case .error:
+        return _ControlsShell(child: _ErrorLabel(message: 'Error encountered while playing video'));
+
+      default:
+        return _Controls(state: state, player: player);
+    }
   }
 }
 
@@ -41,16 +45,14 @@ class _ControlsShell extends StatelessWidget {
 // Main controls content
 // ---------------------------------------------------------------------------
 
-class _Controls extends ConsumerWidget {
-  const _Controls({required this.state});
+class _Controls extends StatelessWidget {
+  final AppVideoPlayer player;
   final PlayerState state;
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // print('_Controls build method');
-    // print(state.status);
-    final notifier = ref.watch(videoPlayerCommandsProvider.notifier);
+  const _Controls({required this.state, required this.player});
 
+  @override
+  Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -59,7 +61,7 @@ class _Controls extends ConsumerWidget {
           children: [
             _TimeLabel(state.position),
             Expanded(
-              child: _SeekBar(state: state, onSeek: notifier.seek),
+              child: _SeekBar(state: state, onSeek: player.seek),
             ),
             _TimeLabel(state.duration),
           ],
@@ -68,11 +70,11 @@ class _Controls extends ConsumerWidget {
         // Play/pause + volume
         Row(
           children: [
-            _PlayPauseButton(state: state, onTap: notifier.togglePlayPause),
+            _PlayPauseButton(state: state, onTap: player.togglePlayPause),
             const SizedBox(width: 8),
             _BufferingIndicator(state: state),
             const Spacer(),
-            _VolumeControl(volume: state.volume, onChanged: notifier.setVolume),
+            _VolumeControl(volume: state.volume, onChanged: player.setVolume),
           ],
         ),
       ],
@@ -91,8 +93,6 @@ class _PlayPauseButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // print('_PlayPauseButton build method');
-    // print(state.status);
     final icon = switch (state.status) {
       PlayerStatus.playing => Icons.pause_rounded,
       PlayerStatus.paused => Icons.play_arrow_rounded,
@@ -114,8 +114,6 @@ class _BufferingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // print('_BufferingIndicator build method');
-    // print(state.status);
     if (state.status != .buffering) return const SizedBox.shrink();
     return const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70));
   }

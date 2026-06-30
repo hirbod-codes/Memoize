@@ -1,10 +1,16 @@
-import 'package:client/components/contents/players/player_controls.dart';
+import 'dart:async';
+
+import 'package:client/app_config.dart';
+import 'package:client/components/contents/players/media_kit_player.dart';
+import 'package:client/components/contents/players/player_control_widgets.dart';
+import 'package:client/components/contents/players/player_factory.dart';
 import 'package:client/components/contents/players/player_interface.dart';
-import 'package:client/components/contents/players/video_player_provider.dart';
 import 'package:client/components/contents/players/video_surface.dart';
+import 'package:client/components/contents/players/web_video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 class VideoPlayerScreen extends ConsumerStatefulWidget {
   const VideoPlayerScreen({super.key, required this.videoId, required this.url, this.accessToken, this.headers, this.title});
@@ -25,16 +31,35 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
 
   static const _controlsTimeout = Duration(seconds: 7);
 
+  late final AppVideoPlayer _player;
+  late final VideoController? _videoController;
+  bool _showVideoSurface = false;
+  bool _loading = false;
+
   @override
   void initState() {
     super.initState();
+    // Each VideoPlayerScreen instance gets its own player, not a shared app-wide one
+    _player = createPlayer();
+    _videoController = _player is MediaKitVideoPlayer ? VideoController(_player.nativePlayer as dynamic) : null;
+    _player.stateStream.listen((state) {
+      if (mounted) {
+        setState(() {
+          _showVideoSurface = state.status != PlayerStatus.idle && state.status != PlayerStatus.loading && state.status != PlayerStatus.error;
+          _loading = state.status == .loading;
+        });
+      }
+    });
+
     // Hide system UI for a cinematic look
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
     // Start loading the video
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(videoPlayerProvider).open(widget.url, headers: widget.headers);
+      _player.open(widget.url, headers: widget.headers);
     });
-    // Start the auto-hide timer
+
+    // Start the controls auto-hide timer
     _scheduleHide();
   }
 
@@ -71,25 +96,53 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       behavior: HitTestBehavior.opaque,
       child: Stack(
         children: [
-          // ── Video frame fills the whole screen ──────────────────────────
-          const Positioned.fill(child: VideoSurface()),
+          if (!_showVideoSurface) _AlbumArt(videoId: widget.videoId, accessToken: widget.accessToken),
 
-          // ── Top bar: back button + title ────────────────────────────────
+          // ── Video frame fills the whole screen ──────────────────────────
+          if (_showVideoSurface)
+            Positioned.fill(
+              child: VideoSurface(controller: _videoController, player: _player is WebVideoPlayer ? _player : null),
+            ),
+
+          // ── Bottom controls ─────────────────────────────────────────────
           AnimatedPositioned(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
-            top: _controlsVisible ? 0 : -80,
+            bottom: _controlsVisible ? 0 : -120,
             left: 0,
             right: 0,
-            child: _TopBar(title: widget.title),
+            child: PlayerControls(player: _player, state: _player.state),
           ),
 
-          // ── Bottom controls ─────────────────────────────────────────────
-          AnimatedPositioned(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut, bottom: _controlsVisible ? 0 : -120, left: 0, right: 0, child: const PlayerControls()),
-
           // ── Center spinner while loading ─────────────────────────────────
-          const _CenterLoadingOverlay(),
+          if (_loading) Center(child: CircularProgressIndicator(color: Colors.white70)),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Album art
+// ---------------------------------------------------------------------------
+
+class _AlbumArt extends StatelessWidget {
+  const _AlbumArt({this.videoId, this.accessToken});
+  final String? videoId;
+  final String? accessToken;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 32, offset: const Offset(0, 16))],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: videoId != null && accessToken != null ? Image.network('${AppConfig.apiUrl}/api/video/thumbnail/$videoId', fit: BoxFit.contain, headers: {'Authorization': 'Bearer $accessToken'}) : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }
@@ -109,10 +162,6 @@ class _TopBar extends StatelessWidget {
         bottom: false,
         child: Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-              onPressed: () => Navigator.of(context).maybePop(),
-            ),
             if (title != null)
               Expanded(
                 child: Text(
@@ -125,19 +174,5 @@ class _TopBar extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _CenterLoadingOverlay extends ConsumerWidget {
-  const _CenterLoadingOverlay();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final stateAsync = ref.watch(playerStateProvider);
-    final isLoading = stateAsync.maybeWhen(data: (s) => s.status == PlayerStatus.loading, orElse: () => true);
-
-    if (!isLoading) return const SizedBox.shrink();
-
-    return const Center(child: CircularProgressIndicator(color: Colors.white70));
   }
 }

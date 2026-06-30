@@ -108,6 +108,7 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
               TextField(
                 controller: titleController,
                 decoration: const InputDecoration(labelText: 'Title'),
+                onChanged: (_) => setState(() {}),
               ),
 
               const SizedBox(height: 20),

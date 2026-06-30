@@ -56,8 +56,8 @@ docker run -d \
 run (for Windows)
 
 ```bash
-mkcert.exe -install
-mkcert.exe localhost 127.0.0.1 ::1
+.\mkcert.exe -install
+.\mkcert.exe localhost 127.0.0.1 ::1
 ```
 
 ### docker run examples

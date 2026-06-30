@@ -25,6 +25,25 @@ import { runCronjobs } from './cronjobs';
 import { jsonResponseLogger, streamResponseLogger } from './middlewares/responseLogger';
 import { generalRateLimiter } from './middlewares/rateLimiting';
 
+// Must be before route imports
+import { platform } from "os";
+import path from 'path';
+import ffmpeg from "fluent-ffmpeg";
+
+const platformName = platform();
+
+const ffmpegBinaryPath = platformName === "win32"
+    ? path.join(process.cwd(), "src", "ffmpeg-8.1-essentials_build", "bin", "ffmpeg.exe")
+    : path.join(process.cwd(), "src", "ffmpeg-7.0.2-amd64-static", "ffmpeg");
+ffmpeg.setFfmpegPath(ffmpegBinaryPath);
+
+const ffprobeBinaryPath = platformName === "win32"
+    ? path.join(process.cwd(), "src", "ffmpeg-8.1-essentials_build", "bin", "ffprobe.exe")
+    : path.join(process.cwd(), "src", "ffmpeg-7.0.2-amd64-static", "ffprobe");
+ffmpeg.setFfprobePath(ffprobeBinaryPath);
+
+export { ffmpeg };
+
 import { leafRoutes } from './routes/leaf';
 import { treeNodeRoutes } from './routes/treeNode';
 import { audioRoutes } from './routes/audio';
@@ -35,7 +54,6 @@ import { userRoutes } from './routes/user';
 import { ttsRoutes } from './routes/tts';
 
 import { S3Client } from "@aws-sdk/client-s3";
-
 dotenv.config({ debug: process.env.DEBUG !== undefined ? Boolean(process.env.DEBUG) : undefined })
 
 export const isProduction = getStringEnv('NODE_ENV', 'The Node env environment variable is not provided')! === 'production'

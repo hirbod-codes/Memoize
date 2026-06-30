@@ -5,8 +5,8 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import { promises as fsp } from "fs";
-import { MaxFileSizeExceededError } from "./errors/MaxFileSizeExceededError";
 import { MinFileSizeNotMetError } from "./errors/MinFileSizeNotMetError";
+import { MaxFileSizeExceededError } from "./errors/MaxFileSizeExceededError";
 
 
 export function decodeToPCM(input: Buffer | Readable): Promise<Float32Array> {
@@ -337,8 +337,6 @@ export interface HlsSegmentOutput {
 export interface DecodeStreamHlsToRamOptions {
     title: string;
     input: Buffer | Readable;
-    maxFileSize: number;
-    minFileSize: number;
     segmentSeconds?: number;
     /** Directory backed by tmpfs (Linux/Mac) — see setup notes below. Falls back to OS temp dir if not tmpfs/not Linux. */
     ramDir?: string;
@@ -357,16 +355,8 @@ function resolveWorkDir(preferred?: string): string {
 }
 
 export function decodeVideoStreamToRamSegments(opts: DecodeStreamHlsToRamOptions): Promise<void> {
-    const { input, maxFileSize, minFileSize, onSegment, onPlaylist, title } = opts;
+    const { input, onSegment, onPlaylist, title } = opts;
     const segmentSeconds = opts.segmentSeconds ?? 5;
-
-    if (typeof maxFileSize !== "number" || maxFileSize <= 0) {
-        throw Error('Invalid maxFileSize provided');
-    }
-
-    if (typeof minFileSize !== "number" || minFileSize <= 0 || minFileSize >= maxFileSize) {
-        throw Error('Invalid minFileSize provided');
-    }
 
     return new Promise(async (resolve, reject) => {
         let settled = false;
@@ -489,6 +479,19 @@ export function decodeVideoStreamToRamSegments(opts: DecodeStreamHlsToRamOptions
 
         ffmpeg.on("close", async (code) => {
             ffmpegExited = true;
+            await checkForNewSegments();
+            cleanupWatcher();
+            if (code !== 0) {
+                const stderrOutput = Buffer.concat(stderrChunks).toString();
+                console.error(`[ffmpeg] exited with code ${code}:\n${stderrOutput}`);
+                settle(new Error(`FFmpeg exited with code ${code}`));
+            } else {
+                settle();
+            }
+        });
+
+        ffmpeg.on("close", async (code) => {
+            ffmpegExited = true;
             await checkForNewSegments(); // flush the final segment + final playlist
             cleanupWatcher();
             await fsp.rm(jobDir, { recursive: true, force: true }).catch(() => { });
@@ -502,50 +505,17 @@ export function decodeVideoStreamToRamSegments(opts: DecodeStreamHlsToRamOptions
             }
         });
 
-        // ---- stdin feeding (same as before) ----
         if (ffmpeg.stdin.destroyed) {
             settle(new Error("ffmpeg stdin destroyed before use"));
             return;
         }
 
         if (Buffer.isBuffer(input)) {
-            if (input.length < minFileSize) {
-                settle(new MinFileSizeNotMetError(minFileSize, input.length));
-                return;
-            }
-            if (input.length > maxFileSize) {
-                settle(new MaxFileSizeExceededError(maxFileSize, input.length));
-                return;
-            }
-
             ffmpeg.stdin.write(input);
             ffmpeg.stdin.end();
         } else {
-            let total = 0;
-            let sizeLimitExceeded = false;
-            input.on("data", (chunk: Buffer) => {
-                total += chunk.length;
-                if (sizeLimitExceeded) return;
-                if (total > maxFileSize) {
-                    sizeLimitExceeded = true;
-                    console.error(`[size] Limit exceeded (${total} bytes), killing ffmpeg`);
-                    ffmpeg.kill("SIGKILL");
-                    input.destroy();
-                    settle(new MaxFileSizeExceededError(maxFileSize, total));
-                    return;
-                }
-                ffmpeg.stdin.write(chunk);
-            });
-            input.on("end", () => {
-                if (sizeLimitExceeded) return; // already settled
-                if (total < minFileSize) {
-                    console.error(`[size] Min limit not met (${total} bytes), killing ffmpeg`);
-                    ffmpeg.kill("SIGKILL");
-                    settle(new MinFileSizeNotMetError(minFileSize, total));
-                    return;
-                }
-                ffmpeg.stdin.end();
-            });
+            input.on("data", (chunk: Buffer) => { ffmpeg.stdin.write(chunk); });
+            input.on("end", () => { ffmpeg.stdin.end(); });
             input.on("error", (e) => {
                 console.error("[input stream]", e);
                 settle(e);
@@ -554,6 +524,221 @@ export function decodeVideoStreamToRamSegments(opts: DecodeStreamHlsToRamOptions
 
         ffmpeg.stdin.on("error", (e) => {
             console.error("[ffmpeg stdin]", e);
+        });
+    });
+}
+
+export interface PreparedVideoInput {
+    jobDir: string;
+    inputFilePath: string;
+    // Caller must call this once everything is done reading the file, to free the RAM it occupies.
+    cleanup: () => Promise<void>;
+}
+
+export interface prepareVideoInputOnRamOptions {
+    input: Buffer | Readable;
+    minFileSize: number;
+    maxFileSize: number;
+    title: string;
+    ramDir?: string;
+}
+
+export async function prepareVideoInputOnRam(opts: prepareVideoInputOnRamOptions): Promise<PreparedVideoInput> {
+    const { input, minFileSize, maxFileSize, title } = opts;
+
+    if (typeof maxFileSize !== "number" || maxFileSize <= 0)
+        throw new Error('Invalid maxFileSize provided');
+
+    if (typeof minFileSize !== "number" || minFileSize <= 0 || minFileSize >= maxFileSize)
+        throw new Error('Invalid minFileSize provided');
+
+    const baseDir = resolveWorkDir(opts.ramDir);
+    const safeTitle = title.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const jobDir = path.join(baseDir, `job-${safeTitle}`);
+    await fsp.mkdir(jobDir, { recursive: true });
+    const inputFilePath = path.join(jobDir, "input.bin");
+
+    const cleanup = async () => {
+        await fsp.rm(jobDir, { recursive: true, force: true }).catch(() => { });
+    };
+
+    try {
+        if (Buffer.isBuffer(input)) {
+            // --- size validation, buffer case ---
+            if (input.length < minFileSize) throw new MinFileSizeNotMetError(minFileSize, input.length);
+            if (input.length > maxFileSize) throw new MaxFileSizeExceededError(maxFileSize, input.length);
+            await fsp.writeFile(inputFilePath, input);
+        } else {
+            await new Promise<void>((resolve, reject) => {
+                const fileStream = fs.createWriteStream(inputFilePath);
+                let total = 0;
+                let sizeLimitExceeded = false;
+
+                input.on("data", (chunk: Buffer) => {
+                    total += chunk.length;
+                    if (sizeLimitExceeded) return;
+                    if (total > maxFileSize) {
+                        sizeLimitExceeded = true;
+                        console.error(`[size] Max limit exceeded (${total} bytes), aborting write`);
+                        input.destroy();
+                        fileStream.destroy();
+                        reject(new MaxFileSizeExceededError(maxFileSize, total));
+                        return;
+                    }
+                    fileStream.write(chunk);
+                });
+                input.on("end", () => {
+                    if (sizeLimitExceeded) return; // already rejected
+                    if (total < minFileSize) {
+                        fileStream.destroy();
+                        reject(new MinFileSizeNotMetError(minFileSize, total));
+                        return;
+                    }
+                    fileStream.end();
+                });
+                input.on("error", (e) => {
+                    fileStream.destroy();
+                    reject(e);
+                });
+                fileStream.on("finish", () => resolve());
+                fileStream.on("error", (e) => reject(e));
+            });
+        }
+    } catch (e) {
+        // --- on any failure during write, clean up the partial RAM file
+        // immediately rather than leaving it around ---
+        await cleanup();
+        throw e;
+    }
+
+    return { jobDir, inputFilePath, cleanup };
+}
+
+export interface decodeVideoFileToRamSegmentsOptions {
+    inputFilePath: string;
+    jobDir: string;
+    segmentSeconds?: number;
+    onSegment: (seg: { index: number; filename: string; stream: Readable }) => void;
+    onPlaylist?: (m3u8Contents: string, isFinal: boolean) => void;
+}
+
+export function decodeVideoFileToRamSegments(opts: decodeVideoFileToRamSegmentsOptions): Promise<void> {
+    const { inputFilePath, jobDir, onSegment, onPlaylist } = opts;
+    const segmentSeconds = opts.segmentSeconds ?? 5;
+
+    return new Promise(async (resolve, reject) => {
+        let settled = false;
+        const settle = (err?: Error) => {
+            if (settled) return;
+            settled = true;
+            cleanupWatcher();
+            err ? reject(err) : resolve();
+        };
+
+        const platformName = platform();
+        const ffmpegPath = platformName === "win32"
+            ? path.join(process.cwd(), "src", "ffmpeg-8.1-essentials_build", "bin", "ffmpeg.exe")
+            : path.join(process.cwd(), "src", "ffmpeg-7.0.2-amd64-static", "ffmpeg");
+        const segmentPattern = path.join(jobDir, "segment_%06d.ts");
+        const playlistPath = path.join(jobDir, "index.m3u8");
+
+        const ffmpeg = spawn(ffmpegPath, [
+            "-i", inputFilePath,
+            "-c:v", "libx264",
+            "-c:a", "aac",
+            "-f", "hls",
+            "-hls_time", String(segmentSeconds),
+            "-hls_list_size", "0",
+            "-hls_segment_filename", segmentPattern,
+            playlistPath,
+        ]);
+
+        const stderrChunks: Buffer[] = [];
+        ffmpeg.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+        ffmpeg.on("error", (e) => {
+            console.error("[ffmpeg process]", e);
+            settle(e);
+        });
+        ffmpeg.stdout.on("error", (e) => {
+            console.error("[ffmpeg stdout]", e);
+            settle(e);
+        });
+
+        const emitted = new Set<string>();
+        let watcher: fs.FSWatcher | null = null;
+        let ffmpegExited = false;
+        const cleanupWatcher = () => {
+            watcher?.close();
+            watcher = null;
+        };
+
+        const segmentIndexFromName = (name: string): number => {
+            const m = name.match(/segment_(\d+)\.ts$/);
+            return m ? parseInt(m[1], 10) : -1;
+        };
+
+        const emitAndDelete = async (name: string) => {
+            if (emitted.has(name)) return;
+            emitted.add(name);
+            const fullPath = path.join(jobDir, name);
+            try {
+                const data = await fsp.readFile(fullPath);
+                const stream = new PassThrough();
+                stream.end(data);
+                onSegment({ index: segmentIndexFromName(name), filename: name, stream });
+            } catch (e) {
+                console.error(`[ram-hls] failed reading segment ${name}`, e);
+            } finally {
+                fsp.unlink(fullPath).catch(() => { });
+            }
+        };
+
+        const emitPlaylistIfPresent = async (isFinal: boolean) => {
+            if (!onPlaylist) return;
+            try {
+                const contents = await fsp.readFile(playlistPath, "utf8");
+                onPlaylist(contents, isFinal);
+            } catch {
+                // playlist may not exist yet on the very first events
+            }
+        };
+
+        const checkForNewSegments = async () => {
+            let names: string[];
+            try {
+                names = await fsp.readdir(jobDir);
+            } catch {
+                return;
+            }
+            const segmentFiles = names
+                .filter((n) => /^segment_\d+\.ts$/.test(n))
+                .sort();
+            const safeToEmit = ffmpegExited ? segmentFiles : segmentFiles.slice(0, -1);
+            for (const name of safeToEmit)
+                await emitAndDelete(name);
+            await emitPlaylistIfPresent(ffmpegExited);
+        };
+
+        try {
+            watcher = fs.watch(jobDir, { persistent: true }, () => {
+                checkForNewSegments().catch((e) => console.error("[ram-hls watch]", e));
+            });
+        } catch (e) {
+            settle(e as Error);
+            return;
+        }
+
+        ffmpeg.on("close", async (code) => {
+            ffmpegExited = true;
+            await checkForNewSegments();
+            cleanupWatcher();
+            if (code !== 0) {
+                const stderrOutput = Buffer.concat(stderrChunks).toString();
+                console.error(`[ffmpeg] exited with code ${code}:\n${stderrOutput}`);
+                settle(new Error(`FFmpeg exited with code ${code}`));
+            } else {
+                settle();
+            }
         });
     });
 }

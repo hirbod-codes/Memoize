@@ -18,7 +18,14 @@ class VideoController {
   Future<Response> post({required String title, required File file, String? fileName, ProgressCallback? onSendProgress}) async {
     Talker().info('VideoController.post is called...');
 
-    final response = await _authDio.post('/api/video/?title=$title&fileName=${fileName ?? p.basename(file.path)}', data: await file.readAsBytes(), onSendProgress: onSendProgress);
+    final length = await file.length();
+
+    final response = await _authDio.post(
+      '/api/video/?title=$title&fileName=${fileName ?? p.basename(file.path)}',
+      data: file.openRead(),
+      options: Options(headers: {Headers.contentLengthHeader: length}),
+      onSendProgress: onSendProgress,
+    );
     Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
 
     Talker().info('VideoController.post call ended');

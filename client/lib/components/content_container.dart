@@ -238,7 +238,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                 width: 300,
                 child: Stack(
                   children: [
-                    ImageContainer(imageId: v),
+                    ImageContainer(key: .new(v), imageId: v),
                     if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v, contentValueIndex)),
                   ],
                 ),
@@ -262,7 +262,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                 width: 300,
                 child: Stack(
                   children: [
-                    VideoContainer(videoId: v),
+                    VideoContainer(key: .new(v), videoId: v),
                     if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v, contentValueIndex)),
                   ],
                 ),
@@ -286,7 +286,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                 width: 300,
                 child: Stack(
                   children: [
-                    AudioContainer(audioId: v),
+                    AudioContainer(key: .new(v), audioId: v),
                     if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v, contentValueIndex)),
                   ],
                 ),

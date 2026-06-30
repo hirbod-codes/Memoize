@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:client/components/contents/players/player_interface.dart';
-import 'package:client/components/contents/players/video_player_provider.dart';
 import 'package:video_player/video_player.dart';
 
 /// Web-only backend. Uses the Flutter `video_player` package which

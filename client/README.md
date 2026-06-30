@@ -14,3 +14,9 @@ flutter run -d windows --dart-define=API_URL=https://api.example.com --dart-defi
 ```bash
 dart run build_runner build
 ```
+
+or:
+
+```bash
+dart run build_runner watch --delete-conflicting-outputs
+```

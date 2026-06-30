@@ -4,6 +4,7 @@ import 'package:client/api/models/video.dart';
 import 'package:client/api/video_controller.dart';
 import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
+import 'package:client/components/contents/players/player_factory.dart';
 import 'package:client/components/contents/players/video_player_provider.dart' hide videoControllerProvider;
 import 'package:client/components/contents/players/video_player_screen.dart';
 import 'package:client/components/global/notification_service.dart';
@@ -83,9 +84,16 @@ class _VideosState extends ConsumerState<VideoContainer> {
     return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md), color: Theme.of(context).colorScheme.surfaceContainerHighest),
       clipBehavior: Clip.antiAlias,
-      child: ProviderScope(
-        overrides: [videoPlayerCommandsProvider],
-        child: VideoPlayerScreen(videoId: _video!.id, url: '${AppConfig.apiUrl}/api/Video/file/${_video!.id}/index.m3u8', headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
+      child: Column(
+        mainAxisAlignment: .start,
+        crossAxisAlignment: .stretch,
+        children: [
+          if (_video != null) Padding(padding: const EdgeInsets.all(8.0), child: Text(_video!.title)),
+          AspectRatio(
+            aspectRatio: 9 / 16,
+            child: VideoPlayerScreen(videoId: _video!.id, url: '${AppConfig.apiUrl}/api/Video/file/${_video!.id}/index.m3u8', headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
+          ),
+        ],
       ),
     );
   }
