@@ -9,6 +9,7 @@ import 'package:client/components/button.dart';
 import 'package:client/components/dialogs/folder_file_create_dialog.dart';
 import 'package:client/components/file_manager.dart';
 import 'package:client/components/global/notification_service.dart';
+import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,7 +46,7 @@ class MobileHomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<MobileHomePage> {
   final TextEditingController _searchController = TextEditingController();
-  Filter _filter = .folder;
+  Filter _filter = Filter.folder;
 
   int _folderSkip = 0;
   int _fileSkip = 0;
@@ -101,14 +102,14 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
     final lastId = _location.elementAt(_location.length - 2);
     if (lastId == 'root') {
-      await _paginate(reset: true, filter: .folder);
+      await _paginate(reset: true, filter: Filter.folder);
 
       if (!mounted) return;
       setState(() {
         _location.removeLast();
         _title = null;
         ref.read(foldersAndFilesProvider.notifier).setFiles([]);
-        _filter = .folder;
+        _filter = Filter.folder;
         _resetSearch();
       });
     } else {
@@ -146,7 +147,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
       _search = value;
     });
 
-    _debouncer = Timer(.new(milliseconds: 700), () {
+    _debouncer = Timer(Duration(milliseconds: 700), () {
       _paginate(search: value, reset: true);
     });
   }
@@ -161,7 +162,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
         _fetching = true;
       });
 
-      if (_location.length == 1 || filter == .folder) {
+      if (_location.length == 1 || filter == Filter.folder) {
         final folderController = ref.read(folderControllerProvider);
 
         final folders = await folderController.getPaginated(limit: limit, parentId: parentId, skip: reset ? 0 : _folderSkip, search: search);
@@ -178,7 +179,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
             ref.read(foldersAndFilesProvider.notifier).setFolders([...(ref.read(foldersAndFilesProvider).folders ?? []), ...folders]);
           }
         });
-      } else if (filter == .file) {
+      } else if (filter == Filter.file) {
         final fileController = ref.read(leafControllerProvider);
 
         final files = await fileController.getPaginated(limit: limit, parentId: parentId!, skip: reset ? 0 : _fileSkip, search: search);
@@ -278,7 +279,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
       if (title == null) return;
 
       FoldersAndFiles p = ref.watch(foldersAndFilesProvider.notifier);
-      if (_location.last == 'root' || _filter == .folder) {
+      if (_location.last == 'root' || _filter == Filter.folder) {
         result = await p.addFolder(title, _location.last == 'root' ? null : _location.last);
       } else {
         result = await p.addFile(title, _location.last);
@@ -287,11 +288,11 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
       Talker().error('The _addNew method in HomePage widget throws an error.', e, st);
     } finally {
       if (mounted) {
-        if (result?.status == .failure) {
-          NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to add one ${_filter == .folder ? 'folder' : 'file'}.');
+        if (result?.status == FoldersAndFilesStateResponseStatus.failure) {
+          NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to add one ${_filter == Filter.folder ? 'folder' : 'file'}.');
         }
-        if (result?.status == .success) {
-          NotificationService.showSuccess(context: context, message: 'Successfully added one ${_filter == .folder ? 'folder' : 'file'}.');
+        if (result?.status == FoldersAndFilesStateResponseStatus.success) {
+          NotificationService.showSuccess(context: context, message: 'Successfully added one ${_filter == Filter.folder ? 'folder' : 'file'}.');
         }
         setState(() {
           _adding = false;
@@ -315,18 +316,18 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Column(
-          mainAxisAlignment: .center,
-          crossAxisAlignment: .stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Top Buttons
             Row(
-              mainAxisAlignment: _location.length > 1 ? .spaceBetween : .end,
+              mainAxisAlignment: _location.length > 1 ? MainAxisAlignment.spaceBetween : MainAxisAlignment.end,
               children: [
                 // Back Button
-                if (_location.length > 1) ...[Button(type: .text, iconSize: 28, isLoading: _fetching, icon: Icons.chevron_left, onPressed: _previousLocation)],
+                if (_location.length > 1) ...[Button(type: ButtonType.text, iconSize: 28, isLoading: _fetching, icon: Icons.chevron_left, onPressed: _previousLocation)],
                 // Edit Button
                 Button(
-                  type: .text,
+                  type: ButtonType.text,
                   iconSize: 24,
                   icon: _editing ? Icons.remove_red_eye_outlined : Icons.edit_square,
                   onPressed: () {
@@ -350,7 +351,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
             const SizedBox(height: 16),
 
             // Add new Button
-            if (_editing) Button(type: .elevated, color: .success, icon: Icons.add, label: 'Add New', onPressed: _addNew, isLoading: _adding),
+            if (_editing) Button(type: ButtonType.elevated, color: ThemeColorName.success, icon: Icons.add, label: 'Add New', onPressed: _addNew, isLoading: _adding),
 
             // Tabs
             if (_location.length > 1) ...[
@@ -358,40 +359,40 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
               Container(
                 decoration: BoxDecoration(
-                  border: .fromLTRB(bottom: .new(width: 1, color: theme.outlineVariant)),
+                  border: BoxBorder.fromLTRB(bottom: BorderSide(width: 1, color: theme.outlineVariant)),
                 ),
                 child: Row(
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        border: _filter == .folder ? .fromLTRB(bottom: .new(width: 5, color: theme.primary)) : .fromLTRB(bottom: .new(width: 5, color: Colors.transparent)),
+                        border: _filter == Filter.folder ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary)) : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
                       ),
                       child: Button(
                         label: 'Folders',
                         width: 100,
                         height: 40,
                         radius: 0,
-                        type: .text,
-                        color: _filter == .folder ? .primary : .onSurface,
+                        type: ButtonType.text,
+                        color: _filter == Filter.folder ? ThemeColorName.primary : ThemeColorName.onSurface,
                         onPressed: () {
-                          _onFilterChange(.folder);
+                          _onFilterChange(Filter.folder);
                         },
                       ),
                     ),
 
                     Container(
                       decoration: BoxDecoration(
-                        border: _filter == .file ? .fromLTRB(bottom: .new(width: 5, color: theme.primary)) : .fromLTRB(bottom: .new(width: 5, color: Colors.transparent)),
+                        border: _filter == Filter.file ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary)) : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
                       ),
                       child: Button(
                         label: 'Files',
                         width: 100,
                         height: 40,
                         radius: 0,
-                        type: .text,
-                        color: _filter == .file ? .primary : .onSurface,
+                        type: ButtonType.text,
+                        color: _filter == Filter.file ? ThemeColorName.primary : ThemeColorName.onSurface,
                         onPressed: () {
-                          _onFilterChange(.file);
+                          _onFilterChange(Filter.file);
                         },
                       ),
                     ),
@@ -406,13 +407,13 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                   // Circular progress indicator
                   if (_fetching)
                     Row(
-                      mainAxisAlignment: .center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
                     ),
 
                   // Folders list
                   if (!_fetching)
-                    if (_location.length == 1 || _filter == .folder)
+                    if (_location.length == 1 || _filter == Filter.folder)
                       ListView.builder(
                         shrinkWrap: true,
                         physics: NeverScrollableScrollPhysics(),
@@ -424,24 +425,24 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                               _nextLocation(folders[index]);
                             },
                             child: Padding(
-                              padding: .all(8),
+                              padding: EdgeInsetsGeometry.all(8),
                               child: ListTile(
                                 title: Text(folders[index].title),
                                 trailing: Row(
-                                  mainAxisSize: .min,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     if (_editing) ...[
                                       Button(
                                         isLoading: _deletingFolder == index,
-                                        type: .text,
-                                        color: .error,
+                                        type: ButtonType.text,
+                                        color: ThemeColorName.error,
                                         icon: Icons.remove_circle_outline,
                                         onPressed: () {
                                           _removeFolder(folders[index], index);
                                         },
                                       ),
                                     ],
-                                    Button(type: .text, color: .primary, icon: Icons.chevron_right),
+                                    Button(type: ButtonType.text, color: ThemeColorName.primary, icon: Icons.chevron_right),
                                   ],
                                 ),
                               ),
@@ -452,7 +453,7 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
                   // Files list
                   if (!_fetching)
-                    if (_location.length > 1 && _filter == .file && files != null && files.isNotEmpty)
+                    if (_location.length > 1 && _filter == Filter.file && files != null && files.isNotEmpty)
                       ListView.builder(
                         shrinkWrap: true,
                         physics: NeverScrollableScrollPhysics(),
@@ -476,24 +477,24 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                                 );
                               },
                               child: Padding(
-                                padding: .all(5),
+                                padding: EdgeInsetsGeometry.all(5),
                                 child: ListTile(
                                   title: Text(file.title),
                                   trailing: Row(
-                                    mainAxisSize: .min,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       if (_editing) ...[
                                         Button(
                                           isLoading: _deletingFile == index,
-                                          type: .text,
-                                          color: .error,
+                                          type: ButtonType.text,
+                                          color: ThemeColorName.error,
                                           icon: Icons.remove_circle_outline,
                                           onPressed: () {
                                             _removeFile(file, index);
                                           },
                                         ),
                                       ],
-                                      Button(type: .text, color: .primary, icon: Icons.chevron_right),
+                                      Button(type: ButtonType.text, color: ThemeColorName.primary, icon: Icons.chevron_right),
                                     ],
                                   ),
                                 ),
@@ -509,8 +510,8 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
             if (_hasMore)
               Button(
                 label: 'Load More',
-                type: .outlined,
-                color: .secondary,
+                type: ButtonType.outlined,
+                color: ThemeColorName.secondary,
                 onPressed: () {
                   _paginateMore();
                 },

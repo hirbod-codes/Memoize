@@ -71,10 +71,10 @@ class _ContentState extends ConsumerState<ContentContainer> {
                   if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to remove content.');
                 } finally {
                   if (mounted) {
-                    if (result?.status == .failure) {
+                    if (result?.status == FoldersAndFilesStateResponseStatus.failure) {
                       NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to remove content.');
                     }
-                    if (result?.status == .success) {
+                    if (result?.status == FoldersAndFilesStateResponseStatus.success) {
                       NotificationService.showSuccess(context: context, message: 'Successfully removed content.');
                     }
                     setState(() {
@@ -84,8 +84,8 @@ class _ContentState extends ConsumerState<ContentContainer> {
                 }
               },
               color: theme.error,
-              padding: .all(4),
-              constraints: .new(minWidth: 10, minHeight: 10),
+              padding: EdgeInsetsGeometry.all(4),
+              constraints: BoxConstraints(minWidth: 10, minHeight: 10),
               iconSize: 18,
               style: IconButton.styleFrom(
                 shape: RoundedRectangleBorder(
@@ -97,10 +97,10 @@ class _ContentState extends ConsumerState<ContentContainer> {
     }
 
     switch (widget.content.type) {
-      case .richText:
+      case ContentType.richText:
         return Column(
-          mainAxisAlignment: .start,
-          crossAxisAlignment: .center,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: widget.content.value.asMap().entries.map((e) {
             final contentValueIndex = e.key;
             final v = e.value;
@@ -108,7 +108,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
             return Stack(
               children: [
                 SizedBox(
-                  width: .infinity,
+                  width: double.infinity,
                   child: Card(
                     child: TextEditor(
                       editing: widget.editing,
@@ -117,11 +117,11 @@ class _ContentState extends ConsumerState<ContentContainer> {
                         FoldersAndFilesStateResponse result = await ref.read(foldersAndFilesProvider.notifier).setContentValue(jsonEncode(json), widget.contentIndex, contentValueIndex);
                         if (!mounted) return;
 
-                        if (result.status == .failure) {
+                        if (result.status == FoldersAndFilesStateResponseStatus.failure) {
                           if (mounted) NotificationService.showError(context: context, message: result.message ?? 'Failure while trying to remove content.');
                         }
 
-                        if (result.status == .success) {
+                        if (result.status == FoldersAndFilesStateResponseStatus.success) {
                           if (mounted) NotificationService.showSuccess(context: context, message: 'Successfully removed content.');
                         }
                       },
@@ -134,10 +134,10 @@ class _ContentState extends ConsumerState<ContentContainer> {
           }).toList(),
         );
 
-      case .string:
+      case ContentType.string:
         return Column(
-          mainAxisAlignment: .start,
-          crossAxisAlignment: .stretch,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: 5,
           children: widget.content.value.asMap().entries.map((e) {
             final contentValueIndex = e.key;
@@ -160,7 +160,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                     top: 8,
                     right: 8,
                     child: Row(
-                      crossAxisAlignment: .center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       spacing: 5,
                       children: [
                         if (_isUpdatingString.contains(contentValueIndex)) SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.success)),
@@ -183,10 +183,10 @@ class _ContentState extends ConsumerState<ContentContainer> {
                                 if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to update content.');
                               } finally {
                                 if (mounted) {
-                                  if (result?.status == .failure) {
+                                  if (result?.status == FoldersAndFilesStateResponseStatus.failure) {
                                     NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to update content.');
                                   }
-                                  if (result?.status == .success) {
+                                  if (result?.status == FoldersAndFilesStateResponseStatus.success) {
                                     NotificationService.showSuccess(context: context, message: 'Successfully update content.');
                                   }
                                   setState(() {
@@ -196,8 +196,8 @@ class _ContentState extends ConsumerState<ContentContainer> {
                               }
                             },
                             color: theme.success,
-                            padding: .all(4),
-                            constraints: .new(minWidth: 10, minHeight: 10),
+                            padding: EdgeInsetsGeometry.all(4),
+                            constraints: BoxConstraints(minWidth: 10, minHeight: 10),
                             iconSize: 18,
                             style: IconButton.styleFrom(
                               shape: RoundedRectangleBorder(
@@ -214,7 +214,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
               );
             } else {
               return SizedBox(
-                width: .infinity,
+                width: double.infinity,
                 child: Card(
                   child: Padding(padding: const EdgeInsets.all(16), child: Text(v)),
                 ),
@@ -223,12 +223,12 @@ class _ContentState extends ConsumerState<ContentContainer> {
           }).toList(),
         );
 
-      case .imageId:
+      case ContentType.imageId:
         return SingleChildScrollView(
-          scrollDirection: .horizontal,
+          scrollDirection: Axis.horizontal,
           child: Row(
-            mainAxisAlignment: .start,
-            crossAxisAlignment: .center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             spacing: 10,
             children: widget.content.value.asMap().entries.map((e) {
               final contentValueIndex = e.key;
@@ -238,7 +238,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                 width: 300,
                 child: Stack(
                   children: [
-                    ImageContainer(key: .new(v), imageId: v),
+                    ImageContainer(key: Key(v), imageId: v),
                     if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v, contentValueIndex)),
                   ],
                 ),
@@ -247,12 +247,12 @@ class _ContentState extends ConsumerState<ContentContainer> {
           ),
         );
 
-      case .videoId:
+      case ContentType.videoId:
         return SingleChildScrollView(
-          scrollDirection: .horizontal,
+          scrollDirection: Axis.horizontal,
           child: Row(
-            mainAxisAlignment: .start,
-            crossAxisAlignment: .start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 10,
             children: widget.content.value.asMap().entries.map((e) {
               final contentValueIndex = e.key;
@@ -262,7 +262,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                 width: 300,
                 child: Stack(
                   children: [
-                    VideoContainer(key: .new(v), videoId: v),
+                    VideoContainer(key: Key(v), videoId: v),
                     if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v, contentValueIndex)),
                   ],
                 ),
@@ -271,12 +271,12 @@ class _ContentState extends ConsumerState<ContentContainer> {
           ),
         );
 
-      case .audioId:
+      case ContentType.audioId:
         return SingleChildScrollView(
-          scrollDirection: .horizontal,
+          scrollDirection: Axis.horizontal,
           child: Row(
-            mainAxisAlignment: .start,
-            crossAxisAlignment: .start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 10,
             children: widget.content.value.asMap().entries.map((e) {
               final contentValueIndex = e.key;
@@ -286,7 +286,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                 width: 300,
                 child: Stack(
                   children: [
-                    AudioContainer(key: .new(v), audioId: v),
+                    AudioContainer(key: Key(v), audioId: v),
                     if (widget.editing) Positioned(top: 4, right: 4, child: removeIcon(v, contentValueIndex)),
                   ],
                 ),

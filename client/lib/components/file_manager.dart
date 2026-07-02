@@ -7,6 +7,7 @@ import 'package:client/components/button.dart';
 import 'package:client/components/content_container.dart';
 import 'package:client/components/dialogs/upload/image_upload_dialog.dart';
 import 'package:client/components/dialogs/upload/video_upload_dialog.dart';
+import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,16 +41,16 @@ class _FileManager extends ConsumerState<FileManager> {
       ContentType? type = await showDialog<ContentType?>(context: context, builder: (_) => ChooseContentTypeDialog());
       if (type == null || !mounted) return;
 
-      result = await ref.read(foldersAndFilesProvider.notifier).addContent(.new(type: type, value: []));
+      result = await ref.read(foldersAndFilesProvider.notifier).addContent(Content(type: type, value: []));
     } catch (e) {
       Talker().error('Failure while trying to add new content.', e);
       if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to add new content.');
     } finally {
       if (mounted) {
-        if (result?.status == .failure) {
+        if (result?.status == FoldersAndFilesStateResponseStatus.failure) {
           NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to add new content.');
         }
-        if (result?.status == .success) {
+        if (result?.status == FoldersAndFilesStateResponseStatus.success) {
           NotificationService.showSuccess(context: context, message: 'Successfully added new content.');
         }
         setState(() {
@@ -76,15 +77,15 @@ class _FileManager extends ConsumerState<FileManager> {
       }
 
       switch (contents[index].type) {
-        case .string:
+        case ContentType.string:
           result = await ref.read(foldersAndFilesProvider.notifier).addContentValue('', index);
           break;
 
-        case .richText:
+        case ContentType.richText:
           result = await ref.read(foldersAndFilesProvider.notifier).addContentValue('', index);
           break;
 
-        case .imageId:
+        case ContentType.imageId:
           String? newId = await showDialog<String?>(context: context, builder: (_) => ImageUploadDialog());
           if (newId == null || !mounted) return;
 
@@ -106,10 +107,10 @@ class _FileManager extends ConsumerState<FileManager> {
       if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to add new content.');
     } finally {
       if (mounted) {
-        if (result?.status == .failure) {
+        if (result?.status == FoldersAndFilesStateResponseStatus.failure) {
           NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to add new content.');
         }
-        if (result?.status == .success) {
+        if (result?.status == FoldersAndFilesStateResponseStatus.success) {
           NotificationService.showSuccess(context: context, message: 'Successfully added new content.');
         }
         setState(() {
@@ -131,7 +132,7 @@ class _FileManager extends ConsumerState<FileManager> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: .start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Are you sure?\nthis action is irreversible!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
@@ -140,13 +141,13 @@ class _FileManager extends ConsumerState<FileManager> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Button(type: .text, color: .error, onPressed: () => Navigator.pop(context), label: 'No'),
+                      Button(type: ButtonType.text, color: ThemeColorName.error, onPressed: () => Navigator.pop(context), label: 'No'),
 
                       const SizedBox(width: 8),
 
                       Button(
-                        type: .elevated,
-                        color: .success,
+                        type: ButtonType.elevated,
+                        color: ThemeColorName.success,
                         onPressed: () async {
                           await _contentDelete(index);
                           if (mounted) Navigator.pop(context);
@@ -168,10 +169,10 @@ class _FileManager extends ConsumerState<FileManager> {
     try {
       FoldersAndFilesStateResponse result = await ref.read(foldersAndFilesProvider.notifier).removeContent(index);
       if (mounted) {
-        if (result.status == .failure) {
+        if (result.status == FoldersAndFilesStateResponseStatus.failure) {
           NotificationService.showError(context: context, message: result.message ?? 'Failure while trying to remove content.');
         }
-        if (result.status == .success) {
+        if (result.status == FoldersAndFilesStateResponseStatus.success) {
           NotificationService.showSuccess(context: context, message: 'Successfully removed content.');
         }
         setState(() {
@@ -197,7 +198,7 @@ class _FileManager extends ConsumerState<FileManager> {
         elevation: 4,
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: .all(5),
+          padding: EdgeInsetsGeometry.all(5),
           child: CustomScrollView(
             slivers: [
               SliverPersistentHeader(
@@ -207,17 +208,17 @@ class _FileManager extends ConsumerState<FileManager> {
                   child: Container(
                     decoration: BoxDecoration(color: theme.surface),
                     child: Column(
-                      mainAxisAlignment: .start,
-                      crossAxisAlignment: .stretch,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: 5,
                       children: [
                         // Close button
                         Row(
-                          mainAxisAlignment: .end,
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Button(
-                              type: .text,
-                              color: .onSurface,
+                              type: ButtonType.text,
+                              color: ThemeColorName.onSurface,
                               icon: Icons.close,
                               onPressed: () {
                                 if (widget.onClose != null) widget.onClose!();
@@ -228,11 +229,11 @@ class _FileManager extends ConsumerState<FileManager> {
 
                         // Edit button
                         Row(
-                          mainAxisAlignment: .spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Button(
-                              type: .text,
-                              color: .primary,
+                              type: ButtonType.text,
+                              color: ThemeColorName.primary,
                               icon: Icons.flip,
                               onPressed: () {
                                 setState(() {
@@ -241,8 +242,8 @@ class _FileManager extends ConsumerState<FileManager> {
                               },
                             ),
                             Button(
-                              type: .text,
-                              color: .primary,
+                              type: ButtonType.text,
+                              color: ThemeColorName.primary,
                               icon: _editing ? Icons.remove_red_eye_outlined : Icons.edit_square,
                               onPressed: () {
                                 setState(() {
@@ -260,8 +261,8 @@ class _FileManager extends ConsumerState<FileManager> {
                         if (_editing)
                           Button(
                             isLoading: _isAdding == -1,
-                            type: .outlined,
-                            color: .success,
+                            type: ButtonType.outlined,
+                            color: ThemeColorName.success,
                             onPressed: () {
                               _onContentAdd();
                             },
@@ -277,37 +278,35 @@ class _FileManager extends ConsumerState<FileManager> {
                 delegate: SliverChildBuilderDelegate(
                   childCount: _isTerm ? file.termContents.length : file.definitionContents.length,
                   (context, contentIndex) => Container(
-                    margin: .fromSTEB(0, 0, 0, 15),
-                    clipBehavior: .antiAlias,
+                    margin: EdgeInsetsGeometry.fromSTEB(0, 0, 0, 15),
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
-                      border: .all(color: theme.outlineVariant, width: 1),
+                      border: BoxBorder.all(color: theme.outlineVariant, width: 1),
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
-                        mainAxisAlignment: .start,
-                        crossAxisAlignment: .stretch,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         spacing: 10,
                         children: [
                           Row(
-                            children: [
-                              IconButton(onPressed: () {}, icon: Icon(Icons.image)),
-                            ],
+                            children: [IconButton(onPressed: () {}, icon: Icon(Icons.image))],
                           ),
                           if (_editing)
                             Row(
-                              mainAxisAlignment: .spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Button(
-                                  type: .text,
-                                  color: .success,
+                                  type: ButtonType.text,
+                                  color: ThemeColorName.success,
                                   icon: Icons.add_circle_outline,
                                   iconSize: 24,
                                   isLoading: _isAdding == contentIndex,
                                   onPressed: () => _onContentValueAdd(index: contentIndex),
                                 ),
-                                Button(type: .text, color: .error, icon: Icons.highlight_remove, iconSize: 24, onPressed: () => _onContentDelete(contentIndex)),
+                                Button(type: ButtonType.text, color: ThemeColorName.error, icon: Icons.highlight_remove, iconSize: 24, onPressed: () => _onContentDelete(contentIndex)),
                               ],
                             ),
                           ContentContainer(leafId: file.id, contentIndex: contentIndex, content: _isTerm ? file.termContents[contentIndex] : file.definitionContents[contentIndex], editing: _editing),

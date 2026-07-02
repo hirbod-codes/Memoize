@@ -12,7 +12,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(mainAxisAlignment: .center, spacing: 5, children: [const Text('Settings')]),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, spacing: 5, children: [const Text('Settings')]),
     );
   }
 }

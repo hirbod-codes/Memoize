@@ -29,7 +29,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   bool _controlsVisible = true;
   DateTime _lastInteraction = DateTime.now();
 
-  static const _controlsTimeout = Duration(seconds: 7);
+  static const _controlsTimeout = Duration(seconds: 5);
 
   late final AppVideoPlayer _player;
   late final VideoController? _videoController;
@@ -46,7 +46,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       if (mounted) {
         setState(() {
           _showVideoSurface = state.status != PlayerStatus.idle && state.status != PlayerStatus.loading && state.status != PlayerStatus.error;
-          _loading = state.status == .loading;
+          _loading = state.status == PlayerStatus.loading;
         });
       }
     });
@@ -97,13 +97,13 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       child: Stack(
         children: [
           if (!_showVideoSurface) _AlbumArt(videoId: widget.videoId, accessToken: widget.accessToken),
-
+      
           // ── Video frame fills the whole screen ──────────────────────────
           if (_showVideoSurface)
             Positioned.fill(
               child: VideoSurface(controller: _videoController, player: _player is WebVideoPlayer ? _player : null),
             ),
-
+      
           // ── Bottom controls ─────────────────────────────────────────────
           AnimatedPositioned(
             duration: const Duration(milliseconds: 250),
@@ -113,7 +113,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
             right: 0,
             child: PlayerControls(player: _player, state: _player.state),
           ),
-
+      
           // ── Center spinner while loading ─────────────────────────────────
           if (_loading) Center(child: CircularProgressIndicator(color: Colors.white70)),
         ],
@@ -136,11 +136,7 @@ class _AlbumArt extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 1,
       child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 32, offset: const Offset(0, 16))],
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
         clipBehavior: Clip.antiAlias,
         child: videoId != null && accessToken != null ? Image.network('${AppConfig.apiUrl}/api/video/thumbnail/$videoId', fit: BoxFit.contain, headers: {'Authorization': 'Bearer $accessToken'}) : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
@@ -148,31 +144,31 @@ class _AlbumArt extends StatelessWidget {
   }
 }
 
-class _TopBar extends StatelessWidget {
-  const _TopBar({this.title});
-  final String? title;
+// class _TopBar extends StatelessWidget {
+//   const _TopBar({this.title});
+//   final String? title;
 
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.black87, Colors.transparent]),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
-          children: [
-            if (title != null)
-              Expanded(
-                child: Text(
-                  title!,
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return DecoratedBox(
+//       decoration: const BoxDecoration(
+//         gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.black87, Colors.transparent]),
+//       ),
+//       child: SafeArea(
+//         bottom: false,
+//         child: Row(
+//           children: [
+//             if (title != null)
+//               Expanded(
+//                 child: Text(
+//                   title!,
+//                   style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+//                   overflow: TextOverflow.ellipsis,
+//                 ),
+//               ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }

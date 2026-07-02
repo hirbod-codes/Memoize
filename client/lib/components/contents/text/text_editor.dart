@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:client/components/button.dart';
+import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/foundation.dart';
@@ -44,7 +45,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
         _controller.document = Document.fromJson(json);
       }
     } catch (e) {
-      _controller.document = .new();
+      _controller.document = Document();
       Talker().error('Failure while trying to parse input json for the rich text editor, falling back to empty content for the editor.', e);
     }
 
@@ -53,7 +54,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
         _hasChanged = true;
       });
       _timer?.cancel();
-      _timer = Timer(.new(seconds: 2), () {
+      _timer = Timer(Duration(seconds: 2), () {
         _onSave();
       });
     });
@@ -106,17 +107,17 @@ class _TextEditorState extends ConsumerState<TextEditor> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
-        crossAxisAlignment: .stretch,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 7,
         children: [
           if (widget.editing)
             Container(
-              decoration: BoxDecoration(borderRadius: .circular(AppRadius.md), color: theme.surface),
+              decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.circular(AppRadius.md), color: theme.surface),
               child: QuillSimpleToolbar(
                 controller: _controller,
                 config: QuillSimpleToolbarConfig(
-                  toolbarIconCrossAlignment: .center,
-                  toolbarIconAlignment: .start,
+                  toolbarIconCrossAlignment: WrapCrossAlignment.center,
+                  toolbarIconAlignment: WrapAlignment.start,
                   buttonOptions: QuillSimpleToolbarButtonOptions(
                     base: QuillToolbarBaseButtonOptions(
                       afterButtonPressed: () {
@@ -132,7 +133,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
             ),
 
           Container(
-            decoration: BoxDecoration(borderRadius: .circular(10), color: theme.surface),
+            decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.circular(10), color: theme.surface),
             child: Padding(
               padding: const EdgeInsets.all(4),
               child: QuillEditor.basic(
@@ -146,8 +147,8 @@ class _TextEditorState extends ConsumerState<TextEditor> {
 
           if (widget.editing)
             Row(
-              mainAxisAlignment: .end,
-              children: [Button(type: .text, color: _hasChanged ? .warning : .primary, icon: Icons.save, isLoading: _saving, onPressed: _onSave)],
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [Button(type: ButtonType.text, color: _hasChanged ? ThemeColorName.warning : ThemeColorName.primary, icon: Icons.save, isLoading: _saving, onPressed: _onSave)],
             ),
         ],
       ),

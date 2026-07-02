@@ -45,7 +45,7 @@ class _AudioPlayerScreenState extends ConsumerState<AudioPlayerScreen> {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
-            crossAxisAlignment: .stretch,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 24),
               _AlbumArt(audioId: widget.audioId, accessToken: widget.accessToken),
@@ -55,7 +55,7 @@ class _AudioPlayerScreenState extends ConsumerState<AudioPlayerScreen> {
               Column(
                 children: [
                   Row(
-                    mainAxisAlignment: .end,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [_SpeedControls(state: state)],
                   ),
                   _SeekBar(state: state),

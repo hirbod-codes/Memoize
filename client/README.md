@@ -9,6 +9,12 @@ flutter run -d windows --dart-define=API_URL=https://api.example.com --dart-defi
 flutter run -d windows --dart-define=API_URL=https://api.example.com --dart-define=ENV=dev
 ```
 
+## Run it once after each `flutter pub get`
+
+```bash
+dart run scripts/patch_media_kit.dart
+```
+
 ## Run after change in video_player_provider.dart file run
 
 ```bash

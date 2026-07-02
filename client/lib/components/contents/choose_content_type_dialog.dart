@@ -1,5 +1,6 @@
 import 'package:client/api/models/leaf.dart';
 import 'package:client/components/button.dart';
+import 'package:client/theme/theme_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,7 +12,7 @@ class ChooseContentTypeDialog extends ConsumerStatefulWidget {
 }
 
 class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
-  ContentType selected = .string;
+  ContentType selected = ContentType.string;
 
   Future<void> _done() async {
     Navigator.pop(context, selected);
@@ -27,7 +28,7 @@ class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: .start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 10,
             children: [
               const Text("Choose new content", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -54,7 +55,7 @@ class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
 
                   const SizedBox(width: 8),
 
-                  Button(type: .elevated, color: .secondary, onPressed: _done, label: "Choose"),
+                  Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: _done, label: "Choose"),
                 ],
               ),
             ],

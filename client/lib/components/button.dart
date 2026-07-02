@@ -70,7 +70,7 @@ class Button extends ConsumerWidget {
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          fixedSize: width != null && height != null ? .new(width!, height!) : null,
+          fixedSize: width != null && height != null ? Size(width!, height!) : null,
           foregroundColor: baseColor,
           side: BorderSide(color: baseColor, width: 1),
           shape: shape ?? _shape(),
@@ -103,24 +103,24 @@ class Button extends ConsumerWidget {
               height: height ?? 18,
               child: CircularProgressIndicator(strokeWidth: 2, color: fg),
             )
-          : (icon != null ? Icon(icon, size: min(width ?? .infinity, iconSize), color: fg) : Icon(Icons.add, size: min(width ?? .infinity, iconSize), color: fg)),
+          : (icon != null ? Icon(icon, size: min(width ?? double.infinity, iconSize), color: fg) : Icon(Icons.add, size: min(width ?? double.infinity, iconSize), color: fg)),
     );
   }
 
   Widget _child({required Color textColor}) {
     if (isLoading) {
       return SizedBox(
-        width: min(width ?? .infinity, iconSize),
-        height: min(width ?? .infinity, iconSize),
+        width: min(width ?? double.infinity, iconSize),
+        height: min(width ?? double.infinity, iconSize),
         child: CircularProgressIndicator(strokeWidth: 2, color: textColor),
       );
     }
 
     if (icon == null) {
-      return Text(label ?? "", style: .new(color: textColor));
+      return Text(label ?? "", style: TextStyle(color: textColor));
     }
 
-    List<Widget> children = [Icon(icon, size: min(width ?? .infinity, iconSize), color: textColor)];
+    List<Widget> children = [Icon(icon, size: min(width ?? double.infinity, iconSize), color: textColor)];
     if (label != null) {
       children.add(const SizedBox(width: 8));
       children.add(Text(label ?? ""));

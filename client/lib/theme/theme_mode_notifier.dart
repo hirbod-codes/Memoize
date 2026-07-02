@@ -21,9 +21,9 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   }
 
   static ITheme getTheme(ThemeMode state) {
-    if (state.isDark) return DarkTheme();
-    if (state.isLight) return LightTheme();
-    if (state.isSystem) return DarkTheme();
+    if (state == ThemeMode.dark) return DarkTheme();
+    if (state == ThemeMode.light) return LightTheme();
+    if (state == ThemeMode.system) return DarkTheme();
 
     throw Exception();
   }

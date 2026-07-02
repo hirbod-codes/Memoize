@@ -10,10 +10,10 @@ class PlayerControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     switch (state.status) {
-      case .loading:
+      case PlayerStatus.loading:
         return const _ControlsShell(child: _LoadingIndicator());
 
-      case .error:
+      case PlayerStatus.error:
         return _ControlsShell(child: _ErrorLabel(message: 'Error encountered while playing video'));
 
       default:
@@ -114,7 +114,7 @@ class _BufferingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (state.status != .buffering) return const SizedBox.shrink();
+    if (state.status != PlayerStatus.buffering) return const SizedBox.shrink();
     return const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70));
   }
 }

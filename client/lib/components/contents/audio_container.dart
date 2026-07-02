@@ -72,7 +72,7 @@ class _AudiosState extends ConsumerState<AudioContainer> {
 
     if (_loading) {
       return Row(
-        mainAxisAlignment: .center,
+        mainAxisAlignment:MainAxisAlignment .center,
         children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
       );
     }
@@ -80,13 +80,13 @@ class _AudiosState extends ConsumerState<AudioContainer> {
     if (_audio == null) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(mainAxisAlignment: .center, crossAxisAlignment: .center, children: [Text('Audio not found.')]),
+        child: Column(mainAxisAlignment:MainAxisAlignment .center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Audio not found.')]),
       );
     }
     if (_token == null) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(mainAxisAlignment: .center, crossAxisAlignment: .center, children: [Text('Unauthenticated.')]),
+        child: Column(mainAxisAlignment:MainAxisAlignment .center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Unauthenticated.')]),
       );
     }
 

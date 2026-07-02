@@ -1,5 +1,6 @@
 import 'package:client/components/button.dart';
 import 'package:client/main.dart';
+import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
 
@@ -23,14 +24,14 @@ class NotificationService {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
-              mainAxisAlignment: .spaceBetween,
-              crossAxisAlignment: .center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(message, style: TextStyle(color: theme.onError)),
                 Button(
-                  type: .text,
+                  type: ButtonType.text,
                   icon: Icons.close,
-                  color: .onError,
+                  color: ThemeColorName.onError,
                   onPressed: () {
                     entry?.remove();
                   },
@@ -68,14 +69,14 @@ class NotificationService {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
-              mainAxisAlignment: .spaceBetween,
-              crossAxisAlignment: .center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(message, style: TextStyle(color: theme.onSuccess)),
                 Button(
-                  type: .text,
+                  type: ButtonType.text,
                   icon: Icons.close,
-                  color: .onSuccess,
+                  color: ThemeColorName.onSuccess,
                   onPressed: () {
                     entry?.remove();
                   },

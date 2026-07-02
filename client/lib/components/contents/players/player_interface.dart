@@ -20,19 +20,19 @@ class PlayerState extends Equatable {
 
   String stringifyStatus(PlayerStatus s) {
     switch (s) {
-      case .buffering:
+      case PlayerStatus.buffering:
         return 'buffering';
-      case .ended:
+      case PlayerStatus.ended:
         return 'ended';
-      case .error:
+      case PlayerStatus.error:
         return 'error';
-      case .idle:
+      case PlayerStatus.idle:
         return 'idle';
-      case .loading:
+      case PlayerStatus.loading:
         return 'loading';
-      case .paused:
+      case PlayerStatus.paused:
         return 'paused';
-      case .playing:
+      case PlayerStatus.playing:
         return 'playing';
     }
   }

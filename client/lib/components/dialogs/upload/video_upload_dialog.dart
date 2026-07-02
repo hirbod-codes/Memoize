@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:client/api/video_controller.dart' hide VideoController;
 import 'package:client/components/button.dart';
+import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -189,7 +190,7 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
                     valueListenable: _titleHasText,
                     builder: (context, hasText, _) {
                       final disabled = _videoFile == null || !hasText;
-                      return Button(type: .elevated, color: .secondary, onPressed: disabled ? null : _upload, isLoading: _loading, label: "Upload");
+                      return Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: disabled ? null : _upload, isLoading: _loading, label: "Upload");
                     },
                   ),
                 ],

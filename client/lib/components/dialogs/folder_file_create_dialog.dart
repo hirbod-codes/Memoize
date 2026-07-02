@@ -1,4 +1,5 @@
 import 'package:client/components/button.dart';
+import 'package:client/theme/theme_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -53,7 +54,7 @@ class _FolderFileCreateDialogState extends ConsumerState<FolderFileCreateDialog>
 
                   const SizedBox(width: 8),
 
-                  Button(type: .elevated, color: .secondary, onPressed: isButtonDisabled() ? null : _upload, label: "Upload"),
+                  Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: isButtonDisabled() ? null : _upload, label: "Upload"),
                 ],
               ),
             ],

@@ -1,0 +1,1012 @@
+[ +179 ms] Artifact Instance of 'MaterialFonts' is not required, skipping update.
+[        ] Artifact Instance of 'GradleWrapper' is not required, skipping update.
+[        ] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
+[  +10 ms] Artifact Instance of 'LegacyCanvasKitRemover' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterSdk' is not required, skipping update.
+[        ] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FontSubsetArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'PubDependencies' is not required, skipping update.
+[        ] executing: [C:\flutter/] git -c log.showSignature=false log HEAD -n 1 --pretty=format:%ad --date=iso
+[  +81 ms] Exit code 0 from: git -c log.showSignature=false log HEAD -n 1 --pretty=format:%ad --date=iso
+[        ] 2026-05-29 12:13:22 -0400
+[  +81 ms] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterEngineStamp' is not required, skipping update.
+[        ] Artifact Instance of 'LegacyCanvasKitRemover' is not required, skipping update.
+[   +5 ms] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[ +192 ms] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterEngineStamp' is not required, skipping update.
+[        ] Artifact Instance of 'LegacyCanvasKitRemover' is not required, skipping update.
+[   +6 ms] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[  +79 ms] Skipping pub get: version match.
+[ +875 ms] Found plugin video_player at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player-2.11.1\
+[  +19 ms] Found plugin video_player_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_web-2.4.0\
+[  +34 ms] Found plugin video_player_avfoundation at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_avfoundation-2.9.7\
+[   +6 ms] Found plugin video_player_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_android-2.9.6\
+[  +47 ms] Found plugin media_kit_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_video-1.3.1\
+[   +7 ms] Found plugin wakelock_plus at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\wakelock_plus-1.5.2\
+[  +48 ms] Found plugin package_info_plus at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\package_info_plus-9.0.1\
+[  +59 ms] Found plugin volume_controller at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\volume_controller-3.6.0\
+[  +32 ms] Found plugin screen_brightness_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\screen_brightness_android-2.1.5\
+[  +76 ms] Found plugin media_kit_libs_windows_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_windows_video-1.0.11\
+[  +16 ms] Found plugin media_kit_libs_macos_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_macos_video-1.1.4\
+[  +13 ms] Found plugin media_kit_libs_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_linux-1.2.1\
+[  +16 ms] Found plugin media_kit_libs_ios_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_ios_video-1.1.4\
+[   +3 ms] Found plugin media_kit_libs_android_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_android_video-1.3.8\
+[  +30 ms] Found plugin just_audio at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio-0.9.46\
+[  +28 ms] Found plugin path_provider at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider-2.1.5\
+[  +13 ms] Found plugin path_provider_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_windows-2.3.0\
+[  +29 ms] Found plugin path_provider_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_linux-2.2.1\
+[  +16 ms] Found plugin path_provider_foundation at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_foundation-2.6.0\
+[  +37 ms] Found plugin path_provider_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.3.1\
+[   +3 ms] Found plugin jni_flutter at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\jni_flutter-1.0.1\
+[  +14 ms] Found plugin jni at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\jni-1.0.0\
+[  +13 ms] Found plugin just_audio_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio_web-0.4.16\
+[  +13 ms] Found plugin audio_session at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\audio_session-0.1.25\
+[  +14 ms] Found plugin image_picker at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker-1.2.2\
+[  +14 ms] Found plugin image_picker_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_windows-0.2.2\
+[  +42 ms] Found plugin file_selector_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_windows-0.9.3+5\
+[  +18 ms] Found plugin image_picker_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_macos-0.2.2+1\
+[   +3 ms] Found plugin file_selector_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_macos-0.9.5\
+[   +3 ms] Found plugin image_picker_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_linux-0.2.2\
+[  +13 ms] Found plugin file_selector_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_linux-0.9.4\
+[  +13 ms] Found plugin image_picker_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_ios-0.8.13+6\
+[   +3 ms] Found plugin image_picker_for_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_for_web-3.1.1\
+[  +13 ms] Found plugin image_picker_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+19\
+[  +14 ms] Found plugin flutter_plugin_android_lifecycle at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.35\
+[  +17 ms] Found plugin flutter_secure_storage at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage-10.3.1\
+[  +12 ms] Found plugin flutter_secure_storage_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_windows-4.1.0\
+[  +26 ms] Found plugin flutter_secure_storage_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_web-2.1.1\
+[  +12 ms] Found plugin flutter_secure_storage_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_linux-3.0.1\
+[   +3 ms] Found plugin flutter_secure_storage_darwin at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_darwin-0.3.2\
+[  +50 ms] Found plugin url_launcher at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher-6.3.2\
+[   +3 ms] Found plugin url_launcher_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_windows-3.1.5\
+[  +15 ms] Found plugin url_launcher_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_web-2.4.3\
+[  +13 ms] Found plugin url_launcher_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_macos-3.2.5\
+[   +3 ms] Found plugin url_launcher_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_linux-3.2.2\
+[   +3 ms] Found plugin url_launcher_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_ios-6.4.1\
+[  +13 ms] Found plugin url_launcher_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.32\
+[  +29 ms] Found plugin quill_native_bridge at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge-11.1.0\
+[   +3 ms] Found plugin quill_native_bridge_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_windows-0.0.2\
+[  +28 ms] Found plugin quill_native_bridge_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_web-0.0.2\
+[  +14 ms] Found plugin quill_native_bridge_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_macos-0.0.1\
+[  +14 ms] Found plugin quill_native_bridge_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_ios-0.0.1\
+[  +14 ms] Found plugin quill_native_bridge_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_android-0.0.1+2\
+[  +80 ms] Found plugin flutter_keyboard_visibility_temp_fork at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_temp_fork-0.1.5\
+[  +13 ms] Found plugin flutter_keyboard_visibility_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_windows-1.0.0\
+[  +25 ms] Found plugin flutter_keyboard_visibility_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_macos-1.0.0\
+[   +2 ms] Found plugin flutter_keyboard_visibility_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_linux-1.0.0\
+[  +44 ms] Found plugin file_picker at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.3.10\
+[ +177 ms] Found plugin video_player at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player-2.11.1\
+[   +4 ms] Found plugin video_player_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_web-2.4.0\
+[   +6 ms] Found plugin video_player_avfoundation at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_avfoundation-2.9.7\
+[   +1 ms] Found plugin video_player_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_android-2.9.6\
+[   +7 ms] Found plugin media_kit_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_video-1.3.1\
+[   +1 ms] Found plugin wakelock_plus at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\wakelock_plus-1.5.2\
+[   +5 ms] Found plugin package_info_plus at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\package_info_plus-9.0.1\
+[   +7 ms] Found plugin volume_controller at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\volume_controller-3.6.0\
+[   +4 ms] Found plugin screen_brightness_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\screen_brightness_android-2.1.5\
+[   +8 ms] Found plugin media_kit_libs_windows_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_windows_video-1.0.11\
+[   +2 ms] Found plugin media_kit_libs_macos_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_macos_video-1.1.4\
+[   +1 ms] Found plugin media_kit_libs_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_linux-1.2.1\
+[   +1 ms] Found plugin media_kit_libs_ios_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_ios_video-1.1.4\
+[   +1 ms] Found plugin media_kit_libs_android_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_android_video-1.3.8\
+[   +4 ms] Found plugin just_audio at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio-0.9.46\
+[   +4 ms] Found plugin path_provider at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider-2.1.5\
+[   +1 ms] Found plugin path_provider_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_windows-2.3.0\
+[   +3 ms] Found plugin path_provider_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_linux-2.2.1\
+[   +2 ms] Found plugin path_provider_foundation at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_foundation-2.6.0\
+[   +5 ms] Found plugin path_provider_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.3.1\
+[   +1 ms] Found plugin jni_flutter at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\jni_flutter-1.0.1\
+[   +1 ms] Found plugin jni at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\jni-1.0.0\
+[   +1 ms] Found plugin just_audio_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio_web-0.4.16\
+[   +1 ms] Found plugin audio_session at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\audio_session-0.1.25\
+[   +1 ms] Found plugin image_picker at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker-1.2.2\
+[   +1 ms] Found plugin image_picker_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_windows-0.2.2\
+[   +3 ms] Found plugin file_selector_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_windows-0.9.3+5\
+[   +2 ms] Found plugin image_picker_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_macos-0.2.2+1\
+[   +1 ms] Found plugin file_selector_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_macos-0.9.5\
+[   +1 ms] Found plugin image_picker_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_linux-0.2.2\
+[   +1 ms] Found plugin file_selector_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_linux-0.9.4\
+[   +1 ms] Found plugin image_picker_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_ios-0.8.13+6\
+[   +1 ms] Found plugin image_picker_for_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_for_web-3.1.1\
+[   +1 ms] Found plugin image_picker_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+19\
+[   +2 ms] Found plugin flutter_plugin_android_lifecycle at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.35\
+[   +2 ms] Found plugin flutter_secure_storage at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage-10.3.1\
+[   +1 ms] Found plugin flutter_secure_storage_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_windows-4.1.0\
+[   +2 ms] Found plugin flutter_secure_storage_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_web-2.1.1\
+[   +1 ms] Found plugin flutter_secure_storage_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_linux-3.0.1\
+[   +1 ms] Found plugin flutter_secure_storage_darwin at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_darwin-0.3.2\
+[   +4 ms] Found plugin url_launcher at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher-6.3.2\
+[   +1 ms] Found plugin url_launcher_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_windows-3.1.5\
+[   +2 ms] Found plugin url_launcher_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_web-2.4.3\
+[   +1 ms] Found plugin url_launcher_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_macos-3.2.5\
+[   +1 ms] Found plugin url_launcher_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_linux-3.2.2\
+[   +1 ms] Found plugin url_launcher_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_ios-6.4.1\
+[   +1 ms] Found plugin url_launcher_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.32\
+[   +2 ms] Found plugin quill_native_bridge at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge-11.1.0\
+[   +1 ms] Found plugin quill_native_bridge_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_windows-0.0.2\
+[   +2 ms] Found plugin quill_native_bridge_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_web-0.0.2\
+[   +1 ms] Found plugin quill_native_bridge_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_macos-0.0.1\
+[   +1 ms] Found plugin quill_native_bridge_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_ios-0.0.1\
+[   +1 ms] Found plugin quill_native_bridge_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_android-0.0.1+2\
+[   +6 ms] Found plugin flutter_keyboard_visibility_temp_fork at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_temp_fork-0.1.5\
+[   +1 ms] Found plugin flutter_keyboard_visibility_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_windows-1.0.0\
+[   +2 ms] Found plugin flutter_keyboard_visibility_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_macos-1.0.0\
+[   +1 ms] Found plugin flutter_keyboard_visibility_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_linux-1.0.0\
+[   +5 ms] Found plugin file_picker at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.3.10\
+[  +23 ms] Skipping generating web_plugin_registrant.dart because it is up-to-date.
+[  +95 ms] Found plugin video_player at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player-2.11.1\
+[   +1 ms] Found plugin video_player_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_web-2.4.0\
+[   +4 ms] Found plugin video_player_avfoundation at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_avfoundation-2.9.7\
+[   +1 ms] Found plugin video_player_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_android-2.9.6\
+[   +6 ms] Found plugin media_kit_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_video-1.3.1\
+[   +1 ms] Found plugin wakelock_plus at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\wakelock_plus-1.5.2\
+[   +4 ms] Found plugin package_info_plus at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\package_info_plus-9.0.1\
+[   +5 ms] Found plugin volume_controller at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\volume_controller-3.6.0\
+[   +4 ms] Found plugin screen_brightness_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\screen_brightness_android-2.1.5\
+[   +9 ms] Found plugin media_kit_libs_windows_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_windows_video-1.0.11\
+[   +2 ms] Found plugin media_kit_libs_macos_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_macos_video-1.1.4\
+[   +1 ms] Found plugin media_kit_libs_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_linux-1.2.1\
+[   +1 ms] Found plugin media_kit_libs_ios_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_ios_video-1.1.4\
+[   +1 ms] Found plugin media_kit_libs_android_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_android_video-1.3.8\
+[   +3 ms] Found plugin just_audio at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio-0.9.46\
+[   +2 ms] Found plugin path_provider at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider-2.1.5\
+[   +1 ms] Found plugin path_provider_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_windows-2.3.0\
+[   +2 ms] Found plugin path_provider_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_linux-2.2.1\
+[   +2 ms] Found plugin path_provider_foundation at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_foundation-2.6.0\
+[   +5 ms] Found plugin path_provider_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.3.1\
+[   +1 ms] Found plugin jni_flutter at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\jni_flutter-1.0.1\
+[   +1 ms] Found plugin jni at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\jni-1.0.0\
+[   +1 ms] Found plugin just_audio_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio_web-0.4.16\
+[   +1 ms] Found plugin audio_session at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\audio_session-0.1.25\
+[   +1 ms] Found plugin image_picker at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker-1.2.2\
+[   +1 ms] Found plugin image_picker_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_windows-0.2.2\
+[   +2 ms] Found plugin file_selector_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_windows-0.9.3+5\
+[   +2 ms] Found plugin image_picker_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_macos-0.2.2+1\
+[   +1 ms] Found plugin file_selector_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_macos-0.9.5\
+[   +1 ms] Found plugin image_picker_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_linux-0.2.2\
+[   +1 ms] Found plugin file_selector_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_linux-0.9.4\
+[   +1 ms] Found plugin image_picker_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_ios-0.8.13+6\
+[   +1 ms] Found plugin image_picker_for_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_for_web-3.1.1\
+[   +1 ms] Found plugin image_picker_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+19\
+[   +1 ms] Found plugin flutter_plugin_android_lifecycle at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.35\
+[   +2 ms] Found plugin flutter_secure_storage at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage-10.3.1\
+[   +1 ms] Found plugin flutter_secure_storage_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_windows-4.1.0\
+[   +2 ms] Found plugin flutter_secure_storage_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_web-2.1.1\
+[   +1 ms] Found plugin flutter_secure_storage_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_linux-3.0.1\
+[   +1 ms] Found plugin flutter_secure_storage_darwin at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_darwin-0.3.2\
+[   +3 ms] Found plugin url_launcher at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher-6.3.2\
+[   +1 ms] Found plugin url_launcher_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_windows-3.1.5\
+[   +2 ms] Found plugin url_launcher_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_web-2.4.3\
+[   +1 ms] Found plugin url_launcher_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_macos-3.2.5\
+[   +1 ms] Found plugin url_launcher_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_linux-3.2.2\
+[   +1 ms] Found plugin url_launcher_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_ios-6.4.1\
+[   +1 ms] Found plugin url_launcher_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.32\
+[   +2 ms] Found plugin quill_native_bridge at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge-11.1.0\
+[   +1 ms] Found plugin quill_native_bridge_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_windows-0.0.2\
+[   +2 ms] Found plugin quill_native_bridge_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_web-0.0.2\
+[   +1 ms] Found plugin quill_native_bridge_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_macos-0.0.1\
+[   +1 ms] Found plugin quill_native_bridge_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_ios-0.0.1\
+[   +1 ms] Found plugin quill_native_bridge_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_android-0.0.1+2\
+[   +6 ms] Found plugin flutter_keyboard_visibility_temp_fork at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_temp_fork-0.1.5\
+[   +1 ms] Found plugin flutter_keyboard_visibility_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_windows-1.0.0\
+[   +2 ms] Found plugin flutter_keyboard_visibility_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_macos-1.0.0\
+[   +1 ms] Found plugin flutter_keyboard_visibility_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_linux-1.0.0\
+[   +5 ms] Found plugin file_picker at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.3.10\
+[ +236 ms] Generating C:\projects\Memoize\client\android\app\src\main\java\io\flutter\plugins\GeneratedPluginRegistrant.java
+[   +3 ms] Skipping generating GeneratedPluginRegistrant.java because it is up-to-date.
+[   +8 ms] Skipping generating generated_plugin_registrant.h because it is up-to-date.
+[   +1 ms] Skipping generating generated_plugin_registrant.cc because it is up-to-date.
+[   +2 ms] Skipping generating generated_plugins.cmake because it is up-to-date.
+[   +3 ms] Skipping generating generated_plugin_registrant.h because it is up-to-date.
+[   +1 ms] Skipping generating generated_plugin_registrant.cc because it is up-to-date.
+[   +1 ms] Skipping generating generated_plugins.cmake because it is up-to-date.
+[   +4 ms] Skipping generating GeneratedPluginRegistrant.h because it is up-to-date.
+[   +2 ms] Skipping generating GeneratedPluginRegistrant.m because it is up-to-date.
+[   +2 ms] Skipping generating GeneratedPluginRegistrant.swift because it is up-to-date.
+[ +165 ms] Initializing file store
+[  +18 ms] Skipping target: gen_localizations
+[   +4 ms] gen_dart_plugin_registrant: Starting due to {InvalidatedReasonKind.inputChanged: The following inputs have updated contents: C:\projects\Memoize\client\.dart_tool\package_config.json,C:\projects\Memoize\client\.dart_tool\flutter_build\dart_plugin_registrant.dart}
+[ +101 ms] Found plugin video_player at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player-2.11.1\
+[   +1 ms] Found plugin video_player_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_web-2.4.0\
+[   +3 ms] Found plugin video_player_avfoundation at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_avfoundation-2.9.7\
+[   +1 ms] Found plugin video_player_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_android-2.9.6\
+[   +5 ms] Found plugin media_kit_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_video-1.3.1\
+[   +1 ms] Found plugin wakelock_plus at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\wakelock_plus-1.5.2\
+[   +3 ms] Found plugin package_info_plus at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\package_info_plus-9.0.1\
+[   +5 ms] Found plugin volume_controller at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\volume_controller-3.6.0\
+[   +3 ms] Found plugin screen_brightness_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\screen_brightness_android-2.1.5\
+[   +6 ms] Found plugin media_kit_libs_windows_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_windows_video-1.0.11\
+[   +1 ms] Found plugin media_kit_libs_macos_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_macos_video-1.1.4\
+[   +1 ms] Found plugin media_kit_libs_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_linux-1.2.1\
+[   +1 ms] Found plugin media_kit_libs_ios_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_ios_video-1.1.4\
+[   +1 ms] Found plugin media_kit_libs_android_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_android_video-1.3.8\
+[   +2 ms] Found plugin just_audio at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio-0.9.46\
+[   +2 ms] Found plugin path_provider at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider-2.1.5\
+[   +2 ms] Found plugin path_provider_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_windows-2.3.0\
+[   +4 ms] Found plugin path_provider_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_linux-2.2.1\
+[   +1 ms] Found plugin path_provider_foundation at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_foundation-2.6.0\
+[   +4 ms] Found plugin path_provider_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.3.1\
+[   +1 ms] Found plugin jni_flutter at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\jni_flutter-1.0.1\
+[   +1 ms] Found plugin jni at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\jni-1.0.0\
+[   +1 ms] Found plugin just_audio_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio_web-0.4.16\
+[   +1 ms] Found plugin audio_session at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\audio_session-0.1.25\
+[   +1 ms] Found plugin image_picker at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker-1.2.2\
+[   +1 ms] Found plugin image_picker_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_windows-0.2.2\
+[   +2 ms] Found plugin file_selector_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_windows-0.9.3+5\
+[   +1 ms] Found plugin image_picker_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_macos-0.2.2+1\
+[   +1 ms] Found plugin file_selector_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_macos-0.9.5\
+[   +1 ms] Found plugin image_picker_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_linux-0.2.2\
+[   +1 ms] Found plugin file_selector_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_linux-0.9.4\
+[   +1 ms] Found plugin image_picker_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_ios-0.8.13+6\
+[   +1 ms] Found plugin image_picker_for_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_for_web-3.1.1\
+[   +1 ms] Found plugin image_picker_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+19\
+[   +1 ms] Found plugin flutter_plugin_android_lifecycle at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.35\
+[   +2 ms] Found plugin flutter_secure_storage at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage-10.3.1\
+[   +1 ms] Found plugin flutter_secure_storage_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_windows-4.1.0\
+[   +2 ms] Found plugin flutter_secure_storage_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_web-2.1.1\
+[   +1 ms] Found plugin flutter_secure_storage_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_linux-3.0.1\
+[   +1 ms] Found plugin flutter_secure_storage_darwin at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_darwin-0.3.2\
+[   +3 ms] Found plugin url_launcher at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher-6.3.2\
+[   +1 ms] Found plugin url_launcher_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_windows-3.1.5\
+[   +2 ms] Found plugin url_launcher_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_web-2.4.3\
+[   +1 ms] Found plugin url_launcher_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_macos-3.2.5\
+[   +1 ms] Found plugin url_launcher_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_linux-3.2.2\
+[   +1 ms] Found plugin url_launcher_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_ios-6.4.1\
+[   +1 ms] Found plugin url_launcher_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.32\
+[   +2 ms] Found plugin quill_native_bridge at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge-11.1.0\
+[   +1 ms] Found plugin quill_native_bridge_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_windows-0.0.2\
+[   +2 ms] Found plugin quill_native_bridge_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_web-0.0.2\
+[   +1 ms] Found plugin quill_native_bridge_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_macos-0.0.1\
+[   +1 ms] Found plugin quill_native_bridge_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_ios-0.0.1\
+[   +1 ms] Found plugin quill_native_bridge_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_android-0.0.1+2\
+[   +6 ms] Found plugin flutter_keyboard_visibility_temp_fork at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_temp_fork-0.1.5\
+[   +1 ms] Found plugin flutter_keyboard_visibility_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_windows-1.0.0\
+[   +2 ms] Found plugin flutter_keyboard_visibility_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_macos-1.0.0\
+[   +1 ms] Found plugin flutter_keyboard_visibility_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_linux-1.0.0\
+[   +6 ms] Found plugin file_picker at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.3.10\
+[  +14 ms] Skipping generating dart_plugin_registrant.dart because it is up-to-date.
+[        ] gen_dart_plugin_registrant: Complete
+[   +2 ms] Skipping target: _composite
+[   +3 ms] complete
+[   +6 ms] Launching lib\main.dart on Windows in debug mode...
+[   +7 ms] C:\flutter\bin\cache\dart-sdk\bin\dartaotruntime.exe C:\flutter\bin\cache\dart-sdk\bin\snapshots\frontend_server_aot.dart.snapshot --sdk-root C:\flutter\bin\cache\artifacts\engine\common\flutter_patched_sdk/ --incremental --target=flutter --experimental-emit-debug-metadata -DAPI_URL=https://localhost:3000 -DENV=dev -DFLUTTER_VERSION=3.44.1 -DFLUTTER_CHANNEL=stable -DFLUTTER_GIT_URL=https://github.com/flutter/flutter.git -DFLUTTER_FRAMEWORK_REVISION=924134a44c -DFLUTTER_ENGINE_REVISION=c416acfeb8 -DFLUTTER_DART_VERSION=3.12.1 --output-dill C:\Users\hirbod\AppData\Local\Temp\flutter_tools.d1f3aa51\flutter_tool.85294948\app.dill --packages C:\projects\Memoize\client\.dart_tool\package_config.json -Ddart.vm.profile=false -Ddart.vm.product=false --enable-asserts --track-widget-creation --filesystem-scheme org-dartlang-root --initialize-from-dill build\6f21bb491bf665b480a432bf97aaafeb.cache.dill.track.dill --source file:///C:/projects/Memoize/client/.dart_tool/flutter_build/dart_plugin_registrant.dart --source package:flutter/src/dart_plugin_registrant.dart -Dflutter.dart_plugin_registrant=file:///C:/projects/Memoize/client/.dart_tool/flutter_build/dart_plugin_registrant.dart --verbosity=error --enable-experiment=alternative-invalidation-strategy
+[  +45 ms] executing: C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe -format json -products * -utf8 -latest -version 16 -requires Microsoft.VisualStudio.Workload.NativeDesktop Microsoft.VisualStudio.Component.VC.Tools.x86.x64 Microsoft.VisualStudio.Component.VC.CMake.Project
+[  +98 ms] Exit code 0 from: C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe -format json -products * -utf8 -latest -version 16 -requires Microsoft.VisualStudio.Workload.NativeDesktop Microsoft.VisualStudio.Component.VC.Tools.x86.x64 Microsoft.VisualStudio.Component.VC.CMake.Project
+[        ] [
+             {
+               "instanceId": "40141681",
+               "installDate": "2026-06-05T12:18:52Z",
+               "installationName": "VisualStudio/18.6.2+11822.322",
+               "installationPath": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community",
+               "installationVersion": "18.6.11822.322",
+               "productId": "Microsoft.VisualStudio.Product.Community",
+               "productPath": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\devenv.exe",
+               "state": 4294967295,
+               "isComplete": true,
+               "isLaunchable": true,
+               "isPrerelease": false,
+               "isRebootRequired": false,
+               "displayName": "Visual Studio Community 2026",
+               "description": "Everything you need to build modern apps – free for you, built for impact.",
+               "channelId": "VisualStudio.18.Release",
+               "channelUri": "https://aka.ms/vs/18/stable/channel",
+               "enginePath": "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\resources\\app\\ServiceHub\\Services\\Microsoft.VisualStudio.Setup.Service",
+               "expirationDate": "2026-08-20T17:00:00+00:00",
+               "installedChannelId": "VisualStudio.18.Release",
+               "installedChannelUri": "https://aka.ms/vs/18/stable/channel",
+               "releaseNotes": "https://docs.microsoft.com/en-us/visualstudio/releases/18/release-notes-v18.6#18.6.2",
+               "resolvedInstallationPath": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community",
+               "retirementDate": "2026-11-18T17:00:00+00:00",
+               "thirdPartyNotices": "https://go.microsoft.com/fwlink/?LinkId=661480",
+               "updateDate": "2026-06-05T12:18:52.762367Z",
+               "catalog": {
+                 "buildBranch": "stable",
+                 "buildVersion": "18.6.11822.322",
+                 "featureReleaseMonth": "05",
+                 "featureReleaseYear": "2026",
+                 "id": "VisualStudio/18.6.2+11822.322",
+                 "includeBuildVersionInDisplayVersion": "False",
+                 "localBuild": "build-lab",
+                 "manifestName": "VisualStudio",
+                 "manifestType": "installer",
+                 "productDisplayVersion": "18.6.2",
+                 "productLine": "Dev18",
+                 "productLineVersion": "18",
+                 "productMilestone": "RTW",
+                 "productMilestoneIsPreRelease": "False",
+                 "productName": "Visual Studio",
+                 "productPatchVersion": "2",
+                 "productPreReleaseMilestoneSuffix": "1.0",
+                 "productRelease": "RTW",
+                 "productSemanticVersion": "18.6.2+11822.322",
+                 "requiredEngineVersion": "4.6.58.48107"
+               },
+               "properties": {
+                 "campaignId": "2500:f4ea1d2d786142f8b261c778d1bf563c",
+                 "canceled": "0",
+                 "channelManifestId": "VisualStudio.18.Release/18.6.2+11822.322",
+                 "includeRecommended": "1",
+                 "nickname": "",
+                 "setupEngineFilePath": "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\setup.exe"
+               }
+             }
+           ]
+[   +8 ms] Building Windows application...
+[ +120 ms] <- compile package:client/main.dart
+[   +1 ms] executing: C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe -S C:\projects\Memoize\client\windows -B C:\projects\Memoize\client\build\windows\x64 -G Visual Studio 18 2026 -A x64 -DFLUTTER_TARGET_PLATFORM=windows-x64
+[  +79 ms] -- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.19044.
+[ +243 ms] -- Skipping MD5 integrity check (patched).
+[        ] -- Directory C:/projects/Memoize/client/build/windows/x64/libmpv exists but is empty!
+[        ] -- Extracting mpv-dev-x86_64-20230924-git-652a1dd.7z...
+[        ] -- Skipping MD5 integrity check (patched).
+[        ] -- Directory C:/projects/Memoize/client/build/windows/x64/ANGLE exists but is empty!
+[        ] -- Extracting ANGLE.7z...
+[ +315 ms] -- Could NOT find JNI (missing: JAVA_INCLUDE_PATH JAVA_INCLUDE_PATH2 JVM) 
+[   +1 ms] -- Configuring done (0.6s)
+[ +450 ms] -- Generating done (0.4s)
+[   +4 ms] -- Build files have been written to: C:/projects/Memoize/client/build/windows/x64
+[  +12 ms] executing: C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe --build C:\projects\Memoize\client\build\windows\x64 --config Debug --target INSTALL --verbose
+[  +93 ms] Change Dir: 'C:/projects/Memoize/client/build/windows/x64'
+[        ] Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/18/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" INSTALL.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
+[ +115 ms] MSBuild version 18.6.3+84d3e95b4 for .NET Framework
+[  +62 ms] Build started 7/1/2026 9:56:14 AM.
+[ +283 ms] Project "C:\projects\Memoize\client\build\windows\x64\INSTALL.vcxproj" on node 1 (default targets).
+[        ] Project "C:\projects\Memoize\client\build\windows\x64\INSTALL.vcxproj" (1) is building "C:\projects\Memoize\client\build\windows\x64\ZERO_CHECK.vcxproj" (2) on node 1 (default targets).
+[        ] PrepareForBuild:
+[        ]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[   +9 ms] InitializeBuildStatus:
+[        ]   Creating "x64\Debug\ZERO_CHECK\ZERO_CHECK.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+[        ]   Touching "x64\Debug\ZERO_CHECK\ZERO_CHECK.tlog\unsuccessfulbuild".
+[  +32 ms] CustomBuild:
+[        ]   All outputs are up-to-date.
+[ +132 ms]   1>Checking Build System
+[ +126 ms] FinalizeBuildStatus:
+[        ]   Deleting file "x64\Debug\ZERO_CHECK\ZERO_CHECK.tlog\unsuccessfulbuild".
+[        ]   Touching "x64\Debug\ZERO_CHECK\ZERO_CHECK.tlog\ZERO_CHECK.lastbuildstate".
+[   +2 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\ZERO_CHECK.vcxproj" (default targets).
+[  +93 ms] Project "C:\projects\Memoize\client\build\windows\x64\INSTALL.vcxproj" (1) is building "C:\projects\Memoize\client\build\windows\x64\ALL_BUILD.vcxproj" (3) on node 1 (default targets).
+[        ] Project "C:\projects\Memoize\client\build\windows\x64\ALL_BUILD.vcxproj" (3) is building "C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_libs_windows_video\media_kit_libs_windows_video_ANGLE_EXTRACT.vcxproj" (4) on node 1 (default targets).
+[        ] PrepareForBuild:
+[        ]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[   +6 ms] InitializeBuildStatus:
+[        ]   Touching "x64\Debug\media_kit_libs_windows_video_ANGLE_EXTRACT\media_ki.7789808A.tlog\unsuccessfulbuild".
+[   +3 ms] CustomBuild:
+[        ]   All outputs are up-to-date.
+[  +14 ms] PostBuildEvent:
+[        ]   setlocal
+[        ]   cd C:\projects\Memoize\client\build\windows\x64\ANGLE
+[        ]   if %errorlevel% neq 0 goto :cmEnd
+[        ]   C:
+[        ]   if %errorlevel% neq 0 goto :cmEnd
+[        ]   7z x C:/projects/Memoize/client/build/windows/x64/ANGLE.7z -o"C:/projects/Memoize/client/build/windows/x64/ANGLE" -y
+[        ]   if %errorlevel% neq 0 goto :cmEnd
+[        ]   :cmEnd
+[        ]   endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+[        ]   :cmErrorLevel
+[        ]   exit /b %1
+[        ]   :cmDone
+[        ]   if %errorlevel% neq 0 goto :VCEnd
+[        ]   :VCEnd
+[ +148 ms]   7-Zip 24.09 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29
+[        ]   Scanning the drive for archives:
+[        ]   1 file, 5035414 bytes (4918 KiB)
+[        ]   Extracting archive: C:\projects\Memoize\client\build\windows\x64\ANGLE.7z
+[ +347 ms]   --
+[        ]   Path = C:\projects\Memoize\client\build\windows\x64\ANGLE.7z
+[        ]   Type = 7z
+[        ]   Physical Size = 5035414
+[        ]   Headers Size = 593
+[        ]   Method = LZMA2:24 BCJ
+[        ]   Solid = +
+[        ]   Blocks = 2
+[        ]   Everything is Ok
+[        ]   Folders: 5
+[        ]   Files: 21
+[        ]   Size:       20717424
+[        ]   Compressed: 5035414
+[  +45 ms] FinalizeBuildStatus:
+[        ]   Deleting file "x64\Debug\media_kit_libs_windows_video_ANGLE_EXTRACT\media_ki.7789808A.tlog\unsuccessfulbuild".
+[        ]   Touching "x64\Debug\media_kit_libs_windows_video_ANGLE_EXTRACT\media_ki.7789808A.tlog\media_kit_libs_windows_video_ANGLE_EXTRACT.lastbuildstate".
+[   +1 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_libs_windows_video\media_kit_libs_windows_video_ANGLE_EXTRACT.vcxproj" (default targets).
+[  +47 ms] Project "C:\projects\Memoize\client\build\windows\x64\ALL_BUILD.vcxproj" (3) is building "C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_libs_windows_video\media_kit_libs_windows_video_LIBMPV_EXTRACT.vcxproj" (5) on node 1 (default targets).
+[        ] PrepareForBuild:
+[        ]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[   +6 ms] InitializeBuildStatus:
+[        ]   Touching "x64\Debug\media_kit_libs_windows_video_LIBMPV_EXTRACT\media_ki.DF1E2B6A.tlog\unsuccessfulbuild".
+[   +5 ms] CustomBuild:
+[        ]   All outputs are up-to-date.
+[  +11 ms] PostBuildEvent:
+[        ]   setlocal
+[        ]   cd C:\projects\Memoize\client\build\windows\x64\libmpv
+[        ]   if %errorlevel% neq 0 goto :cmEnd
+[        ]   C:
+[        ]   if %errorlevel% neq 0 goto :cmEnd
+[        ]   7z x C:/projects/Memoize/client/build/windows/x64/mpv-dev-x86_64-20230924-git-652a1dd.7z -o"C:/projects/Memoize/client/build/windows/x64/libmpv" -y
+[        ]   if %errorlevel% neq 0 goto :cmEnd
+[        ]   :cmEnd
+[        ]   endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+[        ]   :cmErrorLevel
+[        ]   exit /b %1
+[        ]   :cmDone
+[        ]   if %errorlevel% neq 0 goto :VCEnd
+[        ]   :VCEnd
+[  +84 ms]   7-Zip 24.09 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29
+[        ]   Scanning the drive for archives:
+[        ]   1 file, 8785710 bytes (8580 KiB)
+[        ]   Extracting archive: C:\projects\Memoize\client\build\windows\x64\mpv-dev-x86_64-20230924-git-652a1dd.7z
+[ +546 ms]   --
+[        ]   Path = C:\projects\Memoize\client\build\windows\x64\mpv-dev-x86_64-20230924-git-652a1dd.7z
+[        ]   Type = 7z
+[        ]   Physical Size = 8785710
+[        ]   Headers Size = 352
+[        ]   Method = LZMA2:25 LZMA:20 BCJ2
+[        ]   Solid = +
+[        ]   Blocks = 2
+[        ]   Everything is Ok
+[        ]   Folders: 2
+[        ]   Files: 6
+[        ]   Size:       30194357
+[        ]   Compressed: 8785710
+[  +12 ms] FinalizeBuildStatus:
+[        ]   Deleting file "x64\Debug\media_kit_libs_windows_video_LIBMPV_EXTRACT\media_ki.DF1E2B6A.tlog\unsuccessfulbuild".
+[        ]   Touching "x64\Debug\media_kit_libs_windows_video_LIBMPV_EXTRACT\media_ki.DF1E2B6A.tlog\media_kit_libs_windows_video_LIBMPV_EXTRACT.lastbuildstate".
+[   +1 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_libs_windows_video\media_kit_libs_windows_video_LIBMPV_EXTRACT.vcxproj" (default targets).
+[ +103 ms] Project "C:\projects\Memoize\client\build\windows\x64\ALL_BUILD.vcxproj" (3) is building "C:\projects\Memoize\client\build\windows\x64\runner\client.vcxproj" (6) on node 1 (default targets).
+[        ] Project "C:\projects\Memoize\client\build\windows\x64\runner\client.vcxproj" (6) is building "C:\projects\Memoize\client\build\windows\x64\flutter\flutter_assemble.vcxproj" (7) on node 1 (default targets).
+[        ] PrepareForBuild:
+[        ]   Creating directory "x64\Debug\flutter_assemble\".
+[   +3 ms]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[        ]   Creating directory "x64\Debug\flutter_assemble\flutter_assemble.tlog\".
+[   +3 ms] InitializeBuildStatus:
+[        ]   Creating "x64\Debug\flutter_assemble\flutter_assemble.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+[        ]   Touching "x64\Debug\flutter_assemble\flutter_assemble.tlog\unsuccessfulbuild".
+[   +1 ms] ComputeCustomBuildOutput:
+[        ]   Creating directory "C:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\".
+[   +2 ms] CustomBuild:
+[        ]   "The build of 'C:\projects\Memoize\client\build\windows\x64\CMakeFiles\77891190a1eac6c9c4040c6dff6e7710\flutter_assemble.rule' depends on 'C:\PROJECTS\MEMOIZE\CLIENT\WINDOWS\FLUTTER\EPHEMERAL\FLUTTER_WINDOWS.DLL' which is produced by the build of 'C:\projects\Memoize\client\build\windows\x64\CMakeFiles\f36cb20e07f949f846cbcd028b949915\flutter_windows.dll.rule'. The items cannot be built in parallel."
+[  +56 ms]   Generating C:/projects/Memoize/client/windows/flutter/ephemeral/flutter_windows.dll, C:/projects/Memoize/client/windows/flutter/ephemeral/flutter_export.h, C:/projects/Memoize/client/windows/flutter/ephemeral/flutter_windows.h, C:/projects/Memoize/client/windows/flutter/ephemeral/flutter_messenger.h, C:/projects/Memoize/client/windows/flutter/ephemeral/flutter_plugin_registrar.h, C:/projects/Memoize/client/windows/flutter/ephemeral/flutter_texture_registrar.h, C:/projects/Memoize/client/windows/flutter/ephemeral/cpp_client_wrapper/core_implementations.cc, C:/projects/Memoize/client/windows/flutter/ephemeral/cpp_client_wrapper/standard_codec.cc, C:/projects/Memoize/client/windows/flutter/ephemeral/cpp_client_wrapper/plugin_registrar.cc, C:/projects/Memoize/client/windows/flutter/ephemeral/cpp_client_wrapper/flutter_engine.cc, C:/projects/Memoize/client/windows/flutter/ephemeral/cpp_client_wrapper/flutter_view_controller.cc, _phony_
+[+2008 ms]   [ +187 ms] Artifact Instance of 'MaterialFonts' is not required, skipping update.
+[        ]   [   +1 ms] Artifact Instance of 'GradleWrapper' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
+[        ]   [   +1 ms] Artifact Instance of 'LegacyCanvasKitRemover' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterSdk' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FontSubsetArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'PubDependencies' is not required, skipping update.
+[   +8 ms]   [  +22 ms] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterEngineStamp' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'LegacyCanvasKitRemover' is not required, skipping update.
+[   +4 ms]   [   +5 ms] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[ +121 ms]   [ +121 ms] Artifact Instance of 'MaterialFonts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'GradleWrapper' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterEngineStamp' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'LegacyCanvasKitRemover' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterSdk' is not required, skipping update.
+[   +3 ms]   [   +3 ms] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'FontSubsetArtifacts' is not required, skipping update.
+[        ]   [        ] Artifact Instance of 'PubDependencies' is not required, skipping update.
+[  +30 ms]   [  +30 ms] Initializing file store
+[  +50 ms]   [  +50 ms] dart_build: Starting due to {}
+[   +2 ms]   [   +3 ms] Skipping target: gen_localizations
+[   +8 ms]   [   +7 ms] gen_dart_plugin_registrant: Starting due to {InvalidatedReasonKind.outputSetAddition: The following outputs were added to the output set: C:\projects\Memoize\client\.dart_tool\flutter_build\dart_plugin_registrant.dart, InvalidatedReasonKind.inputChanged: The following inputs have updated contents: C:\projects\Memoize\client\.dart_tool\package_config.json}
+[   +8 ms]   [   +8 ms] unpack_windows: Starting due to {}
+[+1169 ms]   [+1169 ms] unpack_windows: Complete
+[+5765 ms]   [+5765 ms] executing: C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe -format json -products * -utf8 -latest -version 16 -requires Microsoft.VisualStudio.Workload.NativeDesktop Microsoft.VisualStudio.Component.VC.Tools.x86.x64 Microsoft.VisualStudio.Component.VC.CMake.Project
+[  +63 ms]   [  +63 ms] Exit code 0 from: C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe -format json -products * -utf8 -latest -version 16 -requires Microsoft.VisualStudio.Workload.NativeDesktop Microsoft.VisualStudio.Component.VC.Tools.x86.x64 Microsoft.VisualStudio.Component.VC.CMake.Project
+[   +5 ms]   [        ] [
+[        ]                {
+[        ]                  "instanceId": "40141681",
+[        ]                  "installDate": "2026-06-05T12:18:52Z",
+[        ]                  "installationName": "VisualStudio/18.6.2+11822.322",
+[        ]                  "installationPath": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community",
+[        ]                  "installationVersion": "18.6.11822.322",
+[        ]                  "productId": "Microsoft.VisualStudio.Product.Community",
+[        ]                  "productPath": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\devenv.exe",
+[        ]                  "state": 4294967295,
+[        ]                  "isComplete": true,
+[        ]                  "isLaunchable": true,
+[        ]                  "isPrerelease": false,
+[        ]                  "isRebootRequired": false,
+[        ]                  "displayName": "Visual Studio Community 2026",
+[        ]                  "description": "Everything you need to build modern apps – free for you, built for impact.",
+[        ]                  "channelId": "VisualStudio.18.Release",
+[        ]                  "channelUri": "https://aka.ms/vs/18/stable/channel",
+[        ]                  "enginePath": "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\resources\\app\\ServiceHub\\Services\\Microsoft.VisualStudio.Setup.Service",
+[        ]                  "expirationDate": "2026-08-20T17:00:00+00:00",
+[        ]                  "installedChannelId": "VisualStudio.18.Release",
+[        ]                  "installedChannelUri": "https://aka.ms/vs/18/stable/channel",
+[        ]                  "releaseNotes": "https://docs.microsoft.com/en-us/visualstudio/releases/18/release-notes-v18.6#18.6.2",
+[        ]                  "resolvedInstallationPath": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community",
+[        ]                  "retirementDate": "2026-11-18T17:00:00+00:00",
+[        ]                  "thirdPartyNotices": "https://go.microsoft.com/fwlink/?LinkId=661480",
+[        ]                  "updateDate": "2026-06-05T12:18:52.762367Z",
+[        ]                  "catalog": {
+[        ]                    "buildBranch": "stable",
+[        ]                    "buildVersion": "18.6.11822.322",
+[        ]                    "featureReleaseMonth": "05",
+[        ]                    "featureReleaseYear": "2026",
+[        ]                    "id": "VisualStudio/18.6.2+11822.322",
+[        ]                    "includeBuildVersionInDisplayVersion": "False",
+[        ]                    "localBuild": "build-lab",
+[        ]                    "manifestName": "VisualStudio",
+[        ]                    "manifestType": "installer",
+[        ]                    "productDisplayVersion": "18.6.2",
+[        ]                    "productLine": "Dev18",
+[        ]                    "productLineVersion": "18",
+[        ]                    "productMilestone": "RTW",
+[        ]                    "productMilestoneIsPreRelease": "False",
+[        ]                    "productName": "Visual Studio",
+[        ]                    "productPatchVersion": "2",
+[        ]                    "productPreReleaseMilestoneSuffix": "1.0",
+[        ]                    "productRelease": "RTW",
+[        ]                    "productSemanticVersion": "18.6.2+11822.322",
+[        ]                    "requiredEngineVersion": "4.6.58.48107"
+[        ]                  },
+[        ]                  "properties": {
+[        ]                    "campaignId": "2500:f4ea1d2d786142f8b261c778d1bf563c",
+[        ]                    "canceled": "0",
+[        ]                    "channelManifestId": "VisualStudio.18.Release/18.6.2+11822.322",
+[        ]                    "includeRecommended": "1",
+[        ]                    "nickname": "",
+[        ]                    "setupEngineFilePath": "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\setup.exe"
+[        ]                  }
+[        ]                }
+[        ]              ]
+[        ]   [  +13 ms] Building native assets for windows_x64.
+[ +101 ms]   [ +104 ms] Running `C:\flutter\bin\cache\dart-sdk\bin\dart compile kernel --packages=C:\projects\Memoize\client\.dart_tool\package_config.json --output=C:\projects\Memoize\client\.dart_tool\hooks_runner\objective_c\63dc6ceb2b\hook.dill --depfile=C:\projects\Memoize\client\.dart_tool\hooks_runner\objective_c\63dc6ceb2b\hook.dill.d C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\objective_c-9.4.1\hook\build.dart`.
+[  +80 ms]   [  +80 ms] Found plugin video_player at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player-2.11.1\
+[   +8 ms]   [   +9 ms] Found plugin video_player_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_web-2.4.0\
+[   +9 ms]   [   +9 ms] Found plugin video_player_avfoundation at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_avfoundation-2.9.7\
+[   +5 ms]   [   +5 ms] Found plugin video_player_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_android-2.9.6\
+[  +12 ms]   [  +12 ms] Found plugin media_kit_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_video-1.3.1\
+[   +5 ms]   [   +5 ms] Found plugin wakelock_plus at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\wakelock_plus-1.5.2\
+[  +12 ms]   [  +12 ms] Found plugin package_info_plus at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\package_info_plus-9.0.1\
+[  +12 ms]   [  +12 ms] Found plugin volume_controller at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\volume_controller-3.6.0\
+[  +10 ms]   [  +10 ms] Found plugin screen_brightness_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\screen_brightness_android-2.1.5\
+[  +14 ms]   [  +14 ms] Found plugin media_kit_libs_windows_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_windows_video-1.0.11\
+[   +5 ms]   [   +4 ms] Found plugin media_kit_libs_macos_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_macos_video-1.1.4\
+[   +3 ms]   [   +3 ms] Found plugin media_kit_libs_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_linux-1.2.1\
+[   +3 ms]   [   +3 ms] Found plugin media_kit_libs_ios_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_ios_video-1.1.4\
+[   +2 ms]   [   +2 ms] Found plugin media_kit_libs_android_video at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\media_kit_libs_android_video-1.3.8\
+[   +5 ms]   [   +5 ms] Found plugin just_audio at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio-0.9.46\
+[   +4 ms]   [   +4 ms] Found plugin path_provider at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider-2.1.5\
+[   +2 ms]   [   +2 ms] Found plugin path_provider_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_windows-2.3.0\
+[   +4 ms]   [   +4 ms] Found plugin path_provider_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_linux-2.2.1\
+[   +3 ms]   [   +3 ms] Found plugin path_provider_foundation at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_foundation-2.6.0\
+[  +10 ms]   [  +10 ms] Found plugin path_provider_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.3.1\
+[   +2 ms]   [   +2 ms] Found plugin jni_flutter at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\jni_flutter-1.0.1\
+[   +2 ms]   [   +2 ms] Found plugin jni at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\jni-1.0.0\
+[   +2 ms]   [   +2 ms] Found plugin just_audio_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio_web-0.4.16\
+[   +2 ms]   [   +2 ms] Found plugin audio_session at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\audio_session-0.1.25\
+[   +3 ms]   [   +2 ms] Found plugin image_picker at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker-1.2.2\
+[   +2 ms]   [   +2 ms] Found plugin image_picker_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_windows-0.2.2\
+[   +6 ms]   [   +6 ms] Found plugin file_selector_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_windows-0.9.3+5\
+[   +4 ms]   [   +4 ms] Found plugin image_picker_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_macos-0.2.2+1\
+[   +2 ms]   [   +2 ms] Found plugin file_selector_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_macos-0.9.5\
+[   +2 ms]   [   +2 ms] Found plugin image_picker_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_linux-0.2.2\
+[   +2 ms]   [   +2 ms] Found plugin file_selector_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_selector_linux-0.9.4\
+[   +2 ms]   [   +2 ms] Found plugin image_picker_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_ios-0.8.13+6\
+[   +2 ms]   [   +2 ms] Found plugin image_picker_for_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_for_web-3.1.1\
+[   +2 ms]   [   +2 ms] Found plugin image_picker_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.13+19\
+[   +2 ms]   [   +2 ms] Found plugin flutter_plugin_android_lifecycle at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.35\
+[   +5 ms]   [   +5 ms] Found plugin flutter_secure_storage at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage-10.3.1\
+[   +2 ms]   [   +2 ms] Found plugin flutter_secure_storage_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_windows-4.1.0\
+[   +4 ms]   [   +4 ms] Found plugin flutter_secure_storage_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_web-2.1.1\
+[   +2 ms]   [   +2 ms] Found plugin flutter_secure_storage_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_linux-3.0.1\
+[   +2 ms]   [   +2 ms] Found plugin flutter_secure_storage_darwin at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_secure_storage_darwin-0.3.2\
+[   +9 ms]   [   +9 ms] Found plugin url_launcher at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher-6.3.2\
+[   +2 ms]   [   +2 ms] Found plugin url_launcher_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_windows-3.1.5\
+[   +4 ms]   [   +3 ms] Found plugin url_launcher_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_web-2.4.3\
+[   +2 ms]   [   +2 ms] Found plugin url_launcher_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_macos-3.2.5\
+[   +2 ms]   [   +2 ms] Found plugin url_launcher_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_linux-3.2.2\
+[   +2 ms]   [   +2 ms] Found plugin url_launcher_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_ios-6.4.1\
+[   +2 ms]   [   +2 ms] Found plugin url_launcher_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.32\
+[   +3 ms]   [   +3 ms] Found plugin quill_native_bridge at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge-11.1.0\
+[   +2 ms]   [   +2 ms] Found plugin quill_native_bridge_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_windows-0.0.2\
+[   +3 ms]   [   +3 ms] Found plugin quill_native_bridge_web at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_web-0.0.2\
+[   +2 ms]   [   +2 ms] Found plugin quill_native_bridge_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_macos-0.0.1\
+[   +2 ms]   [   +2 ms] Found plugin quill_native_bridge_ios at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_ios-0.0.1\
+[   +2 ms]   [   +2 ms] Found plugin quill_native_bridge_android at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\quill_native_bridge_android-0.0.1+2\
+[   +8 ms]   [   +8 ms] Found plugin flutter_keyboard_visibility_temp_fork at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_temp_fork-0.1.5\
+[   +2 ms]   [   +2 ms] Found plugin flutter_keyboard_visibility_windows at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_windows-1.0.0\
+[   +3 ms]   [   +4 ms] Found plugin flutter_keyboard_visibility_macos at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_macos-1.0.0\
+[   +1 ms]   [   +1 ms] Found plugin flutter_keyboard_visibility_linux at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_keyboard_visibility_linux-1.0.0\
+[   +7 ms]   [   +7 ms] Found plugin file_picker at C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.3.10\
+[  +42 ms]   [  +42 ms] Skipping generating dart_plugin_registrant.dart because it is up-to-date.
+[        ]   [        ] gen_dart_plugin_registrant: Complete
+[   +5 ms]   [   +5 ms] kernel_snapshot_program: Starting due to {}
+[  +21 ms]   [  +21 ms] C:\flutter\bin\cache\dart-sdk\bin\dartaotruntime.exe C:\flutter\bin\cache\dart-sdk\bin\snapshots\frontend_server_aot.dart.snapshot --sdk-root C:\flutter\bin\cache\artifacts\engine\common\flutter_patched_sdk/ --target=flutter --no-print-incremental-dependencies -DAPI_URL=https://localhost:3000 -DENV=dev -DFLUTTER_VERSION=3.44.1 -DFLUTTER_CHANNEL=stable -DFLUTTER_GIT_URL=https://github.com/flutter/flutter.git -DFLUTTER_FRAMEWORK_REVISION=924134a44c -DFLUTTER_ENGINE_REVISION=c416acfeb8 -DFLUTTER_DART_VERSION=3.12.1 -Ddart.vm.profile=false -Ddart.vm.product=false --enable-asserts --track-widget-creation --packages C:\projects\Memoize\client\.dart_tool\package_config.json --output-dill C:\projects\Memoize\client\.dart_tool\flutter_build\a6fd043169c57d4d99877e5d2721d8ac\app.dill --depfile C:\projects\Memoize\client\.dart_tool\flutter_build\a6fd043169c57d4d99877e5d2721d8ac\kernel_snapshot_program.d --incremental --initialize-from-dill C:\projects\Memoize\client\.dart_tool\flutter_build\a6fd043169c57d4d99877e5d2721d8ac\app.dill --source file:///C:/projects/Memoize/client/.dart_tool/flutter_build/dart_plugin_registrant.dart --source package:flutter/src/dart_plugin_registrant.dart -Dflutter.dart_plugin_registrant=file:///C:/projects/Memoize/client/.dart_tool/flutter_build/dart_plugin_registrant.dart --verbosity=error package:client/main.dart
+[+2873 ms]   [+2872 ms] input.json contents:
+[        ]              {
+[        ]                "assets": {},
+[        ]                "config": {
+[        ]                  "build_asset_types": [
+[        ]                    "code_assets/code"
+[        ]                  ],
+[        ]                  "extensions": {
+[        ]                    "code_assets": {
+[        ]                      "c_compiler": {
+[        ]                        "ar": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\lib.exe",
+[        ]                        "cc": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+[        ]                        "ld": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\link.exe",
+[        ]                        "windows": {
+[        ]                          "developer_command_prompt": {
+[        ]                            "arguments": [],
+[        ]                            "script": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat"
+[        ]                          }
+[        ]                        }
+[        ]                      },
+[        ]                      "link_mode_preference": "dynamic",
+[        ]                      "target_architecture": "x64",
+[        ]                      "target_os": "windows"
+[        ]                    }
+[        ]                  },
+[        ]                  "linking_enabled": false
+[        ]                },
+[        ]                "out_dir_shared": "C:\\projects\\Memoize\\client\\.dart_tool\\hooks_runner\\shared\\objective_c\\build\\",
+[        ]                "out_file": "C:\\projects\\Memoize\\client\\.dart_tool\\hooks_runner\\objective_c\\63dc6ceb2b\\output.json",
+[        ]                "package_name": "objective_c",
+[        ]                "package_root": "C:\\Users\\hirbod\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\objective_c-9.4.1\\",
+[        ]                "user_defines": {}
+[        ]              }
+[        ]   [   +8 ms] Running `(cd C:\Users\hirbod\AppData\Local\Pub\Cache\hosted\pub.dev\objective_c-9.4.1\; PATH=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64;C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64;;C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86;;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\tools;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\ide;C:\Program Files (x86)\HTML Help Workshop;;C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\amd64;C:\Windows\Microsoft.NET\Framework64\v4.0.30319\;C:\Windows\Microsoft.NET\Framework\v4.0.30319\;C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin;C:\Windows\Microsoft.NET\Framework\v4.0.30319\;;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\dotnet\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;%NVM_HOME%;%NVM_SYMLINK%;C:\Program Files\Git\cmd;C:\Program Files\NVIDIA Corporation\NVIDIA app\NvDLISR;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\110\Tools\Binn\;C:\Program Files (x86)\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Microsoft SQL Server\120\DTS\Binn\;C:\Program Files (x86)\Windows Kits\8.1\Windows Performance Toolkit\;C:\Program Files\PuTTY\;C:\Program Files\nodejs\;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\Git LFS;C:\Users\hirbod\AppData\Local\Microsoft\WindowsApps;C:\Users\hirbod\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\hirbod\AppData\Local\GitHubDesktop\bin;C:\ProgramData\hirbod\GitHubDesktop\bin;C:\Users\hirbod\AppData\Roaming\npm;C:\flutter\bin;C:\Program Files\7-Zip;C:\flutter\bin\mingit\cmd;;C:\flutter\bin\mingit\cmd PROGRAMDATA=C:\ProgramData SYSTEMDRIVE=C: SYSTEMROOT=C:\Windows TEMP=C:\Users\hirbod\AppData\Local\Temp TMP=C:\Users\hirbod\AppData\Local\Temp USERPROFILE=C:\Users\hirbod WINDIR=C:\Windows C:\flutter\bin\cache\dart-sdk\bin\dart --packages=C:\projects\Memoize\client\.dart_tool\package_config.json C:\projects\Memoize\client\.dart_tool\hooks_runner\objective_c\63dc6ceb2b\hook.dill --config=C:\projects\Memoize\client\.dart_tool\hooks_runner\objective_c\63dc6ceb2b\input.json )`.
+[ +339 ms]   [ +340 ms] output.json contents:
+[        ]              {
+[        ]                "assets_for_linking": {},
+[        ]                "status": "success",
+[        ]                "timestamp": "2026-07-01 09:56:29.000"
+[        ]              }
+[  +74 ms]   [  +75 ms] Building native assets for windows_x64 done.
+[   +4 ms]   [   +4 ms] dart_build: Complete
+[  +26 ms]   [  +26 ms] install_code_assets: Starting due to {}
+[  +15 ms]   [  +15 ms] Writing native assets json to file:///C:/projects/Memoize/client/.dart_tool/flutter_build/a6fd043169c57d4d99877e5d2721d8ac/native_assets.json.
+[   +7 ms]   [   +2 ms] Writing C:\projects\Memoize\client\.dart_tool\flutter_build\a6fd043169c57d4d99877e5d2721d8ac\native_assets.json done.
+[        ]   [   +1 ms] install_code_assets: Complete
+[+53948 ms]   [+53951 ms] kernel_snapshot_program: Complete
+[+2903 ms]   [+2903 ms] debug_bundle_windows-x64_assets: Starting due to {}
+[+1425 ms]   [+1426 ms] impellerc command: [C:\flutter\bin\cache\artifacts\engine\windows-x64\impellerc.exe, --sksl, --runtime-stage-gles, --runtime-stage-gles3, --runtime-stage-vulkan, --iplr, --sl=C:\projects\Memoize\client\build\flutter_assets\shaders/ink_sparkle.frag, --spirv=C:\projects\Memoize\client\build\flutter_assets\shaders/ink_sparkle.frag.spirv, --input=C:\flutter\packages\flutter\lib\src\material\shaders\ink_sparkle.frag, --input-type=frag, --include=C:\flutter\packages\flutter\lib\src\material\shaders, --include=C:\flutter\bin\cache\artifacts\engine\windows-x64\shader_lib]
+[   +2 ms]   [   +2 ms] impellerc command: [C:\flutter\bin\cache\artifacts\engine\windows-x64\impellerc.exe, --sksl, --runtime-stage-gles, --runtime-stage-gles3, --runtime-stage-vulkan, --iplr, --sl=C:\projects\Memoize\client\build\flutter_assets\shaders/stretch_effect.frag, --spirv=C:\projects\Memoize\client\build\flutter_assets\shaders/stretch_effect.frag.spirv, --input=C:\flutter\packages\flutter\lib\src\material\shaders\stretch_effect.frag, --input-type=frag, --include=C:\flutter\packages\flutter\lib\src\material\shaders, --include=C:\flutter\bin\cache\artifacts\engine\windows-x64\shader_lib]
+[+1476 ms]   [+1476 ms] debug_bundle_windows-x64_assets: Complete
+[+1586 ms]   [+1586 ms] Persisting file store
+[  +33 ms]   [  +33 ms] Done persisting file store
+[  +57 ms]   [  +56 ms] build succeeded.
+[  +13 ms]   [  +13 ms] "flutter assemble" took 72,581ms.
+[  +82 ms]   [  +82 ms] Running 1 shutdown hook
+[   +3 ms]   [   +3 ms] Shutdown hooks complete
+[        ]   [        ] exiting with code 0
+[  +77 ms]   Building Custom Rule C:/projects/Memoize/client/windows/flutter/CMakeLists.txt
+[  +59 ms] FinalizeBuildStatus:
+[        ]   Deleting file "x64\Debug\flutter_assemble\flutter_assemble.tlog\unsuccessfulbuild".
+[        ]   Touching "x64\Debug\flutter_assemble\flutter_assemble.tlog\flutter_assemble.lastbuildstate".
+[   +1 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\flutter\flutter_assemble.vcxproj" (default targets).
+[  +88 ms] Project "C:\projects\Memoize\client\build\windows\x64\runner\client.vcxproj" (6) is building "C:\projects\Memoize\client\build\windows\x64\plugins\file_selector_windows\file_selector_windows_plugin.vcxproj" (8) on node 1 (default targets).
+[        ] Project "C:\projects\Memoize\client\build\windows\x64\plugins\file_selector_windows\file_selector_windows_plugin.vcxproj" (8) is building "C:\projects\Memoize\client\build\windows\x64\flutter\flutter_wrapper_plugin.vcxproj" (9) on node 1 (default targets).
+[        ] PrepareForBuild:
+[        ]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[        ]   Creating directory "C:\projects\Memoize\client\build\windows\x64\flutter\Debug\".
+[        ]   Creating directory "flutter_wrapper_plugin.dir\Debug\flutter_.7713075B.tlog\".
+[   +3 ms] InitializeBuildStatus:
+[        ]   Creating "flutter_wrapper_plugin.dir\Debug\flutter_.7713075B.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+[        ]   Touching "flutter_wrapper_plugin.dir\Debug\flutter_.7713075B.tlog\unsuccessfulbuild".
+[  +62 ms] CustomBuild:
+[        ]   Building Custom Rule C:/projects/Memoize/client/windows/flutter/CMakeLists.txt
+[ +125 ms] ClCompile:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\CL.exe /c /IC:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\include /IC:\projects\Memoize\client\windows\flutter\ephemeral /Zi /nologo /W4 /WX /diagnostics:column /Od /Ob0 /D _UNICODE /D UNICODE /D WIN32 /D _WINDOWS /D _HAS_EXCEPTIONS=0 /D _DEBUG /D UNICODE /D _UNICODE /D "CMAKE_INTDIR=\"Debug\"" /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"flutter_wrapper_plugin.dir\Debug\\" /Fd"C:\projects\Memoize\client\build\windows\x64\flutter\Debug\flutter_wrapper_plugin.pdb" /external:W4 /TP /wd4100 /errorReport:queue C:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\core_implementations.cc C:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\standard_codec.cc C:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\plugin_registrar.cc
+[  +79 ms]   core_implementations.cc
+[+2029 ms]   standard_codec.cc
+[+2255 ms]   plugin_registrar.cc
+[+1285 ms]   Generating Code...
+[ +500 ms] Lib:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\Lib.exe /OUT:"C:\projects\Memoize\client\build\windows\x64\flutter\Debug\flutter_wrapper_plugin.lib" /NOLOGO /MACHINE:X64  /machine:x64 flutter_wrapper_plugin.dir\Debug\core_implementations.obj
+[        ]   flutter_wrapper_plugin.dir\Debug\standard_codec.obj
+[        ]   flutter_wrapper_plugin.dir\Debug\plugin_registrar.obj
+[ +183 ms]   flutter_wrapper_plugin.vcxproj -> C:\projects\Memoize\client\build\windows\x64\flutter\Debug\flutter_wrapper_plugin.lib
+[  +27 ms] FinalizeBuildStatus:
+[        ]   Deleting file "flutter_wrapper_plugin.dir\Debug\flutter_.7713075B.tlog\unsuccessfulbuild".
+[        ]   Touching "flutter_wrapper_plugin.dir\Debug\flutter_.7713075B.tlog\flutter_wrapper_plugin.lastbuildstate".
+[        ] Done Building Project "C:\projects\Memoize\client\build\windows\x64\flutter\flutter_wrapper_plugin.vcxproj" (default targets).
+[   +9 ms] PrepareForBuild:
+[        ]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[        ]   Creating directory "C:\projects\Memoize\client\build\windows\x64\plugins\file_selector_windows\Debug\".
+[        ]   Creating directory "file_selector_windows_plugin.dir\Debug\file_sel.7B11B17A.tlog\".
+[   +4 ms] InitializeBuildStatus:
+[        ]   Creating "file_selector_windows_plugin.dir\Debug\file_sel.7B11B17A.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+[        ]   Touching "file_selector_windows_plugin.dir\Debug\file_sel.7B11B17A.tlog\unsuccessfulbuild".
+[  +52 ms] CustomBuild:
+[        ]   Building Custom Rule C:/projects/Memoize/client/windows/flutter/ephemeral/.plugin_symlinks/file_selector_windows/windows/CMakeLists.txt
+[  +56 ms] ClCompile:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\CL.exe /c /IC:\projects\Memoize\client\windows\flutter\ephemeral /IC:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\include /Zi /nologo /W4 /WX /diagnostics:column /Od /Ob0 /D _WINDLL /D _UNICODE /D UNICODE /D WIN32 /D _WINDOWS /D _HAS_EXCEPTIONS=0 /D _DEBUG /D FLUTTER_PLUGIN_IMPL /D _HAS_EXCEPTIONS=1 /D UNICODE /D _UNICODE /D "CMAKE_INTDIR=\"Debug\"" /D file_selector_windows_plugin_EXPORTS /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"file_selector_windows_plugin.dir\Debug\\" /Fd"file_selector_windows_plugin.dir\Debug\vc145.pdb" /external:W4 /TP /wd4100 /errorReport:queue C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\file_selector_windows\windows\file_selector_windows.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\file_selector_windows\windows\file_dialog_controller.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\file_selector_windows\windows\file_selector_plugin.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\file_selector_windows\windows\messages.g.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\file_selector_windows\windows\string_utils.cpp
+[  +68 ms]   file_selector_windows.cpp
+[+2981 ms]   file_dialog_controller.cpp
+[+1501 ms]   file_selector_plugin.cpp
+[+3305 ms]   messages.g.cpp
+[+2170 ms]   string_utils.cpp
+[+1622 ms]   Generating Code...
+[ +628 ms] Link:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\link.exe /OUT:"C:\projects\Memoize\client\build\windows\x64\plugins\file_selector_windows\Debug\file_selector_windows_plugin.dll" /INCREMENTAL /ILK:"file_selector_windows_plugin.dir\Debug\file_selector_windows_plugin.ilk" /NOLOGO ..\..\flutter\Debug\flutter_wrapper_plugin.lib C:\projects\Memoize\client\windows\flutter\ephemeral\flutter_windows.dll.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/projects/Memoize/client/build/windows/x64/plugins/file_selector_windows/Debug/file_selector_windows_plugin.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"C:/projects/Memoize/client/build/windows/x64/plugins/file_selector_windows/Debug/file_selector_windows_plugin.lib" /MACHINE:X64  /machine:x64 /DLL file_selector_windows_plugin.dir\Debug\file_selector_windows.obj
+[        ]   file_selector_windows_plugin.dir\Debug\file_dialog_controller.obj
+[        ]   file_selector_windows_plugin.dir\Debug\file_selector_plugin.obj
+[        ]   file_selector_windows_plugin.dir\Debug\messages.g.obj
+[        ]   file_selector_windows_plugin.dir\Debug\string_utils.obj
+[ +159 ms]      Creating library C:/projects/Memoize/client/build/windows/x64/plugins/file_selector_windows/Debug/file_selector_windows_plugin.lib and object C:/projects/Memoize/client/build/windows/x64/plugins/file_selector_windows/Debug/file_selector_windows_plugin.exp
+[ +239 ms]   file_selector_windows_plugin.vcxproj -> C:\projects\Memoize\client\build\windows\x64\plugins\file_selector_windows\Debug\file_selector_windows_plugin.dll
+[  +16 ms] FinalizeBuildStatus:
+[        ]   Deleting file "file_selector_windows_plugin.dir\Debug\file_sel.7B11B17A.tlog\unsuccessfulbuild".
+[        ]   Touching "file_selector_windows_plugin.dir\Debug\file_sel.7B11B17A.tlog\file_selector_windows_plugin.lastbuildstate".
+[   +1 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\plugins\file_selector_windows\file_selector_windows_plugin.vcxproj" (default targets).
+[  +73 ms] Project "C:\projects\Memoize\client\build\windows\x64\runner\client.vcxproj" (6) is building "C:\projects\Memoize\client\build\windows\x64\plugins\flutter_secure_storage_windows\flutter_secure_storage_windows_plugin.vcxproj" (10) on node 1 (default targets).
+[        ] PrepareForBuild:
+[        ]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[        ]   Creating directory "C:\projects\Memoize\client\build\windows\x64\plugins\flutter_secure_storage_windows\Debug\".
+[        ]   Creating directory "flutter_secure_storage_windows_plugin.dir\Debug\flutter_.BFC02146.tlog\".
+[   +3 ms] InitializeBuildStatus:
+[        ]   Creating "flutter_secure_storage_windows_plugin.dir\Debug\flutter_.BFC02146.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+[        ]   Touching "flutter_secure_storage_windows_plugin.dir\Debug\flutter_.BFC02146.tlog\unsuccessfulbuild".
+[  +50 ms] CustomBuild:
+[        ]   Building Custom Rule C:/projects/Memoize/client/windows/flutter/ephemeral/.plugin_symlinks/flutter_secure_storage_windows/windows/CMakeLists.txt
+[  +52 ms] ClCompile:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\CL.exe /c /IC:\projects\Memoize\client\windows\flutter\ephemeral /IC:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\include /Zi /nologo /W4 /WX /diagnostics:column /Od /Ob0 /D _WINDLL /D _UNICODE /D UNICODE /D WIN32 /D _WINDOWS /D _HAS_EXCEPTIONS=0 /D _DEBUG /D FLUTTER_PLUGIN_IMPL /D UNICODE /D _UNICODE /D "SECURE_STORAGE_KEY_PREFIX=\"client_VGhpcyBpcyB0aGUgcHJlZml4IGZv_\"" /D "CMAKE_INTDIR=\"Debug\"" /D flutter_secure_storage_windows_plugin_EXPORTS /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"flutter_secure_storage_windows_plugin.dir\Debug\\" /Fd"flutter_secure_storage_windows_plugin.dir\Debug\vc145.pdb" /external:W4 /TP /wd4100 /errorReport:queue C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\flutter_secure_storage_windows\windows\flutter_secure_storage_windows_plugin.cpp
+[  +59 ms]   flutter_secure_storage_windows_plugin.cpp
+[+4855 ms] Link:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\link.exe /OUT:"C:\projects\Memoize\client\build\windows\x64\plugins\flutter_secure_storage_windows\Debug\flutter_secure_storage_windows_plugin.dll" /INCREMENTAL /ILK:"flutter_secure_storage_windows_plugin.dir\Debug\flutter_secure_storage_windows_plugin.ilk" /NOLOGO ..\..\flutter\Debug\flutter_wrapper_plugin.lib C:\projects\Memoize\client\windows\flutter\ephemeral\flutter_windows.dll.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/projects/Memoize/client/build/windows/x64/plugins/flutter_secure_storage_windows/Debug/flutter_secure_storage_windows_plugin.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"C:/projects/Memoize/client/build/windows/x64/plugins/flutter_secure_storage_windows/Debug/flutter_secure_storage_windows_plugin.lib" /MACHINE:X64  /machine:x64 /DLL flutter_secure_storage_windows_plugin.dir\Debug\flutter_secure_storage_windows_plugin.obj
+[ +142 ms]      Creating library C:/projects/Memoize/client/build/windows/x64/plugins/flutter_secure_storage_windows/Debug/flutter_secure_storage_windows_plugin.lib and object C:/projects/Memoize/client/build/windows/x64/plugins/flutter_secure_storage_windows/Debug/flutter_secure_storage_windows_plugin.exp
+[ +225 ms]   flutter_secure_storage_windows_plugin.vcxproj -> C:\projects\Memoize\client\build\windows\x64\plugins\flutter_secure_storage_windows\Debug\flutter_secure_storage_windows_plugin.dll
+[  +12 ms] FinalizeBuildStatus:
+[        ]   Deleting file "flutter_secure_storage_windows_plugin.dir\Debug\flutter_.BFC02146.tlog\unsuccessfulbuild".
+[        ]   Touching "flutter_secure_storage_windows_plugin.dir\Debug\flutter_.BFC02146.tlog\flutter_secure_storage_windows_plugin.lastbuildstate".
+[   +1 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\plugins\flutter_secure_storage_windows\flutter_secure_storage_windows_plugin.vcxproj" (default targets).
+[  +42 ms] Project "C:\projects\Memoize\client\build\windows\x64\runner\client.vcxproj" (6) is building "C:\projects\Memoize\client\build\windows\x64\flutter\flutter_wrapper_app.vcxproj" (11) on node 1 (default targets).
+[        ] PrepareForBuild:
+[        ]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[        ]   Creating directory "flutter_wrapper_app.dir\Debug\flutter_.8AA29A38.tlog\".
+[   +3 ms] InitializeBuildStatus:
+[        ]   Creating "flutter_wrapper_app.dir\Debug\flutter_.8AA29A38.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+[        ]   Touching "flutter_wrapper_app.dir\Debug\flutter_.8AA29A38.tlog\unsuccessfulbuild".
+[  +52 ms] CustomBuild:
+[        ]   Building Custom Rule C:/projects/Memoize/client/windows/flutter/CMakeLists.txt
+[  +55 ms] ClCompile:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\CL.exe /c /IC:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\include /IC:\projects\Memoize\client\windows\flutter\ephemeral /Zi /nologo /W4 /WX /diagnostics:column /Od /Ob0 /D _UNICODE /D UNICODE /D WIN32 /D _WINDOWS /D _HAS_EXCEPTIONS=0 /D _DEBUG /D UNICODE /D _UNICODE /D "CMAKE_INTDIR=\"Debug\"" /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"flutter_wrapper_app.dir\Debug\\" /Fd"C:\projects\Memoize\client\build\windows\x64\flutter\Debug\flutter_wrapper_app.pdb" /external:W4 /TP /wd4100 /errorReport:queue C:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\core_implementations.cc C:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\standard_codec.cc C:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\flutter_engine.cc C:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\flutter_view_controller.cc
+[  +59 ms]   core_implementations.cc
+[+1989 ms]   standard_codec.cc
+[+2267 ms]   flutter_engine.cc
+[+2205 ms]   flutter_view_controller.cc
+[+2244 ms]   Generating Code...
+[ +600 ms] Lib:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\Lib.exe /OUT:"C:\projects\Memoize\client\build\windows\x64\flutter\Debug\flutter_wrapper_app.lib" /NOLOGO /MACHINE:X64  /machine:x64 flutter_wrapper_app.dir\Debug\core_implementations.obj
+[        ]   flutter_wrapper_app.dir\Debug\standard_codec.obj
+[        ]   flutter_wrapper_app.dir\Debug\flutter_engine.obj
+[        ]   flutter_wrapper_app.dir\Debug\flutter_view_controller.obj
+[ +186 ms]   flutter_wrapper_app.vcxproj -> C:\projects\Memoize\client\build\windows\x64\flutter\Debug\flutter_wrapper_app.lib
+[  +15 ms] FinalizeBuildStatus:
+[        ]   Deleting file "flutter_wrapper_app.dir\Debug\flutter_.8AA29A38.tlog\unsuccessfulbuild".
+[        ]   Touching "flutter_wrapper_app.dir\Debug\flutter_.8AA29A38.tlog\flutter_wrapper_app.lastbuildstate".
+[   +1 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\flutter\flutter_wrapper_app.vcxproj" (default targets).
+[  +48 ms] Project "C:\projects\Memoize\client\build\windows\x64\runner\client.vcxproj" (6) is building "C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_libs_windows_video\media_kit_libs_windows_video_plugin.vcxproj" (12) on node 1 (default targets).
+[        ] PrepareForBuild:
+[        ]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[        ]   Creating directory "C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_libs_windows_video\Debug\".
+[        ]   Creating directory "media_kit_libs_windows_video_plugin.dir\Debug\media_ki.90F04006.tlog\".
+[   +4 ms] InitializeBuildStatus:
+[        ]   Creating "media_kit_libs_windows_video_plugin.dir\Debug\media_ki.90F04006.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+[        ]   Touching "media_kit_libs_windows_video_plugin.dir\Debug\media_ki.90F04006.tlog\unsuccessfulbuild".
+[  +53 ms] CustomBuild:
+[        ]   Building Custom Rule C:/projects/Memoize/client/windows/flutter/ephemeral/.plugin_symlinks/media_kit_libs_windows_video/windows/CMakeLists.txt
+[  +56 ms] ClCompile:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\CL.exe /c /IC:\projects\Memoize\client\windows\flutter\ephemeral /IC:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\include /Zi /nologo /W4 /WX /diagnostics:column /Od /Ob0 /D _WINDLL /D _UNICODE /D UNICODE /D WIN32 /D _WINDOWS /D _HAS_EXCEPTIONS=0 /D _DEBUG /D FLUTTER_PLUGIN_IMPL /D UNICODE /D _UNICODE /D _DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR /D "CMAKE_INTDIR=\"Debug\"" /D media_kit_libs_windows_video_plugin_EXPORTS /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"media_kit_libs_windows_video_plugin.dir\Debug\\" /Fd"media_kit_libs_windows_video_plugin.dir\Debug\vc145.pdb" /external:W4 /TP /wd4100 /errorReport:queue C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_libs_windows_video\windows\media_kit_libs_windows_video_plugin_c_api.cpp
+[  +62 ms]   media_kit_libs_windows_video_plugin_c_api.cpp
+[+2424 ms] Link:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\link.exe /OUT:"C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_libs_windows_video\Debug\media_kit_libs_windows_video_plugin.dll" /INCREMENTAL /ILK:"media_kit_libs_windows_video_plugin.dir\Debug\media_kit_libs_windows_video_plugin.ilk" /NOLOGO ..\..\flutter\Debug\flutter_wrapper_plugin.lib C:\projects\Memoize\client\windows\flutter\ephemeral\flutter_windows.dll.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/projects/Memoize/client/build/windows/x64/plugins/media_kit_libs_windows_video/Debug/media_kit_libs_windows_video_plugin.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"C:/projects/Memoize/client/build/windows/x64/plugins/media_kit_libs_windows_video/Debug/media_kit_libs_windows_video_plugin.lib" /MACHINE:X64  /machine:x64 /DLL media_kit_libs_windows_video_plugin.dir\Debug\media_kit_libs_windows_video_plugin_c_api.obj
+[  +81 ms]      Creating library C:/projects/Memoize/client/build/windows/x64/plugins/media_kit_libs_windows_video/Debug/media_kit_libs_windows_video_plugin.lib and object C:/projects/Memoize/client/build/windows/x64/plugins/media_kit_libs_windows_video/Debug/media_kit_libs_windows_video_plugin.exp
+[ +145 ms]   media_kit_libs_windows_video_plugin.vcxproj -> C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_libs_windows_video\Debug\media_kit_libs_windows_video_plugin.dll
+[  +18 ms] FinalizeBuildStatus:
+[        ]   Deleting file "media_kit_libs_windows_video_plugin.dir\Debug\media_ki.90F04006.tlog\unsuccessfulbuild".
+[        ]   Touching "media_kit_libs_windows_video_plugin.dir\Debug\media_ki.90F04006.tlog\media_kit_libs_windows_video_plugin.lastbuildstate".
+[   +1 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_libs_windows_video\media_kit_libs_windows_video_plugin.vcxproj" (default targets).
+[  +46 ms] Project "C:\projects\Memoize\client\build\windows\x64\runner\client.vcxproj" (6) is building "C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\media_kit_video_plugin.vcxproj" (13) on node 1 (default targets).
+[        ] PrepareForBuild:
+[        ]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[        ]   Creating directory "C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\Debug\".
+[        ]   Creating directory "media_kit_video_plugin.dir\Debug\media_ki.D94F82B8.tlog\".
+[   +3 ms] InitializeBuildStatus:
+[        ]   Creating "media_kit_video_plugin.dir\Debug\media_ki.D94F82B8.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+[        ]   Touching "media_kit_video_plugin.dir\Debug\media_ki.D94F82B8.tlog\unsuccessfulbuild".
+[  +67 ms] CustomBuild:
+[        ]   Building Custom Rule C:/projects/Memoize/client/windows/flutter/ephemeral/.plugin_symlinks/media_kit_video/windows/CMakeLists.txt
+[  +62 ms] ClCompile:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\CL.exe /c /IC:\projects\Memoize\client\build\windows\x64\libmpv\include /IC:\projects\Memoize\client\build\windows\x64\ANGLE\include /IC:\projects\Memoize\client\windows\flutter\ephemeral /IC:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\include /Zi /nologo /W4 /WX /diagnostics:column /Od /Ob0 /D _WINDLL /D _UNICODE /D UNICODE /D WIN32 /D _WINDOWS /D _HAS_EXCEPTIONS=0 /D _DEBUG /D FLUTTER_PLUGIN_IMPL /D UNICODE /D _UNICODE /D _DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR /D "CMAKE_INTDIR=\"Debug\"" /D media_kit_video_plugin_EXPORTS /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"media_kit_video_plugin.dir\Debug\\" /Fd"media_kit_video_plugin.dir\Debug\vc145.pdb" /external:W4 /TP /wd4100 /errorReport:queue C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\angle_surface_manager.cc C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\media_kit_video_plugin_c_api.cc C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\media_kit_video_plugin.cc C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\video_output_manager.cc C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\video_output.cc C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\utils.cc
+[  +65 ms]   angle_surface_manager.cc
+[+1991 ms]   media_kit_video_plugin_c_api.cc
+[+2089 ms]   media_kit_video_plugin.cc
+[ +137 ms] C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\video_output.h(14,10): error C1083: Cannot open include file: 'client.h': No such file or directory [C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\media_kit_video_plugin.vcxproj]
+[   +2 ms]   (compiling source file '../../../../../windows/flutter/ephemeral/.plugin_symlinks/media_kit_video/windows/media_kit_video_plugin_c_api.cc')
+[+1946 ms] C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\video_output.h(14,10): error C1083: Cannot open include file: 'client.h': No such file or directory [C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\media_kit_video_plugin.vcxproj]
+[        ]   (compiling source file '../../../../../windows/flutter/ephemeral/.plugin_symlinks/media_kit_video/windows/media_kit_video_plugin.cc')
+[  +10 ms]   video_output_manager.cc
+[+1946 ms] C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\video_output.h(14,10): error C1083: Cannot open include file: 'client.h': No such file or directory [C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\media_kit_video_plugin.vcxproj]
+[        ]   (compiling source file '../../../../../windows/flutter/ephemeral/.plugin_symlinks/media_kit_video/windows/video_output_manager.cc')
+[   +9 ms]   video_output.cc
+[ +401 ms] C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\video_output.h(14,10): error C1083: Cannot open include file: 'client.h': No such file or directory [C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\media_kit_video_plugin.vcxproj]
+[        ]   (compiling source file '../../../../../windows/flutter/ephemeral/.plugin_symlinks/media_kit_video/windows/video_output.cc')
+[   +3 ms]   utils.cc
+[ +794 ms]   Generating Code...
+[ +189 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\media_kit_video_plugin.vcxproj" (default targets) -- FAILED.
+[  +48 ms] Project "C:\projects\Memoize\client\build\windows\x64\runner\client.vcxproj" (6) is building "C:\projects\Memoize\client\build\windows\x64\plugins\url_launcher_windows\url_launcher_windows_plugin.vcxproj" (14) on node 1 (default targets).
+[        ] PrepareForBuild:
+[        ]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[        ]   Creating directory "C:\projects\Memoize\client\build\windows\x64\plugins\url_launcher_windows\Debug\".
+[        ]   Creating directory "url_launcher_windows_plugin.dir\Debug\url_laun.5079B4EC.tlog\".
+[   +3 ms] InitializeBuildStatus:
+[        ]   Creating "url_launcher_windows_plugin.dir\Debug\url_laun.5079B4EC.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+[        ]   Touching "url_launcher_windows_plugin.dir\Debug\url_laun.5079B4EC.tlog\unsuccessfulbuild".
+[  +63 ms] CustomBuild:
+[        ]   Building Custom Rule C:/projects/Memoize/client/windows/flutter/ephemeral/.plugin_symlinks/url_launcher_windows/windows/CMakeLists.txt
+[  +53 ms] ClCompile:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\CL.exe /c /IC:\projects\Memoize\client\windows\flutter\ephemeral /IC:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\include /Zi /nologo /W4 /WX /diagnostics:column /Od /Ob0 /D _WINDLL /D _UNICODE /D UNICODE /D WIN32 /D _WINDOWS /D _HAS_EXCEPTIONS=0 /D _DEBUG /D FLUTTER_PLUGIN_IMPL /D UNICODE /D _UNICODE /D "CMAKE_INTDIR=\"Debug\"" /D url_launcher_windows_plugin_EXPORTS /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"url_launcher_windows_plugin.dir\Debug\\" /Fd"url_launcher_windows_plugin.dir\Debug\vc145.pdb" /external:W4 /TP /wd4100 /errorReport:queue C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\url_launcher_windows\windows\url_launcher_windows.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\url_launcher_windows\windows\messages.g.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\url_launcher_windows\windows\system_apis.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\url_launcher_windows\windows\url_launcher_plugin.cpp
+[  +61 ms]   url_launcher_windows.cpp
+[+2675 ms]   messages.g.cpp
+[+2046 ms]   system_apis.cpp
+[ +851 ms]   url_launcher_plugin.cpp
+[+2789 ms]   Generating Code...
+[ +439 ms] Link:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\link.exe /OUT:"C:\projects\Memoize\client\build\windows\x64\plugins\url_launcher_windows\Debug\url_launcher_windows_plugin.dll" /INCREMENTAL /ILK:"url_launcher_windows_plugin.dir\Debug\url_launcher_windows_plugin.ilk" /NOLOGO ..\..\flutter\Debug\flutter_wrapper_plugin.lib shlwapi.lib C:\projects\Memoize\client\windows\flutter\ephemeral\flutter_windows.dll.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/projects/Memoize/client/build/windows/x64/plugins/url_launcher_windows/Debug/url_launcher_windows_plugin.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"C:/projects/Memoize/client/build/windows/x64/plugins/url_launcher_windows/Debug/url_launcher_windows_plugin.lib" /MACHINE:X64  /machine:x64 /DLL url_launcher_windows_plugin.dir\Debug\url_launcher_windows.obj
+[        ]   url_launcher_windows_plugin.dir\Debug\messages.g.obj
+[        ]   url_launcher_windows_plugin.dir\Debug\system_apis.obj
+[        ]   url_launcher_windows_plugin.dir\Debug\url_launcher_plugin.obj
+[ +130 ms]      Creating library C:/projects/Memoize/client/build/windows/x64/plugins/url_launcher_windows/Debug/url_launcher_windows_plugin.lib and object C:/projects/Memoize/client/build/windows/x64/plugins/url_launcher_windows/Debug/url_launcher_windows_plugin.exp
+[ +222 ms]   url_launcher_windows_plugin.vcxproj -> C:\projects\Memoize\client\build\windows\x64\plugins\url_launcher_windows\Debug\url_launcher_windows_plugin.dll
+[  +12 ms] FinalizeBuildStatus:
+[        ]   Deleting file "url_launcher_windows_plugin.dir\Debug\url_laun.5079B4EC.tlog\unsuccessfulbuild".
+[        ]   Touching "url_launcher_windows_plugin.dir\Debug\url_laun.5079B4EC.tlog\url_launcher_windows_plugin.lastbuildstate".
+[   +1 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\plugins\url_launcher_windows\url_launcher_windows_plugin.vcxproj" (default targets).
+[  +54 ms] Project "C:\projects\Memoize\client\build\windows\x64\runner\client.vcxproj" (6) is building "C:\projects\Memoize\client\build\windows\x64\plugins\volume_controller\volume_controller_plugin.vcxproj" (15) on node 1 (default targets).
+[        ] PrepareForBuild:
+[        ]   Structured output is enabled. The formatting of compiler diagnostics will reflect the error hierarchy. See https://aka.ms/cpp/structured-output for more details.
+[        ]   Creating directory "C:\projects\Memoize\client\build\windows\x64\plugins\volume_controller\Debug\".
+[        ]   Creating directory "volume_controller_plugin.dir\Debug\volume_c.3E33C861.tlog\".
+[   +3 ms] InitializeBuildStatus:
+[        ]   Creating "volume_controller_plugin.dir\Debug\volume_c.3E33C861.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+[        ]   Touching "volume_controller_plugin.dir\Debug\volume_c.3E33C861.tlog\unsuccessfulbuild".
+[  +68 ms] CustomBuild:
+[        ]   Building Custom Rule C:/projects/Memoize/client/windows/flutter/ephemeral/.plugin_symlinks/volume_controller/windows/CMakeLists.txt
+[  +53 ms] ClCompile:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\CL.exe /c /IC:\projects\Memoize\client\windows\flutter\ephemeral /IC:\projects\Memoize\client\windows\flutter\ephemeral\cpp_client_wrapper\include /Zi /nologo /W4 /WX /diagnostics:column /Od /Ob0 /D _WINDLL /D _UNICODE /D UNICODE /D WIN32 /D _WINDOWS /D _HAS_EXCEPTIONS=0 /D _DEBUG /D FLUTTER_PLUGIN_IMPL /D UNICODE /D _UNICODE /D "CMAKE_INTDIR=\"Debug\"" /D volume_controller_plugin_EXPORTS /EHsc /RTC1 /MDd /GR /std:c++17 /Fo"volume_controller_plugin.dir\Debug\\" /Fd"volume_controller_plugin.dir\Debug\vc145.pdb" /external:W4 /TP /wd4100 /errorReport:queue C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\volume_controller\windows\volume_controller_plugin_c_api.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\volume_controller\windows\volume_controller_plugin.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\volume_controller\windows\include\volume_controller\helper.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\volume_controller\windows\include\volume_controller\volume_controller.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\volume_controller\windows\include\volume_controller\volume_listener.cpp C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\volume_controller\windows\include\volume_controller\volume_stream_handler.cpp
+[  +58 ms]   volume_controller_plugin_c_api.cpp
+[+2633 ms]   volume_controller_plugin.cpp
+[+2794 ms]   helper.cpp
+[+1073 ms]   volume_controller.cpp
+[+1783 ms]   volume_listener.cpp
+[+1872 ms]   volume_stream_handler.cpp
+[+2432 ms]   Generating Code...
+[ +436 ms] Link:
+[        ]   C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\link.exe /OUT:"C:\projects\Memoize\client\build\windows\x64\plugins\volume_controller\Debug\volume_controller_plugin.dll" /INCREMENTAL /ILK:"volume_controller_plugin.dir\Debug\volume_controller_plugin.ilk" /NOLOGO ..\..\flutter\Debug\flutter_wrapper_plugin.lib C:\projects\Memoize\client\windows\flutter\ephemeral\flutter_windows.dll.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/projects/Memoize/client/build/windows/x64/plugins/volume_controller/Debug/volume_controller_plugin.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"C:/projects/Memoize/client/build/windows/x64/plugins/volume_controller/Debug/volume_controller_plugin.lib" /MACHINE:X64  /machine:x64 /DLL volume_controller_plugin.dir\Debug\volume_controller_plugin_c_api.obj
+[        ]   volume_controller_plugin.dir\Debug\volume_controller_plugin.obj
+[        ]   volume_controller_plugin.dir\Debug\helper.obj
+[        ]   volume_controller_plugin.dir\Debug\volume_controller.obj
+[        ]   volume_controller_plugin.dir\Debug\volume_listener.obj
+[        ]   volume_controller_plugin.dir\Debug\volume_stream_handler.obj
+[ +122 ms]      Creating library C:/projects/Memoize/client/build/windows/x64/plugins/volume_controller/Debug/volume_controller_plugin.lib and object C:/projects/Memoize/client/build/windows/x64/plugins/volume_controller/Debug/volume_controller_plugin.exp
+[ +209 ms]   volume_controller_plugin.vcxproj -> C:\projects\Memoize\client\build\windows\x64\plugins\volume_controller\Debug\volume_controller_plugin.dll
+[  +13 ms] FinalizeBuildStatus:
+[        ]   Deleting file "volume_controller_plugin.dir\Debug\volume_c.3E33C861.tlog\unsuccessfulbuild".
+[        ]   Touching "volume_controller_plugin.dir\Debug\volume_c.3E33C861.tlog\volume_controller_plugin.lastbuildstate".
+[   +1 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\plugins\volume_controller\volume_controller_plugin.vcxproj" (default targets).
+[   +1 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\runner\client.vcxproj" (default targets) -- FAILED.
+[   +1 ms] Done Building Project "C:\projects\Memoize\client\build\windows\x64\ALL_BUILD.vcxproj" (default targets) -- FAILED.
+[        ] Done Building Project "C:\projects\Memoize\client\build\windows\x64\INSTALL.vcxproj" (default targets) -- FAILED.
+[   +8 ms] Build FAILED.
+[        ] "C:\projects\Memoize\client\build\windows\x64\INSTALL.vcxproj" (default target) (1) ->
+[        ] "C:\projects\Memoize\client\build\windows\x64\ALL_BUILD.vcxproj" (default target) (3) ->
+[        ] "C:\projects\Memoize\client\build\windows\x64\runner\client.vcxproj" (default target) (6) ->
+[        ] "C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\media_kit_video_plugin.vcxproj" (default target) (13) ->
+[        ] (ClCompile target) -> 
+[        ]   C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\video_output.h(14,10): error C1083: Cannot open include file: 'client.h': No such file or directory [C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\media_kit_video_plugin.vcxproj]
+[        ]   C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\video_output.h(14,10): error C1083: Cannot open include file: 'client.h': No such file or directory [C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\media_kit_video_plugin.vcxproj]
+[        ]   C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\video_output.h(14,10): error C1083: Cannot open include file: 'client.h': No such file or directory [C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\media_kit_video_plugin.vcxproj]
+[        ]   C:\projects\Memoize\client\windows\flutter\ephemeral\.plugin_symlinks\media_kit_video\windows\video_output.h(14,10): error C1083: Cannot open include file: 'client.h': No such file or directory [C:\projects\Memoize\client\build\windows\x64\plugins\media_kit_video\media_kit_video_plugin.vcxproj]
+[        ]     0 Warning(s)
+[        ]     4 Error(s)
+[        ] Time Elapsed 00:02:27.35
+[  +31 ms] Building Windows application... (completed in 148.9s)
+[        ] Error: Build process failed.
+[   +2 ms] "flutter run" took 152,762ms.
+[  +25 ms] 
+           #0      throwToolExit (package:flutter_tools/src/base/common.dart:34:3)
+           #1      RunCommand.runCommand (package:flutter_tools/src/commands/run.dart:940:9)
+           <asynchronous suspension>
+           #2      FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1630:27)
+           <asynchronous suspension>
+           #3      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #4      CommandRunner.runCommand (package:args/command_runner.dart:212:13)
+           <asynchronous suspension>
+           #5      FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:496:9)
+           <asynchronous suspension>
+           #6      AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #7      FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:431:5)
+           <asynchronous suspension>
+           #8      FlutterCommandRunner.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:307:33)
+           <asynchronous suspension>
+           #9      run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:104:11)
+           <asynchronous suspension>
+           #10     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+           <asynchronous suspension>
+           #11     main (package:flutter_tools/executable.dart:103:3)
+           <asynchronous suspension>
+
+
+[        ] Running 3 shutdown hooks
+[  +13 ms] Shutdown hooks complete
+[        ] exiting with code 1

@@ -41,7 +41,7 @@ class _NativeSurface extends ConsumerWidget {
 
     return Video(
       controller: controller!,
-      fit: .contain,
+      fit: BoxFit.contain,
       // We own the controls — turn off the built-in overlay.
       controls: NoVideoControls,
     );

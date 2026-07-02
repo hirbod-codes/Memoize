@@ -30,15 +30,15 @@ class MediaKitVideoPlayer implements AppVideoPlayer {
   void _bindStreams() {
     // Playing / paused
     _player.stream.playing.listen((playing) {
-      // print('_player.stream.playing.listen');
-      // print(playing);
+      print('_player.stream.playing.listen');
+      print(playing);
       _emit(_state.copyWith(status: playing ? PlayerStatus.playing : PlayerStatus.paused));
     });
 
     // Buffering
     _player.stream.buffering.listen((buffering) {
-      // print('_player.stream.buffering.listen');
-      // print(buffering);
+      print('_player.stream.buffering.listen');
+      print(buffering);
       if (buffering) _emit(_state.copyWith(status: PlayerStatus.buffering));
     });
 
@@ -64,31 +64,29 @@ class MediaKitVideoPlayer implements AppVideoPlayer {
 
     // End of media
     _player.stream.completed.listen((completed) {
-      // print('_player.stream.completed.listen');
-      // print(completed);
+      print('_player.stream.completed.listen');
+      print(completed);
       if (completed) _emit(_state.copyWith(status: PlayerStatus.ended));
     });
 
     // Errors
     _player.stream.error.listen((err) {
-      // print('[MediaKitVideoPlayer] error: $err');
+      print('[MediaKitVideoPlayer] error: $err');
       _emit(_state.copyWith(status: PlayerStatus.error, error: err));
     });
   }
 
   @override
-  Future<void> open(String url, {Map<String, String>? headers}) async {
-    // print('_player.open');
+  Future<void> open(String url, {Map<String, String>? headers, bool play = false}) async {
+    print('_player.open');
     final s = _state.copyWith(status: PlayerStatus.loading, position: Duration.zero, duration: Duration.zero, error: null);
     _emit(s);
 
     final media = Media(url, httpHeaders: headers);
-    await _player.open(media);
-    // print('_player.open done');
-    // print(s.toJson());
-    // print(_state.toJson());
-
-    // _emit(_state.copyWith(status: .playing));
+    await _player.open(media, play: play);
+    print('_player.open done');
+    print(s.toJson());
+    print(_state.toJson());
   }
 
   @override

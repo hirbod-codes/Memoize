@@ -70,27 +70,27 @@ class _ImagesState extends ConsumerState<ImageContainer> {
 
     if (_loading) {
       return Row(
-        mainAxisAlignment: .center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
       );
     }
 
-    if (_image == null) return Column(mainAxisAlignment: .center, crossAxisAlignment: .center, children: [Text('Image not found.')]);
-    if (_token == null) return Column(mainAxisAlignment: .center, crossAxisAlignment: .center, children: [Text('Unauthenticated.')]);
+    if (_image == null) return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Image not found.')]);
+    if (_token == null) return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Unauthenticated.')]);
 
     return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md), color: Theme.of(context).colorScheme.surfaceContainerHighest),
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: .all(8.0),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
-          mainAxisAlignment: .start,
-          crossAxisAlignment: .stretch,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              clipBehavior: .antiAlias,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md)),
-              child: Image.network('${AppConfig.apiUrl}/api/image/file/${widget.imageId}', fit: .fitWidth, headers: {'Authorization': 'Bearer $_token'}, ),
+              child: Image.network('${AppConfig.apiUrl}/api/image/file/${widget.imageId}', fit: BoxFit.fitWidth, headers: {'Authorization': 'Bearer $_token'}),
             ),
             if (_image?.title != null) Center(child: Text(_image?.title ?? '')),
           ],

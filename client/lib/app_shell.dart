@@ -16,7 +16,7 @@ class AppShell extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.surface,
       appBar: TopBar(title: title),
-      body: Container(width: .infinity, height: .infinity, padding: EdgeInsetsGeometry.all(8), child: child),
+      body: Container(width: double.infinity, height: double.infinity, padding: EdgeInsetsGeometry.all(8), child: child),
       bottomNavigationBar: NavBar(currentIndex: 0, onChanged: (i) {}),
     );
   }
