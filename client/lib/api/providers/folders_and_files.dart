@@ -47,7 +47,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.addFolder is called...');
 
-      if (state.folders == null) return .new(status: .failure, message: 'No folders found!');
+      if (state.folders == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No folders found!');
 
       // Send request
       String newId = await ref.read(folderControllerProvider).create(title: title, parentId: parentId);
@@ -55,12 +55,12 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       return _persist(
         errorMessage: 'Failure while trying to add new folder.',
         update: () {
-          state.folders!.add(.new(id: newId, title: title, treeNodeIds: [], leafIds: []));
+          state.folders!.add(Folder(id: newId, title: title, treeNodeIds: [], leafIds: []));
         },
       );
     } catch (e) {
       Talker().error('FoldersAndFiles.addFolder throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to add new folder.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to add new folder.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.addFolder call ended');
     }
@@ -70,7 +70,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.setFolder is called...');
 
-      if (state.folders == null) return .new(status: .failure, message: 'No folders found!');
+      if (state.folders == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No folders found!');
 
       int? folderIndex;
       for (int i = 0; i < state.folders!.length; i++) {
@@ -78,7 +78,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
         folderIndex = i;
         break;
       }
-      if (folderIndex == null) return .new(status: .failure, message: 'Folder not found!');
+      if (folderIndex == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Folder not found!');
 
       // Send request
       Response<dynamic> response = await ref.read(folderControllerProvider).patch(id: folder.id, title: folder.title, leafIds: folder.leafIds, treeNodeIds: folder.treeNodeIds);
@@ -92,7 +92,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       );
     } catch (e) {
       Talker().error('FoldersAndFiles.setFolder throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to update folder.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update folder.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.setFolder call ended');
     }
@@ -102,8 +102,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.removeFolder is called...');
 
-      if (state.folders == null) return .new(status: .failure, message: 'No folders found!');
-      if (index >= state.folders!.length || index < 0) return .new(status: .failure, message: 'Folder not found!');
+      if (state.folders == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No folders found!');
+      if (index >= state.folders!.length || index < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Folder not found!');
 
       // Send request
       Response<dynamic> response = await ref.read(folderControllerProvider).delete(id: state.folders![index].id);
@@ -117,7 +117,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       );
     } catch (e) {
       Talker().error('FoldersAndFiles.removeFolder throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to remove folder.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove folder.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.removeFolder call ended');
     }
@@ -127,7 +127,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.removeFolderById is called...');
 
-      if (state.folders == null) return .new(status: .failure, message: 'No folders found!');
+      if (state.folders == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No folders found!');
 
       int? folderIndex;
       for (int i = 0; i < state.folders!.length; i++) {
@@ -135,7 +135,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
         folderIndex = i;
         break;
       }
-      if (folderIndex == null) return .new(status: .failure, message: 'folder not found!');
+      if (folderIndex == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'folder not found!');
 
       // Send request
       Response<dynamic> response = await ref.read(folderControllerProvider).delete(id: id);
@@ -149,7 +149,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       );
     } catch (e) {
       Talker().error('FoldersAndFiles.removeFolderById throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to remove folder.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove folder.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.removeFolderById call ended');
     }
@@ -164,7 +164,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.addFile is called...');
 
-      if (state.files == null) return .new(status: .failure, message: 'No files found!');
+      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
 
       // Send request
       String newId = await ref.read(leafControllerProvider).create(title: title, treeNodeId: treeNodeId, termContents: [], definitionContents: []);
@@ -172,12 +172,12 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       return _persist(
         errorMessage: 'Failure while trying to add new file.',
         update: () {
-          state.files!.add(.new(id: newId, treeNodeId: treeNodeId, title: title, termContents: [], definitionContents: []));
+          state.files!.add(Leaf(id: newId, treeNodeId: treeNodeId, title: title, termContents: [], definitionContents: []));
         },
       );
     } catch (e) {
       Talker().error('FoldersAndFiles.addFile throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to add new file.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to add new file.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.addFile call ended');
     }
@@ -187,7 +187,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.setFile is called...');
 
-      if (state.files == null) return .new(status: .failure, message: 'No files found!');
+      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
 
       int? fileIndex;
       for (int i = 0; i < state.files!.length; i++) {
@@ -195,7 +195,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
         fileIndex = i;
         break;
       }
-      if (fileIndex == null) return .new(status: .failure, message: 'File not found!');
+      if (fileIndex == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
 
       // Send request
       Response<dynamic> response = await ref.read(leafControllerProvider).patch(id: file.id, title: file.title, termContents: file.termContents, definitionContents: file.definitionContents);
@@ -209,7 +209,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       );
     } catch (e) {
       Talker().error('FoldersAndFiles.setFile throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to update file.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update file.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.setFile call ended');
     }
@@ -219,8 +219,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.removeFile is called...');
 
-      if (state.files == null) return .new(status: .failure, message: 'No files found!');
-      if (index >= state.files!.length || index < 0) return .new(status: .failure, message: 'File not found!');
+      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
+      if (index >= state.files!.length || index < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
 
       // Send request
       Response<dynamic> response = await ref.read(leafControllerProvider).delete(id: state.files![index].id);
@@ -234,7 +234,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       );
     } catch (e) {
       Talker().error('FoldersAndFiles.removeFile throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to remove file.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove file.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.removeFile call ended');
     }
@@ -244,7 +244,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.removeFileById is called...');
 
-      if (state.files == null) return .new(status: .failure, message: 'No files found!');
+      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
 
       Leaf? file;
       for (int i = 0; i < state.files!.length; i++) {
@@ -252,7 +252,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
         file = state.files![i];
         break;
       }
-      if (file == null) return .new(status: .failure, message: 'File not found!');
+      if (file == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
 
       // Send request
       Response<dynamic> response = await ref.read(leafControllerProvider).delete(id: id);
@@ -266,7 +266,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       );
     } catch (e) {
       Talker().error('FoldersAndFiles.removeFileById throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to remove file.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove file.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.removeFileById call ended');
     }
@@ -277,16 +277,16 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.setContent is called...');
 
-      if (state.files == null) return .new(status: .failure, message: 'No files found!');
+      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
       final List<Content> contents;
       if (state.isTerm) {
-        if (contentIndex >= state.files![state.fileIndex].termContents.length || contentIndex < 0) return .new(status: .failure, message: 'File not found!');
+        if (contentIndex >= state.files![state.fileIndex].termContents.length || contentIndex < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
         contents = tempFile.termContents.map((m) => m.copyWith()).toList();
       } else {
-        if (contentIndex >= state.files![state.fileIndex].definitionContents.length || contentIndex < 0) return .new(status: .failure, message: 'File not found!');
+        if (contentIndex >= state.files![state.fileIndex].definitionContents.length || contentIndex < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
         contents = tempFile.definitionContents.map((m) => m.copyWith()).toList();
       }
 
@@ -304,7 +304,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       return _persistContents(response: result, message: 'Failure while trying to update content.', contents: contents);
     } catch (e) {
       Talker().error('FoldersAndFiles.setContent throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to update content.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update content.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.setContent call ended');
     }
@@ -314,7 +314,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.addContent is called...');
 
-      if (state.files == null) return .new(status: .failure, message: 'No files found!');
+      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
@@ -339,7 +339,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       return _persistContents(response: result, message: 'Failure while trying to add new content.', contents: contents);
     } catch (e) {
       Talker().error('FoldersAndFiles.addContent throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to add new content.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to add new content.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.addContent call ended');
     }
@@ -349,7 +349,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.removeContent is called...');
 
-      if (state.files == null) return .new(status: .failure, message: 'No files found!');
+      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
@@ -374,7 +374,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       return _persistContents(response: result, message: 'Failure while trying to remove content.', contents: contents);
     } catch (e) {
       Talker().error('FoldersAndFiles.removeContent throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to remove content.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove content.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.removeContent call ended');
     }
@@ -384,16 +384,16 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.setContent is called...');
 
-      if (state.files == null) return .new(status: .failure, message: 'No files found!');
+      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
       final List<Content> contents;
       if (state.isTerm) {
-        if (contentIndex < 0 || contentValueIndex < 0 || contentIndex >= state.files![state.fileIndex].termContents.length || contentValueIndex >= state.files![state.fileIndex].termContents[contentIndex].value.length) return .new(status: .failure, message: 'File not found!');
+        if (contentIndex < 0 || contentValueIndex < 0 || contentIndex >= state.files![state.fileIndex].termContents.length || contentValueIndex >= state.files![state.fileIndex].termContents[contentIndex].value.length) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
         contents = tempFile.termContents.map((m) => m.copyWith()).toList();
       } else {
-        if (contentIndex < 0 || contentValueIndex < 0 || contentIndex >= state.files![state.fileIndex].definitionContents.length || contentValueIndex >= state.files![state.fileIndex].definitionContents[contentIndex].value.length) return .new(status: .failure, message: 'File not found!');
+        if (contentIndex < 0 || contentValueIndex < 0 || contentIndex >= state.files![state.fileIndex].definitionContents.length || contentValueIndex >= state.files![state.fileIndex].definitionContents[contentIndex].value.length) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
         contents = tempFile.definitionContents.map((m) => m.copyWith()).toList();
       }
 
@@ -411,7 +411,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       return _persistContents(response: result, message: 'Failure while trying to update content.', contents: contents);
     } catch (e) {
       Talker().error('FoldersAndFiles.setContent throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to update content.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update content.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.setContent call ended');
     }
@@ -421,7 +421,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.addContentValue is called...');
 
-      if (state.files == null) return .new(status: .failure, message: 'No files found!');
+      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
@@ -447,7 +447,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     } catch (e) {
       print(e);
       Talker().error('FoldersAndFiles.addContentValue throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to add new content.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to add new content.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.addContentValue call ended');
     }
@@ -457,7 +457,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     try {
       Talker().info('FoldersAndFiles.removeContentValue is called...');
 
-      if (state.files == null) return .new(status: .failure, message: 'No files found!');
+      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
@@ -482,7 +482,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       return _persistContents(response: result, message: 'Failure while trying to remove content.', contents: contents);
     } catch (e) {
       Talker().error('FoldersAndFiles.removeContentValue throws an error', e);
-      return .new(status: .failure, message: 'Failure while trying to remove content.', error: e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove content.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.removeContentValue call ended');
     }
@@ -506,10 +506,10 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       state = state.copyWith();
 
-      return .new(status: .success);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.success);
     }
 
-    return .new(status: .failure, message: errorMessage);
+    return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: errorMessage);
   }
 }
 

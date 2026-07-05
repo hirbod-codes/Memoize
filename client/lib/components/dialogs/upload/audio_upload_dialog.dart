@@ -33,7 +33,7 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
   }
 
   Future<void> _pickAudio() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.audio, allowMultiple: false);
+    final result = await FilePicker.pickFiles(type: FileType.audio, allowMultiple: false);
 
     if (result == null) return;
 

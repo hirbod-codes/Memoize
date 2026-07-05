@@ -33,15 +33,15 @@ class Content {
 
   static String stringifyContentType(ContentType value) {
     switch (value) {
-      case .string:
+      case ContentType.string:
         return 'string';
-      case .richText:
+      case ContentType.richText:
         return 'richText';
-      case .imageId:
+      case ContentType.imageId:
         return 'imageId';
-      case .videoId:
+      case ContentType.videoId:
         return 'videoId';
-      case .audioId:
+      case ContentType.audioId:
         return 'audioId';
     }
   }
