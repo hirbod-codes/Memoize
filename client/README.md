@@ -35,4 +35,5 @@ reg delete "HKCU\Environment" /F /V FLUTTER_STORAGE_BASE_URL
 ```bash
 flutter run -d windows --dart-define=API_URL=https://api.example.com --dart-define=ENV=prod
 flutter run -d windows --dart-define=API_URL=https://localhost:3000 --dart-define=ENV=dev
+flutter run -d web-server --dart-define=API_URL=https://localhost:3000 --dart-define=ENV=dev
 ```
