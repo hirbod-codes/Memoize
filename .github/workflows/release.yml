@@ -428,7 +428,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: web
-          path: memoize-web-${{ needs.client-release.outputs.version }}.zip
+          path: |
+            memoize-web-latest.zip
+            memoize-web-${{ needs.client-release.outputs.version }}.zip
 
   macos-build:
     needs: client-release
