@@ -1,14 +1,21 @@
-class Folder {
-  late final String id;
-  late final String title;
-  late final String userId;
-  late final String? parentId;
-  late final List<String> treeNodeIds;
-  late final List<String> leafIds;
-  late final int createdAt;
-  late final int updatedAt;
+import 'dart:convert';
 
-  Folder({required this.id, required this.title, required this.userId, this.parentId, required this.treeNodeIds, required this.leafIds, required this.createdAt, required this.updatedAt});
+class Folder {
+  late String id;
+  late String title;
+  late String? userId;
+  late String? parentId;
+  late List<String> treeNodeIds;
+  late List<String> leafIds;
+  late int? createdAt;
+  late int? updatedAt;
+
+  Folder({required this.id, required this.title, this.userId, this.parentId, required this.treeNodeIds, required this.leafIds, this.createdAt, this.updatedAt});
+
+  Map<String, dynamic> toJson() => ({'id': id, 'title': title, 'createdAt': createdAt, 'updatedAt': updatedAt});
+
+  @override
+  String toString() => jsonEncode(toJson());
 
   factory Folder.fromJson(Map<String, dynamic> json) {
     final id = json['_id'];
@@ -21,5 +28,9 @@ class Folder {
     final updatedAt = (json['updatedAt'] as num).toInt();
 
     return Folder(id: id, title: title, userId: userId, parentId: parentId, treeNodeIds: treeNodeIds, leafIds: leafIds, createdAt: createdAt, updatedAt: updatedAt);
+  }
+
+  Folder copyWith({String? id, String? title, String? userId, List<String>? treeNodeIds, List<String>? leafIds, int? createdAt, int? updatedAt}) {
+    return Folder(id: id ?? this.id, title: title ?? this.title, userId: userId ?? this.userId, treeNodeIds: treeNodeIds ?? [...this.treeNodeIds], leafIds: leafIds ?? [...this.leafIds], createdAt: createdAt ?? this.createdAt, updatedAt: updatedAt ?? this.updatedAt);
   }
 }

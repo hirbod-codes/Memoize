@@ -6,8 +6,9 @@ import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
 import 'package:client/components/contents/players/audio/audio_player_provider.dart';
 import 'package:client/components/contents/players/audio/audio_player_screen.dart';
+import 'package:client/components/global/notification_service.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -58,14 +59,7 @@ class _AudioContainerState extends ConsumerState<AudioContainer> {
   FutureOr<Null> _handleError(dynamic e) {
     if (!mounted) return null;
 
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Failed to fetch audio data.', style: .new(color: theme.onError)),
-        backgroundColor: theme.error,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    NotificationService.showError(context: context, message: 'Failed to fetch audio data.');
 
     setState(() {
       _loading = false;
@@ -78,17 +72,32 @@ class _AudioContainerState extends ConsumerState<AudioContainer> {
 
     if (_loading) {
       return Row(
-        mainAxisAlignment: .center,
+        mainAxisAlignment:MainAxisAlignment .center,
         children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
       );
     }
 
-    if (_audio == null) return Column(mainAxisAlignment: .center, crossAxisAlignment: .center, children: [Text('Audio not found.')]);
-    if (_token == null) return Column(mainAxisAlignment: .center, crossAxisAlignment: .center, children: [Text('Unauthenticated.')]);
+    if (_audio == null) {
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(mainAxisAlignment:MainAxisAlignment .center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Audio not found.')]),
+      );
+    }
+    if (_token == null) {
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(mainAxisAlignment:MainAxisAlignment .center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Unauthenticated.')]),
+      );
+    }
 
-    return ProviderScope(
-      overrides: [audioPlayerCommandsProvider],
-      child: AudioPlayerScreen(audioId: _audio!.id, url: '${AppConfig.apiUrl}/api/audio/file/${_audio!.id}', headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _audio!.title, artist: _audio!.metadata?.artists?[0]),
+    return Container(
+      height: 900,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md), color: Theme.of(context).colorScheme.surfaceContainerHighest),
+      clipBehavior: Clip.antiAlias,
+      child: ProviderScope(
+        overrides: [audioPlayerCommandsProvider],
+        child: AudioPlayerScreen(audioId: _audio!.id, url: '${AppConfig.apiUrl}/api/audio/file/${_audio!.id}', headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _audio!.title),
+      ),
     );
   }
 }

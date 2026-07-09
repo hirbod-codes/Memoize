@@ -1,4 +1,4 @@
-import 'package:client/auth/auth_controller.dart';
+import 'package:client/auth/responses/refresh_response.dart';
 import 'package:client/auth/token_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,8 +7,10 @@ class RefreshInterceptor extends Interceptor {
   final Dio dio;
   final TokenStorage storage;
   final Ref ref;
+  final Future<void> Function() logout;
+  final Future<RefreshResponse> Function(String refreshToken) refresh;
 
-  RefreshInterceptor({required this.dio, required this.storage, required this.ref});
+  RefreshInterceptor({required this.dio, required this.storage, required this.ref, required this.logout, required this.refresh});
 
   bool _isRefreshing = false;
 
@@ -33,15 +35,11 @@ class RefreshInterceptor extends Interceptor {
         throw Exception();
       }
 
-      final response = await dio.post('/api/auth/refresh', data: {'refreshToken': refreshToken});
+      final response = await refresh(refreshToken);
 
-      final accessToken = response.data['accessToken'];
-
-      final newRefreshToken = response.data['refreshToken'];
+      final accessToken = response.accessToken;
 
       await storage.saveAccessToken(accessToken);
-
-      await storage.saveRefreshToken(newRefreshToken);
 
       final request = err.requestOptions;
 
@@ -50,10 +48,10 @@ class RefreshInterceptor extends Interceptor {
       final retryResponse = await dio.fetch(request);
 
       handler.resolve(retryResponse);
-    } catch (_) {
+    } catch (e) {
       await storage.clear();
 
-      ref.read(authControllerProvider.notifier).logout();
+      await logout();
 
       handler.next(err);
     } finally {

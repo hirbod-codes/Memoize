@@ -5,6 +5,7 @@ import 'package:client/auth/responses/login_response.dart';
 import 'package:client/auth/responses/refresh_response.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 class AuthController extends Notifier<AuthState> {
   late final TokenStorage _storage;
@@ -23,28 +24,39 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> _initialize() async {
+    Talker().info('AuthController._initialize called...');
+
     final refreshToken = await _storage.getRefreshToken();
+    Talker().info('refreshToken: $refreshToken');
 
     if (refreshToken == null) {
       state = const AuthState(AuthStatus.unauthenticated);
+      Talker().info('AuthController._initialize ended');
       return;
     }
 
     try {
-      final result = await _refresh(refreshToken);
+      final result = await refresh(refreshToken);
+      Talker().info('refresh result: $result');
 
       await _storage.saveAccessToken(result.accessToken);
 
       state = const AuthState(AuthStatus.authenticated);
-    } catch (_) {
+    } catch (e) {
+      Talker().error('error: $e');
+
       await _storage.clear();
 
       state = const AuthState(AuthStatus.unauthenticated);
     }
+
+    Talker().info('AuthController._initialize ended');
   }
 
-  Future<RefreshResponse> _refresh(String refreshToken) async {
+  Future<RefreshResponse> refresh(String refreshToken) async {
+    Talker().info('AuthController._initialize called...');
     final response = await _authDio.post('/api/auth/refresh', data: {'refreshToken': refreshToken, 'noCookies': 'true'});
+    Talker().info('response status code: ${response.statusCode}', );
 
     return RefreshResponse(accessToken: response.data['accessToken']);
   }
@@ -62,13 +74,13 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    state = const AuthState(AuthStatus.unauthenticated);
+
     final refreshToken = await _storage.getRefreshToken();
     final accessToken = await _storage.getAccessToken();
     await _storage.clear();
 
     if (refreshToken != null) await _dio.post('/api/auth/logout', data: {'refreshToken': refreshToken, 'accessToken': accessToken});
-
-    state = const AuthState(AuthStatus.unauthenticated);
   }
 }
 

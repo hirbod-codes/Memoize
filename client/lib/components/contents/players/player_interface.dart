@@ -18,6 +18,27 @@ class PlayerState extends Equatable {
     return PlayerState(status: status ?? this.status, position: position ?? this.position, duration: duration ?? this.duration, buffered: buffered ?? this.buffered, volume: volume ?? this.volume, error: error ?? this.error);
   }
 
+  String stringifyStatus(PlayerStatus s) {
+    switch (s) {
+      case PlayerStatus.buffering:
+        return 'buffering';
+      case PlayerStatus.ended:
+        return 'ended';
+      case PlayerStatus.error:
+        return 'error';
+      case PlayerStatus.idle:
+        return 'idle';
+      case PlayerStatus.loading:
+        return 'loading';
+      case PlayerStatus.paused:
+        return 'paused';
+      case PlayerStatus.playing:
+        return 'playing';
+    }
+  }
+
+  Map<String, dynamic> toJson() => {'status': stringifyStatus(status), 'position': position, 'duration': duration, 'buffered': buffered, 'volume': volume, 'error': error};
+
   @override
   List<Object?> get props => [status, position, duration, buffered, volume, error];
 }

@@ -189,7 +189,8 @@ router.post('/register', unAuth, authRateLimiter, async (req, res) => {
             email,
             phoneNumber,
             password: hashedPassword,
-            role: 'default'
+            role: 'default',
+            temporaryAvatar: false,
         })
         if (createResult === false || !createResult.acknowledged) {
             res.status(500).send()

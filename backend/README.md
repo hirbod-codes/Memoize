@@ -24,6 +24,7 @@ docker run -d \
     -e REFRESH_TOKEN_SECRET=very_secret \
     --network backend_net \
     --restart unless-stopped \
+    --shm-size=1g
     --name memoize_backend Memoize/backend-dev:latest
 
 docker run -d \
@@ -44,6 +45,7 @@ docker run -d \
     --network backend_net \
     --network db_net \
     --restart unless-stopped \
+    --shm-size=1g
     --name memoize_backend Memoize/backend:latest
 ```
 
@@ -54,8 +56,8 @@ docker run -d \
 run (for Windows)
 
 ```bash
-mkcert.exe -install
-mkcert.exe localhost 127.0.0.1 ::1
+.\mkcert.exe -install
+.\mkcert.exe localhost 127.0.0.1 ::1
 ```
 
 ### docker run examples

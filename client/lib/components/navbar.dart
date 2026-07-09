@@ -7,10 +7,10 @@ int getCurrentIndex(BuildContext context) {
   switch (location) {
     case '/':
       return 0;
-    case '/notes':
-      return 1;
-    case '/settings':
-      return 2;
+    // case '/notes':
+    //   return 1;
+    // case '/settings':
+    //   return 2;
     default:
       return 0;
   }
@@ -32,18 +32,20 @@ class NavBar extends StatelessWidget {
           case 0:
             context.go('/');
             break;
-          case 1:
-            context.go('/notes');
-            break;
-          case 2:
-            context.go('/settings');
-            break;
+          // case 1:
+          //   context.go('/notes');
+          //   break;
+          // case 2:
+          //   context.go('/settings');
+          //   break;
+          default:
+            context.go('/');
         }
       },
       destinations: const [
         NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-        NavigationDestination(icon: Icon(Icons.note_sharp), label: 'Notes'),
-        NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+        // NavigationDestination(icon: Icon(Icons.note_sharp), label: 'Notes'),
+        // NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
       ],
     );
   }

@@ -4,10 +4,10 @@ import 'package:client/api/models/video.dart';
 import 'package:client/api/video_controller.dart';
 import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
-import 'package:client/components/contents/players/video_player_provider.dart' hide videoControllerProvider;
 import 'package:client/components/contents/players/video_player_screen.dart';
+import 'package:client/components/global/notification_service.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -58,14 +58,7 @@ class _VideosState extends ConsumerState<VideoContainer> {
   FutureOr<Null> _handleError(dynamic e) {
     if (!mounted) return null;
 
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Failed to fetch Video data.', style: .new(color: theme.onError)),
-        backgroundColor: theme.error,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    NotificationService.showError(context: context, message: 'Failed to fetch audio data.');
 
     setState(() {
       _loading = false;
@@ -78,17 +71,32 @@ class _VideosState extends ConsumerState<VideoContainer> {
 
     if (_loading) {
       return Row(
-        mainAxisAlignment: .center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
       );
     }
 
-    if (_video == null) return Column(mainAxisAlignment: .center, crossAxisAlignment: .center, children: [Text('Video not found.')]);
-    if (_token == null) return Column(mainAxisAlignment: .center, crossAxisAlignment: .center, children: [Text('Unauthenticated.')]);
+    if (_video == null) return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Video not found.')]);
+    if (_token == null) return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Unauthenticated.')]);
 
-    return ProviderScope(
-      overrides: [videoPlayerCommandsProvider],
-      child: VideoPlayerScreen(videoId: _video!.id, url: '${AppConfig.apiUrl}/api/Video/file/${_video!.id}/index.m3u8', headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
+    return Container(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md), color: Theme.of(context).colorScheme.surfaceContainerHighest),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 5,
+          children: [
+            if (_video != null) Text(_video!.title),
+            AspectRatio(
+              aspectRatio: 9 / 16,
+              child: VideoPlayerScreen(videoId: _video!.id, url: '${AppConfig.apiUrl}/api/Video/file/${_video!.id}/index.m3u8', headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

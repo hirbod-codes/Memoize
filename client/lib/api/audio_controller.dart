@@ -1,7 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:client/api/models/audio.dart';
 import 'package:client/auth/dio_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
+import 'package:path/path.dart' as p;
 
 class AudioController {
   final Ref ref;
@@ -10,38 +15,52 @@ class AudioController {
 
   AudioController(this.ref);
 
-  // Future<String> create({required String title, required String treeNodeId, required List<Content> termContents, required List<Content> definitionContents}) async {
-  //   final response = await _authDio.post('/api/leaf/', data: {'title': title, 'treeNodeId': treeNodeId, 'termContents': termContents, 'definitionContents': definitionContents});
+  Future<Response> post({required String title, required File file, String? fileName, ProgressCallback? onSendProgress}) async {
+    Talker().info('AudioController.post is called...');
 
-  //   return response.data['id'];
-  // }
+    final length = await file.length();
+
+    final response = await _authDio.post(
+      '/api/audio/?title=$title&fileName=${fileName ?? p.basename(file.path)}',
+      data: file.openRead(),
+      options: Options(headers: {Headers.contentLengthHeader: length}),
+      onSendProgress: onSendProgress,
+    );
+    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
+
+    Talker().info('AudioController.post call ended');
+    return response;
+  }
 
   Future<Audio?> get({required String audioId}) async {
-    final response = await _authDio.get('/api/audio/info?audioId=$audioId');
-    if (response.data == null) return null;
+    Talker().info('AudioController.get is called...');
 
+    final response = await _authDio.get('/api/audio/info?audioId=$audioId');
+    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
+    if (response.data == null) {
+      Talker().info('Null response data!');
+      Talker().info('AudioController.get call ended');
+      return null;
+    }
+
+    Talker().info('AudioController.get call ended');
     return Audio.fromJson(response.data);
   }
 
   Future<Audio?> getByTitle({required String title}) async {
-    final response = await _authDio.get('/api/audio/info?title=$title');
-    if (response.data == null) return null;
+    Talker().info('AudioController.getByTitle is called...');
 
+    final response = await _authDio.get('/api/audio/info?title=$title');
+    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
+    if (response.data == null) {
+      Talker().info('Null response data!');
+      Talker().info('AudioController.getByTitle call ended');
+      return null;
+    }
+
+    Talker().info('AudioController.getByTitle call ended');
     return Audio.fromJson(response.data);
   }
-
-  // Future<Response> patch({required String id, String? title, List<Content>? termContents, List<Content>? definitionContents}) async {
-  //   final Map<String, dynamic> data = {'_id': id};
-  //   if (title != null) data['title'] = title;
-  //   if (termContents != null) data['termContents'] = termContents;
-  //   if (definitionContents != null) data['definitionContents'] = definitionContents;
-
-  //   return await _authDio.patch('/api/leaf/', data: data);
-  // }
-
-  // Future<Response> delete({required String id}) async {
-  //   return await _authDio.delete('/api/leaf/?id=$id');
-  // }
 }
 
 final audioControllerProvider = Provider((ref) => AudioController(ref));

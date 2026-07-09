@@ -193,6 +193,7 @@ router.patch('/', async (req, res) => {
                 return res.status(400).json({ errors: err.errors })
             return res.status(400).json({ message: 'Invalid Tree node' });
         }
+        console.log({ leaf: JSON.stringify(leaf, null, 4) });
 
         const userId = (req as any).user.userId
 

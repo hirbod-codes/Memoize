@@ -2,17 +2,19 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:client/components/button.dart';
+import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 class TextEditor extends ConsumerStatefulWidget {
   final bool editing;
   final String? json;
-  final Function? onSave;
+  final Future<void> Function(List<Map<String, dynamic>> json)? onSave;
 
   const TextEditor({super.key, required this.editing, this.json, this.onSave});
 
@@ -43,9 +45,8 @@ class _TextEditorState extends ConsumerState<TextEditor> {
         _controller.document = Document.fromJson(json);
       }
     } catch (e) {
-      _controller.document = .new();
-      print('\nerror!');
-      print(e);
+      _controller.document = Document();
+      Talker().error('Failure while trying to parse input json for the rich text editor, falling back to empty content for the editor.', e);
     }
 
     _controller.addListener(() {
@@ -53,7 +54,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
         _hasChanged = true;
       });
       _timer?.cancel();
-      _timer = Timer(.new(milliseconds: 700), () {
+      _timer = Timer(Duration(seconds: 2), () {
         _onSave();
       });
     });
@@ -68,39 +69,55 @@ class _TextEditorState extends ConsumerState<TextEditor> {
     super.dispose();
   }
 
-  void _onSave() {
+  Future<void> _onSave() async {
     if (!widget.editing) return;
 
-    setState(() {
-      _saving = true;
-    });
-    final json = _controller.document.toDelta().toJson();
-    print(json);
-    if (widget.onSave != null) widget.onSave!(json);
-    setState(() {
-      _hasChanged = false;
-      _saving = false;
-    });
+    if (_saving) return;
+
+    try {
+      setState(() {
+        _saving = true;
+      });
+
+      final json = _controller.document.toDelta().toJson();
+
+      await widget.onSave?.call(json);
+      if (!mounted) return;
+
+      setState(() {
+        _hasChanged = false;
+        _saving = false;
+      });
+    } catch (e) {
+      Talker().error('The _onSave method in TextEditor widget throws an error', e);
+      if (!mounted) return;
+
+      setState(() {
+        _saving = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    _controller.readOnly = !widget.editing;
+
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
-        crossAxisAlignment: .stretch,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 7,
         children: [
           if (widget.editing)
             Container(
-              decoration: BoxDecoration(borderRadius: .circular(AppRadius.md), color: theme.surface),
+              decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.circular(AppRadius.md), color: theme.surface),
               child: QuillSimpleToolbar(
                 controller: _controller,
                 config: QuillSimpleToolbarConfig(
-                  toolbarIconCrossAlignment: .center,
-                  toolbarIconAlignment: .start,
+                  toolbarIconCrossAlignment: WrapCrossAlignment.center,
+                  toolbarIconAlignment: WrapAlignment.start,
                   buttonOptions: QuillSimpleToolbarButtonOptions(
                     base: QuillToolbarBaseButtonOptions(
                       afterButtonPressed: () {
@@ -116,7 +133,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
             ),
 
           Container(
-            decoration: BoxDecoration(borderRadius: .circular(10), color: theme.surface),
+            decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.circular(10), color: theme.surface),
             child: Padding(
               padding: const EdgeInsets.all(4),
               child: QuillEditor.basic(
@@ -130,8 +147,8 @@ class _TextEditorState extends ConsumerState<TextEditor> {
 
           if (widget.editing)
             Row(
-              mainAxisAlignment: .end,
-              children: [Button(type: .text, color: _hasChanged ? .warning : .primary, icon: Icons.save, isLoading: _saving, onPressed: _onSave)],
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [Button(type: ButtonType.text, color: _hasChanged ? ThemeColorName.warning : ThemeColorName.primary, icon: Icons.save, isLoading: _saving, onPressed: _onSave)],
             ),
         ],
       ),

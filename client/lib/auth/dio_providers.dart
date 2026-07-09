@@ -1,4 +1,5 @@
 import 'package:client/app_config.dart';
+import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_interceptor.dart';
 import 'package:client/auth/refresh_interceptor.dart';
 import 'package:client/auth/token_storage.dart';
@@ -16,7 +17,8 @@ final authDioProvider = Provider<Dio>((ref) {
 
   dio.interceptors.add(AuthInterceptor(storage));
 
-  dio.interceptors.add(RefreshInterceptor(dio: dio, storage: storage, ref: ref));
+  var controller = ref.read(authControllerProvider.notifier);
+  dio.interceptors.add(RefreshInterceptor(dio: dio, storage: storage, ref: ref, logout: controller.logout, refresh: controller.refresh));
 
   return dio;
 });

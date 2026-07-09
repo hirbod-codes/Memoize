@@ -1,114 +1,282 @@
 import express from 'express';
-import { Readable } from 'stream';
-import { streamToBuffer } from '../utils';
 import { string, ValidationError } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
-import { ImageRepository } from '../DB/repositories/ImageRepository';
+import { BUCKET_NAME, s3 } from '..';
+import { Upload } from "@aws-sdk/lib-storage";
+import ImageRepository from '../DB/repositories/ImageRepository';
+import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { fileTypeFromBuffer } from 'file-type';
+import { teeStream } from '../lib/stream';
+import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
+import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
 
 const router = express.Router();
 
 router.post('/', auth, authorization, async (req, res) => {
     try {
-        console.log('/upload')
+        console.log('/api/image', 'POST')
 
-        console.log('Validating...')
-        let fileName: string | undefined, fileBuffer: Buffer, title: string | undefined
+        console.log('Validating...');
+        // ------------------------------------------------------------------------- Validating...
+        let fileName: string | undefined, title: string | undefined
         try {
             title = await string().required().label('Title').validate(req.query.title?.toString())
             fileName = await string().required().label('File name').validate(req.query.fileName?.toString())
-            const fileStream = Readable.from(req);
-            fileBuffer = await streamToBuffer(fileStream)
+            console.log({ title, fileName })
         } catch (err) {
             console.error(err)
             if (err instanceof ValidationError)
                 return res.status(400).json({ errors: err.errors })
-            return res.status(400).json({ message: 'Invalid Tree node' });
+            return res.status(400).json({ message: 'Invalid Image info.' });
         }
-        console.log({ fileName })
+
+        const userId = (req as any).user.userId
 
         const imageRepository = new ImageRepository()
 
-        console.log("Inserting image file...");
-        // Will be permanent after user created corresponding leaf
-        const imageFileId = await imageRepository.upload({ title, temporary: true, userId: (req as any).user.userId, contentType: req.headers['content-type'] }, { fileName: fileName, bytes: fileBuffer })
-        console.log("Upload image file result", imageFileId);
-        if (imageFileId === false || !imageFileId)
-            return res.status(500).send()
+        console.log("Checking weather title already exists...");
+        // ------------------------------------------------------------------------- Checking weather title already exists...
+        const image = await imageRepository.getForUserByTitle(title, userId);
+        if (image)
+            return res.status(400).json({ message: 'Image title must be unique.' });
 
-        res.status(201).json({ id: imageFileId });
+        const imageFileBucketKey = `image/${userId}/${title}`
 
-        console.log('------------end------------')
+        console.log("Inserting image...");
+        // ------------------------------------------------------------------------- Inserting image...
+        const imageInsertResult = await imageRepository.insert({ title, fileName, contentType: "image/jpg", userId, bucketKey: imageFileBucketKey, temporary: true })
+        console.log("Image insert result", imageInsertResult);
+        if (!imageInsertResult.acknowledged || !imageInsertResult.insertedId)
+            return res.status(500).json({ ok: false, message: 'Image info creation failed' })
+
+        console.log("Splitting req stream...");
+        // ------------------------------------------------------------------------- Splitting req stream...
+        const { splitter, createBranch } = teeStream();
+
+        const s3Stream = createBranch();
+        const typeStream = createBranch();
+
+        const swallow = <T>(p: Promise<T>) => { p.catch((e) => { console.error('swallow throws an error.', e); }); return p; };
+
+        let uploadImage: Upload | null = null
+        let contentType: string | null = null
+
+        let totalBytes = 0;
+        let sizeLimitError: MaxFileSizeExceededError | null = null;
+        const minFileSize = 10 * 1024
+        const maxFileSize = 2 * 1024 * 1024 * 1024
+        try {
+            splitter.on('error', () => { });
+            req.on('error', (err) => {
+                console.error('Request stream error:', err);
+                splitter.destroy(err);
+            });
+            req.on('data', (chunk: Buffer) => {
+                totalBytes += chunk.length;
+                if (sizeLimitError) return; // already tripped, ignore further chunks
+                if (totalBytes > maxFileSize) {
+                    sizeLimitError = new MaxFileSizeExceededError(maxFileSize, totalBytes);
+                    console.error(`[size] Max limit exceeded (${totalBytes} bytes), aborting`);
+                    req.destroy(sizeLimitError);
+                    splitter.destroy(sizeLimitError);
+                }
+            });
+            req.pipe(splitter);
+            splitter.resume();
+
+            console.log("Uploading image file...");
+            // ------------------------------------------------------------------------- Uploading image file...
+            uploadImage = new Upload({
+                client: s3,
+                params: {
+                    Bucket: BUCKET_NAME,
+                    Key: imageFileBucketKey,
+                    Body: s3Stream
+                }
+            });
+            const uploadPromise = swallow((async () => {
+                await uploadImage.done();
+                console.log("Done uploading image file");
+            })());
+
+            console.log("Extracting audio file content type...");
+            // ------------------------------------------------------------------------- Extracting audio file content type...
+            const contentTypePromise = swallow((async () => {
+                const chunks: Buffer[] = [];
+                let total = 0;
+                const maxBytes = 8192;
+
+                try {
+                    for await (const chunk of typeStream) {
+                        const buffer = Buffer.isBuffer(chunk)
+                            ? chunk
+                            : Buffer.from(chunk);
+
+                        chunks.push(buffer);
+                        total += buffer.length;
+
+                        if (total >= maxBytes) {
+                            break;
+                        }
+                    }
+                } finally {
+                    if (!typeStream.destroyed) typeStream.destroy();
+                }
+
+                const head = Buffer.concat(chunks, total);
+
+                const result = await fileTypeFromBuffer(head);
+
+                console.log("Done extracting audio file content type");
+                return result?.mime ?? "application/octet-stream";
+            })());
+
+            console.log("Waiting for streams to finish...");
+            // ------------------------------------------------------------------------- Waiting for streams to finish...
+            [, contentType] = await Promise.all([
+                uploadPromise,
+                contentTypePromise,
+            ]);
+
+            if (sizeLimitError)
+                throw sizeLimitError;
+
+            if (totalBytes < minFileSize)
+                throw new MinFileSizeNotMetError(minFileSize, totalBytes);
+        } catch (err) {
+            console.error(err);
+
+            splitter.destroy();
+
+            try {
+                await uploadImage?.abort();
+            } catch (abortErr) { console.error('Failed to abort segment/playlist uploads:', abortErr); }
+
+            if (err instanceof MaxFileSizeExceededError) {
+                return res.status(413).json({ errors: [err.message] });
+            }
+            if (err instanceof MinFileSizeNotMetError) {
+                return res.status(400).json({ errors: [err.message] });
+            }
+
+            return res.status(500).json({ message: 'Error uploading video file' });
+        }
+
+        const r = await imageRepository.unsafeUpdate(imageInsertResult.insertedId.toString(), userId, { contentType: contentType ?? "application/octet-stream", temporary: false })
+        if (!r.acknowledged || r.matchedCount !== 1) {
+            await uploadImage.abort();
+            return res.status(500).json({ ok: false, message: 'Image info update failed' });
+        }
+
+        res.status(201).json({ id: imageInsertResult.insertedId.toString() });
     } catch (err) {
         console.error(err)
-        res.status(500).json({ message: 'Error uploading image file' });
+        return res.status(500).json({ message: 'Error uploading video file' });
+    } finally {
+        console.log('------------end------------');
     }
 })
 
 router.get('/info/', auth, async (req, res) => {
     try {
-        console.log('/info')
+        console.log('/api/image/info')
 
         console.log('Validation...')
-        let id: string | undefined = undefined
+        let imageId: string | undefined = undefined
+        let title: string | undefined = undefined
         try {
-            id = await string().objectIdString().required().label('Image id').validate(req.query.id?.toString())
+            imageId = await string().objectIdString().optional().label('Image id').validate(req.query.id?.toString())
+            title = await string().optional().label('Title').validate(req.query.title?.toString())
+
+            if (imageId === undefined && title === undefined) {
+                res.status(400).json({ message: 'Invalid parameters' });
+                return
+            }
         } catch (err) {
             console.error(err)
-            if (err instanceof ValidationError)
-                return res.status(400).json({ errors: err.errors })
-            return res.status(400).json({ message: 'Invalid Tree node' });
+            res.status(400).json({ message: 'Invalid parameters' });
+            return
         }
-        console.log({ id })
+        console.log({ imageId, title })
+
+        const userId = (req as any).user.userId
 
         const imageRepository = new ImageRepository()
 
-        let result = await imageRepository.getFile(id)
-
+        let result
+        if (imageId)
+            result = await imageRepository.getForUser(imageId, userId)
+        else
+            result = await imageRepository.getForUserByTitle(title!, userId)
         console.log({ result })
+        if (!result)
+            return res.status(404).send()
 
         res.status(200).json(result)
 
         console.log('------------end------------')
     } catch (err) {
-        res.status(500).json({ message: 'Error getting audio' });
+        res.status(500).json({ message: 'Error getting image' });
     }
 });
 
 router.get('/file/:imageId', auth, async (req, res) => {
     try {
-        console.log('/file')
+        console.log('/api/image/file')
 
         console.log('Validation...')
-        let imageId: string | undefined = undefined
+        let imageId: string | undefined = undefined, download: boolean = false
         try {
             imageId = await string().objectIdString().required().label('Image id').validate(req.params.imageId?.toString())
+            let temp = await string().optional().label('Download').validate(req.query.download?.toString())
+            download = temp === 'true';
         } catch (err) {
             console.error(err)
             if (err instanceof ValidationError)
                 return res.status(400).json({ errors: err.errors })
-            return res.status(400).json({ message: 'Invalid Tree node' });
+            return res.status(400).json({ message: 'Invalid parameters' });
         }
         console.log({ imageId })
 
+        const userId = (req as any).user.userId
+
         const imageRepository = new ImageRepository()
-        const file = await imageRepository.getFile(imageId)
-        if (!file) {
-            res.status(404).json({ message: 'image file not found' });
+
+        console.log("Checking weather image exists...");
+        const image = await imageRepository.getForUser(imageId, userId)
+        if (!image) {
+            res.status(404).json({ message: 'Image not found' });
             return
         }
-        console.log('file', file)
+        console.log({ image })
 
-        console.log('downloading...')
-        imageRepository.downloadFile(res, file._id.toString())
+        const result = await s3.send(new GetObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: image.bucketKey,
+            ResponseContentDisposition: download ? `attachment; filename="${image.fileName}"` : undefined,
+        }));
 
-        console.log('------------end------------')
+        const stream = result.Body;
+        if (stream === undefined || stream === null)
+            return res.status(404).send();
+
+        const contentLength = result.ContentLength;
+
+        res.status(200);
+        res.setHeader("Content-Length", contentLength ?? "");
+
+        (stream as any).pipe(res);
     } catch (err) {
-        res.status(500).json({ message: 'Error getting audio file' });
+        res.status(500).json({ message: 'Error getting image file' });
+    } finally {
+        console.log('------------end------------')
     }
 });
 
 router.delete('/:imageId', auth, authorization, async (req, res) => {
     try {
+        console.log('/api/image', 'DELETE')
+
         console.log('Validation...')
         let imageId: string | undefined = undefined
         try {
@@ -121,22 +289,41 @@ router.delete('/:imageId', auth, authorization, async (req, res) => {
         }
         console.log({ imageId })
 
+        const userId = (req as any).user.userId
+
         const imageRepository = new ImageRepository()
 
-        const image = await imageRepository.getFile(imageId)
-        if (!image)
-            return res.status(404).send()
+        console.log("Checking weather image exists...");
+        const image = await imageRepository.getForUser(imageId, userId)
+        if (!image) {
+            res.status(404).json({ message: 'Image not found' });
+            return
+        }
+        console.log({ image })
 
-        const imageDeleteResult = await imageRepository.deleteFile(imageId)
-        if (imageDeleteResult !== true)
-            res.status(500).json({ message: 'Couldn\'t delete image' });
+        console.log("Make image temporary in DB to maintain consistency...");
+        const r = await imageRepository.unsafeUpdate(imageId, userId, { temporary: true })
+        if (!r.acknowledged || r.matchedCount)
+            return res.status(500).send()
 
+        console.log("Deleting image file in the bucket storage...");
+        await s3.send(
+            new DeleteObjectCommand({
+                Bucket: BUCKET_NAME,
+                Key: image.bucketKey
+            })
+        );
 
-        res.status(200).send()
+        console.log("Deleting image in DB...");
+        const rr = await imageRepository.delete(imageId)
+        if (!rr.acknowledged)
+            return res.status(500).send()
 
-        console.log('------------end------------')
+        res.status(200).send();
     } catch (err) {
-        res.status(500).json({ message: 'Error deleting audio' });
+        res.status(500).json({ message: 'Error deleting image' });
+    } finally {
+        console.log('------------end------------')
     }
 });
 

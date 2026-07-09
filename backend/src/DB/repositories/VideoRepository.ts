@@ -3,7 +3,7 @@ import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
-import { collectionName, Video } from '../models/Video';
+import { collectionName, Video, VideoCreate, VideoUpdate } from '../models/Video';
 
 class VideoRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -32,7 +32,7 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
         const indexes = await db.collection(collectionName).indexes()
 
         if (indexes.find(i => i.name === 'title') === undefined)
-            await db.createIndex(collectionName, { title: 1 }, { unique: true, name: 'title' })
+            await db.createIndex(collectionName, { title: 1, userId: 1 }, { unique: true, name: 'title' })
 
         if (indexes.find(i => i.name === 'userId') === undefined)
             await db.createIndex(collectionName, { userId: 1 }, { name: 'userId' })
@@ -50,36 +50,44 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
         await db.dropCollection(collectionName)
     }
 
-    async insert(video: Video): Promise<InsertOneResult> {
+    async insert(video: VideoCreate): Promise<InsertOneResult> {
         return await VideoRepository.collection!.insertOne({ ...video, updatedAt: Date.now(), createdAt: Date.now() }, { session: this.session })
     }
 
     async get(id: string): Promise<Video> {
-        return (await VideoRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
+        return (await VideoRepository.collection!.find({ temporary: false, _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
     async getForUser(videoId: string, userId: string): Promise<Video> {
-        return (await VideoRepository.collection!.find({ _id: ObjectId.createFromHexString(videoId), userId }, { session: this.session }).toArray())[0]
+        return (await VideoRepository.collection!.find({ temporary: false, _id: ObjectId.createFromHexString(videoId), userId }, { session: this.session }).toArray())[0]
+    }
+
+    async getForUserByTitle(title: string, userId: string) {
+        return (await VideoRepository.collection!.find({ temporary: false, title, userId }, { session: this.session }).toArray())[0]
     }
 
     async getManyForUser(leafIds: string[], userId: string): Promise<Video[]> {
-        return await VideoRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
+        return await VideoRepository.collection!.find({ temporary: false, _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
 
     async getByUserId(userId: string) {
-        return await VideoRepository.collection!.find({ userId }, { session: this.session }).toArray()
+        return await VideoRepository.collection!.find({ temporary: false, userId }, { session: this.session }).toArray()
+    }
+
+    getTemporariesFromCursor(fromTsMs: number) {
+        return VideoRepository.collection!.find({ temporary: true, updatedAt: { $gte: fromTsMs } })
     }
 
     getFromCursor(fromTsMs: number) {
-        return VideoRepository.collection!.find({ updatedAt: { $gte: fromTsMs } })
+        return VideoRepository.collection!.find({ temporary: false, updatedAt: { $gte: fromTsMs } })
     }
 
     async updateTitle(videoId: string, title: string) {
-        return await VideoRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(videoId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
+        return await VideoRepository.collection!.updateOne({ temporary: false, _id: ObjectId.createFromHexString(videoId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
     }
 
-    async makePermanent(videoId: string) {
-        return await VideoRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(videoId) }, { $set: { temporary: true, updatedAt: Date.now() } }, { session: this.session })
+    async unsafeUpdate(audioId: string, userId: string, updates: VideoUpdate) {
+        return await VideoRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(audioId), userId }, { $set: { ...updates, updatedAt: Date.now() } }, { session: this.session })
     }
 
     async delete(id: string): Promise<DeleteResult> {

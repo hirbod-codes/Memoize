@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:talker/talker.dart';
 import 'package:client/api/models/folder.dart';
 import 'package:client/auth/dio_providers.dart';
 import 'package:dio/dio.dart';
@@ -11,19 +14,28 @@ class FolderController {
   FolderController(this.ref);
 
   Future<String> create({required String title, String? parentId}) async {
+    Talker().info('FolderController.create is called...');
+
     final Map<String, dynamic> data = {'title': title};
     if (parentId != null) data['parentId'] = parentId;
+    Talker().info('input data: ${jsonEncode(data)}');
 
-    final response = await _authDio.post('/api/treeNode/', data: data);
+    final response = await _authDio.post('/api/treeNode/', data: {'treeNode': data});
+    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
 
+    Talker().info('FolderController.create call ended');
     return response.data['id'];
   }
 
   Future<List<Folder>> getMany({required List<String> ids}) async {
+    Talker().info('FolderController.getMany is called...');
+
     final response = await _authDio.get('/api/treeNode/?ids=${ids.join(',')}');
+    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
 
     final List<dynamic> folders = response.data;
 
+    Talker().info('FolderController.getMany call ended');
     return folders.map((f) => Folder.fromJson(f)).toList();
   }
 
@@ -57,7 +69,7 @@ class FolderController {
     if (treeNodeIds != null) data['treeNodeIds'] = treeNodeIds;
     if (leafIds != null) data['leafIds'] = leafIds;
 
-    return await _authDio.patch('/api/treeNode/', data: data);
+    return await _authDio.patch('/api/treeNode/', data: {'treeNode': data});
   }
 
   Future<Response> delete({required String id}) async {

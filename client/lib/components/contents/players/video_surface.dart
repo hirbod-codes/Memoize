@@ -5,19 +5,22 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:client/components/contents/players/web_video_player.dart';
-import 'package:client/components/contents/players/video_player_provider.dart';
 
 /// Renders the video frame. On native platforms this is a media_kit
 /// [Video] widget. On web it falls back to [VideoPlayer].
 class VideoSurface extends ConsumerWidget {
-  const VideoSurface({super.key});
+  final VideoController? controller;
+  final WebVideoPlayer? player;
+
+  const VideoSurface({super.key, this.controller, this.player});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (kIsWeb) {
-      return _WebSurface();
+      return _WebSurface(player: player);
     }
-    return _NativeSurface();
+
+    return _NativeSurface(controller: controller);
   }
 }
 
@@ -26,14 +29,19 @@ class VideoSurface extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 class _NativeSurface extends ConsumerWidget {
+  final VideoController? controller;
+
+  const _NativeSurface({this.controller});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final controller = ref.watch(videoControllerProvider);
     if (controller == null) {
       return const _PlaceholderBox();
     }
+
     return Video(
-      controller: controller,
+      controller: controller!,
+      fit: BoxFit.contain,
       // We own the controls — turn off the built-in overlay.
       controls: NoVideoControls,
     );
@@ -45,12 +53,19 @@ class _NativeSurface extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 class _WebSurface extends ConsumerWidget {
+  final WebVideoPlayer? player;
+
+  const _WebSurface({this.player});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final player = ref.watch(videoPlayerProvider);
+    if (player == null) {
+      return const _PlaceholderBox();
+    }
+
     if (player is! WebVideoPlayer) return const _PlaceholderBox();
 
-    final nativeController = player.nativeController;
+    final nativeController = player!.nativeController;
     if (nativeController == null) {
       return const _PlaceholderBox();
     }

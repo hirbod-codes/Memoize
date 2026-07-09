@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
@@ -26,7 +28,7 @@ class Button extends ConsumerWidget {
   final double radius;
   final RoundedRectangleBorder? shape;
 
-  final double? iconSize;
+  final double iconSize;
 
   const Button({super.key, this.label, this.onPressed, this.type = ButtonType.elevated, this.isTransparent = false, this.color = ThemeColorName.primary, this.onColor = ThemeColorName.onPrimary, this.isLoading = false, this.icon, this.iconSize = 18, this.width, this.height, this.radius = AppRadius.md, this.shape});
 
@@ -68,8 +70,9 @@ class Button extends ConsumerWidget {
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
+          fixedSize: width != null && height != null ? Size(width!, height!) : null,
           foregroundColor: baseColor,
-          side: BorderSide(color: baseColor, width: 1.5),
+          side: BorderSide(color: baseColor, width: 1),
           shape: shape ?? _shape(),
         ),
         child: _child(textColor: baseColor),
@@ -78,10 +81,14 @@ class Button extends ConsumerWidget {
   }
 
   Widget _text(Color baseColor) {
-    return TextButton(
-      onPressed: isLoading ? null : onPressed,
-      style: TextButton.styleFrom(foregroundColor: baseColor, shape: label == null && icon != null ? CircleBorder() : shape ?? _shape()),
-      child: _child(textColor: baseColor),
+    return SizedBox(
+      width: width,
+      height: height,
+      child: TextButton(
+        onPressed: isLoading ? null : onPressed,
+        style: TextButton.styleFrom(foregroundColor: baseColor, shape: label == null && icon != null ? CircleBorder() : shape ?? _shape()),
+        child: _child(textColor: baseColor),
+      ),
     );
   }
 
@@ -90,24 +97,30 @@ class Button extends ConsumerWidget {
       onPressed: isLoading ? null : onPressed,
       backgroundColor: baseColor,
       foregroundColor: fg,
-      child: isLoading ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: fg)) : (icon != null ? Icon(icon, size: iconSize, color: fg) : Icon(Icons.add, size: iconSize, color: fg)),
+      child: isLoading
+          ? SizedBox(
+              width: width ?? 18,
+              height: height ?? 18,
+              child: CircularProgressIndicator(strokeWidth: 2, color: fg),
+            )
+          : (icon != null ? Icon(icon, size: min(width ?? double.infinity, iconSize), color: fg) : Icon(Icons.add, size: min(width ?? double.infinity, iconSize), color: fg)),
     );
   }
 
   Widget _child({required Color textColor}) {
     if (isLoading) {
       return SizedBox(
-        width: iconSize,
-        height: iconSize,
+        width: min(width ?? double.infinity, iconSize),
+        height: min(width ?? double.infinity, iconSize),
         child: CircularProgressIndicator(strokeWidth: 2, color: textColor),
       );
     }
 
     if (icon == null) {
-      return Text(label ?? "", style: .new(color: textColor));
+      return Text(label ?? "", style: TextStyle(color: textColor));
     }
 
-    List<Widget> children = [Icon(icon, size: iconSize, color: textColor)];
+    List<Widget> children = [Icon(icon, size: min(width ?? double.infinity, iconSize), color: textColor)];
     if (label != null) {
       children.add(const SizedBox(width: 8));
       children.add(Text(label ?? ""));
