@@ -1,6 +1,6 @@
-# Memoize
+# Client
 
-This application helps users to memorize contents.
+A new Flutter project.
 
 ## To develop
 
