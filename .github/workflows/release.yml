@@ -93,7 +93,7 @@ jobs:
 
       - name: Create latest copies
         run: |
-          cp backend-image-${{ needs.backend-release.outputs.version }}.tar.gz backend-image-latest.tar.gz
+          cp backend/backend-image-${{ needs.backend-release.outputs.version }}.tar.gz backend-image-latest.tar.gz
 
       - name: Upload latest backend build
         env:
@@ -104,7 +104,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-image
-          path: backend-image-${{ needs.backend-release.outputs.version }}.tar.gz
+          path: backend/backend-image-${{ needs.backend-release.outputs.version }}.tar.gz
 
   client-release:
     runs-on: ubuntu-latest
