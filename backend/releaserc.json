@@ -1,4 +1,5 @@
 {
+    "tagFormat": "backend-v${version}",
     "branches": [
         "main"
     ],

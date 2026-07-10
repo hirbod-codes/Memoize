@@ -1,4 +1,6 @@
-# Instructions
+# Memoize
+
+This application helps users to memorize contents.
 
 ## for production
 
