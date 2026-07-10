@@ -1,4 +1,5 @@
 {
+    "tagFormat": "client-v${version}",
     "branches": [
         "main"
     ],
