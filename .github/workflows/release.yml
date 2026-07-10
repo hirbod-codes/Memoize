@@ -366,7 +366,7 @@ jobs:
         with:
           name: web
           path: |
-            memoize-web-latest.zip
+            latest_artifacts/memoize-web-latest.zip
             memoize-web-${{ needs.client-release.outputs.version }}.zip
 
   macos-build:
