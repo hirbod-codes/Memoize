@@ -26,7 +26,7 @@ docker run -d \
     -e REFRESH_TOKEN_SECRET=very_secret \
     --network backend_net \
     --restart unless-stopped \
-    --shm-size=1g
+    --shm-size=1g \
     --name memoize_backend Memoize/backend-dev:latest
 
 docker run -d \
@@ -44,11 +44,16 @@ docker run -d \
     -e MEILISEARCH_PORT=7700 \
     -e ACCESS_TOKEN_SECRET=very_secret \
     -e REFRESH_TOKEN_SECRET=very_secret \
+    -e BUCKET_NAME=name \
+    -e S3_STORAGE_ENDPOINT=endpoint \
+    -e S3_STORAGE_ACCESS_KEY=very_secret \
+    -e S3_STORAGE_SECRET_KEY=very_secret \
+    -e S3_API_KEY="very_secret" \
     --network backend_net \
     --network db_net \
     --restart unless-stopped \
-    --shm-size=1g
-    --name memoize_backend Memoize/backend:latest
+    --shm-size=1g \
+    --name memoize_backend ghcr.io/hirbod-codes/memoize/backend:1.1.39
 ```
 
 ## for HTTPS (necessary for development too, because of modern browsers cookie restrictions)
