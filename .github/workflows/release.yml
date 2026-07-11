@@ -253,7 +253,8 @@ jobs:
 
       - name: Package web
         run: |
-          zip -r memoize-web-${{ needs.release.outputs.version }}.zip client/build/web
+          cd client/build/web
+          zip -r ../../../memoize-web-${{ needs.release.outputs.version }}.zip .
 
       - name: Upload web artifacts
         uses: actions/upload-artifact@v4
