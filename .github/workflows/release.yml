@@ -68,6 +68,7 @@ jobs:
         with:
           name: backend-image
           path: backend/backend-image-${{ needs.release.outputs.version }}.tar.gz
+          retention-days: 1
 
   android-build:
     needs: release
@@ -118,6 +119,7 @@ jobs:
         with:
           name: android
           path: artifacts/*
+          retention-days: 1
 
   windows-build:
     needs: release
@@ -165,6 +167,7 @@ jobs:
         with:
           name: windows
           path: memoize-windows-${{ needs.release.outputs.version }}.zip
+          retention-days: 1
 
   linux-build:
     needs: release
@@ -213,6 +216,7 @@ jobs:
         with:
           name: linux
           path: memoize-linux-${{ needs.release.outputs.version }}.tar.gz
+          retention-days: 1
 
   web-build:
     needs: release
@@ -261,6 +265,7 @@ jobs:
         with:
           name: web
           path: memoize-web-${{ needs.release.outputs.version }}.zip
+          retention-days: 1
 
   macos-build:
     needs: release
@@ -310,6 +315,7 @@ jobs:
         with:
           name: macos
           path: memoize-macos-${{ needs.release.outputs.version }}.zip
+          retention-days: 1
 
   ios-build:
     needs: release
@@ -359,6 +365,7 @@ jobs:
         with:
           name: ios
           path: memoize-ios-${{ needs.release.outputs.version }}.ipa
+          retention-days: 1
 
   create-release:
     runs-on: ubuntu-latest
