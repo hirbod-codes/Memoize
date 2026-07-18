@@ -77,13 +77,15 @@ class MediaKitVideoPlayer implements AppVideoPlayer {
   }
 
   @override
-  Future<void> open(String url, {Map<String, String>? headers, bool play = false}) async {
+  Future<void> open(String url, {Map<String, String>? headers}) async {
     print('_player.open');
     final s = _state.copyWith(status: PlayerStatus.loading, position: Duration.zero, duration: Duration.zero, error: null);
     _emit(s);
 
     final media = Media(url, httpHeaders: headers);
-    await _player.open(media, play: play);
+    await _player.open(media, play: false);
+    _emit(_state.copyWith(status: PlayerStatus.paused));
+
     print('_player.open done');
     print(s.toJson());
     print(_state.toJson());

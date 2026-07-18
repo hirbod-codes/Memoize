@@ -2,7 +2,6 @@ import express from 'express';
 import { string, ValidationError } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
 import { BUCKET_NAME, ffmpeg, s3 } from '..';
-// import ffmpeg from "fluent-ffmpeg";
 import { Upload } from "@aws-sdk/lib-storage";
 import VideoRepository from '../DB/repositories/VideoRepository';
 import { fileTypeFromBuffer } from "file-type";
@@ -11,11 +10,11 @@ import fs from 'fs'
 import { promises as fsp } from "fs";
 import path from 'path'
 import { teeStream } from '../lib/stream';
-import { decodeVideoFileToRamSegments, decodeVideoStreamToRamSegments, prepareVideoInputOnRam } from '../ffmpeg';
+import { decodeVideoFileToRamSegments, prepareVideoInputOnRam } from '../ffmpeg';
 import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
 import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
-import { pipeline } from 'stream/promises';
 import { Readable } from 'stream';
+import { generateStreamToken, verifyStreamToken } from '../lib/signed_urls';
 
 const router = express.Router();
 
@@ -302,9 +301,47 @@ router.get('/info/', auth, async (req, res) => {
     }
 });
 
+router.get('/singed_token', auth, async (req, res) => {
+    try {
+        console.log('/api/video/singed_token')
+
+        console.log('Validation...')
+        let videoId: string | undefined = undefined
+        try {
+            videoId = await string().objectIdString().required().label('Video id').validate(req.query.videoId?.toString())
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ errors: ['Invalid parameters'] });
+        }
+        console.log({ videoId })
+
+        const userId = (req as any).user.userId
+
+        const videoRepository = new VideoRepository()
+
+        console.log("Checking weather video exists...");
+        const video = await videoRepository.getForUser(videoId, userId)
+        if (!video)
+            return res.status(404).json({ message: 'Video not found' });
+        console.log({ video })
+
+        const token = generateStreamToken(videoId, userId);
+
+        return res.status(200).json({ token });
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: 'Error getting video file' });
+    } finally {
+        console.log('------------end------------')
+    }
+});
+
+// For non web applications
 router.get('/file/:videoId/:filename', auth, async (req, res) => {
     try {
-        console.log('/api/video/file')
+        console.log('/api/video/file/:videoId/:filename')
 
         console.log('Validation...')
         let videoId: string | undefined = undefined, filename: string | undefined = undefined, isPlaylist
@@ -325,12 +362,12 @@ router.get('/file/:videoId/:filename', auth, async (req, res) => {
         }
         console.log({ videoId })
 
-        const userId = (req as any).user.userId
-
         const videoRepository = new VideoRepository()
 
+        const userId = (req as any).user.userId
+
         console.log("Checking weather video exists...");
-        const video = await videoRepository.getForUser(videoId, userId)
+        const video = await videoRepository.getForUser(videoId, userId!)
         if (!video)
             return res.status(404).json({ message: 'Video not found' });
         console.log({ video })
@@ -349,9 +386,70 @@ router.get('/file/:videoId/:filename', auth, async (req, res) => {
         if (result.ContentLength)
             res.setHeader("Content-Length", result.ContentLength);
 
-        // await pipeline(result.Body as Readable, res)
         (result.Body as Readable).pipe(res)
     } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: 'Error getting video file' });
+    } finally {
+        console.log('------------end------------')
+    }
+});
+
+// For web applications
+router.get('/file/:token/:videoId/:filename', async (req, res) => {
+    try {
+        console.log('/api/video/file/:token/:videoId/:filename')
+
+        console.log('Validation...')
+        let videoId: string | undefined = undefined, filename: string | undefined = undefined, token: string | undefined = undefined, isPlaylist
+        try {
+            token = await string().required().label('Token').validate(req.params.token?.toString())
+            videoId = await string().objectIdString().required().label('Video id').validate(req.params.videoId?.toString())
+            filename = await string().required().label('File name').validate(req.params.filename?.toString())
+
+            isPlaylist = filename === "index.m3u8";
+            const isSegment = /^segment_\d+\.ts$/.test(filename);
+            if (!isPlaylist && !isSegment) {
+                return res.status(400).json({ errors: ['Invalid file names requested'] });
+            }
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ errors: ['Invalid parameters'] });
+        }
+        console.log({ videoId })
+
+        console.log('Verifying token...')
+        const { valid, userId } = verifyStreamToken(token, videoId);
+        if (valid !== true)
+            return res.status(401).send();
+
+        const videoRepository = new VideoRepository()
+
+        console.log("Checking weather video exists...");
+        const video = await videoRepository.getForUser(videoId, userId!)
+        if (!video)
+            return res.status(404).json({ message: 'Video not found' });
+        console.log({ video })
+
+        const result = await s3.send(new GetObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: video.bucketKey + '/' + filename,
+        }));
+        console.log({ result, key: video.bucketKey + '/' + filename })
+
+        if (result.Body === undefined || result.Body === null)
+            return res.status(404).send();
+
+        res.setHeader("Content-Type", isPlaylist ? "application/vnd.apple.mpegurl" : "video/mp2t");
+
+        if (result.ContentLength)
+            res.setHeader("Content-Length", result.ContentLength);
+
+        (result.Body as Readable).pipe(res)
+    } catch (err) {
+        console.error(err)
         res.status(500).json({ message: 'Error getting video file' });
     } finally {
         console.log('------------end------------')

@@ -11,6 +11,8 @@ import { extension } from "mime-types";
 import { teeStream } from '../lib/stream';
 import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
 import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
+import { generateStreamToken, verifyStreamToken } from '../lib/signed_urls';
+import { Readable } from 'stream';
 
 const router = express.Router();
 
@@ -267,6 +269,44 @@ router.get('/info/', auth, async (req, res) => {
     }
 });
 
+router.get('/singed_token', auth, async (req, res) => {
+    try {
+        console.log('/api/audio/singed_token')
+
+        console.log('Validation...')
+        let audioId: string | undefined = undefined
+        try {
+            audioId = await string().objectIdString().required().label('Audio id').validate(req.query.audioId?.toString())
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ errors: ['Invalid parameters'] });
+        }
+        console.log({ audioId })
+
+        const userId = (req as any).user.userId
+
+        const audioRepository = new AudioRepository()
+
+        console.log("Checking weather audio exists...");
+        const audio = await audioRepository.getForUser(audioId, userId)
+        if (!audio)
+            return res.status(404).json({ message: 'Audio not found' });
+        console.log({ audio })
+
+        const token = generateStreamToken(audioId, userId);
+
+        return res.status(200).json({ token });
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: 'Error getting audio file' });
+    } finally {
+        console.log('------------end------------')
+    }
+});
+
+// For non web applications
 router.get('/file/:audioId', auth, async (req, res) => {
     try {
         console.log('/api/audio/file')
@@ -325,6 +365,74 @@ router.get('/file/:audioId', auth, async (req, res) => {
 
         stream.pipe(res);
     } catch (err) {
+        res.status(500).json({ message: 'Error getting audio file' });
+    } finally {
+        console.log('------------end------------')
+    }
+});
+
+// For web applications
+router.get('/file/:audioId/:token', async (req, res) => {
+    try {
+        console.log('/api/audio/file/:audioId/:token')
+
+        console.log('Validation...')
+        let audioId: string | undefined = undefined, token: string | undefined = undefined, download: boolean = false
+        try {
+            token = await string().required().label('Token').validate(req.params.token?.toString())
+            audioId = await string().objectIdString().required().label('Audio id').validate(req.params.audioId?.toString())
+            let temp = await string().optional().label('Download').validate(req.query.download?.toString())
+            download = temp === 'true';
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ errors: ['Invalid parameters'] });
+        }
+        console.log({ audioId })
+
+        console.log('Verifying token...')
+        const { valid, userId } = verifyStreamToken(token, audioId);
+        if (valid !== true)
+            return res.status(401).send();
+
+        const audioRepository = new AudioRepository()
+
+        console.log("Checking weather audio exists...");
+        const audio = await audioRepository.getForUser(audioId, userId!)
+        if (!audio)
+            return res.status(404).json({ message: 'Audio not found' });
+        console.log({ audio })
+
+        const range = req.headers.range;
+
+        const result = await s3.send(new GetObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: audio.bucketKey,
+            Range: download ? undefined : range,
+            ResponseContentDisposition: download ? `attachment; filename="${audio.fileName}"` : undefined,
+        }));
+
+        const stream = result.Body as any;
+
+        const contentLength = result.ContentLength;
+        const contentRange = result.ContentRange;
+
+        res.setHeader("Accept-Ranges", "bytes");
+        res.setHeader("Content-Type", result.ContentType || "application/octet-stream");
+
+        if (range && contentRange) {
+            res.status(206);
+            res.setHeader("Content-Range", contentRange);
+            res.setHeader("Content-Length", contentLength ?? "");
+        } else {
+            res.status(200);
+            res.setHeader("Content-Length", contentLength ?? "");
+        }
+
+        stream.pipe(res);
+    } catch (err) {
+        console.error(err)
         res.status(500).json({ message: 'Error getting audio file' });
     } finally {
         console.log('------------end------------')

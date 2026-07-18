@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 class PlayerControls extends StatelessWidget {
   final AppVideoPlayer player;
   final PlayerState state;
+  final Function? onTouch;
 
-  const PlayerControls({super.key, required this.state, required this.player});
+  const PlayerControls({super.key, required this.state, required this.player, this.onTouch});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +18,7 @@ class PlayerControls extends StatelessWidget {
         return _ControlsShell(child: _ErrorLabel(message: 'Error encountered while playing video'));
 
       default:
-        return _Controls(state: state, player: player);
+        return _Controls(state: state, player: player, onTouch: onTouch);
     }
   }
 }
@@ -27,8 +28,9 @@ class PlayerControls extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _ControlsShell extends StatelessWidget {
-  const _ControlsShell({required this.child});
   final Widget child;
+
+  const _ControlsShell({required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +50,9 @@ class _ControlsShell extends StatelessWidget {
 class _Controls extends StatelessWidget {
   final AppVideoPlayer player;
   final PlayerState state;
+  final Function? onTouch;
 
-  const _Controls({required this.state, required this.player});
+  const _Controls({required this.state, required this.player, this.onTouch});
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +64,13 @@ class _Controls extends StatelessWidget {
           children: [
             _TimeLabel(state.position),
             Expanded(
-              child: _SeekBar(state: state, onSeek: player.seek),
+              child: _SeekBar(
+                state: state,
+                onSeek: (d) async {
+                  player.seek(d);
+                  if (onTouch != null) onTouch!();
+                },
+              ),
             ),
             _TimeLabel(state.duration),
           ],
@@ -70,11 +79,23 @@ class _Controls extends StatelessWidget {
         // Play/pause + volume
         Row(
           children: [
-            _PlayPauseButton(state: state, onTap: player.togglePlayPause),
+            _PlayPauseButton(
+              state: state,
+              onTap: () {
+                player.togglePlayPause();
+                if (onTouch != null) onTouch!();
+              },
+            ),
             const SizedBox(width: 8),
             _BufferingIndicator(state: state),
             const Spacer(),
-            _VolumeControl(volume: state.volume, onChanged: player.setVolume),
+            _VolumeControl(
+              volume: state.volume,
+              onChanged: (v) async {
+                player.setVolume(v);
+                if (onTouch != null) onTouch!();
+              },
+            ),
           ],
         ),
       ],

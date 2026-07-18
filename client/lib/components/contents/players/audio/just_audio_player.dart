@@ -79,7 +79,7 @@ class JustAudioPlayer implements AppAudioPlayer {
         // which triggers Content-Range on the server
       );
       await _player.setAudioSource(source);
-      await _player.play();
+      // await _player.play();
     } catch (e) {
       _emit(_state.copyWith(status: AudioPlayerStatus.error, error: e.toString()));
     }

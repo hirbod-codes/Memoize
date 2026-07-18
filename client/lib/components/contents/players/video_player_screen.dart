@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:client/app_config.dart';
+import 'package:client/components/contents/players/hlsjs/web_video_player.dart';
 import 'package:client/components/contents/players/media_kit_player.dart';
 import 'package:client/components/contents/players/player_control_widgets.dart';
 import 'package:client/components/contents/players/player_factory.dart';
 import 'package:client/components/contents/players/player_interface.dart';
 import 'package:client/components/contents/players/video_surface.dart';
-import 'package:client/components/contents/players/web_video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -81,6 +81,13 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     });
   }
 
+  void _resetSchedule() {
+    setState(() {
+      _controlsVisible = true;
+      _lastInteraction = DateTime.now();
+    });
+  }
+
   void _onTap() {
     setState(() {
       _controlsVisible = !_controlsVisible;
@@ -91,33 +98,37 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Stack(
-        children: [
-          if (!_showVideoSurface) _AlbumArt(videoId: widget.videoId, accessToken: widget.accessToken),
-      
-          // ── Video frame fills the whole screen ──────────────────────────
-          if (_showVideoSurface)
-            Positioned.fill(
-              child: VideoSurface(controller: _videoController, player: _player is WebVideoPlayer ? _player : null),
-            ),
-      
-          // ── Bottom controls ─────────────────────────────────────────────
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
-            bottom: _controlsVisible ? 0 : -120,
-            left: 0,
-            right: 0,
-            child: PlayerControls(player: _player, state: _player.state),
+    return Stack(
+      children: [
+        if (!_showVideoSurface) _AlbumArt(videoId: widget.videoId, accessToken: widget.accessToken),
+
+        // ── Video frame fills the whole screen ──────────────────────────
+        if (_showVideoSurface)
+          Positioned.fill(
+            child: VideoSurface(controller: _videoController, player: _player is HlsWebVideoPlayer ? _player : null),
           ),
-      
-          // ── Center spinner while loading ─────────────────────────────────
-          if (_loading) Center(child: CircularProgressIndicator(color: Colors.white70)),
-        ],
-      ),
+
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: _onTap,
+            behavior: HitTestBehavior.opaque,
+            child: const ColoredBox(color: Colors.transparent),
+          ),
+        ),
+
+        // ── Bottom controls ─────────────────────────────────────────────
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          bottom: _controlsVisible ? 0 : -120,
+          left: 0,
+          right: 0,
+          child: PlayerControls(player: _player, state: _player.state, onTouch: _resetSchedule),
+        ),
+
+        // ── Center spinner while loading ─────────────────────────────────
+        if (_loading) Center(child: CircularProgressIndicator(color: Colors.white70)),
+      ],
     );
   }
 }
@@ -138,7 +149,7 @@ class _AlbumArt extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
         clipBehavior: Clip.antiAlias,
-        child: videoId != null && accessToken != null ? Image.network('${AppConfig.apiUrl}/api/video/thumbnail/$videoId', fit: BoxFit.contain, headers: {'Authorization': 'Bearer $accessToken'}) : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        child: videoId != null && accessToken != null ? Image.network('${AppConfig.apiUrl}/api/video/thumbnail/$videoId', fit: BoxFit.fitWidth, headers: {'Authorization': 'Bearer $accessToken'}) : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }

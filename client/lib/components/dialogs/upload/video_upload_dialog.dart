@@ -3,6 +3,7 @@ import 'package:client/api/video_controller.dart' hide VideoController;
 import 'package:client/components/button.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -26,9 +27,11 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
   VideoController? _controller;
 
   File? _videoFile;
-  bool _loading = false;
+  Uint8List? _videoBytes;
 
   bool _picking = false;
+  bool _loading = false;
+  String? _fileName;
 
   double? _uploadProgress;
 
@@ -50,11 +53,21 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
 
   Future<void> _pickVideo(ImageSource source) async {
     if (_picking) return;
+
     _picking = true;
+    setState(() => _picking = true);
 
     try {
       final XFile? picked = await _picker.pickVideo(source: source, maxDuration: const Duration(minutes: 10)).timeout(const Duration(minutes: 2), onTimeout: () => null);
+      if (!mounted) return;
+
+      _picking = false;
+      setState(() => _picking = false);
+
       if (picked == null) return;
+
+      Uint8List? videoBytes;
+      if (kIsWeb) videoBytes = await picked.readAsBytes();
 
       final file = File(picked.path);
 
@@ -72,7 +85,11 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
       await _player?.dispose();
 
       setState(() {
-        _videoFile = file;
+        if (kIsWeb) {
+          _videoBytes = videoBytes!;
+        } else {
+          _videoFile = file;
+        }
         _player = player;
         _controller = controller;
       });
@@ -83,7 +100,7 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
     }
   }
 
-  bool isButtonDisabled() => _videoFile == null || titleController.text.trim().isEmpty;
+  bool isButtonDisabled() => (_videoFile == null && _videoBytes == null) || titleController.text.trim().isEmpty;
 
   Future<void> _upload() async {
     if (isButtonDisabled()) return;
@@ -94,16 +111,32 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
     });
 
     try {
-      Response<dynamic> res = await ref
-          .read(videoControllerProvider)
-          .post(
-            title: titleController.text.trim(),
-            file: _videoFile!,
-            onSendProgress: (sent, total) {
-              if (!mounted || total <= 0) return;
-              setState(() => _uploadProgress = sent / total);
-            },
-          );
+      Response<dynamic> res;
+      if (kIsWeb) {
+        res = await ref
+            .read(videoControllerProvider)
+            .postForWeb(
+              title: titleController.text.trim(),
+              bytes: _videoBytes!,
+              fileName: _fileName ?? titleController.text.trim(),
+              onSendProgress: (sent, total) {
+                if (!mounted || total <= 0) return;
+                setState(() => _uploadProgress = sent / total);
+              },
+            );
+      } else {
+        res = await ref
+            .read(videoControllerProvider)
+            .post(
+              title: titleController.text.trim(),
+              file: _videoFile!,
+              fileName: _fileName,
+              onSendProgress: (sent, total) {
+                if (!mounted || total <= 0) return;
+                setState(() => _uploadProgress = sent / total);
+              },
+            );
+      }
       if (res.statusCode == null || res.statusCode! < 200 || res.statusCode! > 299) return;
       if (!mounted) return;
 
@@ -144,6 +177,7 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
               TextField(
                 controller: titleController,
                 decoration: const InputDecoration(labelText: 'Title'),
+                onChanged: (_) => setState(() {}),
               ),
 
               const SizedBox(height: 16),
@@ -157,7 +191,10 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: _controller == null
-                    ? const Center(child: Text("No video selected"))
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [_picking ? SizedBox(height: 40, width: 40, child: CircularProgressIndicator(strokeWidth: 2)) : const Center(child: Text('No video selected'))],
+                      )
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Video(controller: _controller!, fit: BoxFit.contain),
@@ -189,8 +226,7 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
                   ValueListenableBuilder<bool>(
                     valueListenable: _titleHasText,
                     builder: (context, hasText, _) {
-                      final disabled = _videoFile == null || !hasText;
-                      return Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: disabled ? null : _upload, isLoading: _loading, label: "Upload");
+                      return Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: isButtonDisabled() ? null : _upload, isLoading: _loading, label: "Upload");
                     },
                   ),
                 ],

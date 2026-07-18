@@ -4,10 +4,12 @@ import 'package:client/api/audio_controller.dart';
 import 'package:client/components/button.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:talker/talker.dart';
 
 class AudioUploadDialog extends ConsumerStatefulWidget {
   const AudioUploadDialog({super.key});
@@ -20,8 +22,10 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
   final titleController = TextEditingController();
   Player? _player;
   File? _audioFile;
+  Uint8List? _audioBytes;
   String? _fileName;
 
+  bool _picking = false;
   bool _loading = false;
   bool _playing = false;
 
@@ -33,12 +37,19 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
   }
 
   Future<void> _pickAudio() async {
-    final result = await FilePicker.pickFiles(type: FileType.audio, allowMultiple: false);
+    setState(() => _picking = true);
+    final result = await FilePicker.pickFiles(type: FileType.audio, allowMultiple: false, withData: kIsWeb);
+    if (!mounted) return;
+
+    setState(() => _picking = false);
 
     if (result == null) return;
 
     final path = result.files.single.path;
     if (path == null) return;
+
+    final bytes = result.files.single.bytes;
+    if (kIsWeb && bytes == null) return;
 
     final file = File(path);
 
@@ -57,7 +68,11 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
     });
 
     setState(() {
-      _audioFile = file;
+      if (kIsWeb) {
+        _audioBytes = bytes;
+      } else {
+        _audioFile = file;
+      }
       _fileName = result.files.single.name;
       _player = player;
     });
@@ -73,7 +88,7 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
     }
   }
 
-  bool isButtonDisabled() => _audioFile == null || titleController.text.trim().isEmpty;
+  bool isButtonDisabled() => (!kIsWeb && _audioFile == null) || (kIsWeb && _audioBytes == null) || titleController.text.trim().isEmpty;
 
   Future<void> _upload() async {
     if (isButtonDisabled()) return;
@@ -81,7 +96,13 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
     setState(() => _loading = true);
 
     try {
-      Response<dynamic> res = await ref.read(audioControllerProvider).post(title: titleController.text.trim(), file: _audioFile!);
+      Response<dynamic> res;
+      if (kIsWeb) {
+        res = await ref.read(audioControllerProvider).postForWeb(title: titleController.text.trim(), bytes: _audioBytes!, fileName: _fileName ?? titleController.text.trim());
+      } else {
+        res = await ref.read(audioControllerProvider).post(title: titleController.text.trim(), file: _audioFile!, fileName: _fileName);
+      }
+
       if (res.statusCode == null || res.statusCode! < 200 || res.statusCode! > 299) return;
       if (!mounted) return;
 
@@ -121,8 +142,11 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
                   border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: _audioFile == null
-                    ? const Center(child: Text('No audio selected'))
+                child: _audioFile == null && _audioBytes == null
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [_picking ? SizedBox(height: 40, width: 40, child: CircularProgressIndicator(strokeWidth: 2)) : const Center(child: Text('No audio selected'))],
+                      )
                     : Column(
                         children: [
                           const Icon(Icons.audio_file, size: 48),

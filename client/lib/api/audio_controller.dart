@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:client/api/models/audio.dart';
 import 'package:client/auth/dio_providers.dart';
@@ -14,6 +15,21 @@ class AudioController {
   Dio get _authDio => ref.read(authDioProvider);
 
   AudioController(this.ref);
+
+  Future<Response> postForWeb({required String title, required Uint8List bytes, required String fileName, ProgressCallback? onSendProgress}) async {
+    Talker().info('AudioController.post is called...');
+
+    final response = await _authDio.post(
+      '/api/audio/?title=$title&fileName=$fileName',
+      data: Stream.fromIterable([bytes]),
+      options: Options(headers: {Headers.contentLengthHeader: bytes.length}),
+      onSendProgress: onSendProgress,
+    );
+    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
+
+    Talker().info('AudioController.post call ended');
+    return response;
+  }
 
   Future<Response> post({required String title, required File file, String? fileName, ProgressCallback? onSendProgress}) async {
     Talker().info('AudioController.post is called...');
@@ -45,6 +61,21 @@ class AudioController {
 
     Talker().info('AudioController.get call ended');
     return Audio.fromJson(response.data);
+  }
+
+  Future<String?> getSignedToken({required String audioId}) async {
+    Talker().info('AudioController.get is called...');
+
+    final response = await _authDio.get('/api/audio/singed_token?audioId=$audioId');
+    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
+    if (response.data == null) {
+      Talker().info('Null response data!');
+      Talker().info('AudioController.get call ended');
+      return null;
+    }
+
+    Talker().info('VideoController.get call ended');
+    return response.data['token'];
   }
 
   Future<Audio?> getByTitle({required String title}) async {

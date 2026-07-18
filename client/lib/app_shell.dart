@@ -1,4 +1,4 @@
-import 'package:client/components/navbar.dart';
+// import 'package:client/components/navbar.dart';
 import 'package:client/components/topbar.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +17,8 @@ class AppShell extends ConsumerWidget {
       backgroundColor: theme.surface,
       appBar: TopBar(title: title),
       body: Container(width: double.infinity, height: double.infinity, padding: EdgeInsetsGeometry.all(8), child: child),
-      bottomNavigationBar: NavBar(currentIndex: 0, onChanged: (i) {}),
+      // NavigationBar requires at least two destinations.
+      // bottomNavigationBar: NavBar(currentIndex: 0, onChanged: (i) {}),
     );
   }
 }

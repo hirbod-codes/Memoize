@@ -22,6 +22,7 @@ docker run -d \
     -e MEILISEARCH_KEY=very_secret \
     -e MEILISEARCH_HOST=localhost \
     -e MEILISEARCH_PORT=7700 \
+    -e STREAM_SIGNING_SECRET=very_secret \
     -e ACCESS_TOKEN_SECRET=very_secret \
     -e REFRESH_TOKEN_SECRET=very_secret \
     --network backend_net \
@@ -42,6 +43,7 @@ docker run -d \
     -e MEILISEARCH_KEY=very_secret \
     -e MEILISEARCH_HOST=localhost \
     -e MEILISEARCH_PORT=7700 \
+    -e STREAM_SIGNING_SECRET=very_secret \
     -e ACCESS_TOKEN_SECRET=very_secret \
     -e REFRESH_TOKEN_SECRET=very_secret \
     -e BUCKET_NAME=name \
@@ -54,6 +56,12 @@ docker run -d \
     --restart unless-stopped \
     --shm-size=1g \
     --name memoize_backend ghcr.io/hirbod-codes/memoize/backend:1.1.39
+```
+
+### To generate secrets
+
+```bash
+openssl rand -base64 64
 ```
 
 ## for HTTPS (necessary for development too, because of modern browsers cookie restrictions)
@@ -97,10 +105,6 @@ docker run -d \
     -e MEILI_MASTER_KEY=supersecret \
     -e MEILI_NO_ANALYTICS=true \
     getmeili/meilisearch:v1
-```
-
-```bash
-openssl rand -base64 64
 ```
 
 ## how to commit

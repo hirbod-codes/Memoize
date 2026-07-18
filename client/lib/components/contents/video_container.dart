@@ -8,6 +8,7 @@ import 'package:client/components/contents/players/video_player_screen.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,36 +24,42 @@ class VideoContainer extends ConsumerStatefulWidget {
 class _VideosState extends ConsumerState<VideoContainer> {
   String? _token;
   Video? _video;
+  String? _url;
   bool _loading = true;
 
   @override
   void initState() {
-    ref
-        .read(videoControllerProvider)
-        .get(videoId: widget.videoId)
-        .then((v) {
-          if (!mounted) return;
-
-          final storage = ref.read(tokenStorageProvider);
-
-          storage
-              .getAccessToken()
-              .then((t) {
-                if (!mounted) return;
-
-                setState(() {
-                  if (t != null && t != '') {
-                    _token = t;
-                  }
-                  _video = v;
-                  _loading = false;
-                });
-              })
-              .catchError(_handleError);
-        })
-        .catchError(_handleError);
-
     super.initState();
+    initiate();
+  }
+
+  Future<void> initiate() async {
+    try {
+      Video? video = await ref.read(videoControllerProvider).get(videoId: widget.videoId);
+      if (!mounted) return;
+
+      final storage = ref.read(tokenStorageProvider);
+
+      String? accessToken = await storage.getAccessToken();
+      if (!mounted) return;
+
+      String? signedToken;
+      if (kIsWeb) {
+        signedToken = await ref.read(videoControllerProvider).getSignedToken(videoId: widget.videoId);
+        if (!mounted) return;
+      }
+
+      setState(() {
+        if (accessToken != null && accessToken != '') {
+          _token = accessToken;
+        }
+        _video = video;
+        _url = '${AppConfig.apiUrl}/api/video/file${signedToken == null ? '' : '/$signedToken'}/${_video!.id}/index.m3u8';
+        _loading = false;
+      });
+    } catch (e) {
+      _handleError(e);
+    }
   }
 
   FutureOr<Null> _handleError(dynamic e) {
@@ -76,7 +83,7 @@ class _VideosState extends ConsumerState<VideoContainer> {
       );
     }
 
-    if (_video == null) return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Video not found.')]);
+    if (_video == null || _url == null) return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Video not found.')]);
     if (_token == null) return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Unauthenticated.')]);
 
     return Container(
@@ -92,7 +99,7 @@ class _VideosState extends ConsumerState<VideoContainer> {
             if (_video != null) Text(_video!.title),
             AspectRatio(
               aspectRatio: 9 / 16,
-              child: VideoPlayerScreen(videoId: _video!.id, url: '${AppConfig.apiUrl}/api/Video/file/${_video!.id}/index.m3u8', headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
+              child: VideoPlayerScreen(videoId: _video!.id, url: _url!, headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
             ),
           ],
         ),

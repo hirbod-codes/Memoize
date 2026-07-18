@@ -1,16 +1,15 @@
+import 'package:client/components/contents/players/hlsjs/web_video_player.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:video_player/video_player.dart';
 
-import 'package:client/components/contents/players/web_video_player.dart';
-
 /// Renders the video frame. On native platforms this is a media_kit
 /// [Video] widget. On web it falls back to [VideoPlayer].
 class VideoSurface extends ConsumerWidget {
   final VideoController? controller;
-  final WebVideoPlayer? player;
+  final HlsWebVideoPlayer? player;
 
   const VideoSurface({super.key, this.controller, this.player});
 
@@ -53,7 +52,7 @@ class _NativeSurface extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 class _WebSurface extends ConsumerWidget {
-  final WebVideoPlayer? player;
+  final HlsWebVideoPlayer? player;
 
   const _WebSurface({this.player});
 
@@ -63,14 +62,12 @@ class _WebSurface extends ConsumerWidget {
       return const _PlaceholderBox();
     }
 
-    if (player is! WebVideoPlayer) return const _PlaceholderBox();
+    if (player is! HlsWebVideoPlayer) return const _PlaceholderBox();
 
-    final nativeController = player!.nativeController;
-    if (nativeController == null) {
-      return const _PlaceholderBox();
-    }
-
-    return AspectRatio(aspectRatio: nativeController.value.aspectRatio, child: VideoPlayer(nativeController));
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: HtmlElementView(viewType: player!.viewId),
+    );
   }
 }
 
