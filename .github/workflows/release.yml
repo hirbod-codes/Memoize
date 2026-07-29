@@ -5,6 +5,8 @@ on:
     branches:
       - main
 
+  workflow_dispatch:
+
 permissions:
   contents: write
   packages: write
@@ -16,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  release_by_commit:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.semantic.outputs.new_release_version }}
@@ -38,6 +40,66 @@ jobs:
           working_directory: backend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release_by_workflow_dispatch:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    outputs:
+      new_tag: ${{ steps.bump.outputs.new_tag }}
+      version: ${{ steps.bump.outputs.new_version }}
+      released: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need full tag history, not just last commit
+
+      - name: Bump patch version
+        id: bump
+        run: |
+          last_tag=$(git tag --sort=-v:refname | head -n1)
+
+          if [ -z "$last_tag" ]; then
+            new_version="0.1.0"
+          else
+            ver="${last_tag#v}"
+            IFS='.' read -r major minor patch <<< "$ver"
+            patch=$((patch + 1))
+            new_version="${major}.${minor}.${patch}"
+          fi
+
+          new_tag="v${new_version}"
+          echo "last tag: ${last_tag:-none}, new: $new_tag"
+          echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
+          echo "new_tag=$new_tag" >> "$GITHUB_OUTPUT"
+          echo "released=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        if: steps.bump.outputs.released == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.bump.outputs.new_tag }}" -m "Release ${{ steps.bump.outputs.new_tag }}"
+          git push origin "${{ steps.bump.outputs.new_tag }}"
+
+      - name: Create GitHub release
+        if: steps.bump.outputs.released == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "${{ steps.bump.outputs.new_tag }}" --title "${{ steps.bump.outputs.new_tag }}" --generate-notes
+
+  release:
+    needs: [release_by_commit, release_by_workflow_dispatch]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ (needs.release_by_commit.outputs.version != '' && needs.release_by_commit.outputs.version) || needs.release_by_workflow_dispatch.outputs.version }}
+      released: ${{ (needs.release_by_commit.outputs.released == 'true' && needs.release_by_commit.outputs.released) || needs.release_by_workflow_dispatch.outputs.released || 'false' }}
+
+    steps:
+      - run: |
+          echo "version=${{ (needs.release_by_commit.outputs.version != '' && needs.release_by_commit.outputs.version) || needs.release_by_workflow_dispatch.outputs.version }}"
+          echo "released=${{ (needs.release_by_commit.outputs.released == 'true' && needs.release_by_commit.outputs.released) || needs.release_by_workflow_dispatch.outputs.released || 'false' }}"
 
   backend-build:
     runs-on: ubuntu-latest
