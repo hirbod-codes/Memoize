@@ -488,7 +488,7 @@ jobs:
       - release
       - create-release
     runs-on: ubuntu-latest
-    if: needs.release.result == 'success' && needs.release.outputs.version != '' && needs.create-release.result == 'success'
+    if: always() && needs.release.result == 'success' && needs.release.outputs.version != '' && needs.create-release.result == 'success'
 
     steps:
       - name: Send dispatch to Nginx repo
