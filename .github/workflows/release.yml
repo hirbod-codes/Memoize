@@ -90,16 +90,21 @@ jobs:
         run: gh release create "${{ steps.bump.outputs.new_tag }}" --title "${{ steps.bump.outputs.new_tag }}" --generate-notes
 
   release:
-    needs: [release_by_commit, release_by_workflow_dispatch]
+    needs:
+      - release_by_commit
+      - release_by_workflow_dispatch
     runs-on: ubuntu-latest
+    if: always() && !cancelled()
     outputs:
       version: ${{ (needs.release_by_commit.outputs.version != '' && needs.release_by_commit.outputs.version) || needs.release_by_workflow_dispatch.outputs.version }}
       released: ${{ (needs.release_by_commit.outputs.released == 'true' && needs.release_by_commit.outputs.released) || needs.release_by_workflow_dispatch.outputs.released || 'false' }}
 
     steps:
       - run: |
-          echo "version=${{ (needs.release_by_commit.outputs.version != '' && needs.release_by_commit.outputs.version) || needs.release_by_workflow_dispatch.outputs.version }}"
-          echo "released=${{ (needs.release_by_commit.outputs.released == 'true' && needs.release_by_commit.outputs.released) || needs.release_by_workflow_dispatch.outputs.released || 'false' }}"
+          echo "commit version=${{ needs.release_by_commit.outputs.version }}"
+          echo "commit released=${{ needs.release_by_commit.outputs.released }}"
+          echo "dispatch version=${{ needs.release_by_workflow_dispatch.outputs.version }}"
+          echo "dispatch released=${{ needs.release_by_workflow_dispatch.outputs.released }}"
 
   backend-build:
     runs-on: ubuntu-latest
