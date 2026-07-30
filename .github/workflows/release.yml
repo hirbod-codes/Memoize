@@ -20,6 +20,7 @@ concurrency:
 jobs:
   release_by_commit:
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch'
     outputs:
       version: ${{ steps.semantic.outputs.new_release_version }}
       released: ${{ steps.semantic.outputs.new_release_published }}
@@ -90,7 +91,6 @@ jobs:
 
   release:
     needs: [release_by_commit, release_by_workflow_dispatch]
-    if: always() && !cancelled()
     runs-on: ubuntu-latest
     outputs:
       version: ${{ (needs.release_by_commit.outputs.version != '' && needs.release_by_commit.outputs.version) || needs.release_by_workflow_dispatch.outputs.version }}
@@ -134,7 +134,7 @@ jobs:
 
   android-build:
     needs: release
-    if: needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: ubuntu-latest
 
     env:
@@ -185,7 +185,7 @@ jobs:
 
   windows-build:
     needs: release
-    if: needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: windows-latest
 
     env:
@@ -233,7 +233,7 @@ jobs:
 
   linux-build:
     needs: release
-    if: needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: ubuntu-latest
 
     env:
@@ -282,7 +282,7 @@ jobs:
 
   web-build:
     needs: release
-    if: needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: ubuntu-latest
 
     env:
@@ -331,7 +331,7 @@ jobs:
 
   macos-build:
     needs: release
-    if: needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: macos-latest
 
     env:
@@ -381,7 +381,7 @@ jobs:
 
   ios-build:
     needs: release
-    if: needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: macos-latest
 
     env:
@@ -473,7 +473,7 @@ jobs:
       - release
       - create-release
     runs-on: ubuntu-latest
-    if: needs.release.outputs.version != '' && needs.create-release.result == 'success'
+    if: needs.release.result == 'success' && needs.release.outputs.version != '' && needs.create-release.result == 'success'
 
     steps:
       - name: Send dispatch to Nginx repo
