@@ -116,6 +116,17 @@ jobs:
             echo "released=${{ needs.release_by_workflow_dispatch.outputs.released }}" >> "$GITHUB_OUTPUT"
           fi
 
+  debug:
+    needs: release
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - run: |
+          echo "result='${{ needs.release.result }}'"
+          echo "version='${{ needs.release.outputs.version }}'"
+          echo "released='${{ needs.release.outputs.released }}'"
+
   backend-build:
     runs-on: ubuntu-latest
     needs: release
