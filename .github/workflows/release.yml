@@ -116,20 +116,10 @@ jobs:
             echo "released=${{ needs.release_by_workflow_dispatch.outputs.released }}" >> "$GITHUB_OUTPUT"
           fi
 
-  debug:
-    needs: release
-    runs-on: ubuntu-latest
-
-    steps:
-      - run: |
-          echo "result='${{ needs.release.result }}'"
-          echo "version='${{ needs.release.outputs.version }}'"
-          echo "released='${{ needs.release.outputs.released }}'"
-
   backend-build:
     runs-on: ubuntu-latest
     needs: release
-    if: needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: always() && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
 
     steps:
       - uses: actions/checkout@v4
@@ -159,7 +149,7 @@ jobs:
 
   android-build:
     needs: release
-    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: always() && needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: ubuntu-latest
 
     env:
@@ -210,7 +200,7 @@ jobs:
 
   windows-build:
     needs: release
-    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: always() && needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: windows-latest
 
     env:
@@ -258,7 +248,7 @@ jobs:
 
   linux-build:
     needs: release
-    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: always() && needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: ubuntu-latest
 
     env:
@@ -307,7 +297,7 @@ jobs:
 
   web-build:
     needs: release
-    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: always() && needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: ubuntu-latest
 
     env:
@@ -356,7 +346,7 @@ jobs:
 
   macos-build:
     needs: release
-    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: always() && needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: macos-latest
 
     env:
@@ -406,7 +396,7 @@ jobs:
 
   ios-build:
     needs: release
-    if: needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
+    if: always() && needs.release.result == 'success' && needs.release.outputs.released == 'true' && needs.release.outputs.version != ''
     runs-on: macos-latest
 
     env:
@@ -457,8 +447,8 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     needs:
-      - backend-build
       - release
+      - backend-build
       - android-build
       - windows-build
       - linux-build
