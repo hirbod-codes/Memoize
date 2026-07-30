@@ -96,8 +96,8 @@ jobs:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
     outputs:
-      version: ${{ (needs.release_by_commit.outputs.version != '' && needs.release_by_commit.outputs.version) || needs.release_by_workflow_dispatch.outputs.version }}
-      released: ${{ (needs.release_by_commit.outputs.released == 'true' && needs.release_by_commit.outputs.released) || needs.release_by_workflow_dispatch.outputs.released || 'false' }}
+      version: ${{ steps.vars.outputs.version }}
+      released: ${{ steps.vars.outputs.released }}
 
     steps:
       - run: |
@@ -105,6 +105,16 @@ jobs:
           echo "commit released=${{ needs.release_by_commit.outputs.released }}"
           echo "dispatch version=${{ needs.release_by_workflow_dispatch.outputs.version }}"
           echo "dispatch released=${{ needs.release_by_workflow_dispatch.outputs.released }}"
+
+      - id: vars
+        run: |
+          if [ -n "${{ needs.release_by_commit.outputs.version }}" ]; then
+            echo "version=${{ needs.release_by_commit.outputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "released=${{ needs.release_by_commit.outputs.released }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ needs.release_by_workflow_dispatch.outputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "released=${{ needs.release_by_workflow_dispatch.outputs.released }}" >> "$GITHUB_OUTPUT"
+          fi
 
   backend-build:
     runs-on: ubuntu-latest
