@@ -10,6 +10,7 @@ import 'package:client/components/dialogs/upload/video_upload_dialog.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
+import 'package:client/theme/theme_spacing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:talker/talker.dart';
@@ -28,7 +29,6 @@ class FileManager extends ConsumerStatefulWidget {
 
 class _FileManager extends ConsumerState<FileManager> {
   bool _editing = false;
-  bool _isTerm = true;
   int? _isAdding;
 
   Future<void> _onContentAdd() async {
@@ -70,7 +70,7 @@ class _FileManager extends ConsumerState<FileManager> {
       final p = ref.watch(foldersAndFilesProvider);
       final file = p.files![p.fileIndex];
       List<Content> contents;
-      if (_isTerm) {
+      if (p.isTerm) {
         contents = file.termContents;
       } else {
         contents = file.definitionContents;
@@ -192,134 +192,160 @@ class _FileManager extends ConsumerState<FileManager> {
     final p = ref.watch(foldersAndFilesProvider);
     final file = p.files![p.fileIndex];
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Material(
-        elevation: 4,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: EdgeInsetsGeometry.all(5),
-          child: CustomScrollView(
-            slivers: [
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: HeaderDelegate(
-                  height: _editing ? 150 : 120,
-                  child: Container(
-                    decoration: BoxDecoration(color: theme.surface),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 5,
-                      children: [
-                        // Close button
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Button(
-                              type: ButtonType.text,
-                              color: ThemeColorName.onSurface,
-                              icon: Icons.close,
-                              onPressed: () {
-                                if (widget.onClose != null) widget.onClose!();
-                              },
-                            ),
-                          ],
-                        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        final spacing = getSpacing(maxWidth);
 
-                        // Edit button
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Button(
-                              type: ButtonType.text,
-                              color: ThemeColorName.primary,
-                              icon: Icons.flip,
-                              onPressed: () {
-                                setState(() {
-                                  _isTerm = !_isTerm;
-                                });
-                              },
-                            ),
-                            Button(
-                              type: ButtonType.text,
-                              color: ThemeColorName.primary,
-                              icon: _editing ? Icons.remove_red_eye_outlined : Icons.edit_square,
-                              onPressed: () {
-                                setState(() {
-                                  _editing = !_editing;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-
-                        // Title
-                        Text(widget.file.title),
-                        Divider(color: theme.outlineVariant, height: 1),
-
-                        if (_editing)
-                          Button(
-                            isLoading: _isAdding == -1,
-                            type: ButtonType.outlined,
-                            color: ThemeColorName.success,
-                            onPressed: () {
-                              _onContentAdd();
-                            },
-                            label: "Add Content",
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  childCount: _isTerm ? file.termContents.length : file.definitionContents.length,
-                  (context, contentIndex) => Container(
-                    margin: EdgeInsetsGeometry.fromSTEB(0, 0, 0, 15),
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      border: BoxBorder.all(color: theme.outlineVariant, width: 1),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+        return Material(
+          elevation: 4,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: Padding(
+            padding: EdgeInsetsGeometry.all(spacing.padding),
+            child: CustomScrollView(
+              slivers: [
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: HeaderDelegate(
+                    height: _editing ? 200 : 150,
+                    child: Container(
+                      decoration: BoxDecoration(color: theme.surface),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: 10,
                         children: [
+                          // Close button
                           Row(
-                            children: [IconButton(onPressed: () {}, icon: Icon(Icons.image))],
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Button(
+                                type: ButtonType.text,
+                                color: ThemeColorName.onSurface,
+                                icon: Icons.close,
+                                onPressed: () {
+                                  if (widget.onClose != null) widget.onClose!();
+                                },
+                              ),
+                            ],
                           ),
+
+                          SizedBox(height: spacing.listItemSpacing),
+
+                          // Edit and flip button
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Button(
+                                type: ButtonType.text,
+                                color: ThemeColorName.primary,
+                                icon: Icons.flip,
+                                onPressed: () {
+                                  ref.read(foldersAndFilesProvider.notifier).flip();
+                                },
+                              ),
+                              Button(
+                                type: ButtonType.text,
+                                color: ThemeColorName.primary,
+                                icon: _editing ? Icons.remove_red_eye_outlined : Icons.edit_square,
+                                onPressed: () {
+                                  setState(() {
+                                    _editing = !_editing;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+
+                          SizedBox(height: spacing.listItemSpacing),
+
+                          // Title
+                          Text(widget.file.title, style: TextStyle(fontSize: 30)),
+
+                          Divider(color: theme.outlineVariant, height: 1),
+
+                          if (_editing) SizedBox(height: spacing.listItemSpacing),
+
                           if (_editing)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Button(
-                                  type: ButtonType.text,
-                                  color: ThemeColorName.success,
-                                  icon: Icons.add_circle_outline,
-                                  iconSize: 24,
-                                  isLoading: _isAdding == contentIndex,
-                                  onPressed: () => _onContentValueAdd(index: contentIndex),
-                                ),
-                                Button(type: ButtonType.text, color: ThemeColorName.error, icon: Icons.highlight_remove, iconSize: 24, onPressed: () => _onContentDelete(contentIndex)),
-                              ],
+                            Button(
+                              isLoading: _isAdding == -1,
+                              type: ButtonType.outlined,
+                              color: ThemeColorName.success,
+                              onPressed: () {
+                                _onContentAdd();
+                              },
+                              label: "Add Content",
                             ),
-                          ContentContainer(leafId: file.id, contentIndex: contentIndex, content: _isTerm ? file.termContents[contentIndex] : file.definitionContents[contentIndex], editing: _editing),
                         ],
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(childCount: p.isTerm ? file.termContents.length : file.definitionContents.length, (context, contentIndex) {
+                    IconData contentIcon;
+                    switch ((p.isTerm ? file.termContents[contentIndex] : file.definitionContents[contentIndex]).type) {
+                      case ContentType.imageId:
+                        contentIcon = Icons.image;
+                        break;
+                      case ContentType.audioId:
+                        contentIcon = Icons.audio_file;
+                        break;
+                      case ContentType.videoId:
+                        contentIcon = Icons.video_collection_rounded;
+                        break;
+                      case ContentType.richText:
+                        contentIcon = Icons.text_fields;
+                        break;
+                      case ContentType.string:
+                        contentIcon = Icons.text_format;
+                        break;
+                    }
+
+                    return Container(
+                      margin: EdgeInsetsGeometry.fromSTEB(0, 0, 0, 15),
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        border: BoxBorder.all(color: theme.outlineVariant, width: 1),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(spacing.padding),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          spacing: spacing.listItemSpacing,
+                          children: [
+                            Row(
+                              children: [IconButton(onPressed: () {}, icon: Icon(contentIcon))],
+                            ),
+                            if (_editing)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Button(
+                                    type: ButtonType.text,
+                                    color: ThemeColorName.success,
+                                    icon: Icons.add_circle_outline,
+                                    iconSize: 24,
+                                    isLoading: _isAdding == contentIndex,
+                                    onPressed: () => _onContentValueAdd(index: contentIndex),
+                                  ),
+                                  Button(type: ButtonType.text, color: ThemeColorName.error, icon: Icons.highlight_remove, iconSize: 24, onPressed: () => _onContentDelete(contentIndex)),
+                                ],
+                              ),
+                            ContentContainer(leafId: file.id, contentIndex: contentIndex, content: p.isTerm ? file.termContents[contentIndex] : file.definitionContents[contentIndex], editing: _editing),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
