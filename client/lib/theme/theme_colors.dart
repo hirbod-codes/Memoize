@@ -197,15 +197,15 @@ class LightTheme implements ITheme {
   Color onSecondaryFixedVariant = Color.fromRGBO(39, 71, 119, 1);
 
   @override
-  Color tertiary = Color.fromRGBO(78, 95, 125, 1);
+  Color tertiary = Color.fromRGBO(100, 113, 138, 1);
   @override
   Color onTertiary = Color.fromRGBO(255, 255, 255, 1);
   @override
-  Color tertiaryContainer = Color.fromRGBO(214, 227, 255, 1);
+  Color tertiaryContainer = Color.fromRGBO(223, 229, 242, 1);
   @override
   Color onTertiaryContainer = Color.fromRGBO(54, 71, 100, 1);
   @override
-  Color tertiaryFixed = Color.fromRGBO(214, 227, 255, 1);
+  Color tertiaryFixed = Color.fromRGBO(223, 229, 242, 1);
   @override
   Color tertiaryFixedDim = Color.fromRGBO(182, 199, 233, 1);
   @override
@@ -223,27 +223,27 @@ class LightTheme implements ITheme {
   Color onErrorContainer = Color.fromRGBO(147, 0, 10, 1);
 
   @override
-  Color surface = Color.fromRGBO(244, 250, 250, 1);
+  Color surface = Color.fromRGBO(247, 251, 251, 1);
   @override
-  Color onSurface = Color.fromRGBO(22, 29, 29, 1);
+  Color onSurface = Color.fromRGBO(18, 24, 24, 1);
   @override
-  Color surfaceDim = Color.fromRGBO(213, 219, 219, 1);
+  Color surfaceDim = Color.fromRGBO(203, 214, 214, 1);
   @override
-  Color surfaceBright = Color.fromRGBO(244, 250, 250, 1);
+  Color surfaceBright = Color.fromRGBO(247, 251, 251, 1);
   @override
   Color surfaceContainerLowest = Color.fromRGBO(255, 255, 255, 1);
   @override
-  Color surfaceContainerLow = Color.fromRGBO(239, 245, 245, 1);
+  Color surfaceContainerLow = Color.fromRGBO(241, 247, 247, 1);
   @override
-  Color surfaceContainer = Color.fromRGBO(233, 239, 239, 1);
+  Color surfaceContainer = Color.fromRGBO(235, 242, 242, 1);
   @override
-  Color surfaceContainerHigh = Color.fromRGBO(227, 233, 233, 1);
+  Color surfaceContainerHigh = Color.fromRGBO(224, 233, 233, 1);
   @override
-  Color surfaceContainerHighest = Color.fromRGBO(221, 228, 228, 1);
+  Color surfaceContainerHighest = Color.fromRGBO(213, 224, 224, 1);
   @override
-  Color surfaceVariant = Color.fromRGBO(218, 228, 229, 1);
+  Color surfaceVariant = Color.fromRGBO(219, 229, 230, 1);
   @override
-  Color onSurfaceVariant = Color.fromRGBO(63, 73, 73, 1);
+  Color onSurfaceVariant = Color.fromRGBO(69, 79, 79, 1);
   @override
   Color surfaceTint = Color.fromRGBO(0, 105, 110, 1);
   @override
@@ -252,9 +252,9 @@ class LightTheme implements ITheme {
   Color onInverseSurface = Color.fromRGBO(236, 242, 242, 1);
 
   @override
-  Color outline = Color.fromRGBO(111, 121, 121, 1);
+  Color outline = Color.fromRGBO(105, 115, 115, 1);
   @override
-  Color outlineVariant = Color.fromRGBO(190, 200, 201, 1);
+  Color outlineVariant = Color.fromRGBO(196, 206, 207, 1);
 
   @override
   Color shadow = Color.fromRGBO(0, 0, 0, 1);

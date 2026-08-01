@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:client/theme/theme_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +14,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
     state = switch (state) {
       ThemeMode.light => ThemeMode.dark,
       ThemeMode.dark => ThemeMode.light,
-      ThemeMode.system => ThemeMode.dark,
+      ThemeMode.system => PlatformDispatcher.instance.platformBrightness == Brightness.dark ? ThemeMode.light : ThemeMode.dark,
     };
   }
 
