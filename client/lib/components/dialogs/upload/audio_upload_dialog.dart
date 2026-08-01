@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:talker/talker.dart';
 
 class AudioUploadDialog extends ConsumerStatefulWidget {
   const AudioUploadDialog({super.key});
