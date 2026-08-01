@@ -45,10 +45,13 @@ class _AudioPlayerScreenState extends ConsumerState<AudioPlayerScreen> {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 24),
-              _AlbumArt(audioId: widget.audioId, accessToken: widget.accessToken),
+              Container(
+                constraints: BoxConstraints(maxHeight: 300),
+                child: _AlbumArt(audioId: widget.audioId, accessToken: widget.accessToken),
+              ),
               const SizedBox(height: 40),
               _TrackInfo(title: state.title, artist: state.artist),
               const SizedBox(height: 32),
@@ -161,7 +164,7 @@ class _SeekBarState extends ConsumerState<_SeekBar> {
     return Column(
       children: [
         SliderTheme(
-          data: SliderTheme.of(context).copyWith(trackHeight: 4, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8), overlayShape: const RoundSliderOverlayShape(overlayRadius: 16), secondaryActiveTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
+          data: SliderTheme.of(context).copyWith(trackHeight: 4, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8), overlayShape: const RoundSliderOverlayShape(overlayRadius: 16), secondaryActiveTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
           child: Slider(
             value: progress.clamp(0.0, 1.0),
             secondaryTrackValue: widget.state.bufferedProgress,

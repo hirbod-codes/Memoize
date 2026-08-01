@@ -98,7 +98,7 @@ class _AudioContainerState extends ConsumerState<AudioContainer> {
     }
 
     return Container(
-      height: 900,
+      height: 700,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md), color: Theme.of(context).colorScheme.surfaceContainerHighest),
       clipBehavior: Clip.antiAlias,
       child: ProviderScope(
