@@ -45,7 +45,7 @@ Use nginx to redirect requests to backend(because of browsers CORS)
 download nginx and run:
 
 ```cmd
-<absolute\path\to\nginx.exe> -p <absolute\path\to\nginx\folder> -c <absolute\path\to\nginx.dev.conf>
+C:\nginx\nginx.exe -p C:\nginx\ -c <absolute\path\to\nginx.dev.conf>
 ```
 
 To list or kill nginx processes
