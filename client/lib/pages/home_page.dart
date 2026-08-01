@@ -11,6 +11,7 @@ import 'package:client/components/file_manager.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
+import 'package:client/theme/theme_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker/talker.dart';
@@ -310,215 +311,246 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
     final folders = pState.folders ?? [];
     final files = pState.files;
 
-    return Card(
-      elevation: 10,
-      color: theme.surfaceContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Top Buttons
-            Row(
-              mainAxisAlignment: _location.length > 1 ? MainAxisAlignment.spaceBetween : MainAxisAlignment.end,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        final spacing = getSpacing(maxWidth);
+
+        return Card(
+          elevation: 10,
+          color: theme.surfaceContainer,
+          child: Padding(
+            padding: EdgeInsets.all(spacing.padding),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Back Button
-                if (_location.length > 1) ...[Button(type: ButtonType.text, iconSize: 28, isLoading: _fetching, icon: Icons.chevron_left, onPressed: _previousLocation)],
-                // Edit Button
-                Button(
-                  type: ButtonType.text,
-                  iconSize: 24,
-                  icon: _editing ? Icons.remove_red_eye_outlined : Icons.edit_square,
-                  onPressed: () {
-                    setState(() {
-                      _editing = !_editing;
-                    });
-                  },
-                ),
-              ],
-            ),
-
-            if (_title != null) ...[Text(_title!), Divider(height: 1, color: theme.outlineVariant), const SizedBox(height: 8)],
-
-            // Search
-            TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(labelText: 'Search', prefixIcon: Icon(Icons.search)),
-              onChanged: _onSearchChange,
-            ),
-
-            const SizedBox(height: 16),
-
-            // Add new Button
-            if (_editing) Button(type: ButtonType.elevated, color: ThemeColorName.success, icon: Icons.add, label: 'Add New', onPressed: _addNew, isLoading: _adding),
-
-            // Tabs
-            if (_location.length > 1) ...[
-              const SizedBox(height: 8),
-
-              Container(
-                decoration: BoxDecoration(
-                  border: BoxBorder.fromLTRB(bottom: BorderSide(width: 1, color: theme.outlineVariant)),
-                ),
-                child: Row(
+                // Top Buttons
+                Row(
+                  mainAxisAlignment: _location.length > 1 ? MainAxisAlignment.spaceBetween : MainAxisAlignment.end,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        border: _filter == Filter.folder ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary)) : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
-                      ),
-                      child: Button(
-                        label: 'Folders',
-                        width: 100,
-                        height: 40,
-                        radius: 0,
-                        type: ButtonType.text,
-                        color: _filter == Filter.folder ? ThemeColorName.primary : ThemeColorName.onSurface,
-                        onPressed: () {
-                          _onFilterChange(Filter.folder);
-                        },
-                      ),
-                    ),
-
-                    Container(
-                      decoration: BoxDecoration(
-                        border: _filter == Filter.file ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary)) : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
-                      ),
-                      child: Button(
-                        label: 'Files',
-                        width: 100,
-                        height: 40,
-                        radius: 0,
-                        type: ButtonType.text,
-                        color: _filter == Filter.file ? ThemeColorName.primary : ThemeColorName.onSurface,
-                        onPressed: () {
-                          _onFilterChange(Filter.file);
-                        },
-                      ),
+                    // Back Button
+                    if (_location.length > 1) ...[Button(type: ButtonType.text, iconSize: 28, isLoading: _fetching, icon: Icons.chevron_left, onPressed: _previousLocation)],
+                    // Edit Button
+                    Button(
+                      type: ButtonType.text,
+                      iconSize: 24,
+                      icon: _editing ? Icons.remove_red_eye_outlined : Icons.edit_square,
+                      onPressed: () {
+                        setState(() {
+                          _editing = !_editing;
+                        });
+                      },
                     ),
                   ],
                 ),
-              ),
-            ],
 
-            Expanded(
-              child: ListView(
-                children: [
-                  // Circular progress indicator
-                  if (_fetching)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
+                SizedBox(height: spacing.listItemSpacing),
+
+                if (_title != null) ...[Text(_title!, style: TextStyle(fontSize: 30)), Divider(height: 1, color: theme.outlineVariant)],
+
+                SizedBox(height: spacing.listItemSpacing),
+
+                // Search
+                TextField(
+                  controller: _searchController,
+                  decoration: const InputDecoration(labelText: 'Search', prefixIcon: Icon(Icons.search)),
+                  onChanged: _onSearchChange,
+                ),
+
+                SizedBox(height: spacing.listItemSpacing),
+
+                // Add new Button
+                if (_editing) Button(type: ButtonType.elevated, color: ThemeColorName.success, icon: Icons.add, label: 'Add New', onPressed: _addNew, isLoading: _adding),
+
+                SizedBox(height: spacing.groupSpacing),
+
+                // Tabs
+                if (_location.length > 1) ...[
+                  Container(
+                    decoration: BoxDecoration(
+                      border: BoxBorder.fromLTRB(bottom: BorderSide(width: 1, color: theme.outlineVariant)),
                     ),
-
-                  // Folders list
-                  if (!_fetching)
-                    if (_location.length == 1 || _filter == Filter.folder)
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: folders.length,
-                        itemBuilder: (context, index) => Card(
-                          clipBehavior: Clip.hardEdge,
-                          child: InkWell(
-                            onTap: () {
-                              _nextLocation(folders[index]);
+                    child: Row(
+                      spacing: spacing.listItemSpacing,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            border: _filter == Filter.folder ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary)) : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
+                          ),
+                          child: Button(
+                            label: 'Categories',
+                            width: 100,
+                            height: 40,
+                            radius: 0,
+                            type: ButtonType.text,
+                            color: _filter == Filter.folder ? ThemeColorName.primary : ThemeColorName.onSurface,
+                            onPressed: () {
+                              _onFilterChange(Filter.folder);
                             },
-                            child: Padding(
-                              padding: EdgeInsetsGeometry.all(8),
-                              child: ListTile(
-                                title: Text(folders[index].title),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (_editing) ...[
-                                      Button(
-                                        isLoading: _deletingFolder == index,
-                                        type: ButtonType.text,
-                                        color: ThemeColorName.error,
-                                        icon: Icons.remove_circle_outline,
-                                        onPressed: () {
-                                          _removeFolder(folders[index], index);
-                                        },
-                                      ),
-                                    ],
-                                    Button(type: ButtonType.text, color: ThemeColorName.primary, icon: Icons.chevron_right),
-                                  ],
+                          ),
+                        ),
+
+                        Container(
+                          decoration: BoxDecoration(
+                            border: _filter == Filter.file ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary)) : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
+                          ),
+                          child: Button(
+                            label: 'Cards',
+                            width: 100,
+                            height: 40,
+                            radius: 0,
+                            type: ButtonType.text,
+                            color: _filter == Filter.file ? ThemeColorName.primary : ThemeColorName.onSurface,
+                            onPressed: () {
+                              _onFilterChange(Filter.file);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                SizedBox(height: spacing.listItemSpacing),
+
+                // Lists
+                Expanded(
+                  child: ListView(
+                    children: [
+                      // Circular progress indicator
+                      if (_fetching)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
+                        ),
+
+                      // Folders list
+                      if (!_fetching)
+                        if (_location.length == 1 || _filter == Filter.folder)
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: folders.length,
+                            separatorBuilder: (context, index) => SizedBox(height: spacing.listItemSpacing),
+                            itemBuilder: (context, index) => Card(
+                              clipBehavior: Clip.hardEdge,
+                              child: InkWell(
+                                onTap: () {
+                                  _nextLocation(folders[index]);
+                                },
+                                child: Padding(
+                                  padding: EdgeInsetsGeometry.all(8),
+                                  child: ListTile(
+                                    title: Text(folders[index].title),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (_editing) ...[
+                                          Button(
+                                            isLoading: _deletingFolder == index,
+                                            type: ButtonType.text,
+                                            color: ThemeColorName.error,
+                                            icon: Icons.remove_circle_outline,
+                                            onPressed: () {
+                                              _removeFolder(folders[index], index);
+                                            },
+                                          ),
+                                        ],
+                                        Button(type: ButtonType.text, color: ThemeColorName.primary, icon: Icons.chevron_right),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
 
-                  // Files list
-                  if (!_fetching)
-                    if (_location.length > 1 && _filter == Filter.file && files != null && files.isNotEmpty)
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: files.length,
-                        itemBuilder: (context, index) {
-                          final file = files[index];
-                          return Card(
-                            clipBehavior: Clip.hardEdge,
-                            child: InkWell(
-                              onTap: () {
-                                p.setFileIndex(index);
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: true,
-                                  builder: (_) => FileManager(
-                                    file: file,
-                                    onClose: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                );
-                              },
-                              child: Padding(
-                                padding: EdgeInsetsGeometry.all(5),
-                                child: ListTile(
-                                  title: Text(file.title),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (_editing) ...[
-                                        Button(
-                                          isLoading: _deletingFile == index,
-                                          type: ButtonType.text,
-                                          color: ThemeColorName.error,
-                                          icon: Icons.remove_circle_outline,
-                                          onPressed: () {
-                                            _removeFile(file, index);
+                      // Files list
+                      if (!_fetching)
+                        if (_location.length > 1 && _filter == Filter.file && files != null && files.isNotEmpty)
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: files.length,
+                            separatorBuilder: (context, index) => SizedBox(height: spacing.listItemSpacing),
+                            itemBuilder: (context, index) {
+                              final file = files[index];
+                              return Card(
+                                clipBehavior: Clip.hardEdge,
+                                child: InkWell(
+                                  onTap: () {
+                                    p.setFileIndex(index);
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: true,
+                                      builder: (_) {
+                                        return LayoutBuilder(
+                                          builder: (context, constraints) {
+                                            final maxWidth = constraints.maxWidth;
+                                            final spacing = getSpacing(maxWidth);
+
+                                            return Padding(
+                                              padding: EdgeInsets.all(spacing.padding),
+                                              child: FileManager(
+                                                file: file,
+                                                onClose: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                            );
                                           },
-                                        ),
-                                      ],
-                                      Button(type: ButtonType.text, color: ThemeColorName.primary, icon: Icons.chevron_right),
-                                    ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: EdgeInsetsGeometry.all(8),
+                                    child: ListTile(
+                                      title: Text(file.title),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (_editing) ...[
+                                            Button(
+                                              isLoading: _deletingFile == index,
+                                              type: ButtonType.text,
+                                              color: ThemeColorName.error,
+                                              icon: Icons.remove_circle_outline,
+                                              onPressed: () {
+                                                _removeFile(file, index);
+                                              },
+                                            ),
+                                          ],
+                                          Button(type: ButtonType.text, color: ThemeColorName.primary, icon: Icons.chevron_right),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                ],
-              ),
-            ),
+                              );
+                            },
+                          ),
+                    ],
+                  ),
+                ),
 
-            if (_hasMore)
-              Button(
-                label: 'Load More',
-                type: ButtonType.outlined,
-                color: ThemeColorName.secondary,
-                onPressed: () {
-                  _paginateMore();
-                },
-              ),
-          ],
-        ),
-      ),
+                if (_hasMore) SizedBox(height: spacing.groupSpacing),
+
+                if (_hasMore)
+                  Button(
+                    label: 'Load More',
+                    type: ButtonType.outlined,
+                    color: ThemeColorName.secondary,
+                    onPressed: () {
+                      _paginateMore();
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
