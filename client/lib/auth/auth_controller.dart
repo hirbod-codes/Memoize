@@ -56,7 +56,7 @@ class AuthController extends Notifier<AuthState> {
   Future<RefreshResponse> refresh(String refreshToken) async {
     Talker().info('AuthController._initialize called...');
     final response = await _authDio.post('/api/auth/refresh', data: {'refreshToken': refreshToken, 'noCookies': 'true'});
-    Talker().info('response status code: ${response.statusCode}', );
+    Talker().info('response status code: ${response.statusCode}');
 
     return RefreshResponse(accessToken: response.data['accessToken']);
   }
