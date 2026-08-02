@@ -61,11 +61,14 @@ export const isProduction = getStringEnv('NODE_ENV', 'The Node env environment v
 export const hostName = getStringEnv('HOST', 'The HOST environment variable is not provided')
 export const hostPort = getIntegerEnv('PORT', 'The PORT environment variable is not provided', (s) => s.min(1025))
 
-export const streamSigningSecret = getStringEnv('STREAM_SIGNING_SECRET', 'The stream signing secret environment variable is not provided');
+export const allowedOrigins = getStringEnv('ALLOWED_ORIGINS', 'The Allowed origins environment variable is not provided')!
+
+export const ttsApiKey = getStringEnv('TTS_API_KEY', 'The TTS API key environment variable is not provided', s => s.optional())!
 
 export const accessTokenSecret = getStringEnv('ACCESS_TOKEN_SECRET', 'The access token secret environment variable is not provided')
 export const refreshTokenSecret = getStringEnv('REFRESH_TOKEN_SECRET', 'The refresh token secret environment variable is not provided')
-export const allowedOrigins = getStringEnv('ALLOWED_ORIGINS', 'The Allowed origins environment variable is not provided')!
+
+export const streamSigningSecret = getStringEnv('STREAM_SIGNING_SECRET', 'The stream signing secret environment variable is not provided');
 
 export const meilisearchKey = getStringEnv('MEILISEARCH_KEY', 'The Meilisearch key environment variable is not provided')!
 export const meilisearchHost = getStringEnv('MEILISEARCH_HOST', 'The Meilisearch host environment variable is not provided')!

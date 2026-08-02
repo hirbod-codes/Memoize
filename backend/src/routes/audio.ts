@@ -1,7 +1,7 @@
 import express from 'express';
 import { string, ValidationError } from 'yup';
-import { auth, authorization } from '../middlewares/auth';
-import { BUCKET_NAME, s3 } from '..';
+import { auth, authenticateToken, authorization } from '../middlewares/auth';
+import { BUCKET_NAME, s3, ttsApiKey } from '..';
 import { Upload } from "@aws-sdk/lib-storage";
 import AudioRepository from '../DB/repositories/AudioRepository';
 import * as mm from "music-metadata";
@@ -12,7 +12,8 @@ import { teeStream } from '../lib/stream';
 import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
 import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
 import { generateStreamToken, verifyStreamToken } from '../lib/signed_urls';
-import { Readable } from 'stream';
+import { UserRepository } from '../DB/repositories/UserRepository';
+import { httpsStreamRequest } from '../utils';
 
 const router = express.Router();
 
@@ -306,6 +307,69 @@ router.get('/singed_token', auth, async (req, res) => {
     }
 });
 
+router.get('/tts', async (req, res) => {
+    try {
+        console.log('/tts')
+
+        console.log('Validation...')
+        let text: string | undefined = undefined, userTtsApiKey: string | undefined = undefined, authToken: string | undefined = undefined
+        try {
+            text = await string().max(500).required().label('Text').validate(req.query.text?.toString())
+            authToken = await string().max(500).required().label('Text').validate(req.query.authToken?.toString())
+            userTtsApiKey = await string().max(500).optional().label('Token').validate(req.query.token?.toString())
+        } catch (err) {
+            console.error(err)
+            if (err instanceof ValidationError)
+                return res.status(400).json({ errors: err.errors })
+            return res.status(400).json({ errors: ['Invalid parameters'] });
+        }
+        console.log({ text, userTtsApiKey })
+
+        const result = authenticateToken(authToken)
+        if (result === false)
+            return res.status(401).send();
+
+        const userId = (result as any).userId;
+
+        if (!userTtsApiKey) {
+            const ur = new UserRepository()
+            const user = await ur.get(userId);
+            if (user === false)
+                return res.status(401).send();
+
+            if (user.role !== 'admin' && user?.plan === 'free')
+                return res.status(403).send();
+
+            if (user.ttsApiKey)
+                userTtsApiKey = user.ttsApiKey;
+            else if (ttsApiKey)
+                userTtsApiKey = ttsApiKey;
+            else
+                return res.status(400).json({ errors: ['this feature currently is unavailable.'] });
+        }
+
+        const stream = await httpsStreamRequest({ hostname: 'api.gapgpt.app', path: '/v1/audio/speech', method: 'POST', headers: { 'Authorization': `Bearer ${userTtsApiKey}`, 'Content-Type': 'application/json' } }, JSON.stringify({
+            model: 'gemini-2.5-flash-preview-tts',
+            input: text,
+            voice: 'achernar',
+            response_format: 'mp3'
+        }))
+
+        stream.on('error', (e) => {
+            console.error(e);
+
+            return res.status(500).send()
+        })
+
+        stream.pipe(res)
+    } catch (err) {
+        res.status(500).json({ message: 'Error getting audio file' });
+    } finally {
+        console.log('------------end------------')
+    }
+})
+
+// there are separate routes for downloading audio because web's media player doesn't support using authorization headers, therefor it uses signed urls instead.
 // For non web applications
 router.get('/file/:audioId', auth, async (req, res) => {
     try {

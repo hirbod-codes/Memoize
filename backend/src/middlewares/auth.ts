@@ -34,14 +34,13 @@ export function auth(req: Request, res: Response, next: NextFunction) {
 
     authToken = req.headers.authorization ? authToken.split(" ")[1] : authToken;
 
-    try {
-        const decoded = jwt.verify(authToken, accessTokenSecret);
-        (req as any).user = decoded;
-        next();
-    } catch (err) {
-        console.error(err);
+    const result = authenticateToken(authToken);
+
+    if (!result)
         return res.status(401).send();
-    }
+
+    (req as any).user = result;
+    next();
 }
 
 export function unAuth(req: Request, res: Response, next: NextFunction) {
@@ -52,4 +51,17 @@ export function unAuth(req: Request, res: Response, next: NextFunction) {
         return res.status(401).send();
 
     next();
+}
+
+export function authenticateToken(token: string) {
+    if (!token)
+        return false
+
+    try {
+        const decoded = jwt.verify(token, accessTokenSecret);
+        return decoded;
+    } catch (err) {
+        console.error(err);
+        return false
+    }
 }

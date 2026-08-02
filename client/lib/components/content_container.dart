@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 import 'package:client/api/models/leaf.dart';
 import 'package:client/api/providers/folders_and_files.dart';
 import 'package:client/components/contents/audio_container.dart';
@@ -9,9 +12,7 @@ import 'package:client/components/contents/video_container.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import 'package:client/components/contents/TTSButton.dart';
 
 class ContentContainer extends ConsumerStatefulWidget {
   final bool editing;
@@ -135,6 +136,10 @@ class _ContentState extends ConsumerState<ContentContainer> {
         );
 
       case ContentType.string:
+        stringControllers = widget.content.value.map((v) => TextEditingController(text: v)).toList();
+        Talker().warning('-----------------stringControllers.length: ${stringControllers.length}------------------------------------------------');
+        Talker().warning('-----------------widget.content.value.length: ${widget.content.value.length}------------------------------------------------');
+
         return Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -143,6 +148,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
             final contentValueIndex = e.key;
             final v = e.value;
 
+            Talker().warning('-----------------Index: $contentValueIndex------------------------------------------------');
             if (widget.editing) {
               return Stack(
                 children: [
@@ -216,7 +222,15 @@ class _ContentState extends ConsumerState<ContentContainer> {
               return SizedBox(
                 width: double.infinity,
                 child: Card(
-                  child: Padding(padding: const EdgeInsets.all(16), child: Text(v)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        if (v != '') TTSButton(word: v),
+                        Text(v),
+                      ],
+                    ),
+                  ),
                 ),
               );
             }

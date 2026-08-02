@@ -190,6 +190,7 @@ router.post('/register', unAuth, authRateLimiter, async (req, res) => {
             phoneNumber,
             password: hashedPassword,
             role: 'default',
+            plan: 'free',
             temporaryAvatar: false,
         })
         if (createResult === false || !createResult.acknowledged) {

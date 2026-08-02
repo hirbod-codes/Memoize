@@ -1,5 +1,5 @@
 import { boolean, BooleanSchema, number, NumberSchema, string, StringSchema } from "yup";
-import http from "http";
+import http, { IncomingMessage } from "http";
 import https from "https";
 
 export function validateBooleanEnv(env?: boolean, message?: string, validate?: (schema: BooleanSchema) => BooleanSchema, manuallyValidate?: (env?: boolean) => boolean) {
@@ -87,6 +87,24 @@ export async function httpRequest(options: http.RequestOptions, sendData?: strin
                 console.error(e)
                 reject(e)
             });
+        });
+
+        request.on('error', (e) => {
+            console.error(e)
+            reject(e)
+        });
+
+        if (sendData)
+            request.write(sendData);
+
+        request.end();
+    })
+}
+
+export async function httpsStreamRequest(options: https.RequestOptions, sendData?: string): Promise<IncomingMessage> {
+    return new Promise<IncomingMessage>((resolve, reject) => {
+        const request = https.request(options, (response) => {
+            resolve(response);
         });
 
         request.on('error', (e) => {

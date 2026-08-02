@@ -5,14 +5,22 @@ export const collectionName = 'user'
 
 export const schemaVersion = 'v1.0.0'
 
+const plan = string().oneOf(['free', 'pro'])
+
 const update = {
     schemaVersion: string().optional().min(6).max(20),
     role: string().optional(),
+    plan: plan.optional(),
+
     username: string().optional(),
     phoneNumber: string().optional().matches(/^09[0-9]{9}$/),
     email: string().optional().email(),
-    avatarKey: string().optional(), // user/avatar/<userId>/
+
+    avatarKey: string().optional(),
     temporaryAvatar: boolean().optional(),
+
+    ttsApiKey: string().optional(),
+
     password: string().optional(),
     refreshToken: string().optional(),
 }
@@ -22,13 +30,20 @@ export const userSchema = object().required().stripUnknown().strict(true).shape(
     schemaVersion: string().optional().min(6).max(20),
     _id: likeObjectId.optional(),
     role: string().required(),
+    plan: plan.required(),
+
     username: string().optional(),
     phoneNumber: string().optional().matches(/^09[0-9]{9}$/),
     email: string().optional().email(),
+
     avatarKey: string().optional(), // user/avatar/<userId>/
     temporaryAvatar: boolean().required(),
+
     password: string().required(),
     refreshToken: string().optional(),
+
+    ttsApiKey: string().optional(),
+
     createdAt: number().optional(),
     updatedAt: number().optional(),
 })
