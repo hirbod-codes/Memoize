@@ -137,8 +137,6 @@ class _ContentState extends ConsumerState<ContentContainer> {
 
       case ContentType.string:
         stringControllers = widget.content.value.map((v) => TextEditingController(text: v)).toList();
-        Talker().warning('-----------------stringControllers.length: ${stringControllers.length}------------------------------------------------');
-        Talker().warning('-----------------widget.content.value.length: ${widget.content.value.length}------------------------------------------------');
 
         return Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -148,7 +146,6 @@ class _ContentState extends ConsumerState<ContentContainer> {
             final contentValueIndex = e.key;
             final v = e.value;
 
-            Talker().warning('-----------------Index: $contentValueIndex------------------------------------------------');
             if (widget.editing) {
               return Stack(
                 children: [
