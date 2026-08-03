@@ -155,6 +155,16 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     }
   }
 
+  Future<FoldersAndFilesStateResponse> moveFolder(Folder folder, String? destId) async {
+    Response<dynamic> response = await ref.read(folderControllerProvider).patchParentId(id: folder.id, parentId: destId);
+
+    if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! > 299) {
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move folder.');
+    }
+
+    return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.success);
+  }
+
   // Files
   void setFiles(List<Leaf> files) => state = state.copyWith(files: files);
 
@@ -271,6 +281,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       Talker().info('FoldersAndFiles.removeFileById call ended');
     }
   }
+
+  Future<void> moveFile() async {}
 
   // Contents
   Future<FoldersAndFilesStateResponse> setContent(Content content, int contentIndex) async {

@@ -50,6 +50,8 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
   Filter _filter = Filter.folder;
 
   int _folderSkip = 0;
+  Folder? _movingFolder;
+  bool _isMovingFolder = false;
   int _fileSkip = 0;
   bool _hasMore = true;
 
@@ -345,23 +347,61 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                   ],
                 ),
 
+                // Title
                 SizedBox(height: spacing.listItemSpacing),
-
                 if (_title != null) ...[Text(_title!, style: TextStyle(fontSize: 30)), Divider(height: 1, color: theme.outlineVariant)],
 
-                SizedBox(height: spacing.listItemSpacing),
-
                 // Search
+                SizedBox(height: spacing.listItemSpacing),
                 TextField(
                   controller: _searchController,
                   decoration: const InputDecoration(labelText: 'Search', prefixIcon: Icon(Icons.search)),
                   onChanged: _onSearchChange,
                 ),
 
-                SizedBox(height: spacing.listItemSpacing),
-
                 // Add new Button
+                if (_editing) SizedBox(height: spacing.listItemSpacing),
                 if (_editing) Button(type: ButtonType.elevated, color: ThemeColorName.success, icon: Icons.add, label: 'Add New', onPressed: _addNew, isLoading: _adding),
+
+                // Move folder buttons
+                if (_movingFolder != null) SizedBox(height: spacing.listItemSpacing),
+                if (_movingFolder != null)
+                  Row(
+                    children: [
+                      Button(
+                        type: ButtonType.elevated,
+                        color: ThemeColorName.success,
+                        label: 'Move here',
+                        onPressed: () async {
+                          setState(() {
+                            _isMovingFolder = true;
+                          });
+
+                          await ref.read(foldersAndFilesProvider.notifier).moveFolder(_movingFolder!, _location.last == 'root' ? null : _location.last);
+                          if (!mounted) return;
+
+                          ref.read(foldersAndFilesProvider.notifier).setFolders([...(ref.read(foldersAndFilesProvider).folders ?? []), _movingFolder!]);
+
+                          setState(() {
+                            _isMovingFolder = false;
+                            _movingFolder = null;
+                          });
+                        },
+                        isLoading: _isMovingFolder,
+                      ),
+                      Button(
+                        type: ButtonType.elevated,
+                        color: ThemeColorName.error,
+                        label: 'Cancel move',
+                        onPressed: () {
+                          setState(() {
+                            _movingFolder = null;
+                            _isMovingFolder = false;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
 
                 SizedBox(height: spacing.groupSpacing),
 
@@ -402,9 +442,11 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                             radius: 0,
                             type: ButtonType.text,
                             color: _filter == Filter.file ? ThemeColorName.primary : ThemeColorName.onSurface,
-                            onPressed: () {
-                              _onFilterChange(Filter.file);
-                            },
+                            onPressed: _movingFolder != null
+                                ? null
+                                : () {
+                                    _onFilterChange(Filter.file);
+                                  },
                           ),
                         ),
                       ],
@@ -448,16 +490,34 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                                       children: [
                                         if (_editing) ...[
                                           Button(
-                                            isLoading: _deletingFolder == index,
                                             type: ButtonType.text,
                                             color: ThemeColorName.error,
                                             icon: Icons.remove_circle_outline,
+                                            isLoading: _deletingFolder == index,
                                             onPressed: () {
                                               _removeFolder(folders[index], index);
                                             },
                                           ),
                                         ],
-                                        Button(type: ButtonType.text, color: ThemeColorName.primary, icon: Icons.chevron_right),
+                                        PopupMenuButton<String>(
+                                          icon: const Icon(Icons.more_vert),
+                                          onSelected: (value) {
+                                            switch (value) {
+                                              case 'move':
+                                                setState(() {
+                                                  _movingFolder = folders[index].copyWith();
+                                                  _isMovingFolder = false;
+                                                });
+                                                break;
+                                            }
+                                          },
+                                          itemBuilder: (context) => [
+                                            const PopupMenuItem(
+                                              value: 'move',
+                                              child: ListTile(leading: Icon(Icons.drive_file_move_outlined), title: Text('Move'), contentPadding: EdgeInsets.zero),
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -522,7 +582,6 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                                               },
                                             ),
                                           ],
-                                          Button(type: ButtonType.text, color: ThemeColorName.primary, icon: Icons.chevron_right),
                                         ],
                                       ),
                                     ),

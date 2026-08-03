@@ -72,6 +72,14 @@ class FolderController {
     return await _authDio.patch('/api/treeNode/', data: {'treeNode': data});
   }
 
+  // There is another method for updating treeNode, because parentId field is sensitive to undefined value(having undefined parentId means the treeNode is a root treeNode).
+  Future<Response> patchParentId({required String id, String? parentId}) async {
+    final Map<String, dynamic> data = {'_id': id};
+    data['parentId'] = parentId;
+
+    return await _authDio.patch('/api/treeNode/', data: {'treeNode': data});
+  }
+
   Future<Response> delete({required String id}) async {
     return await _authDio.delete('/api/treeNode/?treeNodeId=$id');
   }

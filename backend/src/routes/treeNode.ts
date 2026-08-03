@@ -18,6 +18,7 @@ router.post('/', async (req, res) => {
         let treeNode: TreeNodePost
         try {
             treeNode = await treeNodePostSchema.required().stripNull().stripUndefined().validate(req.body.treeNode, { stripUnknown: true })
+            if (treeNode.parentId === null) treeNode.parentId = undefined;
         } catch (err) {
             console.error(err)
             if (err instanceof ValidationError)
@@ -220,6 +221,7 @@ router.patch('/', async (req, res) => {
         let treeNode: TreeNodeUpdate
         try {
             treeNode = await treeNodeUpdateSchema.required().validate(req.body.treeNode, { stripUnknown: true })
+            if (treeNode.parentId === null) treeNode.parentId = undefined;
             console.log({ treeNode });
         } catch (err) {
             console.error(err)

@@ -12,6 +12,7 @@ const post = {
 
 const update = {
     _id: string().objectIdString().required().label('Id'),
+    parentId: string().objectIdString().nullable().optional().label('Parent id'),
     title: string().optional().label('Title'),
     treeNodeIds: array().optional().min(0).of(string().required()).label('Tree node ids'),
     leafIds: array().optional().nonNullable().min(0).of(string().required()).label('Leaf ids'),
@@ -19,7 +20,7 @@ const update = {
 
 const create = {
     userId: string().objectIdString().required().label('User'),
-    parentId: string().objectIdString().optional().label('Parent id'),
+    parentId: string().objectIdString().nullable().optional().label('Parent id'),
     title: string().required().label('Title'),
     treeNodeIds: array().required().min(0).of(string().required()).label('Tree node ids'),
     leafIds: array().required().min(0).of(string().required()).label('Leaf ids'),
@@ -34,7 +35,7 @@ export const treeNodeSchema = object().required().shape(create).shape({
     _id: likeObjectId.optional().label('Id'),
 
     userId: string().objectIdString().required().label('User id'),
-    parentId: string().objectIdString().optional().label('Parent id'),
+    parentId: string().objectIdString().nullable().optional().label('Parent id'),
     title: string().required().label('Title'),
 
     treeNodeIds: array().required().min(0).of(string().required()).label('Tree node ids'),
