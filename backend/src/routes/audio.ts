@@ -340,9 +340,7 @@ router.get('/tts', async (req, res) => {
             if (user.role !== 'admin' && user?.plan === 'free')
                 return res.status(403).send();
 
-            if (user.ttsApiKey)
-                userTtsApiKey = user.ttsApiKey;
-            else if (ttsApiKey)
+            if (ttsApiKey)
                 userTtsApiKey = ttsApiKey;
             else
                 return res.status(400).json({ errors: ['this feature currently is unavailable.'] });

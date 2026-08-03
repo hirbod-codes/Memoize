@@ -19,8 +19,6 @@ const update = {
     avatarKey: string().optional(),
     temporaryAvatar: boolean().optional(),
 
-    ttsApiKey: string().optional(),
-
     password: string().optional(),
     refreshToken: string().optional(),
 }
@@ -41,8 +39,6 @@ export const userSchema = object().required().stripUnknown().strict(true).shape(
 
     password: string().required(),
     refreshToken: string().optional(),
-
-    ttsApiKey: string().optional(),
 
     createdAt: number().optional(),
     updatedAt: number().optional(),
