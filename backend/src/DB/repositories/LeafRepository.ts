@@ -101,12 +101,12 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
         return await LeafRepository.collection!.find(filter, { session: this.session }).sort({ _id: -1 }).skip(skip).limit(limit).toArray()
     }
 
-    async replace(leafArg: LeafUpdate) {
+    async update(leafArg: LeafUpdate) {
         const { _id, ...leaf } = leafArg
         return await LeafRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(_id!.toString()) }, { $set: { ...leaf, updatedAt: Date.now() } })
     }
 
-    async replaceForUser(leafArg: LeafUpdate, userId: string) {
+    async updateForUser(leafArg: LeafUpdate, userId: string) {
         const { _id, ...leaf } = leafArg
         return await LeafRepository.collection!.updateOne({ userId, _id: ObjectId.createFromHexString(_id!.toString()) }, { $set: { ...leaf, updatedAt: Date.now() } })
     }

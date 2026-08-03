@@ -199,7 +199,7 @@ router.patch('/', async (req, res) => {
 
         console.log('Replacing updated leaf...')
         const leafRepository = new LeafRepository()
-        const updateResult = await leafRepository.replaceForUser(leaf, userId)
+        const updateResult = await leafRepository.updateForUser(leaf, userId)
         console.log({ updateResult })
         if (!updateResult.acknowledged)
             return res.status(500).send()
