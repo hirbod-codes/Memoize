@@ -70,11 +70,11 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
         return await LeafRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
 
-    async getManyForUserByParentTreeNodeId(leafIds: string[], parentTreeNodeId: string, userId: string) {
+    async getManyForUserByParentTreeNodeIdLimitedByIds(leafIds: string[], parentTreeNodeId: string, userId: string) {
         return await LeafRepository.collection!.find({ _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, treeNodeId: parentTreeNodeId, userId }, { session: this.session }).toArray()
     }
 
-    async getForUserByParentTreeNode(parentTreeNodeId: string, userId: string) {
+    async getManyForUserByParentTreeNodeId(parentTreeNodeId: string, userId: string) {
         return await LeafRepository.collection!.find({ treeNodeId: parentTreeNodeId, userId }, { session: this.session }).toArray()
     }
 

@@ -66,8 +66,8 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
         return (await VideoRepository.collection!.find({ temporary: false, title, userId }, { session: this.session }).toArray())[0]
     }
 
-    async getManyForUser(leafIds: string[], userId: string): Promise<Video[]> {
-        return await VideoRepository.collection!.find({ temporary: false, _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
+    async getManyForUser(videoIds: string[], userId: string): Promise<Video[]> {
+        return await VideoRepository.collection!.find({ temporary: false, _id: { $in: videoIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
 
     async getByUserId(userId: string) {

@@ -66,8 +66,8 @@ class AudioRepository implements IRepository, ISeedable, IDropable {
         return (await AudioRepository.collection!.find({ temporary: false, title, userId }, { session: this.session }).toArray())[0]
     }
 
-    async getManyForUser(leafIds: string[], userId: string): Promise<Audio[]> {
-        return await AudioRepository.collection!.find({ temporary: false, _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
+    async getManyForUser(audioIds: string[], userId: string): Promise<Audio[]> {
+        return await AudioRepository.collection!.find({ temporary: false, _id: { $in: audioIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
 
     async getByUserId(userId: string) {

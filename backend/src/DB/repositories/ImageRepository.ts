@@ -66,8 +66,8 @@ class ImageRepository implements IRepository, ISeedable, IDropable {
         return (await ImageRepository.collection!.find({ temporary: false, title, userId }, { session: this.session }).toArray())[0]
     }
 
-    async getManyForUser(leafIds: string[], userId: string): Promise<Image[]> {
-        return await ImageRepository.collection!.find({ temporary: false, _id: { $in: leafIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
+    async getManyForUser(imageIds: string[], userId: string): Promise<Image[]> {
+        return await ImageRepository.collection!.find({ temporary: false, _id: { $in: imageIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
 
     async getByUserId(userId: string) {

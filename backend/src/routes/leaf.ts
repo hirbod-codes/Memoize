@@ -165,7 +165,7 @@ router.get('/list', async (req, res) => {
         const leafRepository = new LeafRepository()
         let result
         if (ids.length > 0)
-            result = await leafRepository.getManyForUserByParentTreeNodeId(ids, parentId, userId)
+            result = await leafRepository.getManyForUserByParentTreeNodeIdLimitedByIds(ids, parentId, userId)
         else
             result = await leafRepository.getForUserPaginated((req as any).user.userId, parentId, limit, skip, search)
 
