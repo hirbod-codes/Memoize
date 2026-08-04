@@ -156,13 +156,21 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
   }
 
   Future<FoldersAndFilesStateResponse> moveFolder(Folder folder, String? destId) async {
-    Response<dynamic> response = await ref.read(folderControllerProvider).patchParentId(id: folder.id, parentId: destId);
+    try {
+      Talker().info('FoldersAndFiles.moveFolder is called...');
+      Response<dynamic> response = await ref.read(folderControllerProvider).patchParentId(id: folder.id, parentId: destId);
 
-    if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! > 299) {
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move folder.');
+      if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! > 299) {
+        return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move folder.');
+      }
+
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.success);
+    } catch (e) {
+      Talker().error('FoldersAndFiles.moveFolder throws an error', e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update file.', error: e);
+    } finally {
+      Talker().info('FoldersAndFiles.moveFolder call ended');
     }
-
-    return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.success);
   }
 
   // Files
@@ -283,13 +291,21 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
   }
 
   Future<FoldersAndFilesStateResponse> moveFile(Leaf file, String? destId) async {
-    Response<dynamic> response = await ref.read(leafControllerProvider).patch(id: file.id, treeNodeId: destId);
+    try {
+      Talker().info('FoldersAndFiles.moveFile is called...');
+      Response<dynamic> response = await ref.read(leafControllerProvider).patch(id: file.id, treeNodeId: destId);
 
-    if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! > 299) {
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move folder.');
+      if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! > 299) {
+        return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move folder.');
+      }
+
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.success);
+    } catch (e) {
+      Talker().error('FoldersAndFiles.moveFile throws an error', e);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update file.', error: e);
+    } finally {
+      Talker().info('FoldersAndFiles.moveFile call ended');
     }
-
-    return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.success);
   }
 
   // Contents
@@ -505,6 +521,70 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove content.', error: e);
     } finally {
       Talker().info('FoldersAndFiles.removeContentValue call ended');
+    }
+  }
+
+  Future<FoldersAndFilesStateResponse> moveContent(int fromIndex, int toIndex) async {
+    try {
+      Talker().info('FoldersAndFiles.moveContent is called...');
+
+      if (toIndex < 0 || fromIndex < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Invalid index provided');
+      if (state.files == null || state.files!.isEmpty) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No cards found!');
+
+      Talker().info('int fromIndex: $fromIndex, int toIndex: $toIndex');
+
+      final file = state.files![state.fileIndex].copyWith();
+
+      final contents = state.isTerm ? file.termContents : file.definitionContents;
+
+      if (toIndex > contents.length || fromIndex >= contents.length) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Invalid index provided');
+
+      final fromContent = contents.removeAt(fromIndex).copyWith();
+
+      toIndex--; // because one item is removed, therefor the total length is reduced by one.
+
+      contents.insert(toIndex, fromContent);
+
+      return await setFile(file);
+    } catch (e, st) {
+      Talker().error('FoldersAndFiles.moveContent throws an error', e, st);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move content.', error: e);
+    } finally {
+      Talker().info('FoldersAndFiles.moveContent call ended');
+    }
+  }
+
+  Future<FoldersAndFilesStateResponse> moveContentValue(int contentIndex, int fromIndex, int toIndex) async {
+    try {
+      Talker().info('FoldersAndFiles.moveContentValue is called...');
+
+      if (contentIndex < 0 || toIndex < 0 || fromIndex < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Invalid index provided');
+      if (state.files == null || state.files!.isEmpty) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No cards found!');
+
+      Talker().info('int contentIndex: $contentIndex, int fromIndex: $fromIndex, int toIndex: $toIndex');
+
+      final file = state.files![state.fileIndex].copyWith();
+
+      final contents = state.isTerm ? file.termContents : file.definitionContents;
+
+      if (contentIndex >= contents.length) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'content not found');
+
+      final content = contents[contentIndex];
+
+      if (toIndex > content.value.length || fromIndex >= content.value.length) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'content value not found');
+
+      final fromContentValue = content.value.removeAt(fromIndex);
+
+      toIndex--; // because one item is removed, therefor the total length is reduced by one.
+
+      content.value.insert(toIndex, fromContentValue);
+
+      return await setFile(file);
+    } catch (e, st) {
+      Talker().error('FoldersAndFiles.moveContentValue throws an error', e, st);
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move content.', error: e);
+    } finally {
+      Talker().info('FoldersAndFiles.moveContentValue call ended');
     }
   }
 

@@ -31,6 +31,9 @@ class _FileManager extends ConsumerState<FileManager> {
   bool _editing = false;
   int? _isAdding;
 
+  int? _movingContentIndex;
+  bool _isMovingContent = false;
+
   Future<void> _onContentAdd() async {
     FoldersAndFilesStateResponse? result;
     try {
@@ -191,6 +194,7 @@ class _FileManager extends ConsumerState<FileManager> {
 
     final p = ref.watch(foldersAndFilesProvider);
     final file = p.files![p.fileIndex];
+    final contents = p.isTerm ? file.termContents : file.definitionContents;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -239,6 +243,7 @@ class _FileManager extends ConsumerState<FileManager> {
                                 type: ButtonType.text,
                                 color: ThemeColorName.primary,
                                 icon: Icons.flip,
+                                label: 'Flip',
                                 onPressed: () {
                                   ref.read(foldersAndFilesProvider.notifier).flip();
                                 },
@@ -282,9 +287,11 @@ class _FileManager extends ConsumerState<FileManager> {
                 ),
 
                 SliverList(
-                  delegate: SliverChildBuilderDelegate(childCount: p.isTerm ? file.termContents.length : file.definitionContents.length, (context, contentIndex) {
+                  delegate: SliverChildBuilderDelegate(childCount: contents.length, (context, contentIndex) {
+                    Content content = p.isTerm ? file.termContents[contentIndex] : file.definitionContents[contentIndex];
+
                     IconData contentIcon;
-                    switch ((p.isTerm ? file.termContents[contentIndex] : file.definitionContents[contentIndex]).type) {
+                    switch (content.type) {
                       case ContentType.imageId:
                         contentIcon = Icons.image;
                         break;
@@ -302,42 +309,101 @@ class _FileManager extends ConsumerState<FileManager> {
                         break;
                     }
 
-                    return Container(
-                      margin: EdgeInsetsGeometry.fromSTEB(0, 0, 0, 15),
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        border: BoxBorder.all(color: theme.outlineVariant, width: 1),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.all(spacing.padding),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          spacing: spacing.listItemSpacing,
-                          children: [
-                            Row(
-                              children: [IconButton(onPressed: () {}, icon: Icon(contentIcon))],
-                            ),
-                            if (_editing)
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Button(
-                                    type: ButtonType.text,
-                                    color: ThemeColorName.success,
-                                    icon: Icons.add_circle_outline,
-                                    iconSize: 24,
-                                    isLoading: _isAdding == contentIndex,
-                                    onPressed: () => _onContentValueAdd(index: contentIndex),
+                    return Column(
+                      spacing: spacing.listItemSpacing,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (_movingContentIndex != null && _movingContentIndex != contentIndex && _movingContentIndex != contentIndex - 1)
+                          Button(
+                            type: ButtonType.elevated,
+                            isLoading: _isMovingContent,
+                            onPressed: () async {
+                              setState(() {
+                                _isMovingContent = true;
+                              });
+
+                              await ref.watch(foldersAndFilesProvider.notifier).moveContent(_movingContentIndex!, contentIndex);
+                              if (!mounted) return;
+
+                              setState(() {
+                                _movingContentIndex = null;
+                                _isMovingContent = false;
+                              });
+                            },
+                          ),
+                        Container(
+                          margin: EdgeInsetsGeometry.fromSTEB(0, 0, 0, spacing.listItemSpacing),
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(
+                            border: BoxBorder.all(color: theme.outlineVariant, width: 1),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(spacing.padding),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              spacing: spacing.listItemSpacing,
+                              children: [
+                                Row(
+                                  children: [
+                                    IconButton(onPressed: () {}, icon: Icon(contentIcon)),
+                                    if (_editing)
+                                      Button(
+                                        type: ButtonType.text,
+                                        icon: Icons.drive_file_move_outlined,
+                                        iconSize: 24,
+                                        onPressed: _movingContentIndex != null
+                                            ? null
+                                            : () {
+                                                setState(() {
+                                                  _movingContentIndex = contentIndex;
+                                                  _isMovingContent = false;
+                                                });
+                                              },
+                                      ),
+                                  ],
+                                ),
+                                if (_editing)
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Button(
+                                        type: ButtonType.text,
+                                        color: ThemeColorName.success,
+                                        icon: Icons.add_circle_outline,
+                                        iconSize: 24,
+                                        isLoading: _isAdding == contentIndex,
+                                        onPressed: () => _onContentValueAdd(index: contentIndex),
+                                      ),
+                                      Button(type: ButtonType.text, color: ThemeColorName.error, icon: Icons.highlight_remove, iconSize: 24, onPressed: () => _onContentDelete(contentIndex)),
+                                    ],
                                   ),
-                                  Button(type: ButtonType.text, color: ThemeColorName.error, icon: Icons.highlight_remove, iconSize: 24, onPressed: () => _onContentDelete(contentIndex)),
-                                ],
-                              ),
-                            ContentContainer(leafId: file.id, contentIndex: contentIndex, content: p.isTerm ? file.termContents[contentIndex] : file.definitionContents[contentIndex], editing: _editing),
-                          ],
+                                ContentContainer(leafId: file.id, contentIndex: contentIndex, content: content, editing: _editing),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        if (contentIndex == contents.length - 1 && _movingContentIndex != null && _movingContentIndex != contentIndex)
+                          Button(
+                            type: ButtonType.elevated,
+                            isLoading: _isMovingContent,
+                            onPressed: () async {
+                              setState(() {
+                                _isMovingContent = true;
+                              });
+
+                              await ref.watch(foldersAndFilesProvider.notifier).moveContent(_movingContentIndex!, contentIndex + 1);
+                              if (!mounted) return;
+
+                              setState(() {
+                                _movingContentIndex = null;
+                                _isMovingContent = false;
+                              });
+                            },
+                          ),
+                      ],
                     );
                   }),
                 ),
