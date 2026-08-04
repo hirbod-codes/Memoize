@@ -30,7 +30,7 @@ class FolderController {
   Future<Folder?> get({required String id}) async {
     Talker().info('FolderController.getMany is called...');
 
-    final response = await _authDio.get('/api/treeNode/?id=$id');
+    final response = await _authDio.get('/api/treeNode/?treeNodeId=$id');
     Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
     if (response.statusCode == null || response.statusCode! > 299 || response.statusCode! < 200) {
       Talker().info('FolderController.getMany call ended');
