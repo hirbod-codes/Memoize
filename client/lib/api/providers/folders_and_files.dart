@@ -282,7 +282,15 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
     }
   }
 
-  Future<void> moveFile() async {}
+  Future<FoldersAndFilesStateResponse> moveFile(Leaf file, String? destId) async {
+    Response<dynamic> response = await ref.read(leafControllerProvider).patch(id: file.id, treeNodeId: destId);
+
+    if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! > 299) {
+      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move folder.');
+    }
+
+    return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.success);
+  }
 
   // Contents
   Future<FoldersAndFilesStateResponse> setContent(Content content, int contentIndex) async {

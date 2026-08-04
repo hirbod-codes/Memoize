@@ -50,13 +50,16 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
   Filter _filter = Filter.folder;
 
   int _folderSkip = 0;
-  Folder? _movingFolder;
-  bool _isMovingFolder = false;
   int _fileSkip = 0;
   bool _hasMore = true;
 
   Timer? _debouncer;
   String _search = '';
+
+  Folder? _movingFolder;
+  bool _isMovingFolder = false;
+  Leaf? _movingFile;
+  bool _isMovingFile = false;
 
   bool _fetching = false;
   bool _adding = false;
@@ -318,6 +321,49 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
     }
   }
 
+  void _moveFolder() async {
+    setState(() {
+      _isMovingFolder = true;
+    });
+
+    await ref.read(foldersAndFilesProvider.notifier).moveFolder(_movingFolder!, _location.last == 'root' ? null : _location.last);
+    if (!mounted) return;
+
+    ref.read(foldersAndFilesProvider.notifier).setFolders([...(ref.read(foldersAndFilesProvider).folders ?? []), _movingFolder!]);
+
+    setState(() {
+      _isMovingFolder = false;
+      _movingFolder = null;
+    });
+  }
+
+  void _moveFile() async {
+    if (_location.last == 'root') return;
+
+    setState(() {
+      _isMovingFile = true;
+    });
+
+    await ref.read(foldersAndFilesProvider.notifier).moveFile(_movingFile!, _location.last);
+    if (!mounted) return;
+
+    ref.read(foldersAndFilesProvider.notifier).setFiles([...(ref.read(foldersAndFilesProvider).files ?? []), _movingFile!]);
+
+    setState(() {
+      _isMovingFile = false;
+      _movingFile = null;
+    });
+  }
+
+  void _cancelMove() {
+    setState(() {
+      _movingFolder = null;
+      _isMovingFolder = false;
+      _movingFile = null;
+      _isMovingFile = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
@@ -377,43 +423,13 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                 if (_editing) SizedBox(height: spacing.listItemSpacing),
                 if (_editing) Button(type: ButtonType.elevated, color: ThemeColorName.success, icon: Icons.add, label: 'Add New', onPressed: _addNew, isLoading: _adding),
 
-                // Move folder buttons
-                if (_movingFolder != null) SizedBox(height: spacing.listItemSpacing),
-                if (_movingFolder != null)
+                // Move buttons
+                if (_movingFolder != null || _movingFile != null) SizedBox(height: spacing.listItemSpacing),
+                if (_movingFolder != null || _movingFile != null)
                   Row(
                     children: [
-                      Button(
-                        type: ButtonType.elevated,
-                        color: ThemeColorName.success,
-                        label: 'Move here',
-                        onPressed: () async {
-                          setState(() {
-                            _isMovingFolder = true;
-                          });
-
-                          await ref.read(foldersAndFilesProvider.notifier).moveFolder(_movingFolder!, _location.last == 'root' ? null : _location.last);
-                          if (!mounted) return;
-
-                          ref.read(foldersAndFilesProvider.notifier).setFolders([...(ref.read(foldersAndFilesProvider).folders ?? []), _movingFolder!]);
-
-                          setState(() {
-                            _isMovingFolder = false;
-                            _movingFolder = null;
-                          });
-                        },
-                        isLoading: _isMovingFolder,
-                      ),
-                      Button(
-                        type: ButtonType.elevated,
-                        color: ThemeColorName.error,
-                        label: 'Cancel move',
-                        onPressed: () {
-                          setState(() {
-                            _movingFolder = null;
-                            _isMovingFolder = false;
-                          });
-                        },
-                      ),
+                      Button(type: ButtonType.elevated, color: ThemeColorName.success, label: 'Move here', onPressed: ((_movingFolder != null && _location.last == _movingFolder!.parentId) || (_movingFile != null && (_location.last == 'root' || _location.last == _movingFile!.treeNodeId))) ? null : (_movingFolder != null ? _moveFolder : _moveFile), isLoading: _isMovingFolder || _isMovingFile),
+                      Button(type: ButtonType.elevated, color: ThemeColorName.error, label: 'Cancel move', onPressed: _cancelMove),
                     ],
                   ),
 
@@ -596,6 +612,25 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
                                               },
                                             ),
                                           ],
+                                          PopupMenuButton<String>(
+                                            icon: const Icon(Icons.more_vert),
+                                            onSelected: (value) {
+                                              switch (value) {
+                                                case 'move':
+                                                  setState(() {
+                                                    _movingFile = files[index].copyWith();
+                                                    _isMovingFile = false;
+                                                  });
+                                                  break;
+                                              }
+                                            },
+                                            itemBuilder: (context) => [
+                                              const PopupMenuItem(
+                                                value: 'move',
+                                                child: ListTile(leading: Icon(Icons.drive_file_move_outlined), title: Text('Move'), contentPadding: EdgeInsets.zero),
+                                              ),
+                                            ],
+                                          ),
                                         ],
                                       ),
                                     ),
