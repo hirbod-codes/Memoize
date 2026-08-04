@@ -34,7 +34,7 @@ router.post('/', async (req, res) => {
         const userId = (req as any).user.userId
 
         console.log("Inserting new treeNode...");
-        const insertTreeNodeResult = await treeNodeRepository.insert({ ...treeNode, userId, leafIds: [], treeNodeIds: [] })
+        const insertTreeNodeResult = await treeNodeRepository.insert({ ...treeNode, userId })
         console.log("Insert result", insertTreeNodeResult);
         if (!insertTreeNodeResult.acknowledged)
             return res.status(500).send()

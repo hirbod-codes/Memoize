@@ -55,7 +55,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       return _persist(
         errorMessage: 'Failure while trying to add new folder.',
         update: () {
-          state.folders!.add(Folder(id: newId, title: title, treeNodeIds: [], leafIds: []));
+          state.folders!.add(Folder(id: newId, title: title));
         },
       );
     } catch (e) {
@@ -81,7 +81,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       if (folderIndex == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Folder not found!');
 
       // Send request
-      Response<dynamic> response = await ref.read(folderControllerProvider).patch(id: folder.id, title: folder.title, leafIds: folder.leafIds, treeNodeIds: folder.treeNodeIds);
+      Response<dynamic> response = await ref.read(folderControllerProvider).patch(id: folder.id, title: folder.title);
 
       return _persist(
         response: response,

@@ -58,10 +58,6 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
         return (await TreeNodeRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
-    async hasParent(treeNodeId: string) {
-        return (await TreeNodeRepository.collection!.countDocuments({ treeNodeIds: { $in: [treeNodeId] } })) > 0
-    }
-
     async getRootsForUser(userId: string): Promise<TreeNode[]> {
         return await TreeNodeRepository.collection!.find({ userId, parentId: undefined }, { session: this.session }).toArray()
     }
@@ -90,10 +86,6 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
         return TreeNodeRepository.collection!.find({ updatedAt: { $gte: from } }, { session: this.session })
     }
 
-    async hasLeaf(treeNodeId: string, leafId: string) {
-        return (await TreeNodeRepository.collection!.countDocuments({ _id: ObjectId.createFromHexString(treeNodeId), leafIds: { $in: [leafId] } }, { session: this.session })) > 0
-    }
-
     async getRootsForUserPaginated(userId: string, limit: number, skip: number, search?: string) {
         let filter: Filter<TreeNode> = { userId, parentId: undefined }
         if (search)
@@ -117,14 +109,6 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
     async replaceForUser(treeNodeArg: TreeNodeUpdate, userId: string) {
         const { _id, ...treeNode } = treeNodeArg
         return await TreeNodeRepository.collection!.updateOne({ userId, _id: ObjectId.createFromHexString(_id!.toString()) }, { $set: { ...treeNode, updatedAt: Date.now() } })
-    }
-
-    async addLeaf(treeNodeId: string, leafId: string) {
-        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(treeNodeId) }, { $push: { leafIds: leafId }, $set: { updatedAt: Date.now() } })
-    }
-
-    async addTreeNode(treeNodeId: string, addedTreeNodeId: string) {
-        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(treeNodeId) }, { $push: { treeNodeIds: addedTreeNodeId }, $set: { updatedAt: Date.now() } })
     }
 
     async delete(id: string): Promise<DeleteResult> {

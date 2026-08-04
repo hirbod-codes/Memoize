@@ -63,11 +63,9 @@ class FolderController {
     return folders.map((f) => Folder.fromJson(f)).toList();
   }
 
-  Future<Response> patch({required String id, String? title, List<String>? treeNodeIds, List<String>? leafIds}) async {
+  Future<Response> patch({required String id, String? title}) async {
     final Map<String, dynamic> data = {'_id': id};
     if (title != null) data['title'] = title;
-    if (treeNodeIds != null) data['treeNodeIds'] = treeNodeIds;
-    if (leafIds != null) data['leafIds'] = leafIds;
 
     return await _authDio.patch('/api/treeNode/', data: {'treeNode': data});
   }

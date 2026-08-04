@@ -5,12 +5,10 @@ class Folder {
   late String title;
   late String? userId;
   late String? parentId;
-  late List<String> treeNodeIds;
-  late List<String> leafIds;
   late int? createdAt;
   late int? updatedAt;
 
-  Folder({required this.id, required this.title, this.userId, this.parentId, required this.treeNodeIds, required this.leafIds, this.createdAt, this.updatedAt});
+  Folder({required this.id, required this.title, this.userId, this.parentId, this.createdAt, this.updatedAt});
 
   Map<String, dynamic> toJson() => ({'id': id, 'title': title, 'createdAt': createdAt, 'updatedAt': updatedAt});
 
@@ -22,15 +20,13 @@ class Folder {
     final userId = json['userId'];
     final title = json['title'];
     final parentId = json['parentId'];
-    final treeNodeIds = (json['treeNodeIds'] as List<dynamic>).cast<String>();
-    final leafIds = (json['leafIds'] as List<dynamic>).cast<String>();
     final createdAt = (json['createdAt'] as num).toInt();
     final updatedAt = (json['updatedAt'] as num).toInt();
 
-    return Folder(id: id, title: title, userId: userId, parentId: parentId, treeNodeIds: treeNodeIds, leafIds: leafIds, createdAt: createdAt, updatedAt: updatedAt);
+    return Folder(id: id, title: title, userId: userId, parentId: parentId, createdAt: createdAt, updatedAt: updatedAt);
   }
 
-  Folder copyWith({String? id, String? title, String? userId, List<String>? treeNodeIds, List<String>? leafIds, int? createdAt, int? updatedAt}) {
-    return Folder(id: id ?? this.id, title: title ?? this.title, userId: userId ?? this.userId, treeNodeIds: treeNodeIds ?? [...this.treeNodeIds], leafIds: leafIds ?? [...this.leafIds], createdAt: createdAt ?? this.createdAt, updatedAt: updatedAt ?? this.updatedAt);
+  Folder copyWith({String? id, String? title, String? userId, String? parentId, int? createdAt, int? updatedAt}) {
+    return Folder(id: id ?? this.id, title: title ?? this.title, userId: userId ?? this.userId, parentId: parentId ?? this.parentId, createdAt: createdAt ?? this.createdAt, updatedAt: updatedAt ?? this.updatedAt);
   }
 }
