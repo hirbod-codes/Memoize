@@ -68,22 +68,20 @@ router.get('/', async (req, res) => {
         console.log('/api/treeNode')
 
         console.log('Validation...')
-        let ids: string[] | undefined
+        let treeNodeId: string | undefined
         try {
-            let temp = await string().required().label('Tree node id').validate(req.query.ids?.toString())
-
-            ids = await array().min(1).of(string().required().objectIdString()).required().validate(temp.split(',').map(m => m.trim()))
+            treeNodeId = await string().objectIdString().required().label('Tree node id').validate(req.query.treeNodeId?.toString())
         } catch (err) {
             console.error(err)
             if (err instanceof ValidationError)
                 return res.status(400).json({ errors: err.errors })
             return res.status(400).json({ message: 'Invalid Tree node' });
         }
-        console.log({ ids });
+        console.log({ treeNodeId });
 
         console.log("fetching...");
         const treeNodeRepository = new TreeNodeRepository()
-        const treeNode = await treeNodeRepository.getManyForUser(ids, (req as any).user.userId)
+        const treeNode = await treeNodeRepository.getForUser(treeNodeId, (req as any).user.userId)
         if (!treeNode) {
             res.status(404).send()
             return

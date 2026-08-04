@@ -26,16 +26,20 @@ class LeafController {
     return response.data['id'];
   }
 
-  Future<List<Leaf>> getMany({required List<String> leafIds}) async {
+  Future<Leaf?> get({required String leafId}) async {
     Talker().info('LeafController.getMany is called...');
 
-    final response = await _authDio.get('/api/leaf/?leafIds=${leafIds.join(',')}');
+    final response = await _authDio.get('/api/leaf/?leafId=$leafId');
     Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
+    if (response.statusCode == null || response.statusCode! > 299 || response.statusCode! < 200) {
+      Talker().info('LeafController.getMany call ended');
+      return null;
+    }
 
-    final List<dynamic> leafs = response.data;
+    final dynamic leaf = response.data;
 
     Talker().info('LeafController.getMany call ended');
-    return leafs.map((f) => Leaf.fromJson(f)).toList();
+    return Leaf.fromJson(leaf);
   }
 
   Future<List<Leaf>> getChildren({required String parentTreeNodeId}) async {

@@ -96,6 +96,38 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
     _hasMore = true;
   }
 
+  Future<void> _goToRoot() async {
+    await _paginate(reset: true, filter: Filter.folder);
+    if (!mounted) return;
+
+    setState(() {
+      _location.removeLast();
+      _title = null;
+      ref.read(foldersAndFilesProvider.notifier).setFiles([]);
+      _filter = Filter.folder;
+      _resetSearch();
+    });
+  }
+
+  Future<void> _goTo(String locationId) async {
+    final folder = await ref.read(folderControllerProvider).get(id: locationId);
+    if (!mounted) return;
+
+    if (folder == null) {
+      await _goToRoot();
+      return;
+    }
+
+    await _paginate(parentId: locationId, reset: true);
+    if (!mounted) return;
+
+    setState(() {
+      _title = folder.title;
+      _location.removeLast();
+      _resetSearch();
+    });
+  }
+
   Future<void> _previousLocation() async {
     if (_location.length < 2) return;
 
@@ -105,27 +137,9 @@ class _HomePageState extends ConsumerState<MobileHomePage> {
 
     final lastId = _location.elementAt(_location.length - 2);
     if (lastId == 'root') {
-      await _paginate(reset: true, filter: Filter.folder);
-
-      if (!mounted) return;
-      setState(() {
-        _location.removeLast();
-        _title = null;
-        ref.read(foldersAndFilesProvider.notifier).setFiles([]);
-        _filter = Filter.folder;
-        _resetSearch();
-      });
+      await _goToRoot();
     } else {
-      final folderController = ref.read(folderControllerProvider);
-      final folder = await folderController.getMany(ids: [lastId]);
-      await _paginate(parentId: lastId, reset: true);
-
-      if (!mounted) return;
-      setState(() {
-        _title = folder[0].title;
-        _location.removeLast();
-        _resetSearch();
-      });
+      await _goTo(lastId);
     }
   }
 

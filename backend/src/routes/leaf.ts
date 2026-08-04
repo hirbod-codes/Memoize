@@ -82,37 +82,38 @@ router.get('/', async (req, res) => {
         console.log('/api/leaf')
 
         console.log('Validation...')
-        let leafIds: string[] | undefined, parentTreeNodeId: string | undefined
+        let parentTreeNodeId: string | undefined, leafId: string | undefined
         try {
             parentTreeNodeId = await string().optional().label('Parent tree node id').validate(req.query.parentTreeNodeId?.toString())
-            let temp = await string().optional().label('Tree node id').validate(req.query.leafIds?.toString())
+            leafId = await string().objectIdString().optional().label('Leaf Id').validate(req.query.leafId?.toString())
 
-            if (!parentTreeNodeId && !temp)
-                return res.status(400).json({ errors: ['Invalid data provided'] })
-
-            if (temp)
-                leafIds = await array().min(1).of(string().required().objectIdString()).required().validate(temp.split(',').map(m => m.trim()))
+            if (!parentTreeNodeId && !leafId)
+                return res.status(400).json({ errors: ['One of the parentTreeNodeId or leafId query parameters are required.'] })
         } catch (err) {
             console.error(err)
             if (err instanceof ValidationError)
                 return res.status(400).json({ errors: err.errors })
-            return res.status(400).json({ message: 'Invalid Tree node' });
+            return res.status(400).json({ errors: ['Invalid Tree node'] });
         }
-        console.log({ leafIds });
+        console.log({ parentTreeNodeId });
 
-        console.log("Fetching leafs...");
         const leafRepository = new LeafRepository()
-        let leafs: Leaf[]
-        if (leafIds)
-            leafs = await leafRepository.getManyForUser(leafIds, (req as any).user.userId)
-        else
-            leafs = await leafRepository.getForUserByParentTreeNode(parentTreeNodeId!, (req as any).user.userId)
-        if (!leafs) {
-            res.status(404).send()
-            return
+
+        if (parentTreeNodeId) {
+            console.log("Fetching leafs...");
+            let leafs: Leaf[] = await leafRepository.getManyForUserByParentTreeNodeId(parentTreeNodeId!, (req as any).user.userId)
+            if (!leafs)
+                return res.status(404).send()
+            res.status(200).json(leafs)
+        } else {
+            console.log("Fetching leaf...");
+            let leaf: Leaf = await leafRepository.getForUser(leafId!, (req as any).user.userId)
+            if (!leaf)
+                return res.status(404).send()
+            res.status(200).json(leaf)
         }
 
-        res.status(200).json(leafs)
+        res.status(500).send()
         console.log('------------end------------')
     } catch (err) {
         console.error(err);

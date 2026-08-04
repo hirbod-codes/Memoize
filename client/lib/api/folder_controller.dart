@@ -27,16 +27,20 @@ class FolderController {
     return response.data['id'];
   }
 
-  Future<List<Folder>> getMany({required List<String> ids}) async {
+  Future<Folder?> get({required String id}) async {
     Talker().info('FolderController.getMany is called...');
 
-    final response = await _authDio.get('/api/treeNode/?ids=${ids.join(',')}');
+    final response = await _authDio.get('/api/treeNode/?id=$id');
     Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
+    if (response.statusCode == null || response.statusCode! > 299 || response.statusCode! < 200) {
+      Talker().info('FolderController.getMany call ended');
+      return null;
+    }
 
-    final List<dynamic> folders = response.data;
+    final dynamic folder = response.data;
 
     Talker().info('FolderController.getMany call ended');
-    return folders.map((f) => Folder.fromJson(f)).toList();
+    return Folder.fromJson(folder);
   }
 
   Future<List<Folder>> getChildren({required String parentTreeNodeId}) async {
