@@ -150,7 +150,7 @@ router.get('/list', async (req, res) => {
         console.log('/api/treeNode/list/')
 
         console.log('Validation...')
-        let search: string | undefined, limit: number, skip: number | undefined, parentId: string | undefined
+        let search: string | undefined, limit: number, skip: number | undefined, parentId: string | undefined = undefined
         try {
             search = await string().optional().label('Search input').validate(req.query.search?.toString())
             parentId = await string().optional().objectIdString().label('Parent folder id').validate(req.query.parentId?.toString())
@@ -194,7 +194,7 @@ router.get('/list', async (req, res) => {
         const treeNodeRepository = new TreeNodeRepository()
         let result
         if (search?.trim())
-            result = await treeNodeRepository.getManyForUser(ids, userId)
+            result = await treeNodeRepository.getManyForUserByParentId(ids, userId, parentId)
         else
             if (parentId)
                 result = await treeNodeRepository.getChildrenForUserPaginated(userId, parentId, limit, skip, search)

@@ -70,6 +70,10 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
         return await TreeNodeRepository.collection!.find({ _id: { $in: treeNodeIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
 
+    async getManyForUserByParentId(treeNodeIds: string[], userId: string, parentId?: string): Promise<TreeNode[]> {
+        return await TreeNodeRepository.collection!.find({ _id: { $in: treeNodeIds.map(m => ObjectId.createFromHexString(m)) }, userId, parentId }, { session: this.session }).toArray()
+    }
+
     async getForUser(treeNodeId: string, userId: string): Promise<TreeNode> {
         return (await TreeNodeRepository.collection!.find({ _id: ObjectId.createFromHexString(treeNodeId), userId }, { session: this.session }).toArray())[0]
     }
