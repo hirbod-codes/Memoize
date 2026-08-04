@@ -62,11 +62,12 @@ class LeafController {
     return leafs.map((f) => Leaf.fromJson(f)).toList();
   }
 
-  Future<Response> patch({required String id, String? title, List<Content>? termContents, List<Content>? definitionContents}) async {
+  Future<Response> patch({required String id, String? title, String? parentTreeNodeId, List<Content>? termContents, List<Content>? definitionContents}) async {
     Talker().info('LeafController.patch is called...');
 
     final Map<String, dynamic> data = {'_id': id};
     if (title != null) data['title'] = title;
+    if (parentTreeNodeId != null) data['parentTreeNodeId'] = parentTreeNodeId;
     if (termContents != null) data['termContents'] = termContents.map((c) => c.toJson()).toList();
     if (definitionContents != null) data['definitionContents'] = definitionContents.map((c) => c.toJson()).toList();
 

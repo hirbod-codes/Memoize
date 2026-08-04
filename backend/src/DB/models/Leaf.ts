@@ -18,6 +18,7 @@ const post = {
 
 const update = {
     _id: string().objectIdString().required().label('Id'),
+    treeNodeId: string().objectIdString().optional().label('Tree node id'),
     title: string().optional().label('Title'),
     termContents: contentsSchema.optional().nonNullable().min(0).label('Term contents'),
     definitionContents: contentsSchema.optional().nonNullable().min(0).label('Definition contents'),
