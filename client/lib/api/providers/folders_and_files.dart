@@ -541,7 +541,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       final fromContent = contents.removeAt(fromIndex).copyWith();
 
-      toIndex--; // because one item is removed, therefor the total length is reduced by one.
+      if (toIndex > fromIndex) toIndex--; // because one item is removed, therefor the total length is reduced by one.
 
       contents.insert(toIndex, fromContent);
 
@@ -575,7 +575,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       final fromContentValue = content.value.removeAt(fromIndex);
 
-      toIndex--; // because one item is removed, therefor the total length is reduced by one.
+      if (toIndex > fromIndex) toIndex--; // because one item is removed, therefor the total length is reduced by one.
 
       content.value.insert(toIndex, fromContentValue);
 
