@@ -91,15 +91,19 @@ class _VideosState extends ConsumerState<VideoContainer> {
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
+        // child: VideoPlayerScreen(videoId: _video!.id, url: _url!, headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.center,
           spacing: 5,
           children: [
             if (_video != null) Text(_video!.title),
-            AspectRatio(
-              aspectRatio: 9 / 16,
-              child: VideoPlayerScreen(videoId: _video!.id, url: _url!, headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
+            SizedBox(
+              height: 450,
+              child: AspectRatio(
+                aspectRatio: 9 / 16,
+                child: VideoPlayerScreen(videoId: _video!.id, url: _url!, headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
+              ),
             ),
           ],
         ),

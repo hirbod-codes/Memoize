@@ -380,7 +380,7 @@ class _FileManager extends ConsumerState<FileManager> {
                                       Button(type: ButtonType.text, color: ThemeColorName.error, icon: Icons.highlight_remove, iconSize: 24, onPressed: () => _onContentDelete(contentIndex)),
                                     ],
                                   ),
-                                ContentContainer(leafId: file.id, contentIndex: contentIndex, content: content, editing: _editing),
+                                ContentContainer(leafId: file.id, contentIndex: contentIndex, editing: _editing),
                               ],
                             ),
                           ),

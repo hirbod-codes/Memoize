@@ -90,7 +90,7 @@ class _ImagesState extends ConsumerState<ImageContainer> {
             Container(
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md)),
-              child: Image.network('${AppConfig.apiUrl}/api/image/file/${widget.imageId}', fit: BoxFit.fitWidth, headers: {'Authorization': 'Bearer $_token'}),
+              child: Image.network('${AppConfig.apiUrl}/api/image/file/${widget.imageId}', fit: BoxFit.contain, headers: {'Authorization': 'Bearer $_token'}),
             ),
             if (_image?.title != null) Center(child: Text(_image?.title ?? '')),
           ],

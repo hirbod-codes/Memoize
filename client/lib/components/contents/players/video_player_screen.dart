@@ -100,7 +100,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        if (!_showVideoSurface) _AlbumArt(videoId: widget.videoId, accessToken: widget.accessToken),
+        if (!_showVideoSurface)
+          Positioned.fill(
+            child: _AlbumArt(videoId: widget.videoId, accessToken: widget.accessToken),
+          ),
 
         // ── Video frame fills the whole screen ──────────────────────────
         if (_showVideoSurface)
@@ -144,13 +147,10 @@ class _AlbumArt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1,
-      child: Container(
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
-        clipBehavior: Clip.antiAlias,
-        child: videoId != null && accessToken != null ? Image.network('${AppConfig.apiUrl}/api/video/thumbnail/$videoId', fit: BoxFit.fitWidth, headers: {'Authorization': 'Bearer $accessToken'}) : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
-      ),
+    return Container(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: videoId != null && accessToken != null ? Image.network('${AppConfig.apiUrl}/api/video/thumbnail/$videoId', fit: BoxFit.contain, headers: {'Authorization': 'Bearer $accessToken'}) : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
   }
 }
