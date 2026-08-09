@@ -1,0 +1,378 @@
+networks:
+  observability:
+    driver: overlay
+    attachable: true
+
+  backend_net:
+    driver: overlay
+    attachable: true
+
+  db_net:
+    driver: overlay
+    attachable: true
+
+secrets:
+  TTS_API_KEY:
+    external: true
+  MEMOIZE_MONGODB_USERNAME:
+    external: true
+  MEMOIZE_MONGODB_PASSWORD:
+    external: true
+  MEMOIZE_MEILISEARCH_KEY:
+    external: true
+  MEMOIZE_STREAM_SIGNING_SECRET:
+    external: true
+  MEMOIZE_ACCESS_TOKEN_SECRET:
+    external: true
+  MEMOIZE_REFRESH_TOKEN_SECRET:
+    external: true
+  MEMOIZE_BUCKET_NAME:
+    external: true
+  MEMOIZE_S3_STORAGE_ENDPOINT:
+    external: true
+  MEMOIZE_S3_STORAGE_ACCESS_KEY:
+    external: true
+  MEMOIZE_S3_STORAGE_SECRET_KEY:
+    external: true
+  MEMOIZE_S3_API_KEY:
+    external: true
+  MEMOIZE_ME_CONFIG_MONGODB_ADMINUSERNAME:
+    external: true
+  MEMOIZE_ME_CONFIG_MONGODB_ADMINPASSWORD:
+    external: true
+  MEMOIZE_MONGO_INITDB_ROOT_USERNAME:
+    external: true
+  MEMOIZE_MONGO_INITDB_ROOT_PASSWORD:
+    external: true
+  MEMOIZE_MEILI_MASTER_KEY:
+    external: true
+  MEMOIZE_GF_SECURITY_ADMIN_PASSWORD:
+    external: true
+
+services:
+  nginx:
+    image: ghcr.io/hirbod-codes/memoize/nginx:${MEMOIZE_NGINX_VERSION}
+    ports:
+      - "${MEMOIZE_NGINX_PORT}:443"
+      - "443:443"
+    networks:
+      - backend_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+
+  memoize:
+    image: ghcr.io/hirbod-codes/memoize/backend:${MEMOIZE_BACKEND_VERSION}
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+      LOG_DIR: /app/logs
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
+      HOST: 0.0.0.0
+      PORT: 3000
+      ALLOWED_ORIGINS: ${MEMOIZE_ALLOWED_ORIGINS}
+      DB_DATABASE_NAME: Memoize
+      DB_SUPPORTS_TRANSACTION: "false"
+      DB_URL: mongodb://mongo:27017
+      MEMOIZE_MEILISEARCH_PORT: 7700
+      MEILISEARCH_HOST: meilisearch
+      TTS_API_KEY_FILE: ${TTS_API_KEY}
+      MONGODB_USERNAME_FILE: /run/secrets/MEMOIZE_MONGODB_USERNAME
+      MONGODB_PASSWORD_FILE: /run/secrets/MEMOIZE_MONGODB_PASSWORD
+      MEILISEARCH_KEY_FILE: /run/secrets/MEMOIZE_MEILISEARCH_KEY
+      STREAM_SIGNING_SECRET_FILE: /run/secrets/MEMOIZE_STREAM_SIGNING_SECRET
+      ACCESS_TOKEN_SECRET_FILE: /run/secrets/MEMOIZE_ACCESS_TOKEN_SECRET
+      REFRESH_TOKEN_SECRET_FILE: /run/secrets/MEMOIZE_REFRESH_TOKEN_SECRET
+      BUCKET_NAME_FILE: /run/secrets/MEMOIZE_BUCKET_NAME
+      S3_STORAGE_ENDPOINT_FILE: /run/secrets/MEMOIZE_S3_STORAGE_ENDPOINT
+      S3_STORAGE_ACCESS_KEY_FILE: /run/secrets/MEMOIZE_S3_STORAGE_ACCESS_KEY
+      S3_STORAGE_SECRET_KEY_FILE: /run/secrets/MEMOIZE_S3_STORAGE_SECRET_KEY
+      S3_API_KEY_FILE: /run/secrets/MEMOIZE_S3_API_KEY
+    secrets:
+      - TTS_API_KEY
+      - MEMOIZE_MONGODB_USERNAME
+      - MEMOIZE_MONGODB_PASSWORD
+      - MEMOIZE_MEILISEARCH_KEY
+      - MEILISEARCH_HOST
+      - MEMOIZE_STREAM_SIGNING_SECRET
+      - MEMOIZE_ACCESS_TOKEN_SECRET
+      - MEMOIZE_REFRESH_TOKEN_SECRET
+      - MEMOIZE_BUCKET_NAME
+      - MEMOIZE_S3_STORAGE_ENDPOINT
+      - MEMOIZE_S3_STORAGE_ACCESS_KEY
+      - MEMOIZE_S3_STORAGE_SECRET_KEY
+      - MEMOIZE_S3_API_KEY
+    volumes:
+      - ./memoize_logs:/app/logs:rw
+    networks:
+      - db_net
+      - backend_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      # resources:
+      #   limits:
+      #     cpus: "2.00"
+      #     memory: 2G
+      #   reservations:
+      #     cpus: "0.25"
+      #     memory: 256M
+
+  mongo:
+    image: mongo:8.2.7
+    ports:
+      - "${MEMOIZE_MONGO_PORT}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/MEMOIZE_MONGO_INITDB_ROOT_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/MEMOIZE_MONGO_INITDB_ROOT_PASSWORD
+    secrets:
+      - MEMOIZE_MONGO_INITDB_ROOT_USERNAME
+      - MEMOIZE_MONGO_INITDB_ROOT_PASSWORD
+    volumes:
+      - ./mongo_data:/data/db
+    networks:
+      - db_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "2.00"
+          memory: 2G
+        reservations:
+          cpus: "0.50"
+          memory: 512M
+
+  mongo-express:
+    image: mongo-express:1.0.2
+    ports:
+      - "${MEMOIZE_MONGO_EXPRESS_PORT}:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME_FILE: /run/secrets/MEMOIZE_ME_CONFIG_MONGODB_ADMINUSERNAME
+      ME_CONFIG_MONGODB_ADMINPASSWORD_FILE: /run/secrets/MEMOIZE_ME_CONFIG_MONGODB_ADMINPASSWORD
+      ME_CONFIG_MONGODB_SERVER: mongo
+    secrets:
+      - MEMOIZE_ME_CONFIG_MONGODB_ADMINUSERNAME
+      - MEMOIZE_ME_CONFIG_MONGODB_ADMINPASSWORD
+    networks:
+      - db_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+
+  meilisearch:
+    image: getmeili/meilisearch:v1
+    ports:
+      - "${MEMOIZE_MEILISEARCH_PORT}:7700"
+    environment:
+      MEILI_MASTER_KEY_FILE: /run/secrets/MEMOIZE_MEILI_MASTER_KEY
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_EXPERIMENTAL_METRICS: "true"
+    secrets:
+      - MEMOIZE_MEILI_MASTER_KEY
+    volumes:
+      - ./meili_data:/meili_data
+    networks:
+      - db_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "2.00"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  prometheus:
+    image: prom/prometheus:v3.13.2
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+      - "--web.enable-remote-write-receiver"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus_data:/prometheus
+    networks:
+      - observability
+      - backend_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  grafana:
+    image: grafana/grafana:13.0
+    ports:
+      - "${MEMOIZE_GRAFANA_PORT}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD_FILE: /run/secrets/MEMOIZE_GF_SECURITY_ADMIN_PASSWORD
+    secrets:
+      - MEMOIZE_GF_SECURITY_ADMIN_PASSWORD
+    volumes:
+      - ./grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - observability
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+
+  loki:
+    image: grafana/loki:3.7.6
+    command:
+      - "-config.file=/etc/loki/config.yml"
+    volumes:
+      - ./loki.yml:/etc/loki/config.yml:ro
+      - ./loki_data:/loki
+    networks:
+      - observability
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  tempo:
+    image: grafana/tempo:3.0.2
+    command:
+      - "-config.file=/etc/tempo/config.yml"
+    volumes:
+      - ./tempo.yml:/etc/tempo/config.yml:ro
+      - ./tempo_data:/var/tempo
+    networks:
+      - observability
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  alloy:
+    image: grafana/alloy:v1.18.1
+    command:
+      - run
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./alloy_data:/var/lib/alloy/data
+      - ./alloy.config:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./memoize_logs:/var/log/memoize:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - observability
+      - backend_net
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro,rslave
+    networks:
+      - observability
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          cpus: "0.05"
+          memory: 32M
+
+  cadvisor:
+    image: bitnamicharts/cadvisor:0.1.13
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    networks:
+      - observability
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 64M

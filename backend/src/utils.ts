@@ -1,6 +1,31 @@
 import { boolean, BooleanSchema, number, NumberSchema, string, StringSchema } from "yup";
 import http, { IncomingMessage } from "http";
 import https from "https";
+import fs from "fs";
+import path from "path";
+import os from "os";
+
+const SECRETS_DIR = process.env.SECRETS_DIR ?? '/run/secrets'
+
+function readSecretFile(key: string): string | undefined {
+    if (os.platform() !== 'linux')
+        return undefined
+
+    const secretPath = path.join(SECRETS_DIR, key)
+
+    try {
+        const contents = fs.readFileSync(secretPath, 'utf8').trim()
+        return contents.length > 0 ? contents : undefined
+    } catch (e: any) {
+        if (e?.code !== 'ENOENT')
+            console.warn(`Found ${secretPath} but couldn't read it: ${e?.message ?? e}`)
+        return undefined
+    }
+}
+
+function resolveRawEnv(key: string): string | undefined {
+    return readSecretFile(key + '_FILE') ?? process.env[key]
+}
 
 export function validateBooleanEnv(env?: boolean, message?: string, validate?: (schema: BooleanSchema) => BooleanSchema, manuallyValidate?: (env?: boolean) => boolean) {
     let schema: any = boolean().required()
@@ -42,9 +67,9 @@ export function validateIntegerEnv(env?: number, message?: string, validate?: (s
 }
 
 export function getStringEnv(key: string, message?: string, validate?: (schema: StringSchema) => StringSchema, manuallyValidate?: (env?: string) => boolean): string {
-    const env = process.env[key]
+    const env = resolveRawEnv(key)
 
-    console.log(`${key}: ${env}`)
+    console.log(`${key}: ${env !== undefined ? '<*****>' : '<missing>'}`)
 
     validateStringEnv(env, message, validate, manuallyValidate)
 
@@ -52,9 +77,10 @@ export function getStringEnv(key: string, message?: string, validate?: (schema: 
 }
 
 export function getIntegerEnv(key: string, message?: string, validate?: (schema: NumberSchema) => NumberSchema, manuallyValidate?: (env?: number) => boolean): number {
-    const env = Number(process.env[key])
+    const raw = resolveRawEnv(key)
+    const env = Number(raw)
 
-    console.log(`${key}: ${env}`)
+    console.log(`${key}: ${raw !== undefined ? '<*****>' : '<missing>'}`)
 
     validateIntegerEnv(env, message, validate, manuallyValidate)
 
@@ -62,9 +88,10 @@ export function getIntegerEnv(key: string, message?: string, validate?: (schema:
 }
 
 export function getBooleanEnv(key: string, message?: string, validate?: (schema: BooleanSchema) => BooleanSchema, manuallyValidate?: (env?: boolean) => boolean): boolean {
-    const env = process.env[key]?.toLowerCase() === 'true'
+    const raw = resolveRawEnv(key)
+    const env = raw?.toLowerCase() === 'true'
 
-    console.log(`${key}: ${env}`)
+    console.log(`${key}: ${raw !== undefined ? '<*****>' : '<missing>'}`)
 
     validateBooleanEnv(env, message, validate, manuallyValidate)
 

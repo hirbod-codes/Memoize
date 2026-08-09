@@ -7,6 +7,13 @@ import https from 'https'
 import fs from 'fs'
 import dotenv from 'dotenv';
 
+import { metricsMiddleware } from './observability/metrics';
+import { metricsRouter } from './observability/metricsRoute';
+import { healthRouter } from './observability/health';
+import { httpLogger } from './observability/httpLogger';
+import { errorLoggingMiddleware, registerProcessErrorHandlers } from './observability/errorHandling';
+import { logger } from './observability/logger';
+
 import { getBooleanEnv, getIntegerEnv, getStringEnv, tryAndWait } from './utils';
 
 import { Meilisearch } from 'meilisearch'
@@ -54,9 +61,15 @@ import { userRoutes } from './routes/user';
 import { ttsRoutes } from './routes/tts';
 
 import { S3Client } from "@aws-sdk/client-s3";
+
 dotenv.config({ debug: process.env.DEBUG !== undefined ? Boolean(process.env.DEBUG) : undefined })
 
-export const isProduction = getStringEnv('NODE_ENV', 'The Node env environment variable is not provided')! === 'production'
+export const nodeEnv = getStringEnv('NODE_ENV', 'The Node env environment variable is not provided')
+
+export const isProduction = nodeEnv! === 'production'
+
+export const logDir = getStringEnv('LOG_DIR', 'The LOG_DIR environment variable is not provided')
+export const logLevel = getStringEnv('LOG_LEVEL', 'The LOG_LEVEL environment variable is not provided')
 
 export const hostName = getStringEnv('HOST', 'The HOST environment variable is not provided')
 export const hostPort = getIntegerEnv('PORT', 'The PORT environment variable is not provided', (s) => s.min(1025))
@@ -133,7 +146,17 @@ export const s3 = new S3Client({
     }))
         throw new Error('Failed to prepare database.')
 
+    registerProcessErrorHandlers();
+
     const app = express()
+
+    // --- Observability middleware first, so it wraps everything downstream ---
+    app.use(metricsMiddleware());
+    app.use(httpLogger);
+
+    // --- Unauthenticated, network-restricted endpoints ---
+    app.use(healthRouter); // /healthz, /readyz
+    app.use(metricsRouter); // /metrics — scraped by Prometheus, not by users
 
     if (isProduction)
         app.set("trust proxy", 1);
@@ -191,15 +214,17 @@ export const s3 = new S3Client({
     // 404 For unknown URLs
     app.use((_req, res) => { res.sendStatus(404) })
 
+    app.use(errorLoggingMiddleware());
+
     if (!isProduction)
         https.createServer({
             key: fs.readFileSync('localhost+2-key.pem'),
             cert: fs.readFileSync('localhost+2.pem')
         }, app)
-            .listen(hostPort, hostName, () => console.log(`listening on ${hostName}:${hostPort}...`))
+            .listen(hostPort, hostName, () => logger.info({ hostPort }, '`listening on ${hostName}:${hostPort}...'))
     else
         // Server is behind NginX proxy
-        app.listen(hostPort, hostName, () => console.log(`listening on ${hostName}:${hostPort}...`))
+        app.listen(hostPort, hostName, () => logger.info({ hostPort }, '`listening on ${hostName}:${hostPort}...'))
 
     runCronjobs()
 })()

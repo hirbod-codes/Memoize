@@ -3,5 +3,5 @@
         "src"
     ],
     "ext": "ts",
-    "exec": "ts-node --files --project tsconfig.json src/index.ts"
+    "exec": "ts-node --files --project tsconfig.json --require ./dist/observability/tracing.js src/index.ts"
 }

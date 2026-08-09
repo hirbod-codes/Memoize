@@ -5,13 +5,14 @@
 run (with production env values):
 
 ```bash
-docker build --target production --tag Memoize/backend:latest .
+sudo docker build --target production --tag Memoize/backend:latest .
 
-docker run -d \
+sudo docker run -d \
     -e NODE_ENV=development \
     -e HOST=0.0.0.0 \
     -e PORT=3000 \
     -e ALLOWED_ORIGINS=https://localhost:443 \
+    -e TTS_API_KEY=very_secret \
     -e DB_DATABASE_NAME=Memoize \
     -e DB_SUPPORTS_TRANSACTION=false \
     -e DB_URL=mongodb://localhost:27017 \
@@ -28,11 +29,12 @@ docker run -d \
     --shm-size=1g \
     --name memoize_backend Memoize/backend-dev:latest
 
-docker run -d \
+sudo docker run -d \
     -e NODE_ENV=production \
     -e HOST=0.0.0.0 \
     -e PORT=3000 \
     -e ALLOWED_ORIGINS=https://domain.tld \
+    -e TTS_API_KEY=very_secret \
     -e DB_DATABASE_NAME=Memoize \
     -e DB_SUPPORTS_TRANSACTION=false \
     -e DB_URL=mongodb://mongo:27017 \
@@ -76,7 +78,7 @@ run (for Windows)
 ### docker run examples
 
 ```bash
-docker run -d \
+sudo docker run -d \
     --name mongo \
     --network db_net \
     --restart unless-stopped \
@@ -86,7 +88,7 @@ docker run -d \
     -v mongo_data:/data/db \
     mongo:8.2.7
 
-docker run -d \
+sudo docker run -d \
     --name mongo-express \
     --network db_net \
     --restart unless-stopped \
@@ -96,7 +98,7 @@ docker run -d \
     -e ME_CONFIG_MONGODB_SERVER=mongo \
     mongo-express:latest
 
-docker run -d \
+sudo docker run -d \
     --name meilisearch \
     --network db_net \
     -p 7700:7700 \
@@ -112,3 +114,22 @@ fix: refresh token rotation
 feat!: change API format
 
 Apparently github action doesn't realize new versions when squashing commits when merging.
+
+## In production
+
+run
+
+```shell
+TTS_API_KEY=api_key \
+MEMOIZE_MONGODB_USERNAME=admin \
+MEMOIZE_MONGODB_PASSWORD=password \
+MEMOIZE_GF_SECURITY_ADMIN_PASSWORD=password \
+MEMOIZE_BUCKET_NAME=name \
+MEMOIZE_S3_STORAGE_ENDPOINT=endpoint \
+MEMOIZE_S3_STORAGE_ACCESS_KEY=access_key \
+MEMOIZE_S3_STORAGE_SECRET_KEY=secret_key \
+MEMOIZE_S3_API_KEY=api_key \
+./rotate_secrets.sh ./secrets.env
+
+sudo docker -d --prune -c ./compose.swarm.yml
+```
