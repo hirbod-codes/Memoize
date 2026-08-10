@@ -46,6 +46,8 @@ secrets:
     external: true
   MEMOIZE_MEILI_MASTER_KEY:
     external: true
+  MEMOIZE_GF_SECURITY_ADMIN_USER:
+    external: true
   MEMOIZE_GF_SECURITY_ADMIN_PASSWORD:
     external: true
 
@@ -234,9 +236,10 @@ services:
     ports:
       - "${MEMOIZE_GRAFANA_PORT}:3000"
     environment:
-      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_USER_FILE: /run/secrets/GF_SECURITY_ADMIN_USER
       GF_SECURITY_ADMIN_PASSWORD_FILE: /run/secrets/MEMOIZE_GF_SECURITY_ADMIN_PASSWORD
     secrets:
+      - MEMOIZE_GF_SECURITY_ADMIN_USER
       - MEMOIZE_GF_SECURITY_ADMIN_PASSWORD
     volumes:
       - ${ROOT_ABSOLUTE_PATH}/grafana_data:/var/lib/grafana
