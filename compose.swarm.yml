@@ -51,7 +51,7 @@ secrets:
 
 services:
   nginx:
-    image: ghcr.io/hirbod-codes/memoize/nginx:${MEMOIZE_NGINX_VERSION}
+    image: ghcr.io/hirbod-codes/nginx:${MEMOIZE_NGINX_VERSION}
     ports:
       - "${MEMOIZE_NGINX_PORT}:443"
       - "443:443"
@@ -110,7 +110,7 @@ services:
       - MEMOIZE_S3_STORAGE_SECRET_KEY
       - MEMOIZE_S3_API_KEY
     volumes:
-      - ./memoize_logs:/app/logs:rw
+      - ${ROOT_ABSOLUTE_PATH}/memoize_logs:/app/logs:rw
     networks:
       - db_net
       - backend_net
@@ -137,7 +137,7 @@ services:
       - MEMOIZE_MONGO_INITDB_ROOT_USERNAME
       - MEMOIZE_MONGO_INITDB_ROOT_PASSWORD
     volumes:
-      - ./mongo_data:/data/db
+      - ${ROOT_ABSOLUTE_PATH}/mongo_data:/data/db
     networks:
       - db_net
     deploy:
@@ -188,7 +188,7 @@ services:
     secrets:
       - MEMOIZE_MEILI_MASTER_KEY
     volumes:
-      - ./meili_data:/meili_data
+      - ${ROOT_ABSOLUTE_PATH}/meili_data:/meili_data
     networks:
       - db_net
     deploy:
@@ -212,8 +212,8 @@ services:
       - "--web.enable-lifecycle"
       - "--web.enable-remote-write-receiver"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./prometheus_data:/prometheus
+      - ${ROOT_ABSOLUTE_PATH}/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ${ROOT_ABSOLUTE_PATH}/prometheus_data:/prometheus
     networks:
       - observability
       - backend_net
@@ -239,9 +239,9 @@ services:
     secrets:
       - MEMOIZE_GF_SECURITY_ADMIN_PASSWORD
     volumes:
-      - ./grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ${ROOT_ABSOLUTE_PATH}/grafana_data:/var/lib/grafana
+      - ${ROOT_ABSOLUTE_PATH}/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ${ROOT_ABSOLUTE_PATH}/grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks:
       - observability
     deploy:
@@ -261,8 +261,8 @@ services:
     command:
       - "-config.file=/etc/loki/config.yml"
     volumes:
-      - ./loki.yml:/etc/loki/config.yml:ro
-      - ./loki_data:/loki
+      - ${ROOT_ABSOLUTE_PATH}/loki.yml:/etc/loki/config.yml:ro
+      - ${ROOT_ABSOLUTE_PATH}/loki_data:/loki
     networks:
       - observability
     deploy:
@@ -282,8 +282,8 @@ services:
     command:
       - "-config.file=/etc/tempo/config.yml"
     volumes:
-      - ./tempo.yml:/etc/tempo/config.yml:ro
-      - ./tempo_data:/var/tempo
+      - ${ROOT_ABSOLUTE_PATH}/tempo.yml:/etc/tempo/config.yml:ro
+      - ${ROOT_ABSOLUTE_PATH}/tempo_data:/var/tempo
     networks:
       - observability
     deploy:
@@ -305,10 +305,10 @@ services:
       - --storage.path=/var/lib/alloy/data
       - /etc/alloy/config.alloy
     volumes:
-      - ./alloy_data:/var/lib/alloy/data
-      - ./alloy.config:/etc/alloy/config.alloy:ro
+      - ${ROOT_ABSOLUTE_PATH}/alloy_data:/var/lib/alloy/data
+      - ${ROOT_ABSOLUTE_PATH}/alloy.config:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./memoize_logs:/var/log/memoize:ro
+      - ${ROOT_ABSOLUTE_PATH}/memoize_logs:/var/log/memoize:ro
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
@@ -353,7 +353,7 @@ services:
           memory: 32M
 
   # cadvisor:
-  #   image: bitnamicharts/cadvisor:0.1.13
+  #   image: gcr.io/cadvisor/cadvisor:v0.49.1
   #   volumes:
   #     - /:/rootfs:ro
   #     - /var/run:/var/run:ro
