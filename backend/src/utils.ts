@@ -24,7 +24,7 @@ function readSecretFile(key: string): string | undefined {
 }
 
 function resolveRawEnv(key: string): string | undefined {
-    return readSecretFile(key + '_FILE') ?? process.env[key]
+    return readSecretFile(key) ?? process.env[key]
 }
 
 export function validateBooleanEnv(env?: boolean, message?: string, validate?: (schema: BooleanSchema) => BooleanSchema, manuallyValidate?: (env?: boolean) => boolean) {
