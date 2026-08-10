@@ -120,6 +120,10 @@ Apparently github action doesn't realize new versions when squashing commits whe
 run
 
 ```shell
+sudo docker swarm init
+
+sudo apt update && sudo apt install -y jq
+
 TTS_API_KEY=api_key \
 MEMOIZE_MONGODB_USERNAME=admin \
 MEMOIZE_MONGODB_PASSWORD=password \
@@ -131,5 +135,5 @@ MEMOIZE_S3_STORAGE_SECRET_KEY=secret_key \
 MEMOIZE_S3_API_KEY=api_key \
 ./rotate_secrets.sh ./secrets.env
 
-sudo docker -d --prune -c ./compose.swarm.yml
+sudo docker stack deploy -d --prune -c ./compose.swarm.yml memoize
 ```
