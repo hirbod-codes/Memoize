@@ -28,6 +28,29 @@ set -a
 source "$ENV_FILE"
 set +a
 
+ROOT_ABSOLUTE_PATH=$(pwd)
+
+export ROOT_ABSOLUTE_PATH
+
+mkdir -p \
+    "$ROOT_ABSOLUTE_PATH/memoize_logs" \
+    "$ROOT_ABSOLUTE_PATH/mongo_data" \
+    "$ROOT_ABSOLUTE_PATH/meili_data" \
+    "$ROOT_ABSOLUTE_PATH/prometheus_data" \
+    "$ROOT_ABSOLUTE_PATH/grafana_data" \
+    "$ROOT_ABSOLUTE_PATH/grafana/provisioning" \
+    "$ROOT_ABSOLUTE_PATH/grafana/dashboards" \
+    "$ROOT_ABSOLUTE_PATH/loki_data" \
+    "$ROOT_ABSOLUTE_PATH/tempo_data" \
+    "$ROOT_ABSOLUTE_PATH/alloy_data"
+ 
+for f in prometheus.yml loki.yml tempo.yml alloy.config; do
+    [[ -f "$ROOT_ABSOLUTE_PATH/$f" ]] || {
+        echo "ERROR: expected config file missing: $ROOT_ABSOLUTE_PATH/$f" >&2
+        exit 1
+    }
+done
+
 echo "Deploying stack '$STACK_NAME' from $COMPOSE_FILE using $ENV_FILE"
 # -E preserves this script's environment (including everything just sourced
 # from $ENV_FILE) across sudo. Without it, sudo's default env_reset strips
