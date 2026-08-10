@@ -84,7 +84,7 @@ services:
       DB_URL: mongodb://mongo:27017
       MEMOIZE_MEILISEARCH_PORT: 7700
       MEILISEARCH_HOST: meilisearch
-      TTS_API_KEY_FILE: ${TTS_API_KEY}
+      TTS_API_KEY_FILE: /run/secrets/TTS_API_KEY
       MONGODB_USERNAME_FILE: /run/secrets/MEMOIZE_MONGODB_USERNAME
       MONGODB_PASSWORD_FILE: /run/secrets/MEMOIZE_MONGODB_PASSWORD
       MEILISEARCH_KEY_FILE: /run/secrets/MEMOIZE_MEILISEARCH_KEY
@@ -101,7 +101,6 @@ services:
       - MEMOIZE_MONGODB_USERNAME
       - MEMOIZE_MONGODB_PASSWORD
       - MEMOIZE_MEILISEARCH_KEY
-      - MEILISEARCH_HOST
       - MEMOIZE_STREAM_SIGNING_SECRET
       - MEMOIZE_ACCESS_TOKEN_SECRET
       - MEMOIZE_REFRESH_TOKEN_SECRET
@@ -353,26 +352,26 @@ services:
           cpus: "0.05"
           memory: 32M
 
-  cadvisor:
-    image: bitnamicharts/cadvisor:0.1.13
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker:/var/lib/docker:ro
-      - /dev/disk:/dev/disk:ro
-    devices:
-      - /dev/kmsg
-    networks:
-      - observability
-    deploy:
-      mode: global
-      restart_policy:
-        condition: on-failure
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 256M
-        reservations:
-          cpus: "0.10"
-          memory: 64M
+  # cadvisor:
+  #   image: bitnamicharts/cadvisor:0.1.13
+  #   volumes:
+  #     - /:/rootfs:ro
+  #     - /var/run:/var/run:ro
+  #     - /sys:/sys:ro
+  #     - /var/lib/docker:/var/lib/docker:ro
+  #     - /dev/disk:/dev/disk:ro
+  #   devices:
+  #     - /dev/kmsg
+  #   networks:
+  #     - observability
+  #   deploy:
+  #     mode: global
+  #     restart_policy:
+  #       condition: on-failure
+  #     resources:
+  #       limits:
+  #         cpus: "0.50"
+  #         memory: 256M
+  #       reservations:
+  #         cpus: "0.10"
+  #         memory: 64M
