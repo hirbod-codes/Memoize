@@ -124,6 +124,8 @@ sudo docker swarm init
 
 sudo apt update && sudo apt install -y jq
 
+sudo chmod +x ./rotate_secrets.sh ./deploy.sh
+
 TTS_API_KEY=api_key \
 MEMOIZE_MONGODB_USERNAME=admin \
 MEMOIZE_MONGODB_PASSWORD=password \
@@ -135,5 +137,8 @@ MEMOIZE_S3_STORAGE_SECRET_KEY=secret_key \
 MEMOIZE_S3_API_KEY=api_key \
 ./rotate_secrets.sh ./secrets.env
 
-sudo docker stack deploy -d --prune -c ./compose.swarm.yml memoize
+# Because swarm doesn't automatically load .env file, we use compose config instead.
+./deploy.sh memoize
 ```
+
+Also in case compose and env and configuration files have transferred with windows line endings, run: `sed -i 's/\r$//' ./*`.
