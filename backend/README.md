@@ -141,4 +141,11 @@ MEMOIZE_S3_API_KEY=api_key \
 ./deploy.sh memoize
 ```
 
-Also in case compose and env and configuration files have transferred with windows line endings, run: `sed -i 's/\r$//' ./*.sh; sed -i 's/\r$//' ./*.yml; sed -i 's/\r$//' ./*.config; sed -i 's/\r$//' ./.env`.
+Also in case compose and env and configuration files have transferred with windows line endings, run:
+
+```bash
+sed -i 's/\r$//' ./*.sh
+sed -i 's/\r$//' ./*.yml
+sed -i 's/\r$//' ./*.config
+sed -i 's/\r$//' ./.env
+```
