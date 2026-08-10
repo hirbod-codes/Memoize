@@ -16,13 +16,6 @@ distributor:
 # no separate config block needed. (Previously this was a top-level
 # `ingester:` block — just delete it, don't replace it with anything.)
 
-# Tempo 3.0 renamed `compactor.compaction.*` -> `compaction.*` (dropped the
-# duplicated "compaction" nesting) and moved compaction/retention duties to
-# an in-process backend scheduler + worker in monolithic mode. Same value,
-# new key path.
-compaction:
-  block_retention: 336h # 14 days — match Loki's retention_period above
-
 storage:
   trace:
     backend: local
@@ -48,3 +41,12 @@ overrides:
   defaults:
     metrics_generator:
       processors: [service-graphs, span-metrics]
+    # Tempo 3.0 has no standalone top-level `compaction:` block anymore —
+    # that config only lives nested inside backend_scheduler/backend_worker,
+    # which run in-process automatically in monolithic mode. The supported
+    # way to set retention here is through this per-tenant override, which
+    # applies as the effective default with no multi-tenancy configured.
+    # (336h also happens to be Tempo's own built-in default — set explicitly
+    # here just to keep it visible and matched to Loki's retention below.)
+    compaction:
+      block_retention: 336h # 14 days — match Loki's retention_period above
