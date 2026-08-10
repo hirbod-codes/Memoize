@@ -51,6 +51,10 @@ for f in prometheus.yml loki.yml tempo.yml alloy.config; do
     }
 done
 
+sudo chown -R 10001:10001 ~/memoize/tempo_data
+sudo chown -R 472:472 ~/memoize/grafana_data
+sudo chown -R 65534:65534 ~/memoize/prometheus_data
+
 echo "Deploying stack '$STACK_NAME' from $COMPOSE_FILE using $ENV_FILE"
 # -E preserves this script's environment (including everything just sourced
 # from $ENV_FILE) across sudo. Without it, sudo's default env_reset strips
