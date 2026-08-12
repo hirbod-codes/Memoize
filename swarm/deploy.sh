@@ -37,13 +37,11 @@ mkdir -p \
     "$ROOT_ABSOLUTE_PATH/mongo_data" \
     "$ROOT_ABSOLUTE_PATH/meili_data" \
     "$ROOT_ABSOLUTE_PATH/prometheus_data" \
-    "$ROOT_ABSOLUTE_PATH/grafana_data" \
-    "$ROOT_ABSOLUTE_PATH/grafana/provisioning" \
-    "$ROOT_ABSOLUTE_PATH/grafana/dashboards" \
+    "$ROOT_ABSOLUTE_PATH/grafana/grafana_data" \
     "$ROOT_ABSOLUTE_PATH/loki_data" \
     "$ROOT_ABSOLUTE_PATH/tempo_data" \
     "$ROOT_ABSOLUTE_PATH/alloy_data"
- 
+
 for f in prometheus.yml loki.yml tempo.yml alloy.config; do
     [[ -f "$ROOT_ABSOLUTE_PATH/$f" ]] || {
         echo "ERROR: expected config file missing: $ROOT_ABSOLUTE_PATH/$f" >&2
@@ -51,9 +49,9 @@ for f in prometheus.yml loki.yml tempo.yml alloy.config; do
     }
 done
 
-sudo chown -R 10001:10001 ~/memoize/tempo_data
-sudo chown -R 472:472 ~/memoize/grafana_data
-sudo chown -R 65534:65534 ~/memoize/prometheus_data
+sudo chown -R 10001:10001 $ROOT_ABSOLUTE_PATH/tempo_data
+sudo chown -R 472:472 $ROOT_ABSOLUTE_PATH/grafana/grafana_data
+sudo chown -R 65534:65534 $ROOT_ABSOLUTE_PATH/prometheus_data
 
 echo "Deploying stack '$STACK_NAME' from $COMPOSE_FILE using $ENV_FILE"
 # -E preserves this script's environment (including everything just sourced

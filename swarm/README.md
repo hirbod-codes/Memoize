@@ -8,28 +8,6 @@ run (with production env values):
 sudo docker build --target production --tag Memoize/backend:latest .
 
 sudo docker run -d \
-    -e NODE_ENV=development \
-    -e HOST=0.0.0.0 \
-    -e PORT=3000 \
-    -e ALLOWED_ORIGINS=https://localhost:443 \
-    -e TTS_API_KEY=very_secret \
-    -e DB_DATABASE_NAME=Memoize \
-    -e DB_SUPPORTS_TRANSACTION=false \
-    -e DB_URL=mongodb://localhost:27017 \
-    -e MONGODB_USERNAME=user \
-    -e MONGODB_PASSWORD=pass \
-    -e MEILISEARCH_KEY=very_secret \
-    -e MEILISEARCH_HOST=localhost \
-    -e MEILISEARCH_PORT=7700 \
-    -e STREAM_SIGNING_SECRET=very_secret \
-    -e ACCESS_TOKEN_SECRET=very_secret \
-    -e REFRESH_TOKEN_SECRET=very_secret \
-    --network backend_net \
-    --restart unless-stopped \
-    --shm-size=1g \
-    --name memoize_backend Memoize/backend-dev:latest
-
-sudo docker run -d \
     -e NODE_ENV=production \
     -e HOST=0.0.0.0 \
     -e PORT=3000 \
@@ -117,9 +95,12 @@ Apparently github action doesn't realize new versions when squashing commits whe
 
 ## In production
 
-run
+1. Copy swarm folder in your vps
+2. run
 
 ```shell
+cd <path>/swarm
+
 sudo docker swarm init
 
 sudo apt update && sudo apt install -y jq
@@ -141,11 +122,14 @@ MEMOIZE_S3_API_KEY=api_key \
 ./deploy.sh memoize
 ```
 
-Also in case compose and env and configuration files have transferred with windows line endings, run:
+### Note before running ./deploy.sh
+
+In case compose and env and configuration files have transferred with windows line endings, run:
 
 ```bash
-sed -i 's/\r$//' ./*.sh
-sed -i 's/\r$//' ./*.yml
-sed -i 's/\r$//' ./*.config
+sed -i 's/\r$//' ./*.*
+sed -i 's/\r$//' ./grafana/dashboards/*.*
+sed -i 's/\r$//' ./grafana/provisioning/dashboards/*.*
+sed -i 's/\r$//' ./grafana/provisioning/datasources/*.*
 sed -i 's/\r$//' ./.env
 ```

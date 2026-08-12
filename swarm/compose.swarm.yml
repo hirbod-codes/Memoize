@@ -81,6 +81,8 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       ALLOWED_ORIGINS: ${MEMOIZE_ALLOWED_ORIGINS}
+      ENV_PREFIX: ${MEMOIZE_ENV_PREFIX}
+      ENV_SUFFIX: ${MEMOIZE_ENV_SUFFIX}
       DB_DATABASE_NAME: Memoize
       DB_SUPPORTS_TRANSACTION: "false"
       DB_URL: mongodb://mongo:27017
@@ -242,7 +244,7 @@ services:
       - MEMOIZE_GF_SECURITY_ADMIN_USER
       - MEMOIZE_GF_SECURITY_ADMIN_PASSWORD
     volumes:
-      - ${ROOT_ABSOLUTE_PATH}/grafana_data:/var/lib/grafana
+      - ${ROOT_ABSOLUTE_PATH}/grafana/grafana_data:/var/lib/grafana
       - ${ROOT_ABSOLUTE_PATH}/grafana/provisioning:/etc/grafana/provisioning:ro
       - ${ROOT_ABSOLUTE_PATH}/grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks:
@@ -306,15 +308,17 @@ services:
     command:
       - run
       - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
       - /etc/alloy/config.alloy
     volumes:
-      - ${ROOT_ABSOLUTE_PATH}/alloy_data:/var/lib/alloy/data
-      - ${ROOT_ABSOLUTE_PATH}/alloy.config:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ${ROOT_ABSOLUTE_PATH}/memoize_logs:/var/log/memoize:ro
+      - /run/udev:/run/udev:ro
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
+      - ${ROOT_ABSOLUTE_PATH}/alloy_data:/var/lib/alloy/data
+      - ${ROOT_ABSOLUTE_PATH}/alloy.config:/etc/alloy/config.alloy:ro
+      - ${ROOT_ABSOLUTE_PATH}/memoize_logs:/var/log/memoize:ro
     networks:
       - observability
       - backend_net
