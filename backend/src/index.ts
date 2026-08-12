@@ -64,6 +64,10 @@ import { S3Client } from "@aws-sdk/client-s3";
 
 dotenv.config({ debug: process.env.DEBUG !== undefined ? Boolean(process.env.DEBUG) : undefined })
 
+// prefix and suffix is only used for reading secret files in resolveRawEnv function in utils.ts
+export const envPrefix = process.env['ENV_PREFIX'] ?? ''
+export const envSuffix = process.env['ENV_SUFFIX'] ?? ''
+
 export const nodeEnv = getStringEnv('NODE_ENV', 'The Node env environment variable is not provided')
 
 export const isProduction = nodeEnv! === 'production'

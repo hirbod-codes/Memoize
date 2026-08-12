@@ -4,6 +4,7 @@ import https from "https";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { envPrefix, envSuffix } from ".";
 
 const SECRETS_DIR = process.env.SECRETS_DIR ?? '/run/secrets'
 
@@ -24,7 +25,7 @@ function readSecretFile(key: string): string | undefined {
 }
 
 function resolveRawEnv(key: string): string | undefined {
-    return readSecretFile(key) ?? process.env[key]
+    return readSecretFile(`${envPrefix}${key}${envSuffix}`) ?? process.env[key]
 }
 
 export function validateBooleanEnv(env?: boolean, message?: string, validate?: (schema: BooleanSchema) => BooleanSchema, manuallyValidate?: (env?: boolean) => boolean) {
