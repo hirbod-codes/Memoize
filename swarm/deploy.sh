@@ -49,7 +49,7 @@ for f in prometheus.yml loki.yml tempo.yml alloy.config; do
     }
 done
 
-sudo chown -R 10001:10001 $ROOT_ABSOLUTE_PATH/tempo_data
+sudo chown -R 10001:10001 $ROOT_ABSOLUTE_PATH/tempo_data $ROOT_ABSOLUTE_PATH/loki_data
 sudo chown -R 472:472 $ROOT_ABSOLUTE_PATH/grafana/grafana_data
 sudo chown -R 65534:65534 $ROOT_ABSOLUTE_PATH/prometheus_data
 
