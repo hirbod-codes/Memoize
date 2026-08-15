@@ -73,7 +73,6 @@ services:
       S3_API_KEY: ${S3_API_KEY}
     volumes:
       - ./memoize_logs:/app/logs:rw
-    shm-size: 1g
     networks:
       - db_net
       - backend_net
@@ -240,6 +239,3 @@ networks:
     driver: bridge
   backend_net:
   db_net:
-
-volumes:
-  ./tempo_data:

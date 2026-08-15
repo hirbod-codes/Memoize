@@ -68,31 +68,31 @@ export function validateIntegerEnv(env?: number, message?: string, validate?: (s
 }
 
 export function getStringEnv(key: string, message?: string, validate?: (schema: StringSchema) => StringSchema, manuallyValidate?: (env?: string) => boolean): string {
-    const env = resolveRawEnv(key)
+    const resolvedEnv = resolveRawEnv(key)
 
-    console.log(`${key}: ${env !== undefined ? '<*****>' : '<missing>'}`)
+    console.log({ key, message, resolvedEnv }, `${key}: ${resolvedEnv !== undefined ? (isProduction ? '<*****>' : resolvedEnv) : '<missing>'}`)
 
-    validateStringEnv(env, message, validate, manuallyValidate)
+    validateStringEnv(resolvedEnv, message, validate, manuallyValidate)
 
-    return env!
+    return resolvedEnv!
 }
 
 export function getIntegerEnv(key: string, message?: string, validate?: (schema: NumberSchema) => NumberSchema, manuallyValidate?: (env?: number) => boolean): number {
-    const raw = resolveRawEnv(key)
-    const env = Number(raw)
+    const resolvedEnv = resolveRawEnv(key)
+    const castedEnv = Number(resolvedEnv)
 
-    console.log(`${key}: ${raw !== undefined ? '<*****>' : '<missing>'}`)
+    console.log({ key, message, resolvedEnv, castedEnv }, `${key}: ${resolvedEnv !== undefined ? (isProduction ? '<*****>' : castedEnv) : '<missing>'}`)
 
-    validateIntegerEnv(env, message, validate, manuallyValidate)
+    validateIntegerEnv(castedEnv, message, validate, manuallyValidate)
 
-    return env!
+    return castedEnv!
 }
 
 export function getBooleanEnv(key: string, message?: string, validate?: (schema: BooleanSchema) => BooleanSchema, manuallyValidate?: (env?: boolean) => boolean): boolean {
     const raw = resolveRawEnv(key)
     const env = raw?.toLowerCase() === 'true'
 
-    console.log(`${key}: ${raw !== undefined ? '<*****>' : '<missing>'}`)
+    console.log({ key, message, raw, env }, `${key}: ${raw !== undefined ? (isProduction ? '<*****>' : env) : '<missing>'}`)
 
     validateBooleanEnv(env, message, validate, manuallyValidate)
 
@@ -118,7 +118,7 @@ export async function httpRequest(options: http.RequestOptions, sendData?: strin
         });
 
         request.on('error', (e) => {
-            console.error(e)
+            console.error({ e }, `http request failed with error`)
             reject(e)
         });
 
@@ -136,7 +136,7 @@ export async function httpsStreamRequest(options: https.RequestOptions, sendData
         });
 
         request.on('error', (e) => {
-            console.error(e)
+            console.error({ e }, `https stream request failed with error`)
             reject(e)
         });
 
@@ -160,13 +160,13 @@ export async function httpsRequest(options: https.RequestOptions, sendData?: str
             });
 
             response.on('error', (e) => {
-                console.error(e)
+                console.error({ e }, `https request failed with error`)
                 reject(e)
             });
         });
 
         request.on('error', (e) => {
-            console.error(e)
+            console.error({ e }, `https request failed with error`)
             reject(e)
         });
 
@@ -188,10 +188,10 @@ export async function tryAndWait(callback: CallableFunction, secondsToWait: numb
             return true
         }
         catch (e) {
-            console.error(e)
+            console.error({ e }, `callback in tryAndWait function throw an error.`)
 
             await (() => new Promise<void>((res, rej) => {
-                console.log('waiting for 5 seconds...')
+                console.log({ secondsToWait }, `waiting for {secondsToWait} seconds...`)
                 setTimeout(() => { res() }, secondsToWait * 1000)
             }))()
         }

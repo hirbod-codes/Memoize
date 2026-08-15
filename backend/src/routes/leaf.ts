@@ -3,7 +3,7 @@ import { likeObjectId } from '../DB/common_schemas';
 import { auth } from '../middlewares/auth';
 import { Leaf, LeafPost, leafPostSchema, LeafUpdate, leafUpdateSchema } from '../DB/models/Leaf';
 import LeafRepository from '../DB/repositories/LeafRepository';
-import { array, number, string, ValidationError } from 'yup';
+import { number, string, ValidationError } from 'yup';
 import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
 import { MongoDB } from '../DB/mongodb';
 import { MEILI_LEAF } from '../DB/meilisearch';

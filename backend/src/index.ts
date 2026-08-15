@@ -40,14 +40,10 @@ import ffmpeg from "fluent-ffmpeg";
 
 const platformName = platform();
 
-const ffmpegBinaryPath = platformName === "win32"
-    ? path.join(process.cwd(), "src", "ffmpeg-8.1-essentials_build", "bin", "ffmpeg.exe")
-    : path.join(process.cwd(), "src", "ffmpeg-7.0.2-amd64-static", "ffmpeg");
+const ffmpegBinaryPath = platformName === "win32" ? path.join(process.cwd(), "src", "ffmpeg-8.1-essentials_build", "bin", "ffmpeg.exe") : path.join(process.cwd(), "src", "ffmpeg-7.0.2-amd64-static", "ffmpeg");
 ffmpeg.setFfmpegPath(ffmpegBinaryPath);
 
-const ffprobeBinaryPath = platformName === "win32"
-    ? path.join(process.cwd(), "src", "ffmpeg-8.1-essentials_build", "bin", "ffprobe.exe")
-    : path.join(process.cwd(), "src", "ffmpeg-7.0.2-amd64-static", "ffprobe");
+const ffprobeBinaryPath = platformName === "win32" ? path.join(process.cwd(), "src", "ffmpeg-8.1-essentials_build", "bin", "ffprobe.exe") : path.join(process.cwd(), "src", "ffmpeg-7.0.2-amd64-static", "ffprobe");
 ffmpeg.setFfprobePath(ffprobeBinaryPath);
 
 export { ffmpeg };
@@ -183,10 +179,10 @@ export const s3 = new S3Client({
             key: fs.readFileSync('localhost+2-key.pem'),
             cert: fs.readFileSync('localhost+2.pem')
         }, app)
-            .listen(hostPort, hostName, () => logger.info({ hostPort }, '`listening on ${hostName}:${hostPort}...'))
+            .listen(hostPort, hostName, () => logger.info({ hostName, hostPort }, `listening on ${hostName}:${hostPort}...`))
     else
         // Server is behind NginX proxy
-        app.listen(hostPort, hostName, () => logger.info({ hostPort }, '`listening on ${hostName}:${hostPort}...'))
+        app.listen(hostPort, hostName, () => logger.info({ hostName, hostPort }, `listening on ${hostName}:${hostPort}...`))
 
     runCronjobs()
 })()

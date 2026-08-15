@@ -2,7 +2,7 @@ import express from 'express';
 import { auth } from '../middlewares/auth';
 import { TreeNodePost, treeNodePostSchema, TreeNodeUpdate, treeNodeUpdateSchema } from '../DB/models/TreeNode';
 import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
-import { array, number, string, ValidationError } from 'yup';
+import { number, string, ValidationError } from 'yup';
 import { meili } from '..';
 import { MEILI_TREE_NODE } from '../DB/meilisearch';
 

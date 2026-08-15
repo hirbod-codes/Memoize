@@ -10,12 +10,6 @@ distributor:
         http:
           endpoint: 0.0.0.0:4318
 
-# Tempo 3.0 removed the ingester component entirely. In monolithic mode
-# (target: all, the default — what this single-container deploy uses), the
-# write path runs in-process via a block-builder + live-store instead, with
-# no separate config block needed. (Previously this was a top-level
-# `ingester:` block — just delete it, don't replace it with anything.)
-
 storage:
   trace:
     backend: local
@@ -41,11 +35,6 @@ overrides:
   defaults:
     metrics_generator:
       processors: [service-graphs, span-metrics]
-    # Tempo 3.0 has no standalone top-level `compaction:` block anymore —
-    # that config only lives nested inside backend_scheduler/backend_worker,
-    # which run in-process automatically in monolithic mode. The supported
-    # way to set retention here is through this per-tenant override, which
-    # applies as the effective default with no multi-tenancy configured.
     # (336h also happens to be Tempo's own built-in default — set explicitly
     # here just to keep it visible and matched to Loki's retention below.)
     compaction:
