@@ -59,7 +59,7 @@ import { ttsRoutes } from './routes/tts';
 
 import { S3Client } from "@aws-sdk/client-s3";
 
-import { auth, isAdmin } from './middlewares/auth';
+import { isAdmin } from './middlewares/auth';
 import { startMetricsPush } from './observability/pushgateway';
 
 export const meili = new Meilisearch({
@@ -123,12 +123,11 @@ export const s3 = new S3Client({
 
     app.use(generalRateLimiter);
 
-    app.use(auth, isAdmin, (req, res, next) => {
+    app.use(isAdmin, (req, res, next) => {
         const logLevelQueryParam = req.query.logLevel
 
-        if (logLevelQueryParam !== 'debug') {
+        if (logLevelQueryParam !== 'debug')
             return next()
-        }
 
         req.log.info({ logLevelQueryParam }, 'Switching effective log level to DEBUG')
         req.log = req.log.child({}, { level: 'debug' })

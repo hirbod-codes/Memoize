@@ -3,19 +3,26 @@ import { Request, Response, NextFunction } from "express";
 import { accessTokenSecret } from '../configs';
 import { UserRepository } from "../DB/repositories/UserRepository";
 
+/**
+ * DOES NOT fail for unauthenticated users.
+ * 
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
 export async function isAdmin(req: Request, res: Response, next: NextFunction) {
-    console.log('authorization middleware');
+    console.log('isAdmin middleware');
 
-    if (!(req as any).user) {
-        return res.status(401).send();
-    }
+    const result = authenticateRequest(req)
+    if (!result)
+        return next();
 
     try {
         const ur = new UserRepository()
-        const u = await ur.get((req as any).user.userId)
-        if (!u || u.role !== 'admin') {
+        const u = await ur.get(result as string)
+        if (!u || u.role !== 'admin')
             return res.status(403).send();
-        }
 
         next();
     } catch (err) {
@@ -27,9 +34,8 @@ export async function isAdmin(req: Request, res: Response, next: NextFunction) {
 export async function authorization(req: Request, res: Response, next: NextFunction) {
     console.log('authorization middleware');
 
-    if (!(req as any).user) {
+    if (!(req as any).user)
         return res.status(401).send();
-    }
 
     try {
         const ur = new UserRepository()
@@ -48,14 +54,7 @@ export async function authorization(req: Request, res: Response, next: NextFunct
 export function auth(req: Request, res: Response, next: NextFunction) {
     console.log('auth middleware');
 
-    let authToken = req.headers.authorization || req.cookies.accessToken;
-
-    if (!authToken)
-        return res.status(401).send();
-
-    authToken = req.headers.authorization ? authToken.split(" ")[1] : authToken;
-
-    const result = authenticateToken(authToken);
+    const result = authenticateRequest(req)
 
     if (!result)
         return res.status(401).send();
@@ -64,17 +63,28 @@ export function auth(req: Request, res: Response, next: NextFunction) {
     next();
 }
 
-export function unAuth(req: Request, res: Response, next: NextFunction) {
-    console.log('unAuth middleware');
-    const authHeader = req.headers.authorization;
+/**
+ * @param req
+ * @returns user id in a string or a jwt.JwtPayload
+ */
+export function authenticateRequest(req: Request): string | false | Response<any, Record<string, any>> | jwt.JwtPayload {
+    console.log('authenticateRequest');
 
-    if (authHeader)
-        return res.status(401).send();
+    const authToken = collectAuthToken(req)
+    if (!authToken)
+        return false
 
-    next();
+    return authenticateToken(authToken);
 }
 
-export function authenticateToken(token: string) {
+/**
+ * 
+ * @param token The JWT access token
+ * @returns user id in a string or a jwt.JwtPayload
+ */
+export function authenticateToken(token: string): string | false | jwt.JwtPayload {
+    console.log('authenticateToken');
+
     if (!token)
         return false
 
@@ -85,4 +95,24 @@ export function authenticateToken(token: string) {
         console.error(err);
         return false
     }
+}
+
+function collectAuthToken(req: Request): string | undefined | null {
+    console.log('collectAuthToken');
+
+    let authToken = req.headers.authorization || req.cookies.accessToken;
+    if (!authToken)
+        return undefined
+
+    return req.headers.authorization ? authToken.split(" ")[1] : authToken;
+}
+
+export function unAuth(req: Request, res: Response, next: NextFunction) {
+    console.log('unAuth middleware');
+    const authHeader = req.headers.authorization;
+
+    if (authHeader)
+        return res.status(401).send();
+
+    next();
 }
