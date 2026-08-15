@@ -12,7 +12,7 @@ networks:
     attachable: true
 
 secrets:
-  TTS_API_KEY:
+  MEMOIZE_TTS_API_KEY:
     external: true
   MEMOIZE_MONGODB_USERNAME:
     external: true
@@ -78,6 +78,8 @@ services:
       LOG_LEVEL: info
       LOG_DIR: /app/logs
       OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
+      LOKI_PUSH_URL: http://loki:3100
+      PUSHGATEWAY_URL: http://pushgateway:9091
       HOST: 0.0.0.0
       PORT: 3000
       ALLOWED_ORIGINS: ${MEMOIZE_ALLOWED_ORIGINS}
@@ -86,9 +88,9 @@ services:
       DB_DATABASE_NAME: Memoize
       DB_SUPPORTS_TRANSACTION: "false"
       DB_URL: mongodb://mongo:27017
-      MEMOIZE_MEILISEARCH_PORT: 7700
+      MEILISEARCH_PORT: 7700
       MEILISEARCH_HOST: meilisearch
-      TTS_API_KEY_FILE: /run/secrets/TTS_API_KEY
+      TTS_API_KEY_FILE: /run/secrets/MEMOIZE_TTS_API_KEY
       MONGODB_USERNAME_FILE: /run/secrets/MEMOIZE_MONGODB_USERNAME
       MONGODB_PASSWORD_FILE: /run/secrets/MEMOIZE_MONGODB_PASSWORD
       MEILISEARCH_KEY_FILE: /run/secrets/MEMOIZE_MEILISEARCH_KEY
@@ -101,7 +103,7 @@ services:
       S3_STORAGE_SECRET_KEY_FILE: /run/secrets/MEMOIZE_S3_STORAGE_SECRET_KEY
       S3_API_KEY_FILE: /run/secrets/MEMOIZE_S3_API_KEY
     secrets:
-      - TTS_API_KEY
+      - MEMOIZE_TTS_API_KEY
       - MEMOIZE_MONGODB_USERNAME
       - MEMOIZE_MONGODB_PASSWORD
       - MEMOIZE_MEILISEARCH_KEY
