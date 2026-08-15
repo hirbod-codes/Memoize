@@ -1,5 +1,7 @@
 import path from 'node:path';
 import pino from 'pino';
+import { isProduction, logDir, logLevel, lokiPushUrl, nodeEnv } from '../configs';
+import { trace, context } from '@opentelemetry/api';
 
 // Where Pino writes its rotating JSON log file. This is the path Alloy tails
 // (see docker-compose / config.alloy) — set it to the SAME absolute path on
@@ -46,10 +48,30 @@ const targets: pino.TransportTargetOptions[] = [
       ? { destination: 1 } // fd 1 = stdout
       : { colorize: true, translateTime: 'SYS:HH:MM:ss', ignore: 'pid,hostname' },
   },
+  {
+    target: 'pino-loki',
+    level: logLevel ?? 'info',
+    options: {
+      batching: true,
+      interval: 5,
+      host: lokiPushUrl,
+      silenceErrors: false,
+      labels: {
+        service: 'memoize-backend',
+        env: 'development'
+      },
+    },
+  },
 ];
+
+const transport = pino.transport({ targets: [targets[2]] });
+transport.on('error', (err) => {
+  console.error('pino transport error:', err);
+});
 
 export const logger = pino(
   {
+    serializers: { err: pino.stdSerializers.err },
     level: logLevel ?? 'info',
     redact: { paths: REDACT_PATHS, censor: '[REDACTED]' },
     base: { service: 'memoize-backend', env: nodeEnv ?? 'development' },
@@ -60,8 +82,16 @@ export const logger = pino(
         return { level: label };
       },
     },
+    // Runs once per log call — adds trace_id/span_id only when a span is
+    // actually active (e.g. inside a traced HTTP request), no-ops otherwise.
+    mixin() {
+      const span = trace.getSpan(context.active());
+      if (!span) return {};
+      const { traceId, spanId } = span.spanContext();
+      return { trace_id: traceId, span_id: spanId };
+    },
   },
-  pino.transport({ targets }),
+  transport,
 );
 
 export type Logger = typeof logger;

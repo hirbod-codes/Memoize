@@ -59,6 +59,7 @@ import { ttsRoutes } from './routes/tts';
 
 import { S3Client } from "@aws-sdk/client-s3";
 
+import { startMetricsPush } from './observability/pushgateway';
 
 export const meili = new Meilisearch({
     host: meilisearchHost + ':' + meilisearchPort.toString(),
@@ -183,6 +184,8 @@ export const s3 = new S3Client({
     else
         // Server is behind NginX proxy
         app.listen(hostPort, hostName, () => logger.info({ hostName, hostPort }, `listening on ${hostName}:${hostPort}...`))
+
+    startMetricsPush();
 
     runCronjobs()
 })()
