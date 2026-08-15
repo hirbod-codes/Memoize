@@ -6,8 +6,8 @@ import LeafRepository from '../DB/repositories/LeafRepository';
 import { array, number, string, ValidationError } from 'yup';
 import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
 import { MongoDB } from '../DB/mongodb';
-import { meili } from '..';
 import { MEILI_LEAF } from '../DB/meilisearch';
+import { meili } from '..';
 
 const router = express.Router();
 

@@ -1,7 +1,7 @@
 import express from 'express';
 import { string, ValidationError } from 'yup';
 import { auth, authenticateToken, authorization } from '../middlewares/auth';
-import { BUCKET_NAME, s3, ttsApiKey } from '..';
+import { BUCKET_NAME, ttsApiKey } from '../configs';
 import { Upload } from "@aws-sdk/lib-storage";
 import AudioRepository from '../DB/repositories/AudioRepository';
 import * as mm from "music-metadata";
@@ -14,6 +14,7 @@ import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
 import { generateStreamToken, verifyStreamToken } from '../lib/signed_urls';
 import { UserRepository } from '../DB/repositories/UserRepository';
 import { httpsStreamRequest } from '../utils';
+import { s3 } from '..';
 
 const router = express.Router();
 

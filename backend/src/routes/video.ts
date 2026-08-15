@@ -1,7 +1,8 @@
 import express from 'express';
 import { string, ValidationError } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
-import { BUCKET_NAME, ffmpeg, s3 } from '..';
+import { ffmpeg } from '..';
+import { BUCKET_NAME } from '../configs';
 import { Upload } from "@aws-sdk/lib-storage";
 import VideoRepository from '../DB/repositories/VideoRepository';
 import { fileTypeFromBuffer } from "file-type";
@@ -15,6 +16,7 @@ import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
 import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
 import { Readable } from 'stream';
 import { generateStreamToken, verifyStreamToken } from '../lib/signed_urls';
+import { s3 } from '..';
 
 const router = express.Router();
 

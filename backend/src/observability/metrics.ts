@@ -1,6 +1,6 @@
 import client from 'prom-client';
 import type { NextFunction, Request, Response } from 'express';
-import { nodeEnv } from '..';
+import { nodeEnv } from '../configs';
 
 export const registry = new client.Registry();
 

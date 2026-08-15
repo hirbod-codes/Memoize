@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { streamSigningSecret } from '..';
+import { streamSigningSecret } from '../configs';
 
 export function generateStreamToken(videoId: string, userId: string, ttlSeconds = 60 * 60 * 6): string {
     const exp = Math.floor(Date.now() / 1000) + ttlSeconds;

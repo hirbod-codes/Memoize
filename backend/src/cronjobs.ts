@@ -1,6 +1,6 @@
 import cron from 'node-cron'
 import VideoRepository from './DB/repositories/VideoRepository'
-import { BUCKET_NAME, s3 } from '.'
+import { BUCKET_NAME } from './configs'
 import { DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
 import { Video } from './DB/models/Video'
 import { Audio } from './DB/models/Audio'
@@ -9,6 +9,7 @@ import ImageRepository from './DB/repositories/ImageRepository'
 import { Image } from './DB/models/Image'
 import { User } from './DB/models/User'
 import { UserRepository } from './DB/repositories/UserRepository'
+import { s3 } from '.'
 
 export const runCronjobs = async () => {
     // Schedule: every 12 hours

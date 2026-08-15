@@ -4,8 +4,9 @@ import { generalRateLimiter } from '../middlewares/rateLimiting';
 import { UserRepository } from '../DB/repositories/UserRepository';
 import { auth } from '../middlewares/auth';
 import { Upload } from '@aws-sdk/lib-storage';
-import { BUCKET_NAME, s3 } from '..';
+import { BUCKET_NAME } from '../configs';
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { s3 } from '..';
 
 const router = express.Router();
 

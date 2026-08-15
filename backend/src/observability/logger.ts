@@ -1,6 +1,5 @@
 import path from 'node:path';
 import pino from 'pino';
-import { isProduction, logDir, logLevel, nodeEnv } from '..';
 
 // Where Pino writes its rotating JSON log file. This is the path Alloy tails
 // (see docker-compose / config.alloy) — set it to the SAME absolute path on

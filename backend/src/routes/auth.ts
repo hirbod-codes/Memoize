@@ -5,7 +5,7 @@ import { UserRepository } from '../DB/repositories/UserRepository';
 import { User } from '../DB/models/User';
 import { Auth, Payload } from '../auth';
 import { unAuth } from '../middlewares/auth';
-import { accessTokenSecret } from '..';
+import { accessTokenSecret } from '../configs';
 import jwt from 'jsonwebtoken'
 
 // To Do: create redis container for invalid tokens

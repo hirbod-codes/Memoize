@@ -1,5 +1,5 @@
 import rateLimit from "express-rate-limit";
-import { isProduction } from "..";
+import { isProduction } from '../configs';
 
 export const generalRateLimiter = rateLimit({
     skipFailedRequests: isProduction ? false : true,

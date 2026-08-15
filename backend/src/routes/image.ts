@@ -1,7 +1,7 @@
 import express from 'express';
 import { string, ValidationError } from 'yup';
 import { auth, authorization } from '../middlewares/auth';
-import { BUCKET_NAME, s3 } from '..';
+import { BUCKET_NAME } from '../configs';
 import { Upload } from "@aws-sdk/lib-storage";
 import ImageRepository from '../DB/repositories/ImageRepository';
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
@@ -9,6 +9,7 @@ import { fileTypeFromBuffer } from 'file-type';
 import { teeStream } from '../lib/stream';
 import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
 import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
+import { s3 } from '..';
 
 const router = express.Router();
 

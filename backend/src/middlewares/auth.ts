@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken"
 import { Request, Response, NextFunction } from "express";
-import { accessTokenSecret } from "..";
+import { accessTokenSecret } from '../configs';
 import { UserRepository } from "../DB/repositories/UserRepository";
 
 export async function authorization(req: Request, res: Response, next: NextFunction) {

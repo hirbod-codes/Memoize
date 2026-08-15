@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken"
-import { accessTokenSecret, refreshTokenSecret } from ".";
+import { accessTokenSecret, refreshTokenSecret } from './configs';
 
 export type Payload = {
     userId: string

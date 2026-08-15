@@ -4,7 +4,7 @@ import https from "https";
 import fs from "fs";
 import path from "path";
 import os from "os";
-import { envPrefix, envSuffix } from ".";
+import { envPrefix, envSuffix, isProduction } from './configs';
 
 const SECRETS_DIR = process.env.SECRETS_DIR ?? '/run/secrets'
 
