@@ -3,5 +3,6 @@
         "src"
     ],
     "ext": "ts",
-    "exec": "ts-node --files --project tsconfig.json --require ./dist/observability/tracing.js src/index.ts"
+    "signal": "SIGTERM",
+    "exec": "ts-node --files --project tsconfig.json --require ./src/observability/tracing.ts src/index.ts"
 }
