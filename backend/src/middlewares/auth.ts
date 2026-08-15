@@ -3,6 +3,27 @@ import { Request, Response, NextFunction } from "express";
 import { accessTokenSecret } from '../configs';
 import { UserRepository } from "../DB/repositories/UserRepository";
 
+export async function isAdmin(req: Request, res: Response, next: NextFunction) {
+    console.log('authorization middleware');
+
+    if (!(req as any).user) {
+        return res.status(401).send();
+    }
+
+    try {
+        const ur = new UserRepository()
+        const u = await ur.get((req as any).user.userId)
+        if (!u || u.role !== 'admin') {
+            return res.status(403).send();
+        }
+
+        next();
+    } catch (err) {
+        console.error(err);
+        return res.status(403).send();
+    }
+}
+
 export async function authorization(req: Request, res: Response, next: NextFunction) {
     console.log('authorization middleware');
 
