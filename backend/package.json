@@ -7,7 +7,6 @@
     "type": "commonjs",
     "scripts": {
         "dev": "tsc && nodemon",
-        "start": "tsc && node --require ./dist/observability/tracing.js ./dist/index.js",
         "build": "tsc"
     },
     "keywords": [],
