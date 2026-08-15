@@ -108,7 +108,7 @@ docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null | grep -q active ||
 # entries assume their source secret has already been resolved above them.
 # -----------------------------------------------------------------------------
 SECRET_ORDER=(
-    TTS_API_KEY
+    MEMOIZE_TTS_API_KEY
     MEMOIZE_MONGODB_USERNAME
     MEMOIZE_MONGODB_PASSWORD
     MEMOIZE_MONGO_INITDB_ROOT_USERNAME
@@ -130,7 +130,7 @@ SECRET_ORDER=(
 )
 
 declare -A MODE=(
-    [TTS_API_KEY]="required"
+    [MEMOIZE_TTS_API_KEY]="required"
     [MEMOIZE_MONGODB_USERNAME]="default:admin"
     [MEMOIZE_MONGODB_PASSWORD]="required"
     [MEMOIZE_MONGO_INITDB_ROOT_USERNAME]="mirror:MEMOIZE_MONGODB_USERNAME"
@@ -152,7 +152,7 @@ declare -A MODE=(
 )
 
 declare -A TARGET_SERVICE=(
-    [TTS_API_KEY]="memoize"
+    [MEMOIZE_TTS_API_KEY]="memoize"
     [MEMOIZE_MONGODB_USERNAME]="memoize"
     [MEMOIZE_MONGODB_PASSWORD]="memoize"
     [MEMOIZE_MONGO_INITDB_ROOT_USERNAME]="mongo"
