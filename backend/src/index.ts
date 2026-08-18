@@ -61,6 +61,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 
 import { isAdmin } from './middlewares/auth';
 import { startMetricsPush } from './observability/pushgateway';
+import { setRequestLogger } from './observability/requestContext';
 
 export const meili = new Meilisearch({
     host: meilisearchHost + ':' + meilisearchPort.toString(),
@@ -114,6 +115,11 @@ export const s3 = new S3Client({
     app.use(metricsMiddleware());
     app.use(httpLogger);
 
+    app.use((req, res, next) => {
+        setRequestLogger(req.log);
+        next();
+    });
+
     // --- Unauthenticated, network-restricted endpoints ---
     app.use(healthRouter); // /healthz, /readyz
     app.use(metricsRouter); // /metrics — scraped by Prometheus, not by users
@@ -131,6 +137,9 @@ export const s3 = new S3Client({
 
         req.log.info({ logLevelQueryParam }, 'Switching effective log level to DEBUG')
         req.log = req.log.child({}, { level: 'debug' })
+
+        setRequestLogger(req.log)
+
         next()
     })
 
