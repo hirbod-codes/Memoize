@@ -107,10 +107,9 @@ sudo apt update && sudo apt install -y jq
 
 sudo chmod +x ./rotate_secrets.sh ./deploy.sh
 
-TTS_API_KEY=api_key \
+MEMOIZE_TTS_API_KEY=api_key \
 MEMOIZE_MONGODB_USERNAME=admin \
 MEMOIZE_MONGODB_PASSWORD=password \
-MEMOIZE_GF_SECURITY_ADMIN_PASSWORD=password \
 MEMOIZE_BUCKET_NAME=name \
 MEMOIZE_S3_STORAGE_ENDPOINT=endpoint \
 MEMOIZE_S3_STORAGE_ACCESS_KEY=access_key \
