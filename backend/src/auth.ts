@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken"
 import { accessTokenSecret, refreshTokenSecret } from './configs';
+import { getLogger } from "./observability/requestContext";
 
 export type Payload = {
     userId: string
@@ -14,7 +15,7 @@ export class Auth {
         try {
             return await bcrypt.hash(password, Auth.SALT_ROUNDS);
         } catch (err) {
-            console.error(err)
+            getLogger().error({ password, err }, 'System failed to hash password.')
             return false
         }
     }
@@ -23,7 +24,7 @@ export class Auth {
         try {
             return bcrypt.hash(refreshToken, 10);
         } catch (err) {
-            console.error(err)
+            getLogger().error({ refreshToken, err }, 'System failed to hash Refresh Token.')
             return false
         }
     }
@@ -40,7 +41,7 @@ export class Auth {
         try {
             return jwt.verify(refreshToken, refreshTokenSecret);
         } catch (err) {
-            console.error(err)
+            getLogger().error({ refreshToken, err }, 'System failed to verify refresh token.')
             return false
         }
     }
@@ -49,7 +50,7 @@ export class Auth {
         try {
             return jwt.verify(accessToken, accessTokenSecret);
         } catch (err) {
-            console.error(err)
+            getLogger().error({ accessToken, err }, 'System failed to verify access token.')
             return false
         }
     }
@@ -73,7 +74,7 @@ export class Auth {
 
             return { accessToken, refreshToken };
         } catch (err) {
-            console.error(err)
+            getLogger().error({ payload, err }, 'System failed to generate token.')
             return false
         }
     }
@@ -86,7 +87,7 @@ export class Auth {
 
             return this.generateAccessToken(payload);
         } catch (err) {
-            console.error(err)
+            getLogger().error({ hashedPassword, password, payload, err }, 'System failed to verify password and generate access token.')
             return false
         }
     }
