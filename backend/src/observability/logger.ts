@@ -64,7 +64,7 @@ const targets: pino.TransportTargetOptions[] = [
   },
 ];
 
-const transport = pino.transport({ targets: [targets[2]] });
+const transport = pino.transport({ targets });
 transport.on('error', (err) => {
   console.error('pino transport error:', err);
 });
