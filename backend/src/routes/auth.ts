@@ -190,7 +190,7 @@ router.post('/register', unAuth, authRateLimiter, async (req, res) => {
             phoneNumber,
             password: hashedPassword,
             role: 'default',
-            plan: 'free',
+            planTitle: 'free',
             temporaryAvatar: false,
         })
         if (createResult === false || !createResult.acknowledged) {
@@ -408,7 +408,7 @@ router.post('/refresh', async (req, res) => {
         }
 
         console.log('Generating tokens...')
-        const newAccessToken = auth.generateAccessToken({ userId, username })
+        const newAccessToken = auth.generateAccessToken({ userId: userId!, username })
         console.log({ newAccessToken })
 
         if (noCookies)
