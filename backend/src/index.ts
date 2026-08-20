@@ -180,6 +180,8 @@ export const s3 = new S3Client({
             res.send('test route' + (new Date()).toISOString());
         });
 
+    app.use(planGate)
+
     app.use(rollbackQuotaOnFailure);
 
     app.use('/api/auth', authRoutes);
