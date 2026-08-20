@@ -1,15 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { UserRepository } from "../DB/repositories/UserRepository";
-import UsageRepository from "../DB/repositories/UsageRepository";
 import SubscriptionRepository from "../DB/repositories/SubscriptionRepository";
 
 export const planGate = async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user)
-        return res.status(401).send();
-
-    const user = await (new UserRepository()).get(req.user.userId)
-    if (!user)
-        return res.status(401).send();
+        return next()
 
     let authorized = false
 
