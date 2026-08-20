@@ -8,7 +8,7 @@ import { generateStreamToken, verifyStreamToken } from '../lib/signed_urls';
 import { UserRepository } from '../DB/repositories/UserRepository';
 import { httpsStreamRequest } from '../utils';
 import { s3 } from '..';
-import { authorizeFeature, authorizeQuota, rollbackQuota } from '../middlewares/authorization';
+import { authorizeFeature, authorizeQuota } from '../middlewares/authorization';
 import { basename, join } from 'path';
 import { mkdir, rm, stat, unlink } from 'fs/promises';
 import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../lib/file_management';
