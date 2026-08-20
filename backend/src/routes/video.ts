@@ -264,7 +264,7 @@ router.get('/file/:videoId', auth, async (req, res) => {
         }
         console.log({ videoId })
 
-        await streamVideoFile(videoId, req.user!.userId, req, res, true)
+        await streamVideoFile(videoId, req.user!.userId, req, res, false)
     } catch (err) {
         console.error(err)
         res.status(500).json({ message: 'Error getting video file' });
