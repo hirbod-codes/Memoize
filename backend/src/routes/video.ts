@@ -10,7 +10,7 @@ import { generateThumbnail, generateWebCompatibleCopy, probeFile } from '../ffmp
 import { Readable } from 'stream';
 import { generateStreamToken, verifyStreamToken } from '../lib/signed_urls';
 import { s3 } from '..';
-import { authorizeFeature, authorizeQuota, rollbackQuota } from '../middlewares/authorization';
+import { authorizeFeature, authorizeQuota } from '../middlewares/authorization';
 import { mkdir, rm, stat, unlink } from 'fs/promises';
 import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../lib/file_management';
 import { InvalidMediaError } from '../errors/InvalidMediaError';
