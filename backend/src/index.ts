@@ -65,6 +65,7 @@ import { notFoundHandler } from './middlewares/notFoundHandler';
 import { errorHandler } from './middlewares/errorHandler';
 import { requestContextMiddleware } from './middlewares/requestContext';
 import { registerProcessErrorHandlers } from './middlewares/processErrorHandlers';
+import { rollbackQuotaOnFailure } from './middlewares/authorization';
 
 export const meili = new Meilisearch({
     host: meilisearchHost + ':' + meilisearchPort.toString(),
@@ -178,6 +179,8 @@ export const s3 = new S3Client({
         app.get('/', (req, res) => {
             res.send('test route' + (new Date()).toISOString());
         });
+
+    app.use(rollbackQuotaOnFailure);
 
     app.use('/api/auth', authRoutes);
     app.use('/api/user', userRoutes);

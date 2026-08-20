@@ -18,7 +18,7 @@ router.get('/info', async (req, res) => {
 
         console.log('Fetching...')
         const userRepository = new UserRepository()
-        const result = await userRepository.get((req as any).user.userId)
+        const result = await userRepository.get(req.user!.userId)
         if (result === false) {
             res.status(401).send()
             return
@@ -52,7 +52,7 @@ router.post('/avatar', async (req, res) => {
             return
         }
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const avatarKey = `user/avatar/${userId}`
 
@@ -118,7 +118,7 @@ router.get('/avatar', async (req, res) => {
             return res.status(400).json({ message: 'Invalid parameters' });
         }
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const userRepository = new UserRepository()
 
@@ -160,7 +160,7 @@ router.delete('/avatar', async (req, res) => {
     try {
         console.log('/api/user/avatar')
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const userRepository = new UserRepository()
 

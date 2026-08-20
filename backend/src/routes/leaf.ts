@@ -40,7 +40,7 @@ router.post('/', async (req, res) => {
         treeNodeRepository.setTransactionSession(session)
 
         console.log("Authorize...")
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
         const treeNode = await treeNodeRepository.getForUser(leaf.treeNodeId, userId)
         if (!treeNode)
             return res.status(403).send()
@@ -54,7 +54,7 @@ router.post('/', async (req, res) => {
         const index = meili.index(MEILI_LEAF)
         const task = await index.addDocuments([{
             _id: insertLeafResult.insertedId.toString(),
-            userId: (req as any).user.userId,
+            userId: req.user!.userId,
             treeNodeId: leaf.treeNodeId,
             title: leaf.title,
             createdAt: Date.now(),
@@ -101,13 +101,13 @@ router.get('/', async (req, res) => {
 
         if (parentTreeNodeId) {
             console.log("Fetching leafs...");
-            let leafs: Leaf[] = await leafRepository.getManyForUserByParentTreeNodeId(parentTreeNodeId!, (req as any).user.userId)
+            let leafs: Leaf[] = await leafRepository.getManyForUserByParentTreeNodeId(parentTreeNodeId!, req.user!.userId)
             if (!leafs)
                 return res.status(404).send()
             res.status(200).json(leafs)
         } else {
             console.log("Fetching leaf...");
-            let leaf: Leaf = await leafRepository.getForUser(leafId!, (req as any).user.userId)
+            let leaf: Leaf = await leafRepository.getForUser(leafId!, req.user!.userId)
             if (!leaf)
                 return res.status(404).send()
             res.status(200).json(leaf)
@@ -144,7 +144,7 @@ router.get('/list', async (req, res) => {
         }
         console.log({ limit, skip, search })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         let ids: string[] = []
         if (search?.trim()) {
@@ -168,7 +168,7 @@ router.get('/list', async (req, res) => {
         if (ids.length > 0)
             result = await leafRepository.getManyForUserByParentTreeNodeIdLimitedByIds(ids, parentId, userId)
         else
-            result = await leafRepository.getForUserPaginated((req as any).user.userId, parentId, limit, skip, search)
+            result = await leafRepository.getForUserPaginated(req.user!.userId, parentId, limit, skip, search)
 
         res.status(200).json(result)
 
@@ -196,7 +196,7 @@ router.patch('/', async (req, res) => {
         }
         console.log({ leaf: JSON.stringify(leaf, null, 4) });
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         console.log('Replacing updated leaf...')
         const leafRepository = new LeafRepository()

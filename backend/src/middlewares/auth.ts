@@ -31,35 +31,21 @@ export async function isAdmin(req: Request, res: Response, next: NextFunction) {
     }
 }
 
-export async function authorization(req: Request, res: Response, next: NextFunction) {
-    console.log('authorization middleware');
-
-    if (!(req as any).user)
-        return res.status(401).send();
-
-    try {
-        const ur = new UserRepository()
-        const u = await ur.get((req as any).user.userId)
-        if (!u || u.username !== 'hirbod') {
-            return res.status(403).send();
-        }
-
-        next();
-    } catch (err) {
-        console.error(err);
-        return res.status(403).send();
-    }
-}
-
-export function auth(req: Request, res: Response, next: NextFunction) {
+export async function auth(req: Request, res: Response, next: NextFunction) {
     console.log('auth middleware');
 
-    const result = authenticateRequest(req)
+    const result = authenticateRequest(req) as any
 
     if (!result)
         return res.status(401).send();
 
-    (req as any).user = result;
+    const user = await (new UserRepository()).get(result.userId)
+    if (!user)
+        return res.status(401).send();
+
+    req.user = result as any;
+    req.user!.userData = user;
+
     next();
 }
 

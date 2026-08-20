@@ -31,7 +31,7 @@ router.post('/', async (req, res) => {
 
         const treeNodeRepository = new TreeNodeRepository()
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         console.log("Inserting new treeNode...");
         const insertTreeNodeResult = await treeNodeRepository.insert({ ...treeNode, userId })
@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
         const index = meili.index(MEILI_TREE_NODE)
         const task = await index.addDocuments([{
             _id: insertTreeNodeResult.insertedId.toString(),
-            userId: (req as any).user.userId,
+            userId: req.user!.userId,
             parentId: treeNode.parentId ?? null,
             title: treeNode.title,
             createdAt: new Date().toISOString(),
@@ -81,7 +81,7 @@ router.get('/', async (req, res) => {
 
         console.log("fetching...");
         const treeNodeRepository = new TreeNodeRepository()
-        const treeNode = await treeNodeRepository.getForUser(treeNodeId, (req as any).user.userId)
+        const treeNode = await treeNodeRepository.getForUser(treeNodeId, req.user!.userId)
         if (!treeNode) {
             res.status(404).send()
             return
@@ -113,7 +113,7 @@ router.get('/children', async (req, res) => {
 
         console.log("fetching...");
         const treeNodeRepository = new TreeNodeRepository()
-        const treeNode = await treeNodeRepository.getByParentIdForUser(parentTreeNodeId, (req as any).user.userId)
+        const treeNode = await treeNodeRepository.getByParentIdForUser(parentTreeNodeId, req.user!.userId)
         if (!treeNode)
             return res.status(404).send()
 
@@ -131,7 +131,7 @@ router.get('/root', async (req, res) => {
 
         console.log("fetching...");
         const treeNodeRepository = new TreeNodeRepository()
-        const treeNode = await treeNodeRepository.getRootsForUser((req as any).user.userId)
+        const treeNode = await treeNodeRepository.getRootsForUser(req.user!.userId)
         if (!treeNode) {
             res.status(404).send()
             return
@@ -168,7 +168,7 @@ router.get('/list', async (req, res) => {
         }
         console.log({ limit, skip, search, parentId })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         let ids: string[] = []
         if (search?.trim()) {
@@ -230,7 +230,7 @@ router.patch('/', async (req, res) => {
 
         const treeNodeRepository = new TreeNodeRepository()
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         console.log("Replacing new treeNode...");
         const updateTreeNodeResult = await treeNodeRepository.replaceForUser(treeNode, userId)
@@ -281,7 +281,7 @@ router.delete('/', async (req, res) => {
 
         console.log("Deleting tree node...");
         const treeNodeRepository = new TreeNodeRepository()
-        const treeNode = await treeNodeRepository.deleteForUser(treeNodeId, (req as any).user.userId)
+        const treeNode = await treeNodeRepository.deleteForUser(treeNodeId, req.user!.userId)
         if (!treeNode.acknowledged || treeNode.deletedCount === 0)
             return res.status(500).send()
 
