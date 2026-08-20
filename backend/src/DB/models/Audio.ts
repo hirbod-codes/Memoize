@@ -1,5 +1,5 @@
 import { boolean, InferType, number, object, string } from 'yup';
-import { likeObjectId } from '../common_schemas';
+import { contentTypeSchema, likeObjectId } from '../common_schemas';
 
 export const collectionName = 'audio'
 
@@ -12,12 +12,12 @@ export const audioPostSchema = object().shape(post).required()
 
 const create = {
     userId: likeObjectId.required(),
-    contentType: string().required(),
+    contentType: contentTypeSchema.optional(),
     title: string().required().label('Title'),
-    fileName: string().required().label('File name'),
     coverArtFileName: string().optional().label('Cover art file name'),
-    bucketKey: string().required().url(), // audio/<userId>/<fileName>
-    coverArtKey: string().optional().url(), // audio/cover_art/<userId>/<title>
+    bucketKey: string().optional().url(), // audio/<userId>/<audioId>
+    webBucketKey: string().optional().url(), // audio/<userId>/web/<audioId>
+    coverArtKey: string().optional().url(), // audio/cover_art/<userId>/<audioId>
     temporary: boolean().required(),
 }
 export const audioCreateSchema = object().shape(create).required()
@@ -31,13 +31,13 @@ const update = {
     schemaVersion: string().optional().min(6).max(20),
     userId: likeObjectId.optional(),
 
-    contentType: string().optional(),
+    contentType: contentTypeSchema.optional(),
     title: string().optional().label('Title'),
-    fileName: string().optional().label('File name'),
     coverArtFileName: string().optional().label('Cover art file name'),
 
-    bucketKey: string().optional().url(), // audio/<userId>/<fileName>
-    coverArtKey: string().optional().url(), // audio/cover_art/<userId>/<title>
+    bucketKey: string().optional().url(), // audio/<userId>/<audioId>
+    webBucketKey: string().optional().url(), // audio/<userId>/web/<audioId>
+    coverArtKey: string().optional().url(), // audio/cover_art/<userId>/<audioId>
 
     temporary: boolean().optional(),
 }
@@ -49,13 +49,13 @@ export const audioSchema = object().shape({
 
     userId: likeObjectId.required(),
 
-    contentType: string().required(),
+    contentType: contentTypeSchema.optional(),
     title: string().required().label('Title'),
-    fileName: string().required().label('File name'),
     coverArtFileName: string().optional().label('Cover art file name'),
 
-    bucketKey: string().required().url(), // audio/<userId>/<fileName>
-    coverArtKey: string().optional().url(), // audio/cover_art/<userId>/<title>
+    bucketKey: string().optional().url(), // audio/<userId>/<audioId>
+    webBucketKey: string().optional().url(), // audio/<userId>/web/<audioId>
+    coverArtKey: string().optional().url(), // audio/cover_art/<userId>/<audioId>
 
     temporary: boolean().required(),
 

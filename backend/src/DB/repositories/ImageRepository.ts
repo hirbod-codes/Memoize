@@ -86,8 +86,8 @@ class ImageRepository implements IRepository, ISeedable, IDropable {
         return await ImageRepository.collection!.updateOne({ temporary: false, _id: ObjectId.createFromHexString(imageId) }, { $set: { title, updatedAt: Date.now() } }, { session: this.session })
     }
 
-    async unsafeUpdate(audioId: string, userId: string, updates: ImageUpdate) {
-        return await ImageRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(audioId), userId }, { $set: { ...updates, updatedAt: Date.now() } }, { session: this.session })
+    async unsafeUpdate(imageId: string, userId: string, updates: ImageUpdate) {
+        return await ImageRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(imageId), userId }, { $set: { ...updates, updatedAt: Date.now() } }, { session: this.session })
     }
 
     async delete(id: string): Promise<DeleteResult> {

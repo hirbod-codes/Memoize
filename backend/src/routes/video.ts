@@ -1,26 +1,28 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { string, ValidationError } from 'yup';
-import { auth, authorization } from '../middlewares/auth';
-import { ffmpeg } from '..';
-import { BUCKET_NAME } from '../configs';
-import { Upload } from "@aws-sdk/lib-storage";
+import { auth } from '../middlewares/auth';
+import { BUCKET_NAME, videoUploadTmpDir } from '../configs';
 import VideoRepository from '../DB/repositories/VideoRepository';
-import { fileTypeFromBuffer } from "file-type";
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import fs from 'fs'
-import { promises as fsp } from "fs";
-import path from 'path'
-import { teeStream } from '../lib/stream';
-import { decodeVideoFileToRamSegments, prepareVideoInputOnRam } from '../ffmpeg';
-import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
-import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
+import { createReadStream, createWriteStream } from 'fs'
+import { basename, join } from 'path'
+import { generateThumbnail, generateWebCompatibleCopy, probeFile } from '../ffmpeg';
 import { Readable } from 'stream';
 import { generateStreamToken, verifyStreamToken } from '../lib/signed_urls';
 import { s3 } from '..';
+import { authorizeFeature, authorizeQuota, rollbackQuota } from '../middlewares/authorization';
+import { mkdir, rm, stat, unlink } from 'fs/promises';
+import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../lib/file_management';
+import { InvalidMediaError } from '../errors/InvalidMediaError';
+import { UploadTooLargeError } from '../errors/UploadTooLargeError';
+import { pipeline } from 'stream/promises';
+import { UsageField } from '../DB/models/Usage';
 
 const router = express.Router();
 
-router.post('/', auth, authorization, async (req, res) => {
+const ALLOWED_VIDEO_CODECS = new Set(['h264', 'hevc', 'vp9', 'av1', 'mpeg4']);
+
+router.post('/', auth, authorizeFeature(['allowedContentTypes.video']), authorizeQuota(new Map([['valuePerContentCount.video', 1]])), async (req, res) => {
     try {
         console.log('/api/video/', 'POST');
 
@@ -39,7 +41,7 @@ router.post('/', auth, authorization, async (req, res) => {
             return res.status(400).json({ message: 'Invalid Video info.' });
         }
 
-        const userId = (req as any).user.userId;
+        const userId = req.user!.userId;
         const videoRepository = new VideoRepository();
 
         console.log("Checking whether title already exists...");
@@ -49,18 +51,12 @@ router.post('/', auth, authorization, async (req, res) => {
             return res.status(400).json({ message: 'Video title must be unique.' });
         }
 
-        const videoFileBucketKey = `video/${userId}/${title}`;
-        const playlistBucketKey = `${videoFileBucketKey}/index.m3u8`;
-        const thumbnailBucketKey = `video/thumbnail/${userId}/${title}`;
-
         console.log("Inserting video...");
         // ------------------------------------------------------------------------- Inserting video...
         const videoInsertResult = await videoRepository.insert({
             title,
             fileName,
-            contentType: "application/octet-stream",
             userId,
-            bucketKey: videoFileBucketKey,
             temporary: true
         });
         console.log("Video insert result", videoInsertResult);
@@ -69,193 +65,104 @@ router.post('/', auth, authorization, async (req, res) => {
         }
         const videoId = videoInsertResult.insertedId.toString();
 
-        console.log("Splitting req stream...");
-        // ------------------------------------------------------------------------- Splitting req stream...
-        const { splitter, createBranch } = teeStream();
-        const metadataStream = createBranch();
+        // ------------------------------------------------------------------------- Set bucket keys
+        const videoFileBucketKey = `video/${userId}/${videoId}`;
+        const webCompatibleVideoFileBucketKey = `video/${userId}/web/${videoId}`;
+        const thumbnailBucketKey = `video/thumbnail/${userId}/${videoId}`;
 
-        const swallow = <T>(p: Promise<T>) => { p.catch((e) => { console.error('swallow throws an error.', e); }); return p; };
+        // ------------------------------------------------------------------------- Make the temporary directory
+        const jobDir = join(videoUploadTmpDir, videoId)
+        await mkdir(jobDir, { recursive: true });
 
-        const segmentUploads: Upload[] = [];
-        const segmentUploadPromises: Promise<any>[] = [];
+        const cleanupPaths: string[] = [];
+        const cleanup = async () => {
+            await Promise.all(cleanupPaths.map((p) => unlink(p).catch(() => { })));
+            await rm(jobDir, { recursive: true, force: true }).catch(() => { });
+        };
 
-        let playlistUpload: Upload | null = null;
-        let uploadThumbnail: Upload | null = null;
-        let thumbnailFile: string | null = null;
-
-        let minFileSize = 5 * 1024
-        let maxFileSize = 2 * 1024 * 1024 * 1024
-
-        const { inputFilePath: filePath, jobDir: directory, cleanup } = await prepareVideoInputOnRam({
-            input: req,
-            minFileSize,
-            maxFileSize,
-            title,
-        });
-
+        let rollbackPromises: undefined | Promise<any> = undefined
         try {
-            console.log("Uploading video file...");
-            // ------------------------------------------------------------------------- Uploading video file...
-            const uploadPromise = swallow((async () => {
-                await decodeVideoFileToRamSegments({
-                    inputFilePath: filePath,
-                    jobDir: directory,
-                    onSegment: ({ filename, stream }) => {
-                        const segmentKey = `${videoFileBucketKey}/${filename}`;
-                        const upload = new Upload({
-                            client: s3,
-                            params: {
-                                Bucket: BUCKET_NAME,
-                                Key: segmentKey,
-                                Body: stream,
-                                ContentType: "video/mp2t",
-                            },
-                        });
-                        segmentUploads.push(upload);
-                        segmentUploadPromises.push(
-                            upload.done().catch((err) => {
-                                console.error(`Failed to upload segment ${filename}:`, err);
-                                throw err;
-                            })
-                        );
-                    },
-                    onPlaylist: (m3u8Contents, isFinal) => {
-                        if (!isFinal) return;
-                        const upload = new Upload({
-                            client: s3,
-                            params: {
-                                Bucket: BUCKET_NAME,
-                                Key: playlistBucketKey,
-                                Body: m3u8Contents,
-                                ContentType: "application/vnd.apple.mpegurl",
-                            },
-                        });
-                        playlistUpload = upload;
-                        segmentUploadPromises.push(
-                            upload.done().catch((err) => {
-                                console.error(`Failed to upload playlist (final=${isFinal}):`, err);
-                                throw err;
-                            })
-                        );
-                    },
-                });
-                // Wait for every segment + playlist S3 write to finish too,
-                // not just ffmpeg's own completion.
-                await Promise.all(segmentUploadPromises);
-            })());
+            const maxTotalStorageBytes = req.user!.privileges!.maxStorageBytes;
 
-            console.log("Extracting video file metadata...");
-            // ------------------------------------------------------------------------- Extracting video file metadata...
-            const metadataPromise: Promise<ffmpeg.FfprobeData> = swallow((async () => {
-                try {
-                    return await new Promise((resolve, reject) => {
-                        ffmpeg(filePath).ffprobe((err, data) => {
-                            if (err) return reject(err);
-                            resolve(data);
-                        });
-                    })
-                } finally {
-                    if (!metadataStream.destroyed) metadataStream.destroy()
-                }
-            })());
+            // ------------------------------------------------------------------------- Store upload stream on disk
+            const { path: inputPath, size: inputSize } = await receiveUpload(req, maxTotalStorageBytes, jobDir);
+            cleanupPaths.push(inputPath);
 
-            console.log("Extracting video file content type...");
-            // ------------------------------------------------------------------------- Extracting video file content type...
-            const contentTypePromise: Promise<string> = swallow((async () => {
-                const fd = await fsp.open(filePath, "r");
-                try {
-                    const { buffer, bytesRead } = await fd.read(Buffer.alloc(8192), 0, 8192, 0);
-                    const result = await fileTypeFromBuffer(buffer.subarray(0, bytesRead));
-                    return result?.mime ?? "application/octet-stream";
-                } finally {
-                    await fd.close();
-                }
-            })());
+            // ------------------------------------------------------------------------- Probe received file, get info and Validate it
+            const info = await probeFile(inputPath);
+            const videoStream = info.streams.find((s) => s.codec_type === 'video');
+            const audioStream = info.streams.find((s) => s.codec_type === 'audio');
+            if (!videoStream || !ALLOWED_VIDEO_CODECS.has(videoStream.codec_name))
+                throw new InvalidMediaError('Unsupported or unrecognized video format');
 
-            console.log("Generating video file thumbnail...");
-            // ------------------------------------------------------------------------- Generating video file thumbnail...
-            const thumbnailFileDirectory = path.join('tmp', userId);
-            await fsp.mkdir(thumbnailFileDirectory, { recursive: true });
+            const durationSeconds = info.format.duration ? parseFloat(info.format.duration) : undefined;
 
-            const thumbnailFileName = `${title}_${Date.now()}.jpg`;
-            const outputPath = path.join(thumbnailFileDirectory, thumbnailFileName);
-            console.log({ outputPath });
+            // ------------------------------------------------------------------------- Set file paths
+            const webCopyPath = join(jobDir, `${videoId}-web.mp4`);
+            const thumbnailPath = join(jobDir, `${videoId}-thumb.jpg`);
+            cleanupPaths.push(webCopyPath, thumbnailPath);
 
-            const thumbnailPromise: Promise<string> = swallow((async () => {
-                try {
-                    return await new Promise((resolve, reject) => {
-                        ffmpeg(filePath).screenshots({ count: 1, folder: thumbnailFileDirectory, filename: thumbnailFileName, size: "320x240", timestamps: ['1'] })
-                            .on("end", () => resolve(outputPath))
-                            .on("error", reject);
-                    })
-                } finally {
-                    if (!metadataStream.destroyed) metadataStream.destroy()
-                }
-            })());
-
-            console.log("Waiting for streams to finish...");
-            // ------------------------------------------------------------------------- Waiting for streams to finish...
-            const [, metadata, contentType, thumbnailResult] = await Promise.all([
-                uploadPromise,
-                metadataPromise,
-                contentTypePromise,
-                thumbnailPromise,
+            // ------------------------------------------------------------------------- Wait for web compatible file and thumbnail to be generated and content type to be collected
+            const [_, contentType] = await Promise.all([
+                generateWebCompatibleCopy(inputPath, jobDir, basename(webCopyPath).split('.')[0], videoStream, audioStream).then((result) => pipeline(result.outputStream, createWriteStream(webCopyPath!))),
+                detectContentType(inputPath),
+                generateThumbnail(inputPath, thumbnailPath, durationSeconds),
             ]);
 
-            console.log({ metadata, contentType, thumbnailResult });
+            // ------------------------------------------------------------------------- Validate generated file sizes
+            const [webCopyStat, thumbnailStat] = await Promise.all([
+                stat(webCopyPath),
+                stat(thumbnailPath),
+            ]);
+            const totalStorageBytes = inputSize + webCopyStat.size + thumbnailStat.size;
+            const quota = new Map<UsageField, number>([['storageBytesCount', totalStorageBytes]])
+            if (await authorizeQuota(quota, req) !== true)
+                throw new UploadTooLargeError('Generated files exceed plan storage limit');
 
-            console.log("Uploading thumbnail...");
-            uploadThumbnail = new Upload({
-                client: s3,
-                params: {
-                    Bucket: BUCKET_NAME,
-                    Key: thumbnailBucketKey,
-                    Body: fs.createReadStream(thumbnailResult)
-                }
-            });
-            await uploadThumbnail.done();
+            try {
+                // ------------------------------------------------------------------------- Upload files to the S3 compatible object storage
+                await Promise.all([
+                    uploadToS3(createReadStream(inputPath), videoFileBucketKey, contentType.mimeType),
+                    uploadToS3(createReadStream(webCopyPath), webCompatibleVideoFileBucketKey, 'video/mp4'),
+                    uploadToS3(createReadStream(thumbnailPath), thumbnailBucketKey, 'image/jpeg'),
+                ]);
 
-            const updateResult = await videoRepository.unsafeUpdate(videoId, userId, { contentType, temporary: false, thumbnailKey: thumbnailBucketKey, thumbnailFileName });
+                // ------------------------------------------------------------------------- Update video info in DB, Make it permanent and set content type
+                const updateResult = await videoRepository.unsafeUpdate(videoId, userId, { contentType: contentType, temporary: false, bucketKey: videoFileBucketKey, webBucketKey: webCompatibleVideoFileBucketKey, thumbnailKey: thumbnailBucketKey, thumbnailFileName: basename(thumbnailPath) });
+                if (!updateResult.acknowledged || updateResult.matchedCount !== 1)
+                    throw new Error('failed to upload video')
 
-            if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
-                return res.status(500).json({ ok: false, message: 'Video info update failed' });
+                // Work is durably done — clear reservations so the response-based rollback middleware becomes a no-op for this request no matter what happens to the connection from here on.
+                // The connection might drop at this exact moment, which fires the res.on('close') and causes rollbackQuotaOnFailure middleware to rollback although content is properly uploaded and stored(a false alarm).
+                req.quotaReservations = []
+            } catch (error) {
+                rollbackPromises = Promise.allSettled([
+                    deleteFromS3(videoFileBucketKey).catch((_) => { }),
+                    deleteFromS3(webCompatibleVideoFileBucketKey).catch((_) => { }),
+                    deleteFromS3(thumbnailBucketKey).catch((_) => { }),
+                    videoRepository.delete(videoId).catch((_) => { })
+                ])
+
+                throw error
             }
         } catch (err) {
-            console.error(err);
-
-            splitter.destroy();
-
-            try {
-                await Promise.all(segmentUploads.map((u) => u.abort().catch(() => { })));
-                await (playlistUpload as Upload | null)?.abort();
-            } catch (abortErr) { console.error('Failed to abort segment/playlist uploads:', abortErr); }
-
-            try {
-                await uploadThumbnail?.abort();
-            } catch (abortErr) { console.error('Failed to abort cover art upload:', abortErr); }
-
-            if (err instanceof MaxFileSizeExceededError) {
-                return res.status(413).json({ errors: [err.message] });
+            if (err instanceof UploadTooLargeError) {
+                return res.status(403).json({ error: err.message });
+            } else if (err instanceof InvalidMediaError) {
+                return res.status(400).json({ error: err.message });
+            } else {
+                console.error('Video upload failed:', err);
+                return res.status(500).json({ error: 'Upload failed' });
             }
-            if (err instanceof MinFileSizeNotMetError) {
-                return res.status(400).json({ errors: [err.message] });
-            }
-
-            return res.status(500).json({ errors: ['Error uploading video file'] });
         } finally {
-            if (thumbnailFile) {
-                fsp.unlink(thumbnailFile).catch((unlinkErr) => {
-                    console.error('Failed to remove temp thumbnail file:', unlinkErr);
-                });
-            }
-
             await cleanup();
+            if (rollbackPromises !== undefined) await rollbackPromises
         }
 
         return res.status(201).json({ id: videoId });
     } catch (err) {
         console.error(err)
-        res.status(500).json({ errors: ['Error uploading video file'] });
+        try { res.status(500).json({ errors: ['Error uploading video file'] }); } catch (_) { }
     } finally {
         console.log('------------end------------')
     }
@@ -283,7 +190,7 @@ router.get('/info/', auth, async (req, res) => {
         }
         console.log({ videoId, title })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const videoRepository = new VideoRepository()
 
@@ -319,7 +226,7 @@ router.get('/singed_token', auth, async (req, res) => {
         }
         console.log({ videoId })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const videoRepository = new VideoRepository()
 
@@ -340,22 +247,15 @@ router.get('/singed_token', auth, async (req, res) => {
     }
 });
 
-// For non web applications
-router.get('/file/:videoId/:filename', auth, async (req, res) => {
+// For non web clients
+router.get('/file/:videoId', auth, async (req, res) => {
     try {
-        console.log('/api/video/file/:videoId/:filename')
+        console.log('/api/video/file/:videoId')
 
         console.log('Validation...')
-        let videoId: string | undefined = undefined, filename: string | undefined = undefined, isPlaylist
+        let videoId: string | undefined = undefined
         try {
             videoId = await string().objectIdString().required().label('Video id').validate(req.params.videoId?.toString())
-            filename = await string().required().label('File name').validate(req.params.filename?.toString())
-
-            isPlaylist = filename === "index.m3u8";
-            const isSegment = /^segment_\d+\.ts$/.test(filename);
-            if (!isPlaylist && !isSegment) {
-                return res.status(400).json({ errors: ['Invalid file names requested'] });
-            }
         } catch (err) {
             console.error(err)
             if (err instanceof ValidationError)
@@ -364,31 +264,7 @@ router.get('/file/:videoId/:filename', auth, async (req, res) => {
         }
         console.log({ videoId })
 
-        const videoRepository = new VideoRepository()
-
-        const userId = (req as any).user.userId
-
-        console.log("Checking weather video exists...");
-        const video = await videoRepository.getForUser(videoId, userId!)
-        if (!video)
-            return res.status(404).json({ message: 'Video not found' });
-        console.log({ video })
-
-        const result = await s3.send(new GetObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: video.bucketKey + '/' + filename,
-        }));
-        console.log({ result, key: video.bucketKey + '/' + filename })
-
-        if (result.Body === undefined || result.Body === null)
-            return res.status(404).send();
-
-        res.setHeader("Content-Type", isPlaylist ? "application/vnd.apple.mpegurl" : "video/mp2t");
-
-        if (result.ContentLength)
-            res.setHeader("Content-Length", result.ContentLength);
-
-        (result.Body as Readable).pipe(res)
+        await streamVideoFile(videoId, req.user!.userId, req, res, true)
     } catch (err) {
         console.error(err)
         res.status(500).json({ message: 'Error getting video file' });
@@ -397,23 +273,16 @@ router.get('/file/:videoId/:filename', auth, async (req, res) => {
     }
 });
 
-// For web applications
-router.get('/file/:token/:videoId/:filename', async (req, res) => {
+// For web clients
+router.get('/file/:token/:videoId', async (req, res) => {
     try {
-        console.log('/api/video/file/:token/:videoId/:filename')
+        console.log('/api/video/file/:token/:videoId')
 
         console.log('Validation...')
-        let videoId: string | undefined = undefined, filename: string | undefined = undefined, token: string | undefined = undefined, isPlaylist
+        let videoId: string | undefined = undefined, token: string | undefined = undefined
         try {
             token = await string().required().label('Token').validate(req.params.token?.toString())
             videoId = await string().objectIdString().required().label('Video id').validate(req.params.videoId?.toString())
-            filename = await string().required().label('File name').validate(req.params.filename?.toString())
-
-            isPlaylist = filename === "index.m3u8";
-            const isSegment = /^segment_\d+\.ts$/.test(filename);
-            if (!isPlaylist && !isSegment) {
-                return res.status(400).json({ errors: ['Invalid file names requested'] });
-            }
         } catch (err) {
             console.error(err)
             if (err instanceof ValidationError)
@@ -424,32 +293,10 @@ router.get('/file/:token/:videoId/:filename', async (req, res) => {
 
         console.log('Verifying token...')
         const { valid, userId } = verifyStreamToken(token, videoId);
-        if (valid !== true)
+        if (valid !== true || !userId)
             return res.status(401).send();
 
-        const videoRepository = new VideoRepository()
-
-        console.log("Checking weather video exists...");
-        const video = await videoRepository.getForUser(videoId, userId!)
-        if (!video)
-            return res.status(404).json({ message: 'Video not found' });
-        console.log({ video })
-
-        const result = await s3.send(new GetObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: video.bucketKey + '/' + filename,
-        }));
-        console.log({ result, key: video.bucketKey + '/' + filename })
-
-        if (result.Body === undefined || result.Body === null)
-            return res.status(404).send();
-
-        res.setHeader("Content-Type", isPlaylist ? "application/vnd.apple.mpegurl" : "video/mp2t");
-
-        if (result.ContentLength)
-            res.setHeader("Content-Length", result.ContentLength);
-
-        (result.Body as Readable).pipe(res)
+        await streamVideoFile(videoId, userId, req, res, true)
     } catch (err) {
         console.error(err)
         res.status(500).json({ message: 'Error getting video file' });
@@ -457,6 +304,43 @@ router.get('/file/:token/:videoId/:filename', async (req, res) => {
         console.log('------------end------------')
     }
 });
+
+async function streamVideoFile(videoId: string, userId: string, req: Request, res: Response, isWeb: boolean) {
+    const videoRepository = new VideoRepository()
+
+    console.log("Checking weather video exists...");
+    const video = await videoRepository.getForUser(videoId, userId!)
+    if (!video || (isWeb && !video.webBucketKey) || (!isWeb && !video.bucketKey))
+        return res.status(404).json({ message: 'Video not found' });
+    console.log({ video })
+
+    const range = req.headers.range;
+
+    const result = await s3.send(new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: isWeb ? video.webBucketKey : video.bucketKey,
+        Range: range
+    }));
+    console.log({ result, key: video.bucketKey })
+
+    if (result.Body === undefined || result.Body === null)
+        return res.status(404).send();
+
+    const body = result.Body as Readable;
+    body.on('error', (err) => {
+        console.error('S3 stream error:', err);
+        if (!res.headersSent) res.status(500).end();
+        else res.destroy();
+    });
+
+    res.status(range ? 206 : 200);
+    res.setHeader('Content-Type', isWeb ? 'video/mp4' : (video.contentType?.mimeType ?? 'video/mp4'));
+    res.setHeader('Accept-Ranges', 'bytes');
+    if (result.ContentRange) res.setHeader('Content-Range', result.ContentRange);
+    if (result.ContentLength) res.setHeader('Content-Length', result.ContentLength);
+
+    body.pipe(res)
+}
 
 router.get('/thumbnail/:videoId', auth, async (req, res) => {
     try {
@@ -476,7 +360,7 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
         }
         console.log({ videoId })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const videoRepository = new VideoRepository()
 
@@ -514,7 +398,7 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
     }
 });
 
-router.delete('/:videoId', auth, authorization, async (req, res) => {
+router.delete('/:videoId', auth, async (req, res) => {
     try {
         console.log('/api/video', 'DELETE')
 
@@ -530,7 +414,7 @@ router.delete('/:videoId', auth, authorization, async (req, res) => {
         }
         console.log({ videoId })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const videoRepository = new VideoRepository()
 

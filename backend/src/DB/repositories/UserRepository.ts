@@ -4,6 +4,7 @@ import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { collectionName, User, UserUpdate } from '../models/User';
 import { MongoDB } from '../mongodb';
+import { Redis } from '../redis';
 
 export class UserRepository implements IRepository, ISeedable, IDropable {
     IDropable: 'IDropable' = 'IDropable';
@@ -12,6 +13,8 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
 
     private session: ClientSession | undefined = undefined
     private static collection: Collection<User> | undefined = undefined
+
+    private static USER_DATA_CACHE_TTL_SECONDS: number = 1_800;
 
     seed(count?: number): Promise<void> {
         throw new Error('Method not implemented.');
@@ -64,7 +67,19 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
 
     async get(id: string) {
         try {
-            return (await UserRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }).toArray())[0]
+            const redis = await Redis.getClient()
+
+            const userJson = await redis.get(`${collectionName}:${id}`)
+            if (userJson)
+                return JSON.parse(userJson)
+
+            const user = (await UserRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }).toArray())[0]
+            if (!user)
+                return undefined
+
+            await redis.set(`${collectionName}:${id}`, JSON.stringify(user), 'EX', UserRepository.USER_DATA_CACHE_TTL_SECONDS)
+
+            return user
         } catch (err) {
             console.error(err)
             return false

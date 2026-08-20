@@ -1,5 +1,5 @@
 import { boolean, InferType, number, object, string } from 'yup';
-import { likeObjectId } from '../common_schemas';
+import { contentTypeSchema, likeObjectId } from '../common_schemas';
 
 export const collectionName = 'image'
 
@@ -12,27 +12,21 @@ export const imagePostSchema = object().shape(post).required()
 
 const create = {
     userId: likeObjectId.required(),
-    contentType: string().required(),
+    contentType: contentTypeSchema.optional(),
     title: string().required().label('Title'),
-    bucketKey: string().required().url(), // image/<userId>/<fileName>
+    bucketKey: string().optional().url(), // image/<userId>/<imageId>
     temporary: boolean().required(),
 }
 export const imageCreateSchema = object().shape(create).required()
-
-const patch = {
-    title: string().required().label('Title'),
-}
-export const imagePatchSchema = object().shape(patch).required()
 
 const update = {
     schemaVersion: string().optional().min(6).max(20),
     userId: likeObjectId.optional(),
 
-    contentType: string().optional(),
+    contentType: contentTypeSchema.optional(),
     title: string().optional().label('Title'),
-    fileName: string().optional().label('File name'),
 
-    bucketKey: string().optional().url(), // image/<userId>/<fileName>
+    bucketKey: string().optional().url(), // image/<userId>/<imageId>
 
     temporary: boolean().optional(),
 }
@@ -44,11 +38,10 @@ export const imageSchema = object().shape({
 
     userId: likeObjectId.required(),
 
-    contentType: string().required(),
+    contentType: contentTypeSchema.optional(),
     title: string().required().label('Title'),
-    fileName: string().required().label('File name'),
 
-    bucketKey: string().required().url(), // image/<userId>/<fileName>
+    bucketKey: string().optional().url(), // image/<userId>/<imageId>
 
     temporary: boolean().required(),
 
@@ -58,6 +51,5 @@ export const imageSchema = object().shape({
 
 export type ImagePost = InferType<typeof imagePostSchema>
 export type ImageCreate = InferType<typeof imageCreateSchema>
-export type ImagePatch = InferType<typeof imagePatchSchema>
 export type ImageUpdate = InferType<typeof imageUpdateSchema>
 export type Image = InferType<typeof imageSchema>

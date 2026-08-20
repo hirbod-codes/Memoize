@@ -104,7 +104,8 @@ export const runCronjobs = async () => {
 
         console.log('Deleting dangling video files...');
         const handleVideoRemove = async (video: Video) => {
-            await deleteObjectIfExists(video.bucketKey)
+            if (video.bucketKey)
+                await deleteObjectIfExists(video.bucketKey)
             if (video.thumbnailKey)
                 await deleteObjectIfExists(video.thumbnailKey)
             deleteVideo(video._id!.toString())
@@ -115,7 +116,8 @@ export const runCronjobs = async () => {
 
         console.log('Deleting dangling audio files...');
         const handleAudioRemove = async (audio: Audio) => {
-            await deleteObjectIfExists(audio.bucketKey)
+            if (audio.bucketKey)
+                await deleteObjectIfExists(audio.bucketKey)
             if (audio.coverArtKey)
                 await deleteObjectIfExists(audio.coverArtKey)
             deleteAudio(audio._id!.toString())

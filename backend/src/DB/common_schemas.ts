@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { addMethod, AnyObject, Flags, Maybe, mixed, number, object, string } from "yup";
+import { addMethod, AnyObject, Flags, InferType, Maybe, mixed, number, object, string } from "yup";
 
 declare module 'yup' {
     interface ObjectSchema<
@@ -97,3 +97,9 @@ export function uniqueArrayTest(list: any) {
     if (!Array.isArray(list)) return false
     return list.length === new Set(list).size;
 }
+
+export const contentTypeSchema = object().shape({
+    mimeType: string().required(),
+    extension: string().required(),
+})
+export type ContentType = InferType<typeof contentTypeSchema>

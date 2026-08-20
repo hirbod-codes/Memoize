@@ -15,7 +15,7 @@ const update = {
     phoneNumber: string().optional().matches(/^09[0-9]{9}$/),
     email: string().optional().email(),
 
-    avatarKey: string().optional(),
+    avatarKey: string().optional(), // user/avatar/<userId>/
     temporaryAvatar: boolean().optional(),
 
     password: string().optional(),

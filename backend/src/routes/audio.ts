@@ -1,24 +1,33 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { string, ValidationError } from 'yup';
-import { auth, authenticateToken, authorization } from '../middlewares/auth';
-import { BUCKET_NAME, ttsApiKey } from '../configs';
-import { Upload } from "@aws-sdk/lib-storage";
+import { auth, authenticateToken } from '../middlewares/auth';
+import { audioUploadTmpDir, BUCKET_NAME, ttsApiKey } from '../configs';
 import AudioRepository from '../DB/repositories/AudioRepository';
-import * as mm from "music-metadata";
-import { fileTypeFromBuffer } from "file-type";
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { extension } from "mime-types";
-import { teeStream } from '../lib/stream';
-import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
-import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
 import { generateStreamToken, verifyStreamToken } from '../lib/signed_urls';
 import { UserRepository } from '../DB/repositories/UserRepository';
 import { httpsStreamRequest } from '../utils';
 import { s3 } from '..';
+import { authorizeFeature, authorizeQuota, rollbackQuota } from '../middlewares/authorization';
+import { basename, join } from 'path';
+import { mkdir, rm, stat, unlink } from 'fs/promises';
+import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../lib/file_management';
+import { extractCoverArt, generateWebCompatibleCopy, isWebCompatible, probeFile } from '../ffmpeg';
+import { InvalidMediaError } from '../errors/InvalidMediaError';
+import { UploadTooLargeError } from '../errors/UploadTooLargeError';
+import { createReadStream, createWriteStream } from 'fs';
+import { Readable } from 'stream';
+import { pipeline } from 'stream/promises';
+import { UsageField } from '../DB/models/Usage';
 
 const router = express.Router();
 
-router.post('/', auth, authorization, async (req, res) => {
+const ALLOWED_AUDIO_CODECS = new Set([
+    'aac', 'mp3', 'opus', 'vorbis', 'flac', 'alac',
+    'pcm_s16le', 'pcm_s24le', 'pcm_f32le',
+]);
+
+router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authorizeQuota(new Map([['valuePerContentCount.audio', 1]])), async (req, res) => {
     try {
         console.log('/api/audio', 'POST')
 
@@ -36,7 +45,7 @@ router.post('/', auth, authorization, async (req, res) => {
             return res.status(400).json({ message: 'Invalid Audio info.' });
         }
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const audioRepository = new AudioRepository()
 
@@ -46,181 +55,112 @@ router.post('/', auth, authorization, async (req, res) => {
         if (audio)
             return res.status(400).json({ message: 'Audio title must be unique.' });
 
-        const audioFileBucketKey = `audio/${userId}/${title}`
-        const coverArtBucketKey = `audio/cover_art/${userId}/${title}`
-
         console.log("Inserting audio...");
         // ------------------------------------------------------------------------- Inserting audio...
-        const audioInsertResult = await audioRepository.insert({ title, fileName, contentType: "application/octet-stream", userId, bucketKey: audioFileBucketKey, temporary: true })
+        const audioInsertResult = await audioRepository.insert({ title, userId, temporary: true })
         console.log("Audio insert result", audioInsertResult);
         if (!audioInsertResult.acknowledged || !audioInsertResult.insertedId)
             return res.status(500).json({ ok: false, message: 'Audio info creation failed' })
+        const audioId = audioInsertResult.insertedId.toString()
 
-        console.log("Splitting req stream...");
-        // ------------------------------------------------------------------------- Splitting req stream...
-        const { splitter, createBranch } = teeStream();
+        // ------------------------------------------------------------------------- Make the temporary directory
+        const jobDir = join(audioUploadTmpDir, audioId)
+        await mkdir(jobDir, { recursive: true });
 
-        const s3Stream = createBranch();
-        const metadataStream = createBranch();
-        const typeStream = createBranch();
+        const cleanupPaths: string[] = [];
+        const cleanup = async () => {
+            await Promise.all(cleanupPaths.map((p) => unlink(p).catch(() => { })));
+            await rm(jobDir, { recursive: true, force: true }).catch(() => { });
+        };
 
-        const swallow = <T>(p: Promise<T>) => { p.catch((e) => { console.error('swallow throws an error.', e); }); return p; };
-
-        let uploadAudio: Upload | null = null
-        let uploadCoverArt: Upload | null = null;
-        let metadata
-        let contentType: string = ''
-        let cover
-        let coverExists
-
-        let totalBytes = 0;
-        let sizeLimitError: MaxFileSizeExceededError | null = null;
-        const minFileSize = 10 * 1024
-        const maxFileSize = 2 * 1024 * 1024 * 1024
+        let rollbackPromises: undefined | Promise<any> = undefined
         try {
-            splitter.on('error', () => { });
-            req.on('error', (err) => {
-                console.error('Request stream error:', err);
-                splitter.destroy(err);
-            });
-            req.on('data', (chunk: Buffer) => {
-                totalBytes += chunk.length;
-                if (sizeLimitError) return; // already tripped, ignore further chunks
-                if (totalBytes > maxFileSize) {
-                    sizeLimitError = new MaxFileSizeExceededError(maxFileSize, totalBytes);
-                    console.error(`[size] Max limit exceeded (${totalBytes} bytes), aborting`);
-                    req.destroy(sizeLimitError);
-                    splitter.destroy(sizeLimitError);
-                }
-            });
-            req.pipe(splitter);
-            splitter.resume();
+            const maxTotalStorageBytes = req.user!.privileges!.maxStorageBytes;
 
-            console.log("Uploading audio file...");
-            // ------------------------------------------------------------------------- Uploading audio file...
-            uploadAudio = new Upload({
-                client: s3,
-                params: {
-                    Bucket: BUCKET_NAME,
-                    Key: audioFileBucketKey,
-                    Body: s3Stream
-                }
-            });
-            const uploadPromise = swallow(uploadAudio.done());
+            // ------------------------------------------------------------------------- Store upload stream on disk
+            const { path: inputPath, size: inputSize } = await receiveUpload(req, maxTotalStorageBytes, jobDir);
+            cleanupPaths.push(inputPath);
 
-            console.log("Extracting audio file info...");
-            // ------------------------------------------------------------------------- Extracting audio file info...
-            const metadataPromise = swallow((async () => {
-                try {
-                    return await mm.parseStream(metadataStream, {
-                        mimeType: req.headers["content-type"] as string
-                    })
-                } finally {
-                    if (!metadataStream.destroyed) metadataStream.destroy()
-                }
-            })());
+            // ------------------------------------------------------------------------- Probe received file, get info and Validate it
+            const info = await probeFile(inputPath);
+            const audioStream = info.streams.find((s) => s.codec_type === 'audio');
+            if (!audioStream || !ALLOWED_AUDIO_CODECS.has(audioStream.codec_name))
+                throw new InvalidMediaError('Unsupported or unrecognized audio format');
 
-            console.log("Extracting audio file content type...");
-            // ------------------------------------------------------------------------- Extracting audio file content type...
-            const contentTypePromise = swallow((async () => {
-                const chunks: Buffer[] = [];
-                let total = 0;
+            // ------------------------------------------------------------------------- Set bucket keys
+            const isUploadWebCompatible = isWebCompatible(undefined, audioStream)
+            const audioFileBucketKey = `audio/${userId}/${audioId}`;
+            const webCompatibleAudioFileBucketKey = isUploadWebCompatible ? undefined : `audio/${userId}/web/${audioId}`;
+            const coverArtBucketKey = `audio/cover_art/${userId}/${audioId}`;
 
-                try {
-                    for await (const chunk of typeStream) {
-                        const buffer = Buffer.isBuffer(chunk)
-                            ? chunk
-                            : Buffer.from(chunk);
+            // ------------------------------------------------------------------------- Set file paths
+            const webCopyPath = isUploadWebCompatible ? undefined : join(jobDir, `${audioId}-web.m4a`);
+            if (webCopyPath)
+                cleanupPaths.push(webCopyPath);
 
-                        chunks.push(buffer);
-                        total += buffer.length;
+            const coverArtPath = join(jobDir, `${audioId}-thumb.jpg`);
+            cleanupPaths.push(coverArtPath);
 
-                        if (total >= maxFileSize) {
-                            break;
-                        }
-                    }
-                } finally {
-                    if (!typeStream.destroyed) typeStream.destroy();
-                }
-
-                const head = Buffer.concat(chunks, total);
-
-                const result = await fileTypeFromBuffer(head);
-
-                return result?.mime ?? "application/octet-stream";
-            })());
-
-            console.log("Waiting for streams to finish...");
-            // ------------------------------------------------------------------------- Waiting for streams to finish...
-            [, metadata, contentType] = await Promise.all([
-                uploadPromise,
-                metadataPromise,
-                contentTypePromise,
+            // ------------------------------------------------------------------------- Wait for web compatible file and cover art to be generated and content type to be collected
+            const promises = await Promise.all([
+                detectContentType(inputPath),
+                extractCoverArt(inputPath, info.streams, jobDir, basename(coverArtPath).split('.')[0]),
+                ...(isUploadWebCompatible ? [] : [generateWebCompatibleCopy(inputPath, jobDir, basename(webCopyPath!).split('.')[0], undefined, audioStream).then((result) => pipeline(result.outputStream, createWriteStream(webCopyPath!)))]),
             ]);
+            const contentType = promises[0]
+            const coverArtResult = promises[1]
 
-            if (sizeLimitError)
-                throw sizeLimitError;
+            // ------------------------------------------------------------------------- Validate generated file sizes
+            const [coverArtStat, webCopyStat] = await Promise.all([
+                stat(coverArtPath),
+                ...(isUploadWebCompatible ? [] : [stat(webCopyPath!)]),
+            ]);
+            const totalStorageBytes = inputSize + (webCopyStat ? webCopyStat.size : 0) + coverArtStat.size;
+            const quota = new Map<UsageField, number>([['storageBytesCount', totalStorageBytes]])
+            if (await authorizeQuota(quota, req) !== true)
+                throw new UploadTooLargeError('Generated files exceed plan storage limit');
 
-            if (totalBytes < minFileSize)
-                throw new MinFileSizeNotMetError(minFileSize, totalBytes);
+            try {
+                // ------------------------------------------------------------------------- Upload files to the S3 compatible object storage
+                await Promise.all([
+                    uploadToS3(createReadStream(inputPath), audioFileBucketKey, contentType.mimeType),
+                    ...(isUploadWebCompatible ? [] : [uploadToS3(createReadStream(webCopyPath!), webCompatibleAudioFileBucketKey!, 'audio/mp4')]),
+                    ...(coverArtResult ? [uploadToS3(createReadStream(coverArtResult.path), coverArtBucketKey, coverArtResult.mimeType)] : [])
+                ]);
 
-            const common = metadata.common;
-            console.log({ metadata, common });
+                // ------------------------------------------------------------------------- Update audio info in DB, Make it permanent and set content type
+                const updateResult = await audioRepository.unsafeUpdate(audioId, userId, { contentType: contentType, temporary: false, bucketKey: audioFileBucketKey, webBucketKey: webCompatibleAudioFileBucketKey, coverArtKey: coverArtBucketKey, coverArtFileName: basename(coverArtPath) });
+                if (!updateResult.acknowledged || updateResult.matchedCount !== 1)
+                    throw new Error('failed to upload audio')
 
-            cover = common.picture?.[0]
-                ? {
-                    data: common.picture[0].data,
-                    mime: common.picture[0].format
-                }
-                : null;
-            coverExists = cover && cover.data && cover.mime
-            console.log({ coverExists, cover_mime: cover?.mime });
+                // Work is durably done — clear reservations so the response-based rollback middleware becomes a no-op for this request no matter what happens to the connection from here on.
+                // The connection might drop at this exact moment, which fires the res.on('close') and causes rollbackQuotaOnFailure middleware to rollback although content is properly uploaded and stored(a false alarm).
+                req.quotaReservations = []
+            } catch (error) {
+                rollbackPromises = Promise.allSettled([
+                    deleteFromS3(audioFileBucketKey).catch((_) => { }),
+                    ...(webCompatibleAudioFileBucketKey ? [deleteFromS3(webCompatibleAudioFileBucketKey).catch((_) => { })] : []),
+                    ...(coverArtResult ? [deleteFromS3(coverArtBucketKey).catch((_) => { })] : []),
+                    audioRepository.delete(audioId).catch((_) => { })
+                ])
 
-            if (coverExists) {
-                console.log("Uploading cover art...");
-                uploadCoverArt = new Upload({
-                    client: s3,
-                    params: {
-                        Bucket: BUCKET_NAME,
-                        Key: coverArtBucketKey,
-                        Body: cover?.data
-                    }
-                });
-                await uploadCoverArt.done();
+                throw error
             }
         } catch (err) {
-            console.error(err);
-
-            splitter.destroy();
-
-            try {
-                await uploadAudio?.abort();
-            } catch (abortErr) { console.error('Failed to abort segment/playlist uploads:', abortErr); }
-
-            try {
-                await uploadCoverArt?.abort();
-            } catch (abortErr) { console.error('Failed to abort cover art upload:', abortErr); }
-
-            if (err instanceof MaxFileSizeExceededError) {
-                return res.status(413).json({ errors: [err.message] });
+            if (err instanceof UploadTooLargeError) {
+                res.status(403).json({ error: err.message });
+            } else if (err instanceof InvalidMediaError) {
+                res.status(400).json({ error: err.message });
+            } else {
+                console.error('Video upload failed:', err);
+                res.status(500).json({ error: 'Upload failed' });
             }
-            if (err instanceof MinFileSizeNotMetError) {
-                return res.status(400).json({ errors: [err.message] });
-            }
-
-            return res.status(500).json({ message: 'Error uploading video file' });
+        } finally {
+            await cleanup();
+            if (rollbackPromises !== undefined) await rollbackPromises
         }
 
-        console.log("Making final changes to video document in db...");
-        // ------------------------------------------------------------------------- Making final changes to video document in db...
-        const unsafeUpdateResult = await audioRepository.unsafeUpdate(audioInsertResult.insertedId.toString(), userId, { contentType, temporary: false, coverArtKey: coverExists ? coverArtBucketKey : undefined, coverArtFileName: coverExists ? `${title}.${extension(cover!.mime)}` : undefined })
-        console.log({ r: unsafeUpdateResult });
-        if (!unsafeUpdateResult.acknowledged || unsafeUpdateResult.matchedCount !== 1) {
-            await uploadAudio.abort();
-            return res.status(500).json({ ok: false, message: 'Audio info update failed' });
-        }
-
-        res.status(201).json({ id: audioInsertResult.insertedId.toString() });
+        res.status(201).json({ id: audioId });
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Error uploading video file' });
@@ -251,7 +191,7 @@ router.get('/info/', auth, async (req, res) => {
         }
         console.log({ audioId, title })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const audioRepository = new AudioRepository()
 
@@ -287,7 +227,7 @@ router.get('/singed_token', auth, async (req, res) => {
         }
         console.log({ audioId })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const audioRepository = new AudioRepository()
 
@@ -388,45 +328,7 @@ router.get('/file/:audioId', auth, async (req, res) => {
         }
         console.log({ audioId })
 
-        const userId = (req as any).user.userId
-
-        const audioRepository = new AudioRepository()
-
-        console.log("Checking weather audio exists...");
-        const audio = await audioRepository.getForUser(audioId, userId)
-        if (!audio) {
-            res.status(404).json({ message: 'Audio not found' });
-            return
-        }
-        console.log({ audio })
-
-        const range = req.headers.range;
-
-        const result = await s3.send(new GetObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: audio.bucketKey,
-            Range: download ? undefined : range,
-            ResponseContentDisposition: download ? `attachment; filename="${audio.fileName}"` : undefined,
-        }));
-
-        const stream = result.Body as any;
-
-        const contentLength = result.ContentLength;
-        const contentRange = result.ContentRange;
-
-        res.setHeader("Accept-Ranges", "bytes");
-        res.setHeader("Content-Type", result.ContentType || "application/octet-stream");
-
-        if (range && contentRange) {
-            res.status(206);
-            res.setHeader("Content-Range", contentRange);
-            res.setHeader("Content-Length", contentLength ?? "");
-        } else {
-            res.status(200);
-            res.setHeader("Content-Length", contentLength ?? "");
-        }
-
-        stream.pipe(res);
+        await streamAudioFile(audioId, req.user!.userId, req, res, true, download)
     } catch (err) {
         res.status(500).json({ message: 'Error getting audio file' });
     } finally {
@@ -456,44 +358,10 @@ router.get('/file/:audioId/:token', async (req, res) => {
 
         console.log('Verifying token...')
         const { valid, userId } = verifyStreamToken(token, audioId);
-        if (valid !== true)
+        if (valid !== true || !userId)
             return res.status(401).send();
 
-        const audioRepository = new AudioRepository()
-
-        console.log("Checking weather audio exists...");
-        const audio = await audioRepository.getForUser(audioId, userId!)
-        if (!audio)
-            return res.status(404).json({ message: 'Audio not found' });
-        console.log({ audio })
-
-        const range = req.headers.range;
-
-        const result = await s3.send(new GetObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: audio.bucketKey,
-            Range: download ? undefined : range,
-            ResponseContentDisposition: download ? `attachment; filename="${audio.fileName}"` : undefined,
-        }));
-
-        const stream = result.Body as any;
-
-        const contentLength = result.ContentLength;
-        const contentRange = result.ContentRange;
-
-        res.setHeader("Accept-Ranges", "bytes");
-        res.setHeader("Content-Type", result.ContentType || "application/octet-stream");
-
-        if (range && contentRange) {
-            res.status(206);
-            res.setHeader("Content-Range", contentRange);
-            res.setHeader("Content-Length", contentLength ?? "");
-        } else {
-            res.status(200);
-            res.setHeader("Content-Length", contentLength ?? "");
-        }
-
-        stream.pipe(res);
+        await streamAudioFile(audioId, userId, req, res, true, download)
     } catch (err) {
         console.error(err)
         res.status(500).json({ message: 'Error getting audio file' });
@@ -501,6 +369,44 @@ router.get('/file/:audioId/:token', async (req, res) => {
         console.log('------------end------------')
     }
 });
+
+async function streamAudioFile(audioId: string, userId: string, req: Request, res: Response, isWeb: boolean, download: boolean) {
+    const audioRepository = new AudioRepository()
+
+    console.log("Checking weather audio exists...");
+    const audio = await audioRepository.getForUser(audioId, userId!)
+    if (!audio || !audio.contentType || (isWeb && !audio.webBucketKey) || (!isWeb && !audio.bucketKey))
+        return res.status(404).json({ message: 'Audio not found' });
+    console.log({ audio })
+
+    const range = req.headers.range;
+
+    const result = await s3.send(new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: isWeb ? audio.webBucketKey : audio.bucketKey,
+        Range: range,
+        ResponseContentDisposition: download ? `attachment; filename="${audio._id!.toString()}.${audio.contentType.extension}"` : undefined,
+    }));
+    console.log({ result, key: audio.bucketKey })
+
+    if (result.Body === undefined || result.Body === null)
+        return res.status(404).send();
+
+    const body = result.Body as Readable;
+    body.on('error', (err) => {
+        console.error('S3 stream error:', err);
+        if (!res.headersSent) res.status(500).end();
+        else res.destroy();
+    });
+
+    res.status(range ? 206 : 200);
+    res.setHeader('Content-Type', isWeb ? 'audio/m4a' : (audio.contentType?.mimeType ?? 'audio/m4a'));
+    res.setHeader('Accept-Ranges', 'bytes');
+    if (result.ContentRange) res.setHeader('Content-Range', result.ContentRange);
+    if (result.ContentLength) res.setHeader('Content-Length', result.ContentLength);
+
+    body.pipe(res)
+}
 
 router.get('/coverArt/:audioId', auth, async (req, res) => {
     try {
@@ -520,7 +426,7 @@ router.get('/coverArt/:audioId', auth, async (req, res) => {
         }
         console.log({ audioId })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const audioRepository = new AudioRepository()
 
@@ -558,7 +464,7 @@ router.get('/coverArt/:audioId', auth, async (req, res) => {
     }
 });
 
-router.delete('/:audioId', auth, authorization, async (req, res) => {
+router.delete('/:audioId', auth, async (req, res) => {
     try {
         console.log('/api/audio', 'DELETE')
 
@@ -574,7 +480,7 @@ router.delete('/:audioId', auth, authorization, async (req, res) => {
         }
         console.log({ audioId })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const audioRepository = new AudioRepository()
 

@@ -1,7 +1,7 @@
 import express from 'express';
 import { string, ValidationError } from 'yup';
-import { auth, authorization } from '../middlewares/auth';
-import { BUCKET_NAME } from '../configs';
+import { auth } from '../middlewares/auth';
+import { BUCKET_NAME, imageUploadTmpDir } from '../configs';
 import { Upload } from "@aws-sdk/lib-storage";
 import ImageRepository from '../DB/repositories/ImageRepository';
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
@@ -10,10 +10,19 @@ import { teeStream } from '../lib/stream';
 import { MaxFileSizeExceededError } from '../errors/MaxFileSizeExceededError';
 import { MinFileSizeNotMetError } from '../errors/MinFileSizeNotMetError';
 import { s3 } from '..';
+import { authorizeFeature, authorizeQuota } from '../middlewares/authorization';
+import { basename, join } from 'path';
+import { mkdir, rm, unlink } from 'fs/promises';
+import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../lib/file_management';
+import { UsageField } from '../DB/models/Usage';
+import { UploadTooLargeError } from '../errors/UploadTooLargeError';
+import { createReadStream } from 'fs';
+import { InvalidMediaError } from '../errors/InvalidMediaError';
+import { Readable } from 'stream';
 
 const router = express.Router();
 
-router.post('/', auth, authorization, async (req, res) => {
+router.post('/', auth, authorizeFeature(['allowedContentTypes.image']), authorizeQuota(new Map([['valuePerContentCount.image', 1]])), async (req, res) => {
     try {
         console.log('/api/image', 'POST')
 
@@ -31,7 +40,7 @@ router.post('/', auth, authorization, async (req, res) => {
             return res.status(400).json({ message: 'Invalid Image info.' });
         }
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const imageRepository = new ImageRepository()
 
@@ -41,135 +50,79 @@ router.post('/', auth, authorization, async (req, res) => {
         if (image)
             return res.status(400).json({ message: 'Image title must be unique.' });
 
-        const imageFileBucketKey = `image/${userId}/${title}`
-
         console.log("Inserting image...");
         // ------------------------------------------------------------------------- Inserting image...
-        const imageInsertResult = await imageRepository.insert({ title, fileName, contentType: "image/jpg", userId, bucketKey: imageFileBucketKey, temporary: true })
+        const imageInsertResult = await imageRepository.insert({ title, userId, temporary: true })
         console.log("Image insert result", imageInsertResult);
         if (!imageInsertResult.acknowledged || !imageInsertResult.insertedId)
             return res.status(500).json({ ok: false, message: 'Image info creation failed' })
+        const imageId = imageInsertResult.insertedId.toString()
 
-        console.log("Splitting req stream...");
-        // ------------------------------------------------------------------------- Splitting req stream...
-        const { splitter, createBranch } = teeStream();
+        // ------------------------------------------------------------------------- Make the temporary directory
+        const jobDir = join(imageUploadTmpDir, imageId)
+        await mkdir(jobDir, { recursive: true });
 
-        const s3Stream = createBranch();
-        const typeStream = createBranch();
+        const cleanupPaths: string[] = [];
+        const cleanup = async () => {
+            await Promise.all(cleanupPaths.map((p) => unlink(p).catch(() => { })));
+            await rm(jobDir, { recursive: true, force: true }).catch(() => { });
+        };
 
-        const swallow = <T>(p: Promise<T>) => { p.catch((e) => { console.error('swallow throws an error.', e); }); return p; };
-
-        let uploadImage: Upload | null = null
-        let contentType: string | null = null
-
-        let totalBytes = 0;
-        let sizeLimitError: MaxFileSizeExceededError | null = null;
-        const minFileSize = 10 * 1024
-        const maxFileSize = 2 * 1024 * 1024 * 1024
+        let rollbackPromises: undefined | Promise<any> = undefined
         try {
-            splitter.on('error', () => { });
-            req.on('error', (err) => {
-                console.error('Request stream error:', err);
-                splitter.destroy(err);
-            });
-            req.on('data', (chunk: Buffer) => {
-                totalBytes += chunk.length;
-                if (sizeLimitError) return; // already tripped, ignore further chunks
-                if (totalBytes > maxFileSize) {
-                    sizeLimitError = new MaxFileSizeExceededError(maxFileSize, totalBytes);
-                    console.error(`[size] Max limit exceeded (${totalBytes} bytes), aborting`);
-                    req.destroy(sizeLimitError);
-                    splitter.destroy(sizeLimitError);
-                }
-            });
-            req.pipe(splitter);
-            splitter.resume();
+            const maxTotalStorageBytes = req.user!.privileges!.maxStorageBytes;
 
-            console.log("Uploading image file...");
-            // ------------------------------------------------------------------------- Uploading image file...
-            uploadImage = new Upload({
-                client: s3,
-                params: {
-                    Bucket: BUCKET_NAME,
-                    Key: imageFileBucketKey,
-                    Body: s3Stream
-                }
-            });
-            const uploadPromise = swallow((async () => {
-                await uploadImage.done();
-                console.log("Done uploading image file");
-            })());
+            // ------------------------------------------------------------------------- Store upload stream on disk
+            const { path: inputPath, size: inputSize } = await receiveUpload(req, maxTotalStorageBytes, jobDir);
+            cleanupPaths.push(inputPath);
 
-            console.log("Extracting audio file content type...");
-            // ------------------------------------------------------------------------- Extracting audio file content type...
-            const contentTypePromise = swallow((async () => {
-                const chunks: Buffer[] = [];
-                let total = 0;
-                const maxBytes = 8192;
+            // ------------------------------------------------------------------------- Set bucket keys
+            const imageFileBucketKey = `image/${userId}/${imageId}`
 
-                try {
-                    for await (const chunk of typeStream) {
-                        const buffer = Buffer.isBuffer(chunk)
-                            ? chunk
-                            : Buffer.from(chunk);
+            // ------------------------------------------------------------------------- Wait for content type to be collected
+            const contentType = await detectContentType(inputPath)
 
-                        chunks.push(buffer);
-                        total += buffer.length;
-
-                        if (total >= maxBytes) {
-                            break;
-                        }
-                    }
-                } finally {
-                    if (!typeStream.destroyed) typeStream.destroy();
-                }
-
-                const head = Buffer.concat(chunks, total);
-
-                const result = await fileTypeFromBuffer(head);
-
-                console.log("Done extracting audio file content type");
-                return result?.mime ?? "application/octet-stream";
-            })());
-
-            console.log("Waiting for streams to finish...");
-            // ------------------------------------------------------------------------- Waiting for streams to finish...
-            [, contentType] = await Promise.all([
-                uploadPromise,
-                contentTypePromise,
-            ]);
-
-            if (sizeLimitError)
-                throw sizeLimitError;
-
-            if (totalBytes < minFileSize)
-                throw new MinFileSizeNotMetError(minFileSize, totalBytes);
-        } catch (err) {
-            console.error(err);
-
-            splitter.destroy();
+            // ------------------------------------------------------------------------- Validate generated file sizes
+            const totalStorageBytes = inputSize
+            const quota = new Map<UsageField, number>([['storageBytesCount', totalStorageBytes]])
+            if (await authorizeQuota(quota, req) !== true)
+                throw new UploadTooLargeError('Generated files exceed plan storage limit');
 
             try {
-                await uploadImage?.abort();
-            } catch (abortErr) { console.error('Failed to abort segment/playlist uploads:', abortErr); }
+                // ------------------------------------------------------------------------- Upload files to the S3 compatible object storage
+                await uploadToS3(createReadStream(inputPath), imageFileBucketKey, contentType.mimeType)
 
-            if (err instanceof MaxFileSizeExceededError) {
-                return res.status(413).json({ errors: [err.message] });
-            }
-            if (err instanceof MinFileSizeNotMetError) {
-                return res.status(400).json({ errors: [err.message] });
-            }
+                // ------------------------------------------------------------------------- Update image info in DB, Make it permanent and set content type
+                const updateResult = await imageRepository.unsafeUpdate(imageId, userId, { contentType: contentType, temporary: false, bucketKey: imageFileBucketKey });
+                if (!updateResult.acknowledged || updateResult.matchedCount !== 1)
+                    throw new Error('failed to upload image')
 
-            return res.status(500).json({ message: 'Error uploading video file' });
+                // Work is durably done — clear reservations so the response-based rollback middleware becomes a no-op for this request no matter what happens to the connection from here on.
+                // The connection might drop at this exact moment, which fires the res.on('close') and causes rollbackQuotaOnFailure middleware to rollback although content is properly uploaded and stored(a false alarm).
+                req.quotaReservations = []
+            } catch (error) {
+                rollbackPromises = Promise.allSettled([
+                    deleteFromS3(imageFileBucketKey).catch((_) => { }),
+                    imageRepository.delete(imageId).catch((_) => { })
+                ])
+
+                throw error
+            }
+        } catch (err) {
+            if (err instanceof UploadTooLargeError) {
+                res.status(403).json({ error: err.message });
+            } else if (err instanceof InvalidMediaError) {
+                res.status(400).json({ error: err.message });
+            } else {
+                console.error('Video upload failed:', err);
+                res.status(500).json({ error: 'Upload failed' });
+            }
+        } finally {
+            await cleanup();
+            if (rollbackPromises !== undefined) await rollbackPromises
         }
 
-        const r = await imageRepository.unsafeUpdate(imageInsertResult.insertedId.toString(), userId, { contentType: contentType ?? "application/octet-stream", temporary: false })
-        if (!r.acknowledged || r.matchedCount !== 1) {
-            await uploadImage.abort();
-            return res.status(500).json({ ok: false, message: 'Image info update failed' });
-        }
-
-        res.status(201).json({ id: imageInsertResult.insertedId.toString() });
+        res.status(201).json({ id: imageId });
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Error uploading video file' });
@@ -200,7 +153,7 @@ router.get('/info/', auth, async (req, res) => {
         }
         console.log({ imageId, title })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const imageRepository = new ImageRepository()
 
@@ -239,34 +192,35 @@ router.get('/file/:imageId', auth, async (req, res) => {
         }
         console.log({ imageId })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const imageRepository = new ImageRepository()
 
         console.log("Checking weather image exists...");
         const image = await imageRepository.getForUser(imageId, userId)
-        if (!image) {
-            res.status(404).json({ message: 'Image not found' });
-            return
-        }
+        if (!image || !image.bucketKey || !image.contentType)
+            return res.status(404).json({ message: 'Image not found' });
         console.log({ image })
 
         const result = await s3.send(new GetObjectCommand({
             Bucket: BUCKET_NAME,
             Key: image.bucketKey,
-            ResponseContentDisposition: download ? `attachment; filename="${image.fileName}"` : undefined,
+            ResponseContentDisposition: download ? `attachment; filename="${image._id!.toString()}.${image.contentType.extension}"` : undefined,
         }));
 
-        const stream = result.Body;
-        if (stream === undefined || stream === null)
-            return res.status(404).send();
-
-        const contentLength = result.ContentLength;
+        const body = result.Body as Readable;
+        body.on('error', (err) => {
+            console.error('S3 stream error:', err);
+            if (!res.headersSent) res.status(500).end();
+            else res.destroy();
+        });
 
         res.status(200);
-        res.setHeader("Content-Length", contentLength ?? "");
+        res.setHeader('Content-Type', image.contentType.mimeType);
+        if (result.ContentRange) res.setHeader('Content-Range', result.ContentRange);
+        if (result.ContentLength) res.setHeader('Content-Length', result.ContentLength);
 
-        (stream as any).pipe(res);
+        body.pipe(res);
     } catch (err) {
         res.status(500).json({ message: 'Error getting image file' });
     } finally {
@@ -274,7 +228,7 @@ router.get('/file/:imageId', auth, async (req, res) => {
     }
 });
 
-router.delete('/:imageId', auth, authorization, async (req, res) => {
+router.delete('/:imageId', auth, async (req, res) => {
     try {
         console.log('/api/image', 'DELETE')
 
@@ -290,7 +244,7 @@ router.delete('/:imageId', auth, authorization, async (req, res) => {
         }
         console.log({ imageId })
 
-        const userId = (req as any).user.userId
+        const userId = req.user!.userId
 
         const imageRepository = new ImageRepository()
 
