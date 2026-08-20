@@ -59,16 +59,20 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
         return (await SubscriptionRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
+    async getForUser(userId: string): Promise<Subscription> {
+        return (await SubscriptionRepository.collection!.find({ userId }, { session: this.session }).toArray())[0]
+    }
+
     async getActiveByUserId(userId: string): Promise<Subscription> {
         const redis = await Redis.getClient()
 
-        const subscription = await redis.get(`${collectionName}:${userId}`)
+        const subscription = await redis.get(`${collectionName}:active:${userId}`)
         if (subscription)
             return JSON.parse(subscription)
 
-        const result = (await SubscriptionRepository.collection!.find({ userId, status: 'active' }, { session: this.session }).toArray())[0]
+        const result = (await SubscriptionRepository.collection!.find({ userId, status: { $ne: 'canceled' } }, { session: this.session }).toArray())[0]
         if (result)
-            await redis.set(``, JSON.stringify(result))
+            await redis.set(`${collectionName}:active:${userId}`, JSON.stringify(result))
 
         return result
     }
@@ -80,7 +84,7 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
     async invalidate(userId: string) {
         const redis = await Redis.getClient()
 
-        await redis.del(`${collectionName}:${userId}`)
+        await redis.del(`${collectionName}:active:${userId}`)
 
         return await SubscriptionRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(userId) }, { $set: { status: 'canceled', updatedAt: Date.now() } }, { session: this.session })
     }
@@ -88,7 +92,7 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
     async invalidateForUser(userId: string) {
         const redis = await Redis.getClient()
 
-        await redis.del(`${collectionName}:${userId}`)
+        await redis.del(`${collectionName}:active:${userId}`)
 
         return await SubscriptionRepository.collection!.updateOne({ userId }, { $set: { status: 'canceled', updatedAt: Date.now() } }, { session: this.session })
     }
