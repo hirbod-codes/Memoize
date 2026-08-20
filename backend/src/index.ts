@@ -12,7 +12,6 @@ import { metricsMiddleware } from './observability/metrics';
 import { metricsRouter } from './observability/metricsRoute';
 import { healthRouter } from './observability/health';
 import { httpLogger } from './observability/httpLogger';
-import { errorLoggingMiddleware, registerProcessErrorHandlers } from './observability/errorHandling';
 import { logger } from './observability/logger';
 
 import { tryAndWait } from './utils';
@@ -30,7 +29,6 @@ import AudioRepository from './DB/repositories/AudioRepository';
 import ImageRepository from './DB/repositories/ImageRepository';
 
 import { runCronjobs } from './cronjobs';
-import { jsonResponseLogger, streamResponseLogger } from './middlewares/responseLogger';
 import { generalRateLimiter } from './middlewares/rateLimiting';
 
 // Must be before route imports
@@ -62,6 +60,10 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { isAdmin } from './middlewares/auth';
 import { startMetricsPush } from './observability/pushgateway';
 import { setRequestLogger } from './observability/requestContext';
+import { notFoundHandler } from './middlewares/notFoundHandler';
+import { errorHandler } from './middlewares/errorHandler';
+import { requestContextMiddleware } from './middlewares/requestContext';
+import { registerProcessErrorHandlers } from './middlewares/processErrorHandlers';
 
 export const meili = new Meilisearch({
     host: meilisearchHost + ':' + meilisearchPort.toString(),
@@ -105,11 +107,11 @@ export const s3 = new S3Client({
         // if (!isProduction)
         //     await db.seedCollections()
     }))
-        throw new Error('Failed to prepare database.')
-
-    registerProcessErrorHandlers();
+        throw new Error('Failed to prepare the MongoDB database.')
 
     const app = express()
+
+    app.use(requestContextMiddleware);
 
     // --- Observability middleware first, so it wraps everything downstream ---
     app.use(metricsMiddleware());
@@ -160,19 +162,8 @@ export const s3 = new S3Client({
             next()
     });
 
-    // // To simulate slow connections
-    // if (isProduction !== true)
-    //     app.use((req, res, next) => {
-    //         setTimeout(() => {
-    //             next()
-    //         }, 4000 * Math.random())
-    //     })
-
     const cookieParser = require('cookie-parser')
     app.use(cookieParser())
-
-    app.use(jsonResponseLogger)
-    app.use(streamResponseLogger)
 
     if (!isProduction)
         app.get('/is_seeding', (req, res) => { res.status(200).json({ isSeeding: MongoDB.isSeeding() }) })
@@ -191,22 +182,23 @@ export const s3 = new S3Client({
     app.use('/api/video', videoRoutes);
     app.use('/api/tts', ttsRoutes);
 
-    // 404 For unknown URLs
-    app.use((_req, res) => { res.sendStatus(404) })
+    app.use(notFoundHandler);
+    app.use(errorHandler);
 
-    app.use(errorLoggingMiddleware());
-
+    let server
     if (!isProduction)
-        https.createServer({
+        server = https.createServer({
             key: fs.readFileSync('localhost+2-key.pem'),
             cert: fs.readFileSync('localhost+2.pem')
         }, app)
             .listen(hostPort, hostName, () => logger.info({ hostName, hostPort }, `listening on ${hostName}:${hostPort}...`))
     else
         // Server is behind NginX proxy
-        app.listen(hostPort, hostName, () => logger.info({ hostName, hostPort }, `listening on ${hostName}:${hostPort}...`))
+        server = app.listen(hostPort, hostName, () => logger.info({ hostName, hostPort }, `listening on ${hostName}:${hostPort}...`))
 
     startMetricsPush();
 
     runCronjobs()
+
+    registerProcessErrorHandlers(server);
 })()
