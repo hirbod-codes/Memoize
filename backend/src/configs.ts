@@ -42,6 +42,18 @@ export const s3Endpoint = getStringEnv('S3_STORAGE_ENDPOINT', 'The S3 storage en
 export const s3AccessKey = getStringEnv('S3_STORAGE_ACCESS_KEY', 'The S3 storage access key environment variable is not provided')!;
 export const s3SecretKey = getStringEnv('S3_STORAGE_SECRET_KEY', 'The S3 storage secret key environment variable is not provided')!;
 
+export const redisConfig = {
+    host: getStringEnv('REDIS_HOST', 'The Redis host environment variable is not provided'),
+    port: getIntegerEnv('REDIS_PORT', 'The Redis port environment variable is not provided'),
+    databaseIndex: getIntegerEnv('REDIS_DATABASE_INDEX', 'The Db database name environment variable is not provided'),
+    supportsTransaction: getBooleanEnv('REDIS_SUPPORTS_TRANSACTION', 'The Db supports transaction environment variable is not provided'),
+    // url: getStringEnv('REDIS_URL', 'The Db url environment variable is not provided'),
+    auth: {
+        // username: getStringEnv('REDIS_USERNAME', 'The Mongodb username environment variable is not provided'),
+        password: getStringEnv('REDIS_PASSWORD', 'The Mongodb password environment variable is not provided'),
+    }
+};
+
 export const dbConfig = {
     databaseName: getStringEnv('DB_DATABASE_NAME', 'The Db database name environment variable is not provided'),
     supportsTransaction: getBooleanEnv('DB_SUPPORTS_TRANSACTION', 'The Db supports transaction environment variable is not provided'),

@@ -60,6 +60,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { isAdmin } from './middlewares/auth';
 import { startMetricsPush } from './observability/pushgateway';
 import { setRequestLogger } from './observability/requestContext';
+import { Redis } from './DB/redis';
 import { notFoundHandler } from './middlewares/notFoundHandler';
 import { errorHandler } from './middlewares/errorHandler';
 import { requestContextMiddleware } from './middlewares/requestContext';
@@ -83,6 +84,11 @@ export const s3 = new S3Client({
 
 (async () => {
     await setupSearch();
+
+    if (!await tryAndWait(async () => {
+        await Redis.connect()
+    }))
+        throw new Error('Failed to prepare the Redis database.')
 
     if (!await tryAndWait(async () => {
         MongoDB.config = dbConfig
