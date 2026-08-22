@@ -2,25 +2,24 @@ import jwt from "jsonwebtoken"
 import { Request, Response, NextFunction } from "express";
 import { accessTokenSecret } from '../configs';
 import { UserRepository } from "../DB/repositories/UserRepository";
+import { isAccessTokenBlacklisted } from "../routes/auth/token_management";
 
 /**
- * DOES NOT fail for unauthenticated users.
- * 
- * @param req 
- * @param res 
- * @param next 
- * @returns 
+ * DOES NOT FORBID unauthenticated users.
  */
-export async function isAdmin(req: Request, res: Response, next: NextFunction) {
-    console.log('isAdmin middleware');
-
+export async function isAdminIfAuthenticated(req: Request, res: Response, next: NextFunction) {
     const result = authenticateRequest(req)
     if (!result)
         return next();
 
     try {
+        const payload = result as jwt.JwtPayload & { userId: string; jti?: string };
+
+        if (payload.jti && await isAccessTokenBlacklisted(payload.jti))
+            return res.status(403).send();
+
         const ur = new UserRepository()
-        const u = await ur.get(result as string)
+        const u = await ur.get(payload.userId)
         if (!u || u.role !== 'admin')
             return res.status(403).send();
 
@@ -32,19 +31,32 @@ export async function isAdmin(req: Request, res: Response, next: NextFunction) {
 }
 
 export async function auth(req: Request, res: Response, next: NextFunction) {
-    console.log('auth middleware');
-
-    const result = authenticateRequest(req) as any
-
+    const result = authenticateRequest(req)
     if (!result)
         return res.status(401).send();
 
-    const user = await (new UserRepository()).get(result.userId)
+    let userObject
+    if (typeof result === 'string')
+        userObject = { userId: result }
+    else
+        userObject = result
+
+    if (typeof result !== 'string' && result.jti && await isAccessTokenBlacklisted(result.jti))
+        return res.status(401).send();
+
+    const user = await (new UserRepository()).get(userObject.userId)
     if (!user)
         return res.status(401).send();
 
-    req.user = result as any;
-    req.user!.userData = user;
+    if (!req.user)
+        req.user = {
+            userId: userObject.userId,
+            userData: user,
+        }
+    else {
+        req.user!.userId = userObject.userId;
+        req.user!.userData = user;
+    }
 
     next();
 }
@@ -53,9 +65,7 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
  * @param req
  * @returns user id in a string or a jwt.JwtPayload
  */
-export function authenticateRequest(req: Request): string | false | Response<any, Record<string, any>> | jwt.JwtPayload {
-    console.log('authenticateRequest');
-
+export function authenticateRequest(req: Request): string | false | jwt.JwtPayload {
     const authToken = collectAuthToken(req)
     if (!authToken)
         return false
@@ -64,13 +74,10 @@ export function authenticateRequest(req: Request): string | false | Response<any
 }
 
 /**
- * 
  * @param token The JWT access token
  * @returns user id in a string or a jwt.JwtPayload
  */
 export function authenticateToken(token: string): string | false | jwt.JwtPayload {
-    console.log('authenticateToken');
-
     if (!token)
         return false
 
@@ -84,8 +91,6 @@ export function authenticateToken(token: string): string | false | jwt.JwtPayloa
 }
 
 function collectAuthToken(req: Request): string | undefined | null {
-    console.log('collectAuthToken');
-
     let authToken = req.headers.authorization || req.cookies.accessToken;
     if (!authToken)
         return undefined
@@ -94,7 +99,6 @@ function collectAuthToken(req: Request): string | undefined | null {
 }
 
 export function unAuth(req: Request, res: Response, next: NextFunction) {
-    console.log('unAuth middleware');
     const authHeader = req.headers.authorization;
 
     if (authHeader)

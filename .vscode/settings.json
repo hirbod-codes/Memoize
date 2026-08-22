@@ -3,6 +3,7 @@
         "chewie",
         "Cloude",
         "clsx",
+        "cooldown",
         "datasources",
         "debouncer",
         "dotenv",
@@ -11,6 +12,7 @@
         "LTRB",
         "meili",
         "Meilisearch",
+        "Melipayamak",
         "Millis",
         "otel",
         "Otlp",
@@ -21,9 +23,14 @@
         "pushgateway",
         "RGBO",
         "riverpod",
+        "sadd",
         "Seedable",
+        "smembers",
         "springify",
+        "srem",
+        "tombstoned",
         "topbar",
-        "worklets"
+        "worklets",
+        "ورود"
     ]
 }

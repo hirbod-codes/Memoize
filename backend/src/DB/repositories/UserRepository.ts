@@ -119,7 +119,15 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
 
     async updateRefreshToken(id: string, refreshToken: string) {
         try {
-            return await UserRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(id) }, { $set: { refreshToken: refreshToken } })
+            const redis = await Redis.getClient()
+
+            const user = await UserRepository.collection!.findOneAndUpdate({ _id: ObjectId.createFromHexString(id) }, { $set: { refreshToken: refreshToken } })
+            if (!user)
+                return false
+
+            await redis.set(`${collectionName}:${id}`, JSON.stringify(user), 'EX', UserRepository.USER_DATA_CACHE_TTL_SECONDS)
+
+            return true
         } catch (err) {
             console.error(err)
             return false
@@ -128,7 +136,15 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
 
     async updateAvatarKey(id: string, avatarKey: string) {
         try {
-            return await UserRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(id) }, { $set: { avatarKey, updatedAt: Date.now() } })
+            const redis = await Redis.getClient()
+
+            const user = await UserRepository.collection!.findOneAndUpdate({ _id: ObjectId.createFromHexString(id) }, { $set: { avatarKey, updatedAt: Date.now() } })
+            if (!user)
+                return false
+
+            await redis.set(`${collectionName}:${id}`, JSON.stringify(user), 'EX', UserRepository.USER_DATA_CACHE_TTL_SECONDS)
+
+            return true
         } catch (err) {
             console.error(err)
             return false

@@ -30,14 +30,15 @@ export const userSchema = object().required().stripUnknown().strict(true).shape(
 
     planTitle: string().required(),
 
+    authMethod: string().oneOf(['email', 'phone']).required(),
     username: string().optional(),
-    phoneNumber: string().optional().matches(/^09[0-9]{9}$/),
-    email: string().optional().email(),
+    phoneNumber: string().optional().matches(/^09[0-9]{9}$/).when('authMethod', { is: 'phone', then: s => s.required() }),
+    email: string().optional().email().when('authMethod', { is: 'email', then: s => s.required() }),
+    password: string().optional().when('authMethod', { is: 'email', then: s => s.required() }),
 
     avatarKey: string().optional(), // user/avatar/<userId>/
     temporaryAvatar: boolean().required(),
 
-    password: string().required(),
     refreshToken: string().optional(),
 
     createdAt: number().optional(),

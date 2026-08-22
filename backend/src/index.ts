@@ -27,6 +27,9 @@ import TreeNodeRepository from './DB/repositories/TreeNodeRepository';
 import VideoRepository from './DB/repositories/VideoRepository';
 import AudioRepository from './DB/repositories/AudioRepository';
 import ImageRepository from './DB/repositories/ImageRepository';
+import PlanRepository from './DB/repositories/PlanRepository';
+import SubscriptionRepository from './DB/repositories/SubscriptionRepository';
+import UsageRepository from './DB/repositories/UsageRepository';
 
 import { runCronjobs } from './cronjobs';
 import { generalRateLimiter } from './middlewares/rateLimiting';
@@ -51,13 +54,12 @@ import { treeNodeRoutes } from './routes/treeNode';
 import { audioRoutes } from './routes/audio';
 import { imageRoutes } from './routes/image';
 import { videoRoutes } from './routes/video';
-import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/user';
 import { ttsRoutes } from './routes/tts';
 
 import { S3Client } from "@aws-sdk/client-s3";
 
-import { isAdmin } from './middlewares/auth';
+import { isAdminIfAuthenticated } from './middlewares/auth';
 import { startMetricsPush } from './observability/pushgateway';
 import { setRequestLogger } from './observability/requestContext';
 import { Redis } from './DB/redis';
@@ -66,6 +68,9 @@ import { errorHandler } from './middlewares/errorHandler';
 import { requestContextMiddleware } from './middlewares/requestContext';
 import { registerProcessErrorHandlers } from './middlewares/processErrorHandlers';
 import { rollbackQuotaOnFailure } from './middlewares/authorization';
+import { planGate } from './middlewares/planGate';
+import { OtpFactory } from './services/OTP/OtpFactory';
+import { authRoutes } from './routes/auth/auth';
 
 export const meili = new Meilisearch({
     host: meilisearchHost + ':' + meilisearchPort.toString(),
@@ -82,6 +87,8 @@ export const s3 = new S3Client({
     },
     forcePathStyle: true // often required for S3-compatible services
 });
+
+export const otpService = OtpFactory.instantiate();
 
 (async () => {
     await setupSearch();
@@ -105,6 +112,9 @@ export const s3 = new S3Client({
         db.addRepository(new VideoRepository())
         db.addRepository(new LeafRepository())
         db.addRepository(new TreeNodeRepository())
+        db.addRepository(new PlanRepository())
+        db.addRepository(new SubscriptionRepository())
+        db.addRepository(new UsageRepository())
 
         // if (!isProduction)
         //     await MongoDB.getDbInstance().dropSeedableCollections()
@@ -138,7 +148,7 @@ export const s3 = new S3Client({
 
     app.use(generalRateLimiter);
 
-    app.use(isAdmin, (req, res, next) => {
+    app.use(isAdminIfAuthenticated, (req, res, next) => {
         const logLevelQueryParam = req.query.logLevel
 
         if (logLevelQueryParam !== 'debug')

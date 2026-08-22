@@ -67,3 +67,11 @@ export const dbConfig = {
         password: getStringEnv('MONGODB_PASSWORD', 'The MONGODB_PASSWORD environment variable is not provided'),
     }
 };
+
+export const smsProvider = {
+    baseEndpoint: getStringEnv('BASE_ENDPOINT', 'The BASE_ENDPOINT environment variable is not provided'),
+    password: getStringEnv('PASSWORD', 'The PASSWORD environment variable is not provided'),
+    username: getStringEnv('USERNAME', 'The USERNAME environment variable is not provided'),
+    from: getStringEnv('FROM', 'The FROM environment variable is not provided'),
+    smsProviderVerificationMessageReferenceAddress: getStringEnv('SMS_PROVIDER_VERIFICATION_MESSAGE_REFERENCE_ADDRESS', 'The SMS_PROVIDER_VERIFICATION_MESSAGE_REFERENCE_ADDRESS environment variable is not provided'),
+}
