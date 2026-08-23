@@ -128,7 +128,8 @@ export const runCronjobs = async () => {
 
         console.log('Deleting dangling image files...');
         const handleImageRemove = async (image: Image) => {
-            await deleteObjectIfExists(image.bucketKey)
+            if (image.bucketKey)
+                await deleteObjectIfExists(image.bucketKey)
             deleteImage(image._id!.toString())
         }
         let imageCursor = imageRepo.getTemporariesFromCursor(from)
