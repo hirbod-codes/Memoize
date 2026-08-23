@@ -245,6 +245,7 @@ router.get('/info/', auth, async (req, res) => {
 
         if (!result) {
             reqLog.info('Video not found');
+            return res.status(404).send()
         } else {
             reqLog.debug({ videoId: result._id?.toString() }, 'Video found');
         }

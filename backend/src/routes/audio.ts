@@ -108,10 +108,7 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authoriz
             const audioFileBucketKey = `audio/${userId}/${audioId}`;
             const webCompatibleAudioFileBucketKey = isUploadWebCompatible ? undefined : `audio/${userId}/web/${audioId}`;
             const coverArtBucketKey = `audio/cover_art/${userId}/${audioId}`;
-            reqLog.debug(
-                { isUploadWebCompatible, audioFileBucketKey, webCompatibleAudioFileBucketKey, coverArtBucketKey },
-                'Computed bucket keys'
-            );
+            reqLog.debug({ isUploadWebCompatible, audioFileBucketKey, webCompatibleAudioFileBucketKey, coverArtBucketKey }, 'Computed bucket keys');
 
             // ------------------------------------------------------------------------- Set file paths
             const webCopyPath = isUploadWebCompatible ? undefined : join(jobDir, `${audioId}-web.m4a`);
@@ -120,6 +117,7 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authoriz
 
             const coverArtPath = join(jobDir, `${audioId}-thumb.jpg`);
             cleanupPaths.push(coverArtPath);
+
             reqLog.debug({ webCopyPath, coverArtPath }, 'Resolved output paths');
 
             // ------------------------------------------------------------------------- Wait for web compatible file and cover art to be generated and content type to be collected
@@ -146,10 +144,7 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authoriz
                 ...(isUploadWebCompatible ? [] : [stat(webCopyPath!)]),
             ]);
             const totalStorageBytes = inputSize + (webCopyStat ? webCopyStat.size : 0) + coverArtStat.size;
-            reqLog.debug(
-                { inputSize, webCopySize: webCopyStat?.size ?? 0, coverArtSize: coverArtStat.size, totalStorageBytes },
-                'Computed total storage footprint'
-            );
+            reqLog.debug({ inputSize, webCopySize: webCopyStat?.size ?? 0, coverArtSize: coverArtStat.size, totalStorageBytes }, 'Computed total storage footprint');
             const quota = new Map<UsageField, number>([['storageBytesCount', totalStorageBytes]])
             if (await authorizeQuota(quota, req) !== true) {
                 reqLog.info({ totalStorageBytes }, 'Rejected audio upload: exceeds plan storage limit');
@@ -165,10 +160,7 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authoriz
                     ...(isUploadWebCompatible ? [] : [uploadToS3(createReadStream(webCopyPath!), webCompatibleAudioFileBucketKey!, 'audio/mp4')]),
                     ...(coverArtResult ? [uploadToS3(createReadStream(coverArtResult.path), coverArtBucketKey, coverArtResult.mimeType)] : [])
                 ]);
-                reqLog.info(
-                    { audioFileBucketKey, webCompatibleAudioFileBucketKey, hasCoverArt: !!coverArtResult, totalStorageBytes },
-                    'Uploaded files to object storage'
-                );
+                reqLog.info({ audioFileBucketKey, webCompatibleAudioFileBucketKey, hasCoverArt: !!coverArtResult, totalStorageBytes }, 'Uploaded files to object storage');
 
                 // ------------------------------------------------------------------------- Update audio info in DB, Make it permanent and set content type
                 const updateResult = await audioRepository.unsafeUpdate(audioId, userId, { contentType: contentType, temporary: false, bucketKey: audioFileBucketKey, webBucketKey: webCompatibleAudioFileBucketKey, coverArtKey: coverArtBucketKey, coverArtFileName: basename(coverArtPath) });
@@ -228,14 +220,13 @@ router.get('/info/', auth, async (req, res) => {
 
             if (audioId === undefined && title === undefined) {
                 reqLog.warn('Rejected audio info request: missing id and title');
-                res.status(400).json({ message: 'Invalid parameters' });
-                return
+                return res.status(400).json({ message: 'Invalid parameters' });
             }
         } catch (err) {
             reqLog.warn({ err }, 'Rejected audio info request: invalid parameters');
-            res.status(400).json({ message: 'Invalid parameters' });
-            return
+            return res.status(400).json({ message: 'Invalid parameters' });
         }
+        reqLog.debug({ title, audioId }, 'Validated metadata');
 
         const userId = req.user!.userId
         reqLog = reqLog.child({ userId, audioId, title });
@@ -251,6 +242,7 @@ router.get('/info/', auth, async (req, res) => {
 
         if (!result) {
             reqLog.info('Audio not found');
+            return res.status(404).send()
         } else {
             reqLog.debug({ audioId: result._id?.toString() }, 'Audio found');
         }
@@ -395,6 +387,8 @@ router.get('/file/:audioId', auth, async (req, res) => {
             reqLog.warn({ err }, 'Rejected audio file request: invalid parameters');
             return res.status(400).json({ message: 'Invalid parameters' });
         }
+        reqLog.debug({ audioId, download }, 'Validated metadata');
+
         reqLog = reqLog.child({ userId: req.user!.userId, audioId, download });
 
         await streamAudioFile(audioId, req.user!.userId, req, res, false, download, reqLog)
@@ -514,8 +508,9 @@ router.get('/coverArt/:audioId', auth, async (req, res) => {
             res.status(404).json({ message: 'Audio not found' });
             return
         }
-        reqLog.debug({ coverArtKey: audio.coverArtKey }, 'Fetching cover art from storage');
+        reqLog.debug({ audio }, 'Audio found');
 
+        reqLog.debug({ coverArtKey: audio.coverArtKey }, 'Fetching cover art from storage');
         const result = await s3.send(new GetObjectCommand({
             Bucket: BUCKET_NAME,
             Key: audio.coverArtKey,
@@ -561,6 +556,7 @@ router.delete('/:audioId', auth, async (req, res) => {
             reqLog.warn({ err }, 'Rejected audio delete request: invalid parameters');
             return res.status(400).json({ message: 'Invalid Tree node' });
         }
+        reqLog.debug({ audioId }, 'Validated metadata');
 
         const userId = req.user!.userId
         reqLog = reqLog.child({ userId, audioId });
@@ -573,7 +569,7 @@ router.delete('/:audioId', auth, async (req, res) => {
             res.status(404).json({ message: 'Audio not found' });
             return
         }
-        reqLog.debug({ bucketKey: audio.bucketKey, coverArtKey: audio.coverArtKey }, 'Audio found, starting delete');
+        reqLog.debug({ audio, bucketKey: audio.bucketKey, coverArtKey: audio.coverArtKey }, 'Audio found, starting delete');
 
         const r = await audioRepository.unsafeUpdate(audioId, userId, { temporary: true })
         reqLog.debug({ updateResult: r }, 'Marked audio temporary in DB before delete');

@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { signAccessToken } from './token_management';
 import { ClientType, createSessionFamily } from "./session_management";
+import { getLogger } from '../../observability/requestContext';
 
 export const ACCESS_COOKIE_NAME = 'accessToken'; // matches req.cookies.accessToken already read in auth.ts
 export const REFRESH_COOKIE_NAME = 'refreshToken';
@@ -13,16 +14,22 @@ export function setAuthCookies(res: Response, accessToken: string, refreshTokenI
     res.cookie(REFRESH_COOKIE_NAME, refreshTokenId, {
         httpOnly: true, secure: true, sameSite: 'strict', maxAge: REFRESH_TTL_SECONDS * 1000, path: '/auth',
     });
+    // Never log accessToken/refreshTokenId — they're bearer credentials.
+    getLogger().debug({ accessExpSeconds }, 'Set auth cookies');
 }
 
 export function clearAuthCookies(res: Response) {
     res.clearCookie(ACCESS_COOKIE_NAME, { path: '/' });
     res.clearCookie(REFRESH_COOKIE_NAME, { path: '/auth' });
+    getLogger().debug('Cleared auth cookies');
 }
 
 export async function issueTokensAndRespond(res: Response, userId: string, client: ClientType, userAgent?: string) {
+    const log = getLogger().child({ module: 'auth', userId, client });
+
     const { tokenId } = await createSessionFamily({ userId, client, userAgent });
     const { token: accessToken, exp } = signAccessToken(userId);
+    log.info('Issued access + refresh tokens');
 
     if (client === 'web') {
         setAuthCookies(res, accessToken, tokenId, exp - Math.floor(Date.now() / 1000));
@@ -33,8 +40,13 @@ export async function issueTokensAndRespond(res: Response, userId: string, clien
 }
 
 export function handleError(res: Response, err: any) {
-    if (err.name === 'ValidationError')
+    const log = getLogger().child({ module: 'auth' });
+
+    if (err.name === 'ValidationError') {
+        log.warn({ errors: err.errors ?? err.message }, 'Auth request failed validation');
         try { return res.status(400).json({ status: 'error', error: err.message }); } catch (_) { }
-    console.error(err);
+    }
+
+    log.error({ err }, 'Unhandled error in auth route');
     try { return res.status(500).json({ status: 'error', error: 'INTERNAL' }); } catch (_) { }
 }

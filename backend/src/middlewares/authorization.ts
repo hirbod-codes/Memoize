@@ -3,35 +3,51 @@ import UsageRepository from '../DB/repositories/UsageRepository';
 import PlanRepository from '../DB/repositories/PlanRepository';
 import { FeatureField, Privileges, resolveQuotaField } from '../DB/models/Plan';
 import { Usage, UsageField } from '../DB/models/Usage';
+import { getLogger } from '../observability/requestContext';
 
 export function authorizeQuota(usages: Map<UsageField, number>): (req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>
 export function authorizeQuota(usages: Map<UsageField, number>, req: Request): Promise<boolean>
 export function authorizeQuota(usages: Map<UsageField, number>, req?: Request): Promise<boolean> | ((req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>) {
     async function temp(req: Request): Promise<boolean> {
-        if (!req.user || !req.user.userData || !req.user.userId)
+        const log = getLogger().child({ module: 'authorization', fn: 'authorizeQuota' });
+
+        if (!req.user || !req.user.userData || !req.user.userId) {
+            log.debug('Denied: no authenticated user on request');
             return false;
+        }
 
         const privileges = await getPrivileges(req)
-        if (!privileges)
+        if (!privileges) {
+            log.warn({ userId: req.user.userId }, 'Denied: could not resolve plan privileges');
             return false
+        }
 
         const usagesWithLimits = collectLimitsForQuotas(usages, privileges)
 
         const reserved = await (new UsageRepository()).tryIncrementQuotas(req.user!.userId, usagesWithLimits);
-        if (!reserved)
+        if (!reserved) {
+            log.info({ userId: req.user.userId, usages: Object.fromEntries(usages) }, 'Denied: quota exceeded');
             return false;
+        }
 
         // Stash rollback info in case the handler fails downstream
         req.quotaReservations = req.quotaReservations ?? []
         req.quotaReservations.push({ userId: req.user.userId, usages });
 
+        log.debug({ userId: req.user.userId, usages: Object.fromEntries(usages) }, 'Reserved quota');
         return true
     }
 
     if (req)
+        // NOTE: temp(req) is async, so this try/catch only catches a
+        // synchronous throw from initiating the call (essentially never) —
+        // any rejection from inside temp() becomes an unhandled rejection
+        // at the caller instead of resolving to `false` as apparently
+        // intended. Not fixed here (logging-only pass), just flagging.
         try {
             return temp(req)
         } catch (error) {
+            getLogger().error({ err: error }, 'authorizeQuota (direct-call form) threw synchronously');
             return new Promise<boolean>((resolve, reject) => { resolve(false) })
         }
     else
@@ -72,22 +88,31 @@ export function authorizeFeature(featureFields: FeatureField[]): (req: Request, 
 export function authorizeFeature(featureFields: FeatureField[], req: Request): Promise<boolean>
 export function authorizeFeature(featureFields: FeatureField[], req?: Request): Promise<boolean> | ((req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>) {
     async function temp(req: Request): Promise<boolean> {
-        if (!req.user || !req.user.userData || !req.user.userId)
+        const log = getLogger().child({ module: 'authorization', fn: 'authorizeFeature', featureFields });
+
+        if (!req.user || !req.user.userData || !req.user.userId) {
+            log.debug('Denied: no authenticated user on request');
             return false
+        }
 
         const privileges = await getPrivileges(req)
-        if (!privileges)
+        if (!privileges) {
+            log.warn({ userId: req.user.userId }, 'Denied: could not resolve plan privileges');
             return false
+        }
 
         for (const featureField of featureFields) {
             const isAllowed = featureField.includes('.')
                 ? (privileges as any)[featureField.split('.')[0]][featureField.split('.')[0]]
                 : privileges[featureField as keyof Privileges];
 
-            if (!isAllowed)
+            if (!isAllowed) {
+                log.info({ userId: req.user.userId, featureField }, 'Denied: feature not allowed on plan');
                 return false
+            }
         }
 
+        log.debug({ userId: req.user.userId }, 'Feature authorized');
         return true
     }
 
@@ -111,54 +136,66 @@ export function authorizeFeature(featureFields: FeatureField[], req?: Request): 
 }
 
 export async function getUsage(req: Request): Promise<Usage | undefined> {
+    const log = getLogger().child({ module: 'authorization', fn: 'getUsage' });
     try {
         if (!req.user || !req.user.userData)
             return undefined
 
         if (!req.user.usages) {
             const usages = await (new UsageRepository()).getByUserId(req.user!.userId);
-            if (!usages)
+            if (!usages) {
+                log.warn({ userId: req.user.userId }, 'No usage record found for user');
                 return undefined
+            }
 
             req.user.usages = usages
         }
 
         return req.user.usages
     } catch (error) {
-        console.error(error);
+        log.error({ err: error }, 'Failed to resolve usage');
         return undefined
     }
 }
 
 export async function getPrivileges(req: Request): Promise<Privileges | undefined> {
+    const log = getLogger().child({ module: 'authorization', fn: 'getPrivileges' });
     try {
         if (!req.user || !req.user.userData)
             return undefined
 
         if (!req.user.privileges) {
             const userPlan = await (new PlanRepository()).getByTitle(req.user.userData.planTitle)
-            if (!userPlan)
+            if (!userPlan) {
+                log.error({ planTitle: req.user.userData.planTitle }, "No plan found matching user's planTitle");
                 return undefined
+            }
 
             req.user.privileges = userPlan.privileges
         }
 
         return req.user.privileges
     } catch (error) {
-        console.error(error);
+        log.error({ err: error }, 'Failed to resolve privileges');
         return undefined
     }
 }
 
 export async function rollbackQuota(usages: Map<UsageField, number>, req: Request): Promise<boolean> {
+    const log = getLogger().child({ module: 'authorization', fn: 'rollbackQuota' });
     const privileges = await getPrivileges(req)
-    if (!privileges)
+    if (!privileges) {
+        log.warn({ userId: req.user?.userId }, 'Could not roll back quota: privileges unresolved');
         return false
+    }
 
     const reserved = await (new UsageRepository()).decrementQuotas(req.user!.userId, usages);
-    if (!reserved.acknowledged)
+    if (!reserved.acknowledged) {
+        log.error({ userId: req.user!.userId, usages: Object.fromEntries(usages) }, 'Quota rollback not acknowledged by DB');
         return false
+    }
 
+    log.debug({ userId: req.user!.userId, usages: Object.fromEntries(usages) }, 'Rolled back quota');
     return true
 }
 
@@ -181,11 +218,17 @@ export function rollbackQuotaOnFailure(req: Request, res: Response, next: NextFu
         const reservations = req.quotaReservations;
         if (!reservations || reservations.length === 0) return;
 
+        const log = getLogger().child({ module: 'authorization', fn: 'rollbackQuotaOnFailure' });
+        log.debug(
+            { statusCode: res.statusCode, aborted, reservationCount: reservations.length },
+            'Rolling back quota reservations after failed response'
+        );
+
         await Promise.allSettled(
             reservations.map((r) =>
                 rollbackQuota(r.usages, req)
                     .catch((err) => {
-                        console.error(`Failed to rollback quota for user ${r.userId}:`, err);
+                        log.error({ err, userId: r.userId }, 'Failed to rollback quota');
                     })
             )
         );

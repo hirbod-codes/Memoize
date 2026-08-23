@@ -1,4 +1,5 @@
 import { AppSettingsRepository } from "../../DB/repositories/AppSettingsRepository";
+import { getLogger } from '../../observability/requestContext';
 
 const AUTH_SETTINGS_KEY = 'auth';
 
@@ -16,7 +17,10 @@ export async function getAuthSettings(): Promise<AuthSettings> {
     const repo = new AppSettingsRepository();
     const doc = await repo.getByKey(AUTH_SETTINGS_KEY);
 
-    if (!doc) return DEFAULT_SETTINGS;
+    if (!doc) {
+        getLogger().debug('No auth settings document found, using defaults');
+        return DEFAULT_SETTINGS;
+    }
 
     return {
         allowEmailRegistration: doc.allowEmailRegistration ?? DEFAULT_SETTINGS.allowEmailRegistration,
@@ -30,6 +34,7 @@ export async function updateAuthSettings(patch: Partial<AuthSettings>): Promise<
     const merged = { ...current, ...patch };
 
     await repo.upsertByKey(AUTH_SETTINGS_KEY, merged);
+    getLogger().debug({ patch, merged }, 'Persisted auth settings');
 
     return merged;
 }

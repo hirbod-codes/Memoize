@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 import { accessTokenSecret } from '../../configs';
 import { Redis } from '../../DB/redis';
+import { getLogger } from '../../observability/requestContext';
 
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 
@@ -21,17 +22,30 @@ export function signAccessToken(userId: string): { token: string; jti: string; e
 
     const token = jwt.sign({ userId, jti, exp }, accessTokenSecret);
 
+    // jti is an opaque identifier used only to look up blacklist entries —
+    // unlike the signed `token` itself, it can't be used to forge a session,
+    // so it's fine to log directly.
+    getLogger().debug({ module: 'token', userId, jti, exp }, 'Signed access token');
+
     return { token, jti, exp };
 }
 
 export async function blacklistAccessToken(jti: string, exp: number): Promise<void> {
+    const log = getLogger().child({ module: 'token', jti });
     const redis = await Redis.getClient();
     const ttl = exp - Math.floor(Date.now() / 1000);
-    if (ttl >= 0)
+    if (ttl >= 0) {
         await redis.set(`access_blacklist:${jti}`, '1', 'EX', ttl);
+        log.info({ ttl }, 'Blacklisted access token');
+    } else {
+        log.debug({ ttl }, 'Skipped blacklisting already-expired access token');
+    }
 }
 
 export async function isAccessTokenBlacklisted(jti: string): Promise<boolean> {
     const redis = await Redis.getClient();
-    return (await redis.exists(`access_blacklist:${jti}`)) === 1;
+    const blacklisted = (await redis.exists(`access_blacklist:${jti}`)) === 1;
+    if (blacklisted)
+        getLogger().debug({ module: 'token', jti }, 'Rejected: access token is blacklisted');
+    return blacklisted;
 }
