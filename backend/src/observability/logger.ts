@@ -9,6 +9,27 @@ import { getRequestId } from '../middlewares/requestContext';
 // both sides in prod, and to a local ./logs folder in dev.
 const logDirectory = logDir ?? path.join(process.cwd(), 'logs');
 
+const VALID_LEVELS = new Set<pino.Level>(['fatal', 'error', 'warn', 'info', 'debug', 'trace']);
+
+/**
+ * logLevel comes from getStringEnv as a plain string, but pino's Level type
+ * is a fixed string-literal union — a bare `as pino.Level` cast would
+ * compile but silently accept a typo'd LOG_LEVEL at runtime. Validate once
+ * here instead, with a safe fallback and a loud stderr warning if it's
+ * wrong (can't use `logger` itself yet — this runs before it's constructed).
+ */
+function resolveLevel(): pino.Level {
+    if (logLevel && VALID_LEVELS.has(logLevel as pino.Level))
+        return logLevel as pino.Level;
+
+    if (logLevel)
+        console.error(`Invalid LOG_LEVEL "${logLevel}" — falling back to "info". Valid values: ${[...VALID_LEVELS].join(', ')}`);
+
+    return 'info';
+}
+
+const effectiveLevel = resolveLevel();
+
 // Never let these hit disk or stdout in plaintext, no matter how deep they're nested.
 const REDACT_PATHS = [
     'req.headers.authorization',
@@ -25,50 +46,74 @@ const REDACT_PATHS = [
     '*.refreshToken',
 ];
 
-const targets: pino.TransportTargetOptions[] = [
+/**
+ * A single pino.transport({ target: '...' }) call — ONE target, not an
+ * array — spins up its own dedicated worker thread. This is deliberate:
+ * pino.transport({ targets: [...] }) with 2+ entries runs every target
+ * inside one SHARED worker, and a failure in any single target (module
+ * load, file open, network setup) can silently take the whole shared
+ * worker down without the failure ever reaching this process's
+ * transport.on('error') handler — a known rough edge in pino's
+ * worker-thread transport system, not something specific to this app.
+ * Building each target as its own independent worker and combining them
+ * with pino.multistream() below avoids that failure mode: one broken
+ * target degrades gracefully instead of taking every target dark with it.
+ */
+function namedTransport(name: string, opts: pino.TransportSingleOptions): pino.DestinationStream {
+    const stream = pino.transport(opts);
+    stream.on('error', (err) => {
+        console.error(`pino transport error [${name}]:`, err);
+    });
+    return stream;
+}
+
+const streams: pino.StreamEntry[] = [
     {
         // Structured JSON, one line per event — this is the file Alloy tails and
         // ships to Loki. Rotates daily or at 50MB, keeps the last 14 files.
-        target: 'pino-roll',
-        level: logLevel ?? 'info',
-        options: {
-            file: path.join(logDirectory, 'backend.log'),
-            frequency: 'daily',
-            size: '50m',
-            mkdir: true,
-            limit: { count: 14 },
-        },
+        level: effectiveLevel,
+        stream: namedTransport('roll', {
+            target: 'pino-roll',
+            options: {
+                file: path.join(logDirectory, 'backend.log'),
+                frequency: 'daily',
+                size: '50m',
+                mkdir: true,
+                limit: { count: 14 },
+            },
+        }),
     },
     {
         // Console output. Pretty-printed in dev; raw JSON to stdout in prod so
         // `docker logs` / your platform's log driver still gets something useful
         // without duplicating the pretty-printer's formatting cost.
-        target: isProduction ? 'pino/file' : 'pino-pretty',
-        level: logLevel ?? 'info',
-        options: isProduction
-            ? { destination: 1 } // fd 1 = stdout
-            : { colorize: true, translateTime: 'SYS:HH:MM:ss', ignore: 'pid,hostname' },
+        level: effectiveLevel,
+        stream: namedTransport('console', {
+            target: isProduction ? 'pino/file' : 'pino-pretty',
+            options: isProduction
+                ? { destination: 1 } // fd 1 = stdout
+                : { colorize: true, translateTime: 'SYS:HH:MM:ss', ignore: 'pid,hostname' },
+        }),
     },
     {
-        target: 'pino-loki',
-        level: logLevel ?? 'info',
-        options: {
-            batching: true,
-            interval: 5,
-            host: lokiPushUrl,
-            silenceErrors: false,
-            labels: {
-                service: 'memoize-backend',
-                env: 'development'
+        level: effectiveLevel,
+        stream: namedTransport('loki', {
+            target: 'pino-loki',
+            options: {
+                batching: true,
+                interval: 5,
+                host: lokiPushUrl,
+                silenceErrors: false,
+                labels: {
+                    service: 'memoize-backend',
+                    env: 'development',
+                },
             },
-        },
+        }),
     },
 ];
 
-const transport = pino.transport({ targets });
-transport.on('error', (err) => {
-    console.error('pino transport error:', err);
-});
+const transport = pino.multistream(streams);
 
 export const logger = pino(
     {
