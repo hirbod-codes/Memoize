@@ -35,13 +35,13 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
         const indexes = await db.collection(collectionName).indexes()
 
         if (indexes.find(i => i.name === 'unique-username') === undefined)
-            await db.createIndex(collectionName, { username: 1 }, { unique: true, name: 'unique-username' })
+            await db.createIndex(collectionName, { username: 1 }, { sparse: true, unique: true, name: 'unique-username' })
 
         if (indexes.find(i => i.name === 'unique-email') === undefined)
-            await db.createIndex(collectionName, { email: 1 }, { sparse: true, name: 'email' })
+            await db.createIndex(collectionName, { email: 1 }, { sparse: true, unique: true, name: 'email' })
 
         if (indexes.find(i => i.name === 'unique-phoneNumber') === undefined)
-            await db.createIndex(collectionName, { phoneNumber: 1 }, { sparse: true, name: 'phoneNumber' })
+            await db.createIndex(collectionName, { phoneNumber: 1 }, { sparse: true, unique: true, name: 'phoneNumber' })
 
         if (indexes.find(i => i.name === 'createdAt') === undefined)
             await db.createIndex(collectionName, { createdAt: -1 }, { name: 'createdAt' })
