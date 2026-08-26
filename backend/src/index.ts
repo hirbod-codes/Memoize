@@ -93,36 +93,42 @@ export const otpService = OtpFactory.instantiate();
 (async () => {
     await setupSearch();
 
-    if (!await tryAndWait(async () => {
-        await Redis.connect()
+    if (!await tryAndWait({
+        onThrow(e) { console.error('redis tryAndWait throw and error', e); },
+        callback: async () => {
+            await Redis.connect()
+        }
     }))
         throw new Error('Failed to prepare the Redis database.')
 
-    if (!await tryAndWait(async () => {
-        MongoDB.config = dbConfig
+    if (!await tryAndWait({
+        onThrow(e) { console.error('MongoDB tryAndWait throw and error', e); },
+        callback: async () => {
+            MongoDB.config = dbConfig
 
-        const db = MongoDB.getDbInstance()
+            const db = MongoDB.getDbInstance()
 
-        await db.reset();
+            await db.reset();
 
-        db.addRepository(new UserRepository())
-        db.addRepository(new InvalidTokensRepository())
-        db.addRepository(new AudioRepository())
-        db.addRepository(new ImageRepository())
-        db.addRepository(new VideoRepository())
-        db.addRepository(new LeafRepository())
-        db.addRepository(new TreeNodeRepository())
-        db.addRepository(new PlanRepository())
-        db.addRepository(new SubscriptionRepository())
-        db.addRepository(new UsageRepository())
+            db.addRepository(new UserRepository())
+            db.addRepository(new InvalidTokensRepository())
+            db.addRepository(new AudioRepository())
+            db.addRepository(new ImageRepository())
+            db.addRepository(new VideoRepository())
+            db.addRepository(new LeafRepository())
+            db.addRepository(new TreeNodeRepository())
+            db.addRepository(new PlanRepository())
+            db.addRepository(new SubscriptionRepository())
+            db.addRepository(new UsageRepository())
 
-        // if (!isProduction)
-        //     await MongoDB.getDbInstance().dropSeedableCollections()
+            // if (!isProduction)
+            //     await MongoDB.getDbInstance().dropSeedableCollections()
 
-        await db.createCollections()
+            await db.createCollections()
 
-        // if (!isProduction)
-        //     await db.seedCollections()
+            // if (!isProduction)
+            //     await db.seedCollections()
+        }
     }))
         throw new Error('Failed to prepare the MongoDB database.')
 
