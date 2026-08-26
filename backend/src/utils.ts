@@ -177,7 +177,7 @@ export async function httpsRequest(options: https.RequestOptions, sendData?: str
     })
 }
 
-export async function tryAndWait(callback: CallableFunction, secondsToWait: number = 5, maxAttempts: number = 100): Promise<boolean> {
+export async function tryAndWait({ callback, secondsToWait = 5, maxAttempts = 100, onThrow }: { callback: CallableFunction, secondsToWait?: number, maxAttempts?: number, onThrow?: (e: unknown) => void }): Promise<boolean> {
     let attempts = 0
 
     while (attempts <= maxAttempts) {
@@ -189,6 +189,8 @@ export async function tryAndWait(callback: CallableFunction, secondsToWait: numb
         }
         catch (e) {
             console.error({ e }, `callback in tryAndWait function throw an error.`)
+
+            onThrow?.(e);
 
             await (() => new Promise<void>((res, rej) => {
                 console.log({ secondsToWait }, `waiting for {secondsToWait} seconds...`)
