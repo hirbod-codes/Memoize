@@ -2,6 +2,7 @@ import { randomInt, createHash } from 'crypto';
 import { Redis } from '../../DB/redis';
 import { otpService } from '../..';
 import { getLogger } from '../../observability/requestContext';
+import { isProduction } from '../../configs';
 
 const OTP_TTL_SECONDS = 5 * 60;
 const OTP_REQUEST_COOLDOWN_SECONDS = 60;
@@ -41,13 +42,15 @@ export async function requestOtp(phoneNumber: string, locale: 'en' | 'fa', purpo
     // anyone who also knows the phone number (which is right next to it in
     // every log line), that's a ~10^6-guess brute force, i.e. equivalent to
     // logging the code itself.
-    const record: OtpRecord = { codeHash: hashCode(code, phoneNumber), attempts: 0, purpose };
+    const codeHash = isProduction ? hashCode(code, phoneNumber) : `${code}:${phoneNumber}`
+
+    const record: OtpRecord = { codeHash, attempts: 0, purpose };
 
     await redis.set(`otp:${phoneNumber}`, JSON.stringify(record), 'EX', OTP_TTL_SECONDS);
     await redis.set(cooldownKey, '1', 'EX', OTP_REQUEST_COOLDOWN_SECONDS);
 
     await otpService.sendVerificationMessage(code, phoneNumber, locale);
-    log.info({ locale }, 'OTP sent');
+    log.info({ locale, codeHash }, 'OTP sent');
 
     return 'sent';
 }
@@ -75,7 +78,9 @@ export async function verifyOtp(phoneNumber: string, code: string, purpose?: Otp
         return false;
     }
 
-    if (record.codeHash !== hashCode(code, phoneNumber)) {
+    const codeHash = isProduction ? hashCode(code, phoneNumber) : `${code}:${phoneNumber}`
+
+    if (record.codeHash !== codeHash) {
         record.attempts += 1;
         const ttl = await redis.ttl(key);
         await redis.set(key, JSON.stringify(record), 'EX', ttl > 0 ? ttl : OTP_TTL_SECONDS);
