@@ -1,6 +1,5 @@
 import { randomInt, createHash } from 'crypto';
 import { Redis } from '../../DB/redis';
-import { smsProvider } from '../../configs';
 import { otpService } from '../..';
 import { getLogger } from '../../observability/requestContext';
 
@@ -13,7 +12,7 @@ type OtpPurpose = 'login' | 'register';
 interface OtpRecord {
     codeHash: string;
     attempts: number;
-    purpose: OtpPurpose;
+    purpose?: OtpPurpose;
 }
 
 function hashCode(code: string, phoneNumber: string): string {
@@ -26,7 +25,7 @@ function hashCode(code: string, phoneNumber: string): string {
  * requested for registration can't be replayed to log into an existing
  * account (or vice versa) if the two flows ever share a phone number window.
  */
-export async function requestOtp(phoneNumber: string, purpose: OtpPurpose, locale: 'en' | 'fa'): Promise<'sent' | 'cooldown'> {
+export async function requestOtp(phoneNumber: string, locale: 'en' | 'fa', purpose?: OtpPurpose): Promise<'sent' | 'cooldown'> {
     const log = getLogger().child({ module: 'otp', phoneNumber, purpose });
     const redis = await Redis.getClient();
 
@@ -53,7 +52,7 @@ export async function requestOtp(phoneNumber: string, purpose: OtpPurpose, local
     return 'sent';
 }
 
-export async function verifyOtp(phoneNumber: string, code: string, purpose: OtpPurpose): Promise<boolean> {
+export async function verifyOtp(phoneNumber: string, code: string, purpose?: OtpPurpose): Promise<boolean> {
     const log = getLogger().child({ module: 'otp', phoneNumber, purpose });
     const redis = await Redis.getClient();
     const key = `otp:${phoneNumber}`;
@@ -65,7 +64,7 @@ export async function verifyOtp(phoneNumber: string, code: string, purpose: OtpP
     }
 
     const record: OtpRecord = JSON.parse(raw);
-    if (record.purpose !== purpose) {
+    if ((purpose || record.purpose) && record.purpose !== purpose) {
         log.warn({ recordPurpose: record.purpose }, 'OTP verification failed: purpose mismatch');
         return false;
     }

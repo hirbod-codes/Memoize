@@ -24,19 +24,17 @@ export function clearAuthCookies(res: Response) {
     getLogger().debug('Cleared auth cookies');
 }
 
-export async function issueTokensAndRespond(res: Response, userId: string, client: ClientType, userAgent?: string) {
+export async function issueTokens(res: Response, userId: string, client: ClientType, userAgent?: string) {
     const log = getLogger().child({ module: 'auth', userId, client });
 
     const { tokenId } = await createSessionFamily({ userId, client, userAgent });
     const { token: accessToken, exp } = signAccessToken(userId);
     log.info('Issued access + refresh tokens');
 
-    if (client === 'web') {
+    if (client === 'web')
         setAuthCookies(res, accessToken, tokenId, exp - Math.floor(Date.now() / 1000));
-        return res.json({ status: 'ok', data: { userId } });
-    }
 
-    return res.json({ status: 'ok', data: { userId, accessToken, refreshToken: tokenId } });
+    return { accessToken, refreshToken: tokenId }
 }
 
 export function handleError(res: Response, err: any) {

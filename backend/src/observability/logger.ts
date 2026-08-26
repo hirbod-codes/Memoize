@@ -47,7 +47,7 @@ const REDACT_PATHS = [
 ];
 
 /**
- * A single pino.transport({ target: '...' }) call — ONE target, not an
+ * A single pino.transport({ target: '...' }) call — ONE target, not an`
  * array — spins up its own dedicated worker thread. This is deliberate:
  * pino.transport({ targets: [...] }) with 2+ entries runs every target
  * inside one SHARED worker, and a failure in any single target (module

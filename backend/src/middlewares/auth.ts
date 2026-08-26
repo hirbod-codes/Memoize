@@ -119,13 +119,13 @@ function collectAuthToken(req: Request): string | undefined | null {
     if (!authToken)
         return undefined
 
-    return req.headers.authorization ? authToken.split(" ")[1] : authToken;
+    return req.headers?.authorization ? authToken.split(" ")[1] : authToken;
 }
 
 export function unAuth(req: Request, res: Response, next: NextFunction) {
-    const authHeader = req.headers.authorization;
+    const authToken = collectAuthToken(req)
 
-    if (authHeader) {
+    if (authToken) {
         getLogger().debug({ module: 'auth-middleware', middleware: 'unAuth' }, 'Rejected: expected unauthenticated request but auth header present');
         return res.status(401).send();
     }

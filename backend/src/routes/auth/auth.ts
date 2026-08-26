@@ -1,174 +1,190 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { UserRepository } from '../../DB/repositories/UserRepository';
-import { auth } from '../../middlewares/auth';
+import { auth, unAuth } from '../../middlewares/auth';
 import { getAuthSettings, updateAuthSettings } from './auth_settings';
 import { requestOtp, verifyOtp } from './otp_management';
 import { rotateRefreshToken, revokeFamily, revokeAllSessions, revokeSessionByTokenId, listSessions } from './session_management';
 import { signAccessToken, blacklistAccessToken } from './token_management';
-import { otpRequestSchema, adminSettingsSchema, loginSchema, refreshSchema, registerSchema } from './auth.schemas';
-import { handleError, clearAuthCookies, issueTokensAndRespond, setAuthCookies, REFRESH_COOKIE_NAME } from './auth.lib';
+import { otpRequestSchema, adminSettingsSchema, loginSchema, refreshSchema, registerSchema, otpVerifySchema } from './auth.schemas';
+import { handleError, clearAuthCookies, issueTokens, setAuthCookies, REFRESH_COOKIE_NAME } from './auth.lib';
 import { isAdminIfAuthenticated } from '../../middlewares/auth';
 import { string } from 'yup';
 import { getLogger } from '../../observability/requestContext';
 
 const router = Router();
 
-router.post('/otp/request', async (req: Request, res: Response) => {
+router.post('/otp/request', unAuth, async (req: Request, res: Response) => {
     const log = getLogger().child({ module: 'auth', route: 'POST /auth/otp/request' });
     try {
-        const { phoneNumber, purpose, locale } = await otpRequestSchema.validate(req.body);
-        log.debug({ phoneNumber, purpose, locale }, 'OTP request received');
+        const { phoneNumber, locale } = await otpRequestSchema.validate(req.body);
+        log.debug({ phoneNumber, locale }, 'OTP request received');
 
         const settings = await getAuthSettings();
-        const ur = new UserRepository();
 
-        if (purpose === 'register') {
-            if (!settings.allowPhoneRegistration) {
-                log.info({ phoneNumber }, 'Rejected OTP request: phone registration disabled');
-                return res.status(403).json({ status: 'error', error: 'PHONE_REGISTRATION_DISABLED' });
-            }
-
-            if (await ur.getByPhoneNumber(phoneNumber)) {
-                log.info({ phoneNumber }, 'Rejected OTP request: phone already registered');
-                return res.status(409).json({ status: 'error', error: 'PHONE_TAKEN' });
-            }
-        } else {
-            if (!(await ur.getByPhoneNumber(phoneNumber))) {
-                log.info({ phoneNumber }, 'Rejected OTP request: no account for phone number');
-                return res.status(404).json({ status: 'error', error: 'USER_NOT_FOUND' });
-            }
-        }
-
-        const result = await requestOtp(phoneNumber, purpose, locale);
+        const result = await requestOtp(phoneNumber, locale);
         if (result === 'cooldown') {
             log.info({ phoneNumber }, 'Rejected OTP request: cooldown active');
             return res.status(429).json({ status: 'error', error: 'OTP_COOLDOWN' });
         }
 
-        log.info({ phoneNumber, purpose }, 'OTP sent');
+        log.info({ phoneNumber }, 'OTP sent');
         res.json({ status: 'ok', data: { message: 'Code sent' } });
     } catch (err: any) {
         handleError(res, err);
     }
 });
 
-router.post('/register', async (req: Request, res: Response) => {
-    const log = getLogger().child({ module: 'auth', route: 'POST /auth/register' });
+router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
+    const log = getLogger().child({ module: 'auth', route: 'POST /auth/otp/verify' });
     try {
-        const body = await registerSchema.validate(req.body);
-        log.debug({ client: body.client, method: body.method, username: body.username }, 'Register request received');
+        const { client, code, phoneNumber } = await otpVerifySchema.validate(req.body);
+        log.debug({ client, code, phoneNumber }, 'Register request received');
 
         const settings = await getAuthSettings();
         const ur = new UserRepository();
 
-        if (body.method === 'email') {
-            if (!settings.allowEmailRegistration) {
-                log.info('Rejected registration: email registration disabled');
-                return res.status(403).json({ status: 'error', error: 'EMAIL_REGISTRATION_DISABLED' });
-            }
+        log.info('verifying OTP verification code');
+        if (!(await verifyOtp(phoneNumber!, code!))) {
+            log.info({ phoneNumber: phoneNumber }, 'Rejected OTP verification: invalid OTP code');
+            return res.status(400).json({ status: 'error', error: 'INVALID_CODE' });
+        }
+        log.info('OTP code verified successfully.');
 
-            if (await ur.getByEmail(body.email!)) {
-                log.info({ email: body.email }, 'Rejected registration: email already taken');
-                return res.status(409).json({ status: 'error', error: 'EMAIL_TAKEN' });
-            }
+        let userId: string
+        let user = await ur.getByPhoneNumber(phoneNumber!);
+        log.debug({ user, userPhoneNumber: phoneNumber }, 'tried fetching user');
+        if (!user) {
+            log.info('User not found, registering new user');
 
-            const passwordHash = await bcrypt.hash(body.password!, 12);
+            // phone registration
+            if (!settings.allowPhoneRegistration) {
+                log.info('Rejected registration: phone registration disabled');
+                return res.status(403).json({ status: 'error', error: 'PHONE_REGISTRATION_DISABLED' });
+            }
 
             const created = await ur.create({
-                authMethod: 'email',
+                authMethod: 'phone',
                 role: 'user',
                 planTitle: 'free',
-                username: body.username,
-                email: body.email,
+                phoneNumber: phoneNumber,
                 temporaryAvatar: true,
-                password: passwordHash,
             });
 
-            if (!created) {
-                log.error({ email: body.email }, 'User creation failed (email)');
+            if (!created || !created.acknowledged) {
+                log.error({ phoneNumber: phoneNumber }, 'User creation failed (phone)');
                 return res.status(500).json({ status: 'error', error: 'CREATE_FAILED' });
             }
 
-            log.info({ userId: created.insertedId.toString() }, 'Registered new user (email)');
-            return issueTokensAndRespond(res, created.insertedId.toString(), body.client, req.headers['user-agent']);
+            userId = created.insertedId.toString()
+
+            user = await ur.get(userId)
+            if (!user) {
+                log.error({ userId }, 'User fetch failed');
+                return res.status(500).json({ status: 'error', error: 'FETCH_FAILED' });
+            }
+        }
+        else userId = user._id.toString()
+
+        let tokens
+        if (user) {
+            log.info({ userId }, 'Login succeeded (phone)');
+            tokens = await issueTokens(res, userId, client, req.headers['user-agent']);
+        } else {
+            log.info({ userId }, 'Registered new user (phone)');
+            tokens = await issueTokens(res, userId, client, req.headers['user-agent']);
         }
 
-        // phone registration
-        if (!settings.allowPhoneRegistration) {
-            log.info('Rejected registration: phone registration disabled');
-            return res.status(403).json({ status: 'error', error: 'PHONE_REGISTRATION_DISABLED' });
-        }
+        if (client === 'web')
+            return res.json({ status: 'ok', data: { user, accessToken: tokens.accessToken } });
 
-        if (await ur.getByPhoneNumber(body.phoneNumber!)) {
-            log.info({ phoneNumber: body.phoneNumber }, 'Rejected registration: phone already taken');
-            return res.status(409).json({ status: 'error', error: 'PHONE_TAKEN' });
-        }
-
-        if (!(await verifyOtp(body.phoneNumber!, body.code!, 'register'))) {
-            log.info({ phoneNumber: body.phoneNumber }, 'Rejected registration: invalid OTP code');
-            return res.status(400).json({ status: 'error', error: 'INVALID_CODE' });
-        }
-
-        const created = await ur.create({
-            authMethod: 'phone',
-            role: 'user',
-            planTitle: 'free',
-            username: body.username,
-            phoneNumber: body.phoneNumber,
-            temporaryAvatar: true,
-        });
-
-        if (!created) {
-            log.error({ phoneNumber: body.phoneNumber }, 'User creation failed (phone)');
-            return res.status(500).json({ status: 'error', error: 'CREATE_FAILED' });
-        }
-
-        log.info({ userId: created.insertedId.toString() }, 'Registered new user (phone)');
-        return issueTokensAndRespond(res, created.insertedId.toString(), body.client, req.headers['user-agent']);
+        return res.json({ status: 'ok', data: { user, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken } });
     } catch (err: any) {
         handleError(res, err);
     }
 });
 
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/register', unAuth, async (req: Request, res: Response) => {
+    const log = getLogger().child({ module: 'auth', route: 'POST /auth/register' });
+    try {
+        const { client, email, password } = await registerSchema.validate(req.body);
+        log.debug({ client, email, password }, 'Register request received');
+
+        const settings = await getAuthSettings();
+        const ur = new UserRepository();
+
+        if (!settings.allowEmailRegistration) {
+            log.info('Rejected registration: email registration disabled');
+            return res.status(403).json({ status: 'error', error: 'EMAIL_REGISTRATION_DISABLED' });
+        }
+
+        if (await ur.getByEmail(email!)) {
+            log.info({ email }, 'Rejected registration: email already taken');
+            return res.status(409).json({ status: 'error', error: 'EMAIL_TAKEN' });
+        }
+
+        const passwordHash = await bcrypt.hash(password!, 12);
+
+        const created = await ur.create({
+            authMethod: 'email',
+            role: 'user',
+            planTitle: 'free',
+            email,
+            temporaryAvatar: true,
+            password: passwordHash,
+        });
+
+        if (!created || !created.acknowledged) {
+            log.error({ email }, 'User creation failed');
+            return res.status(500).json({ status: 'error', error: 'CREATE_FAILED' });
+        }
+        const userId = created.insertedId.toString()
+        log.info({ userId }, 'Registered new user');
+
+        const user = await ur.get(userId);
+        if (!user) {
+            log.error({ userId }, 'User fetch failed');
+            return res.status(500).json({ status: 'error', error: 'FETCH_FAILED' });
+        }
+
+        const { accessToken, refreshToken } = await issueTokens(res, userId, client, req.headers['user-agent']);
+
+        if (client === 'web')
+            return res.json({ status: 'ok', data: { user, accessToken } });
+
+        return res.json({ status: 'ok', data: { user, accessToken, refreshToken } });
+    } catch (err: any) {
+        handleError(res, err);
+    }
+});
+
+router.post('/login', unAuth, async (req: Request, res: Response) => {
     const log = getLogger().child({ module: 'auth', route: 'POST /auth/login' });
     try {
-        const body = await loginSchema.validate(req.body);
-        log.debug({ client: body.client, method: body.method }, 'Login request received');
+        const { client, email, password } = await loginSchema.validate(req.body);
+        log.debug({ client, email, password }, 'Login request received');
 
         const ur = new UserRepository();
 
-        if (body.method === 'email') {
-            const user = await ur.getByEmail(body.email!);
-            if (!user || !user.email || !user.password) {
-                log.info({ email: body.email }, 'Rejected login: no matching account');
-                return res.status(401).json({ status: 'error', error: 'INVALID_CREDENTIALS' });
-            }
-
-            const match = await bcrypt.compare(body.password!, user.password);
-            if (!match) {
-                log.info({ userId: user._id!.toString() }, 'Rejected login: password mismatch');
-                return res.status(401).json({ status: 'error', error: 'INVALID_CREDENTIALS' });
-            }
-
-            log.info({ userId: user._id!.toString() }, 'Login succeeded (email)');
-            return issueTokensAndRespond(res, user._id!.toString(), body.client, req.headers['user-agent']);
-        }
-
-        const user = await ur.getByPhoneNumber(body.phoneNumber!);
-        if (!user) {
-            log.info({ phoneNumber: body.phoneNumber }, 'Rejected login: no matching account');
+        const user = await ur.getByEmail(email!);
+        if (!user || !user.email || !user.password) {
+            log.info({ email }, 'Rejected login: no matching account');
             return res.status(401).json({ status: 'error', error: 'INVALID_CREDENTIALS' });
         }
 
-        if (!(await verifyOtp(body.phoneNumber!, body.code!, 'login'))) {
-            log.info({ userId: user._id!.toString() }, 'Rejected login: invalid OTP code');
-            return res.status(400).json({ status: 'error', error: 'INVALID_CODE' });
+        const match = await bcrypt.compare(password!, user.password);
+        if (!match) {
+            log.info({ userId: user._id!.toString() }, 'Rejected login: password mismatch');
+            return res.status(401).json({ status: 'error', error: 'INVALID_CREDENTIALS' });
         }
 
-        log.info({ userId: user._id!.toString() }, 'Login succeeded (phone)');
-        return issueTokensAndRespond(res, user._id!.toString(), body.client, req.headers['user-agent']);
+        log.info({ userId: user._id!.toString() }, 'Login succeeded (email)');
+        const { accessToken, refreshToken } = await issueTokens(res, user._id!.toString(), client, req.headers['user-agent']);
+
+        if (client === 'web')
+            return res.json({ status: 'ok', data: { user, accessToken } });
+
+        return res.json({ status: 'ok', data: { user, accessToken, refreshToken } });
     } catch (err: any) {
         handleError(res, err);
     }
