@@ -1,8 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
-import { AppError, isAppError } from '../errors/AppError';
+import { isAppError } from '../errors/AppError';
 import { getRequestId } from './requestContext';
-import { logger, severityForStatus } from '../observability/logger';
+import { severityForStatus } from '../observability/logger';
+import { getLogger, runWithLogger } from '../observability/requestLoggerContext';
+import { isProduction } from '../configs';
 
 interface ErrorResponseBody {
     error: {
@@ -13,8 +15,6 @@ interface ErrorResponseBody {
     };
 }
 
-const isProduction = process.env.NODE_ENV === 'production';
-
 /**
  * Normalizes anything thrown into a consistent { statusCode, errorCode,
  * message, isOperational, details } shape. This is where the
@@ -23,7 +23,10 @@ const isProduction = process.env.NODE_ENV === 'production';
  * to the "unknown bug" branch.
  */
 function normalize(err: unknown): { statusCode: number, errorCode: string, message: string, isOperational: boolean, details?: unknown } {
+    const log = getLogger().child({ step: 'normalize' });
+
     if (isAppError(err)) {
+        log.info({ error: err }, 'Returning an application error')
         return {
             statusCode: err.statusCode,
             errorCode: err.errorCode,
@@ -35,6 +38,7 @@ function normalize(err: unknown): { statusCode: number, errorCode: string, messa
 
     // Zod validation errors thrown at controller boundaries
     if (err instanceof ZodError) {
+        log.info({ error: err }, 'Returning a Zod error')
         return {
             statusCode: 400,
             errorCode: 'VALIDATION_ERROR',
@@ -46,6 +50,7 @@ function normalize(err: unknown): { statusCode: number, errorCode: string, messa
 
     // Mongo duplicate key error (e.g. unique index violation)
     if (err && typeof err === 'object' && 'code' in err && (err as { code: unknown }).code === 11000) {
+        log.info({ error: err }, 'Returning a MongoDB error')
         return {
             statusCode: 409,
             errorCode: 'CONFLICT',
@@ -56,6 +61,7 @@ function normalize(err: unknown): { statusCode: number, errorCode: string, messa
 
     // Anything else is an unrecognized / programmer error
     const message = err instanceof Error ? err.message : 'Internal server error';
+    log.info({ error: err }, 'Returning an unexpected error')
     return {
         statusCode: 500,
         errorCode: 'INTERNAL_ERROR',
@@ -71,8 +77,12 @@ function normalize(err: unknown): { statusCode: number, errorCode: string, messa
  * error-handling middleware.
  */
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction): void {
-    const normalized = normalize(err);
+    const log = getLogger().child({ module: 'error', middleware: 'errorHandler' });
+
+    const normalized = runWithLogger(log, () => normalize(err))
+    log.debug({ normalized })
     const requestId = getRequestId();
+    log.debug({ requestId })
 
     const logPayload = {
         err,
@@ -83,13 +93,15 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
         errorCode: normalized.errorCode,
         isOperational: normalized.isOperational,
     };
+    log.debug({ logPayload })
 
     // Operational errors are expected traffic (bad input, missing resource,
     // auth failures) — log at warn/info. Non-operational errors are bugs —
     // log at error/fatal so they're loud in Grafana/alerts.
     const level = normalized.isOperational ? severityForStatus(normalized.statusCode) : 'error';
+    log.debug({ resolvedLogLevel: level })
 
-    logger[level](logPayload, normalized.message);
+    log[level](logPayload, normalized.message);
 
     const body: ErrorResponseBody = {
         error: {
@@ -109,6 +121,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     if (normalized.details !== undefined && (normalized.isOperational || !isProduction)) {
         body.error.details = normalized.details;
     }
+    log.debug({ body })
 
     res.status(normalized.statusCode).json(body);
 }

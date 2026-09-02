@@ -10,7 +10,7 @@ const update = {
     key: string().optional(),
 
     allowEmailRegistration: boolean().optional(),
-    allowPhoneRegistration: boolean().optional(),
+    allowOtp: boolean().optional(),
 }
 export const appSettingsUpdateSchema = object().shape(update).required()
 
@@ -21,10 +21,10 @@ export const appSettingsSchema = object().required().stripUnknown().strict(true)
     // discriminates which settings group this document holds, e.g. 'auth'.
     // one document per group rather than a single blob, so each group can
     // grow its own typed fields the same way User.ts does.
-    key: string().required(),
+    key: string().required().oneOf(['auth']),
 
-    allowEmailRegistration: boolean().optional(),
-    allowPhoneRegistration: boolean().optional(),
+    allowEmailRegistration: boolean().when('key', { is: 'auth', then(s) { return s.required() } }),
+    allowOtp: boolean().when('key', { is: 'auth', then(s) { return s.required() } }),
 
     createdAt: number().optional(),
     updatedAt: number().optional(),

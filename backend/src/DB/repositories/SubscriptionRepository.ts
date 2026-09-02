@@ -33,7 +33,7 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
         const indexes = await db.collection(collectionName).indexes()
 
         if (indexes.find(i => i.name === 'userId') === undefined)
-            await db.createIndex(collectionName, { userId: 1 }, { unique: true, partialFilterExpression: { status: { $in: ['active', 'trialing'] } }, name: 'userId_active' })
+            await db.createIndex(collectionName, { userId: 1 }, { unique: true, partialFilterExpression: { status: { $in: ['active', 'cancel'] } }, name: 'userId_active' })
 
         if (indexes.find(i => i.name === 'planTitle') === undefined)
             await db.createIndex(collectionName, { planTitle: 1 }, { name: 'planTitle' })
@@ -59,8 +59,20 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
         return (await SubscriptionRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
-    async getForUser(userId: string): Promise<Subscription> {
-        return (await SubscriptionRepository.collection!.find({ userId }, { session: this.session }).toArray())[0]
+    async getForUser(userId: string): Promise<Subscription[]> {
+        return await SubscriptionRepository.collection!.find({ userId }, { session: this.session }).toArray()
+    }
+
+    async getByStatusByTitleForUser(userId: string, status: Subscription['status'][], planTitle: string) {
+        return await SubscriptionRepository.collection!.find({ userId, status: { $in: status }, planTitle }, { session: this.session }).toArray()
+    }
+
+    async getByStatusForUser(userId: string, status: Subscription['status'][]) {
+        return await SubscriptionRepository.collection!.find({ userId, status: { $in: status } }, { session: this.session }).toArray()
+    }
+
+    async getByStatus(status: Subscription['status'][]) {
+        return await SubscriptionRepository.collection!.find({ status: { $in: status } }, { session: this.session }).toArray()
     }
 
     async getActiveByUserId(userId: string): Promise<Subscription> {
@@ -70,7 +82,7 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
         if (subscription)
             return JSON.parse(subscription)
 
-        const result = (await SubscriptionRepository.collection!.find({ userId, status: { $ne: 'canceled' } }, { session: this.session }).toArray())[0]
+        const result = (await SubscriptionRepository.collection!.find({ userId, status: { $in: ['active', 'trialing'] } }, { session: this.session }).toArray())[0]
         if (result)
             await redis.set(`${collectionName}:active:${userId}`, JSON.stringify(result))
 
@@ -81,7 +93,11 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
         return await SubscriptionRepository.collection!.find({ planTitle, userId }, { session: this.session }).toArray()
     }
 
-    async invalidate(userId: string) {
+    async cancelByStatus(status: Subscription['status'][], hoursOld: number) {
+        return await SubscriptionRepository.collection!.updateMany({ status: { $in: status }, createdAt: { $lte: Date.now() - (hoursOld * 60 * 60 * 1000) } }, { $set: { status: 'canceled' } })
+    }
+
+    async inactivate(userId: string) {
         const redis = await Redis.getClient()
 
         await redis.del(`${collectionName}:active:${userId}`)
@@ -89,16 +105,24 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
         return await SubscriptionRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(userId) }, { $set: { status: 'canceled', updatedAt: Date.now() } }, { session: this.session })
     }
 
-    async invalidateForUser(userId: string) {
+    async inactivateForUser(userId: string) {
         const redis = await Redis.getClient()
 
         await redis.del(`${collectionName}:active:${userId}`)
 
-        return await SubscriptionRepository.collection!.updateOne({ userId }, { $set: { status: 'canceled', updatedAt: Date.now() } }, { session: this.session })
+        return await SubscriptionRepository.collection!.updateMany({ userId, status: { $in: ['active', 'trialing'] } }, { $set: { status: 'canceled', updatedAt: Date.now() } }, { session: this.session })
     }
 
     async unsafeUpdate(subscriptionId: string, userId: string, updates: SubscriptionUpdate) {
         return await SubscriptionRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(subscriptionId), userId }, { $set: { ...updates, updatedAt: Date.now() } }, { session: this.session })
+    }
+
+    async deleteDanglingStatusForUser(userId: string): Promise<DeleteResult> {
+        return await SubscriptionRepository.collection!.deleteMany({ userId, status: { $in: ['paymentNotCompleted', 'paymentNotVerified'] } }, { session: this.session })
+    }
+
+    async deleteByStatusForUser(userId: string, status: Subscription['status'][]): Promise<DeleteResult> {
+        return await SubscriptionRepository.collection!.deleteMany({ userId, status: { $in: status } }, { session: this.session })
     }
 
     async delete(id: string): Promise<DeleteResult> {

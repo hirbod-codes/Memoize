@@ -6,6 +6,15 @@ export const collectionName = 'plan'
 
 const positiveInteger = number().integer().moreThan(-1)
 
+const priceSchema = object().shape({
+    IRR: number().required().integer().min(0),
+    IRT: number().required().integer().min(0),
+    USD: number().required().integer().min(0),
+    EUR: number().required().integer().min(0),
+    BTC: number().required().integer().min(0),
+    ETH: number().required().integer().min(0),
+})
+
 const privilegesSchema = object().shape({
     maxCategories: positiveInteger.required(),
     maxNestedCategories: positiveInteger.required(),
@@ -32,7 +41,7 @@ export const schemaVersion = 'v1.0.0'
 
 const post = {
     title: string().required().label('Title'),
-    price: positiveInteger.required().label('Price'),
+    price: priceSchema.required().label('Price'),
     privileges: privilegesSchema.required(),
 }
 export const planPostSchema = object().shape(post).required()
@@ -40,7 +49,7 @@ export const planPostSchema = object().shape(post).required()
 const create = {
     title: string().required().label('Title'),
     privileges: privilegesSchema.required(),
-    price: positiveInteger.required().label('Price'),
+    price: priceSchema.required().label('Price'),
 }
 export const planCreateSchema = object().shape(create).required()
 
@@ -49,7 +58,7 @@ const update = {
     schemaVersion: string().optional().min(6).max(20),
 
     title: string().optional().label('Title'),
-    price: positiveInteger.optional().label('Price'),
+    price: priceSchema.optional().label('Price'),
     privileges: privilegesSchema.optional(),
 }
 export const planUpdateSchema = object().shape(update).required()
@@ -60,7 +69,7 @@ export const planSchema = object().shape({
 
     title: string().required().label('Title'),
 
-    price: positiveInteger.required().label('Price'),
+    price: priceSchema.required().label('Price'),
 
     privileges: privilegesSchema.required(),
 
@@ -72,10 +81,6 @@ export const planSchema = object().shape({
 export type Privileges = InferType<typeof privilegesSchema>
 export type QuotaField = Exclude<keyof Privileges, 'allowedContentTypes' | 'maxValuePerContent'> | `maxValuePerContent.${keyof Privileges['maxValuePerContent'] & string}`
 export type FeatureField = `allowedContentTypes.${keyof Privileges['allowedContentTypes'] & string}`
-
-export function resolveQuotaField(usageField: UsageField): QuotaField {
-    return 'max' + usageField[0].toUpperCase() + usageField.replace('Count', '') as any
-}
 
 export type PlanPost = InferType<typeof planPostSchema>
 export type PlanCreate = InferType<typeof planCreateSchema>

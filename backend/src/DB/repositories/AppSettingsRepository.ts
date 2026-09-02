@@ -1,4 +1,4 @@
-import { ClientSession, Collection, Db, UpdateResult } from 'mongodb';
+import { ClientSession, Collection, Db, UpdateResult, WithId } from 'mongodb';
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
@@ -46,7 +46,7 @@ export class AppSettingsRepository implements IRepository, ISeedable, IDropable 
         await db.dropCollection(collectionName)
     }
 
-    async getByKey(key: string) {
+    async getByKey(key: AppSettings['key']): Promise<false | undefined | WithId<AppSettings>> {
         try {
             const redis = await Redis.getClient()
             const cacheKey = `${collectionName}:${key}`

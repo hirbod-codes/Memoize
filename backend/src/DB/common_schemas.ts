@@ -75,21 +75,10 @@ export const localizedText = mixed<{ [key: string]: string }>().optional().test(
     return ov
 })
 
-export const price = mixed<{ [key: string]: number }>().optional().test((v: any) => {
-    if (v === undefined || v === null)
-        return true
-
-    if (typeof v !== 'object' || Array.isArray(v))
-        return false
-
-    for (const k in v)
-        if (Object.prototype.hasOwnProperty.call(v, k))
-            if (!number().integer().min(0).required().strict(true).isValidSync(v[k]))
-                return false
-
-    return true
-}).transform((v, ov) => {
-    return ov
+export const currencySchema = string().oneOf(['IRR', 'IRT', 'USD', 'EUR', 'BTC', 'ETH'])
+export const priceSchema = object().shape({
+    currency: currencySchema.required(),
+    amount: number().integer().min(0).required(),
 })
 
 export function uniqueArrayTest(list: any) {

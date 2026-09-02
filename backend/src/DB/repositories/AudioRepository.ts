@@ -74,6 +74,14 @@ class AudioRepository implements IRepository, ISeedable, IDropable {
         return await AudioRepository.collection!.find({ temporary: false, userId }, { session: this.session }).toArray()
     }
 
+    async getPageForUser(userId: string, skip: number, limit: number): Promise<Audio[]> {
+        return await AudioRepository.collection!.find({ temporary: false, userId }, { session: this.session }).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray()
+    }
+
+    async countForUser(userId: string): Promise<number> {
+        return await AudioRepository.collection!.countDocuments({ temporary: false, userId }, { session: this.session })
+    }
+
     getFromCursor(fromTsMs: number) {
         return AudioRepository.collection!.find({ temporary: false, updatedAt: { $gte: fromTsMs } })
     }

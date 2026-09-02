@@ -1,3 +1,6 @@
+import { isProduction } from "../../../configs";
+import { getLogger, runWithLogger } from "../../../observability/requestLoggerContext";
+import { httpsRequest } from "../../../utils";
 import { IOtp } from "../IOtp";
 
 export class Melipayamak implements IOtp {
@@ -5,41 +8,74 @@ export class Melipayamak implements IOtp {
     private username: string
     private password: string
     private from: string
-    private smsProviderVerificationMessageReferenceAddress: string
+    private verificationMessageReferenceAddress: string
 
-    constructor({ baseEndpoint, username, password, from, smsProviderVerificationMessageReferenceAddress }: { baseEndpoint: string, username: string, password: string, from: string, smsProviderVerificationMessageReferenceAddress: string }) {
+    constructor({ baseEndpoint, username, password, from, verificationMessageReferenceAddress }: { baseEndpoint: string, username: string, password: string, from: string, verificationMessageReferenceAddress: string }) {
         this.baseEndpoint = baseEndpoint
         this.username = username
         this.password = password
         this.from = from
-        this.smsProviderVerificationMessageReferenceAddress = smsProviderVerificationMessageReferenceAddress
+        this.verificationMessageReferenceAddress = verificationMessageReferenceAddress
     }
 
     async sendVerificationMessage(code: string, toPhoneNumber: string, locale: 'en' | 'fa'): Promise<boolean> {
+        const log = getLogger().child({ step: 'sendVerificationMessage' });
+
         try {
-            const response = await fetch(`${this.baseEndpoint}/SendSMS/SendSMS`, {
+            log.debug({ ...(isProduction ? {} : { code }), toPhoneNumber, locale })
+
+            const message = locale === 'en'
+                ? `Your verification code: 
+${code}
+@${this.verificationMessageReferenceAddress} #${code}
+`
+                : `کد ورود شما: 
+${code}
+@${this.verificationMessageReferenceAddress} #${code}
+`
+
+            return await runWithLogger(log, () => this.sendMessage(message, toPhoneNumber))
+        } catch (error) {
+            log.error({ error }, 'failed to send verification code')
+            return false
+        }
+    }
+
+    async sendMessage(message: string, toPhoneNumber: string): Promise<boolean> {
+        const log = getLogger().child({ step: 'sendMessage' });
+
+        try {
+            log.debug({ ...(isProduction ? {} : { message }), toPhoneNumber })
+
+            const result = await httpsRequest({
+                host: `${this.baseEndpoint.replace('https://', '')}`,
+                path: '/SendSMS/SendSMS',
                 method: 'post',
-                body: JSON.stringify({
-                    username: this.username,
-                    password: this.password,
-                    from: this.from,
-                    text: locale === 'en'
-                        ? `Your Memoize verification code is ${code}`
-                        : `کد ورود شما: 
-    ${code}
-    @${this.smsProviderVerificationMessageReferenceAddress} #${code}`
-                }),
                 headers: {
                     'Content-Type': 'application/json'
                 }
-            })
+            }, JSON.stringify({
+                username: this.username,
+                password: this.password,
+                from: this.from,
+                to: toPhoneNumber,
+                text: message
+            }))
+            log.debug({ statusCode: result.response.statusCode })
 
-            if (response.ok)
-                return true
+            if (result.response.statusCode && result.response.statusCode > 199 && result.response.statusCode < 300) {
+                const data = JSON.parse(result.data)
+                log.debug({ data })
+                if (data.RetStatus === 1 && data.StrRetStatus === 'ok') {
+                    log.info('successfully sent verification code')
+                    return true
+                }
+            }
 
+            log.info('failed to send verification code')
             return false
         } catch (error) {
-            console.error(error);
+            log.error({ error }, 'failed to send verification code')
             return false
         }
     }

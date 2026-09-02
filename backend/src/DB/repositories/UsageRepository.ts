@@ -55,7 +55,29 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
         return (await UsageRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
-    async getByUserId(userId: string): Promise<Usage> {
+    async getByUserId(userId: string): Promise<Usage | undefined> {
+        let usage = (await UsageRepository.collection!.find({ userId }, { session: this.session }).toArray())[0]
+
+        if (!usage) {
+            const result = await this.insert({
+                userId, cardsPerCategoryCount: 0,
+                categoriesCount: 0,
+                nestedCategoriesCount: 0,
+                contentsPerCardSideCount: 0,
+                storageBytesCount: 0,
+                valuePerContentCount: {
+                    audio: 0,
+                    image: 0,
+                    video: 0,
+                    richText: 0,
+                    string: 0
+                }
+            })
+
+            if (!result.acknowledged)
+                return undefined
+        }
+
         return (await UsageRepository.collection!.find({ userId }, { session: this.session }).toArray())[0]
     }
 

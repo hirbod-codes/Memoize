@@ -1,5 +1,5 @@
 import type { Server } from 'node:http';
-import { logger } from '../observability/logger';
+import { getLogger } from '../observability/requestLoggerContext';
 
 /**
  * Last line of defense — NOT a substitute for proper try/catch or the
@@ -14,13 +14,15 @@ import { logger } from '../observability/logger';
  * Do NOT try to keep serving traffic after this fires.
  */
 export function registerProcessErrorHandlers(server: Server): void {
+    const log = getLogger().child({ module: 'error', middleware: 'registerProcessErrorHandlers' });
+
     let shuttingDown = false;
 
     function shutdown(reason: string, err: unknown): void {
         if (shuttingDown) return;
         shuttingDown = true;
 
-        logger.fatal({ err, reason }, 'Fatal error — shutting down process');
+        log.fatal({ err, reason }, 'Fatal error — shutting down process');
 
         // Stop accepting new connections; let in-flight ones drain.
         server.close(() => {
@@ -29,7 +31,7 @@ export function registerProcessErrorHandlers(server: Server): void {
 
         // Hard exit if graceful shutdown hangs (e.g. a connection never closes).
         setTimeout(() => {
-            logger.fatal('Forced shutdown after timeout — graceful close did not complete');
+            log.fatal('Forced shutdown after timeout — graceful close did not complete');
             process.exit(1);
         }, 10_000).unref();
     }
@@ -46,7 +48,7 @@ export function registerProcessErrorHandlers(server: Server): void {
     // on service update/scale-down; handle it the same way for clean
     // rolling deploys instead of connections being cut mid-request.
     process.on('SIGTERM', () => {
-        logger.info('SIGTERM received — starting graceful shutdown');
+        log.info('SIGTERM received — starting graceful shutdown');
         server.close(() => process.exit(0));
     });
 }

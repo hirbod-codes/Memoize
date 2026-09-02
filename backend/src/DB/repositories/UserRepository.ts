@@ -1,4 +1,4 @@
-import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId, UpdateResult } from 'mongodb';
+import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId, UpdateResult, WithId } from 'mongodb';
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
@@ -65,7 +65,7 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
-    async get(id: string) {
+    async get(id: string): Promise<WithId<User> | false | undefined> {
         try {
             const redis = await Redis.getClient()
 
@@ -86,7 +86,7 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
-    async getByUsername(username: string) {
+    async getByUsername(username: string): Promise<WithId<User> | false | undefined> {
         try {
             return (await UserRepository.collection!.find({ username }).toArray())[0]
         } catch (err) {
@@ -95,7 +95,7 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
-    async getByEmail(email: string) {
+    async getByEmail(email: string): Promise<WithId<User> | false | undefined> {
         try {
             return (await UserRepository.collection!.find({ email }).toArray())[0]
         } catch (err) {
@@ -104,7 +104,7 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
-    async getByPhoneNumber(phoneNumber: string) {
+    async getByPhoneNumber(phoneNumber: string): Promise<WithId<User> | false | undefined> {
         try {
             return (await UserRepository.collection!.find({ phoneNumber }).toArray())[0]
         } catch (err) {

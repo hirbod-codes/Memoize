@@ -74,6 +74,14 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
         return await VideoRepository.collection!.find({ temporary: false, userId }, { session: this.session }).toArray()
     }
 
+    async getPageForUser(userId: string, skip: number, limit: number): Promise<Video[]> {
+        return await VideoRepository.collection!.find({ temporary: false, userId }, { session: this.session }).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray()
+    }
+
+    async countForUser(userId: string): Promise<number> {
+        return await VideoRepository.collection!.countDocuments({ temporary: false, userId }, { session: this.session })
+    }
+
     getTemporariesFromCursor(fromTsMs: number) {
         return VideoRepository.collection!.find({ temporary: true, updatedAt: { $gte: fromTsMs } })
     }

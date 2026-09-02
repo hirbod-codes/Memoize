@@ -1,4 +1,3 @@
-// { userId, cardCount, storageBytesUsed, categoryCount, deviceCount }
 import { InferType, number, object, string } from 'yup';
 import { likeObjectId } from '../common_schemas';
 import { QuotaField } from './Plan';
@@ -75,4 +74,8 @@ export type UsageField = Exclude<keyof Usage, 'valuePerContentCount' | 'createdA
 
 export function resolveUsageField(quotaField: QuotaField): UsageField {
     return quotaField.replace('max', '')[0].toLowerCase() + quotaField.replace('max', '').slice(1) + 'Count' as any
+}
+
+export function resolveQuotaField(usageField: UsageField): QuotaField {
+    return 'max' + usageField[0].toUpperCase() + usageField.replace('Count', '') as any
 }

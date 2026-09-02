@@ -1,4 +1,4 @@
-import { boolean, BooleanSchema, number, NumberSchema, string, StringSchema } from "yup";
+import { boolean, BooleanSchema, InferType, number, NumberSchema, string, StringSchema } from "yup";
 import http, { IncomingMessage } from "http";
 import https from "https";
 import fs from "fs";
@@ -28,56 +28,67 @@ function resolveRawEnv(key: string): string | undefined {
     return readSecretFile(`${envPrefix}${key}${envSuffix}`) ?? process.env[key]
 }
 
-export function validateBooleanEnv(env?: boolean, message?: string, validate?: (schema: BooleanSchema) => BooleanSchema, manuallyValidate?: (env?: boolean) => boolean) {
-    let schema: any = boolean().required()
+export function validateBooleanEnv(env?: boolean, message?: string, validateWithYup?: undefined, manuallyValidate?: (env?: boolean) => boolean): boolean
+export function validateBooleanEnv<T extends BooleanSchema>(env?: boolean, message?: string, validateWithYup?: (schema: BooleanSchema) => T, manuallyValidate?: (env?: boolean) => boolean): InferType<T>
+export function validateBooleanEnv<T extends BooleanSchema>(env?: boolean, message?: string, validateWithYup?: (schema: BooleanSchema) => T, manuallyValidate?: (env?: boolean) => boolean): InferType<T> | boolean {
+    let schema: BooleanSchema = boolean()
+    if (validateWithYup)
+        schema = validateWithYup(schema)
+    else
+        schema = schema.required()
 
-    if (validate)
-        schema = validate(schema)
+    if (manuallyValidate !== undefined && manuallyValidate(env) === false)
+        throw new Error(message ?? 'Invalid environment variable provided')
 
-    if (!schema.isValidSync(env))
+    return schema.validateSync(env) as InferType<T> | boolean
+}
+
+export function validateStringEnv(env?: string, message?: string, validateWithYup?: undefined, manuallyValidate?: (env?: string) => boolean): string
+export function validateStringEnv<T extends StringSchema>(env?: string, message?: string, validateWithYup?: (schema: StringSchema) => T, manuallyValidate?: (env?: string) => boolean): InferType<T>
+export function validateStringEnv<T extends StringSchema>(env?: string, message?: string, validateWithYup?: (schema: StringSchema) => T, manuallyValidate?: (env?: string) => boolean): InferType<T> | string {
+    let schema: StringSchema = string()
+    if (validateWithYup)
+        schema = validateWithYup(schema)
+    else
+        schema = schema.required()
+
+    if (manuallyValidate !== undefined && manuallyValidate(env) === false)
+        throw new Error(message ?? 'Invalid environment variable provided')
+
+    return schema.validateSync(env) as InferType<T> | string
+}
+
+export function validateIntegerEnv(env?: number, message?: string, validateWithYup?: undefined, manuallyValidate?: (env?: number) => boolean): number
+export function validateIntegerEnv<T extends NumberSchema>(env?: number, message?: string, validateWithYup?: (schema: NumberSchema) => T, manuallyValidate?: (env?: number) => boolean): InferType<T>
+export function validateIntegerEnv<T extends NumberSchema>(env?: number, message?: string, validateWithYup?: (schema: NumberSchema) => T, manuallyValidate?: (env?: number) => boolean): InferType<T> | number {
+    let schema: NumberSchema = number()
+    if (validateWithYup)
+        schema = validateWithYup(schema)
+    else
+        schema = schema.required()
+
+    if (!Number.isFinite(env) || !Number.isInteger(env))
         throw new Error(message ?? 'Invalid environment variable provided')
 
     if (manuallyValidate !== undefined && manuallyValidate(env) === false)
         throw new Error(message ?? 'Invalid environment variable provided')
+
+    return schema.validateSync(env) as InferType<T> | number
 }
 
-export function validateStringEnv(env?: string, message?: string, validate?: (schema: StringSchema) => StringSchema, manuallyValidate?: (env?: string) => boolean) {
-    let schema: any = string().required()
-
-    if (validate)
-        schema = validate(schema)
-
-    if (!schema.isValidSync(env))
-        throw new Error(message ?? 'Invalid environment variable provided')
-
-    if (manuallyValidate !== undefined && manuallyValidate(env) === false)
-        throw new Error(message ?? 'Invalid environment variable provided')
-}
-
-export function validateIntegerEnv(env?: number, message?: string, validate?: (schema: NumberSchema) => NumberSchema, manuallyValidate?: (env?: number) => boolean) {
-    let schema: any = number().required()
-
-    if (validate)
-        schema = validate(schema)
-
-    if (!schema.isValidSync(env) || !Number.isFinite(env) || !Number.isInteger(env))
-        throw new Error(message ?? 'Invalid environment variable provided')
-
-    if (manuallyValidate !== undefined && manuallyValidate(env) === false)
-        throw new Error(message ?? 'Invalid environment variable provided')
-}
-
-export function getStringEnv(key: string, message?: string, validate?: (schema: StringSchema) => StringSchema, manuallyValidate?: (env?: string) => boolean): string {
+export function getStringEnv(key: string, message?: string, validate?: undefined, manuallyValidate?: (env?: string) => boolean): string
+export function getStringEnv<T extends StringSchema>(key: string, message?: string, validate?: (schema: StringSchema) => T, manuallyValidate?: (env?: string) => boolean): InferType<T>
+export function getStringEnv<T extends StringSchema>(key: string, message?: string, validate?: (schema: StringSchema) => T, manuallyValidate?: (env?: string) => boolean): InferType<T> | string {
     const resolvedEnv = resolveRawEnv(key)
 
     console.log({ key, message, resolvedEnv }, `${key}: ${resolvedEnv !== undefined ? (isProduction ? '<*****>' : resolvedEnv) : '<missing>'}`)
 
-    validateStringEnv(resolvedEnv, message, validate, manuallyValidate)
-
-    return resolvedEnv!
+    return validateStringEnv(resolvedEnv, message, validate, manuallyValidate)
 }
 
-export function getIntegerEnv(key: string, message?: string, validate?: (schema: NumberSchema) => NumberSchema, manuallyValidate?: (env?: number) => boolean): number {
+export function getIntegerEnv(key: string, message?: string, validate?: undefined, manuallyValidate?: (env?: number) => boolean): number
+export function getIntegerEnv<T extends NumberSchema>(key: string, message?: string, validate?: (schema: NumberSchema) => T, manuallyValidate?: (env?: number) => boolean): InferType<T>
+export function getIntegerEnv<T extends NumberSchema>(key: string, message?: string, validate?: (schema: NumberSchema) => T, manuallyValidate?: (env?: number) => boolean): InferType<T> | number {
     const resolvedEnv = resolveRawEnv(key)
     const castedEnv = Number(resolvedEnv)
 
@@ -88,7 +99,9 @@ export function getIntegerEnv(key: string, message?: string, validate?: (schema:
     return castedEnv!
 }
 
-export function getBooleanEnv(key: string, message?: string, validate?: (schema: BooleanSchema) => BooleanSchema, manuallyValidate?: (env?: boolean) => boolean): boolean {
+export function getBooleanEnv(key: string, message?: string, validate?: undefined, manuallyValidate?: (env?: boolean) => boolean): boolean
+export function getBooleanEnv<T extends BooleanSchema>(key: string, message?: string, validate?: (schema: BooleanSchema) => T, manuallyValidate?: (env?: boolean) => boolean): InferType<T>
+export function getBooleanEnv<T extends BooleanSchema>(key: string, message?: string, validate?: (schema: BooleanSchema) => T, manuallyValidate?: (env?: boolean) => boolean): InferType<T> | boolean {
     const raw = resolveRawEnv(key)
     const env = raw?.toLowerCase() === 'true'
 

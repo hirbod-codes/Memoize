@@ -4,12 +4,18 @@ import { Melipayamak } from "./SmsProviders/melipayamak";
 
 export class OtpFactory {
     static instantiate(): IOtp {
-        return new Melipayamak({
-            baseEndpoint: smsProvider.baseEndpoint,
-            username: smsProvider.username,
-            password: smsProvider.password,
-            from: smsProvider.from,
-            smsProviderVerificationMessageReferenceAddress: smsProvider.smsProviderVerificationMessageReferenceAddress
-        })
+        switch (smsProvider.identifier) {
+            case 'melipayamak':
+                return new Melipayamak({
+                    baseEndpoint: smsProvider.melipayamak.baseEndpoint!,
+                    username: smsProvider.melipayamak.username!,
+                    password: smsProvider.melipayamak.apiKey!,
+                    from: smsProvider.melipayamak.from!,
+                    verificationMessageReferenceAddress: smsProvider.melipayamak.verificationMessageReferenceAddress!
+                })
+
+            default:
+                throw new Error('UNSUPPORTED_SMS_PROVIDER')
+        }
     }
 }

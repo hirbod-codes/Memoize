@@ -26,7 +26,9 @@ export const lokiPushUrl = getStringEnv('LOKI_PUSH_URL', 'The LOKI_PUSH_URL envi
 export const pushgatewayUrl = getStringEnv('PUSHGATEWAY_URL', 'The PUSHGATEWAY_URL environment variable is not provided');
 
 export const hostName = getStringEnv('HOST', 'The HOST environment variable is not provided');
-export const hostPort = getIntegerEnv('PORT', 'The PORT environment variable is not provided', (s) => s.min(1025));
+export const hostPort = getIntegerEnv('PORT', 'The PORT environment variable is not provided', (s) => s.required().min(1025));
+
+export const appUrl = getStringEnv('APP_URL', 'The APP_URL environment variable is not provided'); // Required for payments
 
 export const allowedOrigins = getStringEnv('ALLOWED_ORIGINS', 'The ALLOWED_ORIGINS environment variable is not provided')!;
 
@@ -69,9 +71,27 @@ export const dbConfig = {
 };
 
 export const smsProvider = {
-    baseEndpoint: getStringEnv('BASE_ENDPOINT', 'The BASE_ENDPOINT environment variable is not provided'),
-    password: getStringEnv('PASSWORD', 'The PASSWORD environment variable is not provided'),
-    username: getStringEnv('USERNAME', 'The USERNAME environment variable is not provided'),
-    from: getStringEnv('FROM', 'The FROM environment variable is not provided'),
-    smsProviderVerificationMessageReferenceAddress: getStringEnv('SMS_PROVIDER_VERIFICATION_MESSAGE_REFERENCE_ADDRESS', 'The SMS_PROVIDER_VERIFICATION_MESSAGE_REFERENCE_ADDRESS environment variable is not provided'),
+    identifier: getStringEnv('SMS_PROVIDER_IDENTIFIER', 'The SMS_PROVIDER_IDENTIFIER environment variable is not provided'),
+    melipayamak: {
+        baseEndpoint: getStringEnv('MELIPAYAMAK_BASE_ENDPOINT', 'The MELIPAYAMAK_BASE_ENDPOINT environment variable is not provided', s => s.optional()),
+        username: getStringEnv('MELIPAYAMAK_USERNAME', 'The MELIPAYAMAK_USERNAME environment variable is not provided', s => s.optional()),
+        apiKey: getStringEnv('MELIPAYAMAK_API_KEY', 'The MELIPAYAMAK_API_KEY environment variable is not provided', s => s.optional()),
+        from: getStringEnv('MELIPAYAMAK_FROM', 'The MELIPAYAMAK_FROM environment variable is not provided', s => s.optional()),
+        verificationMessageReferenceAddress: getStringEnv('MELIPAYAMAK_VERIFICATION_MESSAGE_REFERENCE_ADDRESS', 'The SMS_PROVIDER_VERIFICATION_MESSAGE_REFERENCE_ADDRESS environment variable is not provided', s => s.optional()),
+    }
 }
+
+if (smsProvider.identifier === 'melipayamak' && (!smsProvider.melipayamak.baseEndpoint || !smsProvider.melipayamak.apiKey || !smsProvider.melipayamak.username || !smsProvider.melipayamak.from || !smsProvider.melipayamak.verificationMessageReferenceAddress))
+    throw new Error('one of the required environment variables associated with the chosen sms provider \'melipayamak\' is not provided')
+
+export const supportedPayments = getStringEnv('SUPPORTED_PAYMENT_METHODS', 'The SUPPORTED_PAYMENT_METHODS environment variable is not provided').split(',').map(m => m.trim()).filter(f => Boolean(f))
+
+export const payments = {
+    zarinpal: {
+        url: getStringEnv('ZARINPAL_URL', 'The ZARINPAL_URL environment variable is not provided', s => s.optional()),
+        merchantId: getStringEnv('ZARINPAL_MERCHANT_ID', 'The ZARINPAL_MERCHANT_ID environment variable is not provided', s => s.optional()),
+    }
+}
+
+if (supportedPayments.includes('zarinpal') && (!payments.zarinpal.url || !payments.zarinpal.merchantId))
+    throw new Error('one of the required ZARINPAL_URL ZARINPAL_MERCHANT_ID is not provided')

@@ -9,13 +9,22 @@ import ImageRepository from './DB/repositories/ImageRepository'
 import { Image } from './DB/models/Image'
 import { User } from './DB/models/User'
 import { UserRepository } from './DB/repositories/UserRepository'
-import { s3 } from '.'
+import { payments, s3 } from '.'
+import SubscriptionRepository from './DB/repositories/SubscriptionRepository'
+import { getLogger, runWithLogger } from './observability/requestLoggerContext'
+import { Subscription } from './DB/models/Subscription'
 
 export const runCronjobs = async () => {
+    const cronLog = getLogger()
+
+    cronLog.info('scheduling jobs...')
+
     // Schedule: every 12 hours
     // "0 0 */12 * * *" => second, minute, hour, day, month, weekday
     cron.schedule('0 0 */12 * * *', async () => {
-        console.log('Sending delete requests for temporary contents...');
+        const log = getLogger().child({ module: 'cronjob', job: 'clean temporary contents' });
+
+        log.info('Sending delete requests for temporary contents...');
 
         const from = Date.now() - (14 * 60 * 60)
 
@@ -26,35 +35,35 @@ export const runCronjobs = async () => {
         const audioRepo = new AudioRepository()
 
         const deleteVideo = (videoId: string) => {
-            console.log(`Deleting video id: ${videoId} ...`);
+            log.info(`Deleting video id: ${videoId} ...`);
 
             videoRepo.delete(videoId)
-                .then(videoRepoDeleteResult => console.log({ videoRepoDeleteResult }))
-                .catch(e => console.error(e))
+                .then(videoRepoDeleteResult => log.info({ videoRepoDeleteResult }))
+                .catch(e => log.error({ error: e }))
         }
 
         const deleteAudio = async (audioId: string) => {
-            console.log(`Deleting audio id: ${audioId} ...`);
+            log.info(`Deleting audio id: ${audioId} ...`);
 
             audioRepo.delete(audioId)
-                .then(audioRepoDeleteResult => console.log({ audioRepoDeleteResult }))
-                .catch(e => console.error(e))
+                .then(audioRepoDeleteResult => log.info({ audioRepoDeleteResult }))
+                .catch(e => log.error({ error: e }))
         }
 
         const deleteImage = async (imageId: string) => {
-            console.log(`Deleting image id: ${imageId} ...`);
+            log.info(`Deleting image id: ${imageId} ...`);
 
             imageRepo.delete(imageId)
-                .then(imageRepoDeleteResult => console.log({ imageRepoDeleteResult }))
-                .catch(e => console.error(e))
+                .then(imageRepoDeleteResult => log.info({ imageRepoDeleteResult }))
+                .catch(e => log.error({ error: e }))
         }
 
         const deleteAvatar = async (userId: string) => {
-            console.log(`Deleting avatar of user id: ${userId} ...`);
+            log.info(`Deleting avatar of user id: ${userId} ...`);
 
             userRepo.unsafeUpdate(userId, { avatarKey: undefined, temporaryAvatar: false })
-                .then(userRepoDeleteAvatarResult => console.log({ userRepoDeleteAvatarResult }))
-                .catch(e => console.error(e))
+                .then(userRepoDeleteAvatarResult => log.info({ userRepoDeleteAvatarResult }))
+                .catch(e => log.error({ error: e }))
         }
 
         const objectExistsInS3 = async (key: string): Promise<boolean> => {
@@ -87,12 +96,11 @@ export const runCronjobs = async () => {
 
                 await deleteObjectInS3(key)
             } catch (e) {
-                console.error(`failure while trying to delete video file with key: ${key}`)
-                console.error(e)
+                log.error({ error: e }, `failure while trying to delete video file with key: ${key}`)
             }
         }
 
-        console.log('Deleting dangling avatar files...');
+        log.info('Deleting dangling avatar files...');
         const handleAvatarRemove = async (user: User) => {
             if (user.avatarKey)
                 await deleteObjectIfExists(user.avatarKey)
@@ -102,7 +110,7 @@ export const runCronjobs = async () => {
         for await (const user of userCursor)
             handleAvatarRemove(user)
 
-        console.log('Deleting dangling video files...');
+        log.info('Deleting dangling video files...');
         const handleVideoRemove = async (video: Video) => {
             if (video.bucketKey)
                 await deleteObjectIfExists(video.bucketKey)
@@ -114,7 +122,7 @@ export const runCronjobs = async () => {
         for await (const video of videoCursor)
             handleVideoRemove(video)
 
-        console.log('Deleting dangling audio files...');
+        log.info('Deleting dangling audio files...');
         const handleAudioRemove = async (audio: Audio) => {
             if (audio.bucketKey)
                 await deleteObjectIfExists(audio.bucketKey)
@@ -126,7 +134,7 @@ export const runCronjobs = async () => {
         for await (const audio of audioCursor)
             handleAudioRemove(audio)
 
-        console.log('Deleting dangling image files...');
+        log.info('Deleting dangling image files...');
         const handleImageRemove = async (image: Image) => {
             if (image.bucketKey)
                 await deleteObjectIfExists(image.bucketKey)
@@ -136,8 +144,102 @@ export const runCronjobs = async () => {
         for await (const image of imageCursor)
             handleImageRemove(image)
 
-        console.log('done');
+        log.info('done');
     })
 
-    console.log('Cron jobs scheduled')
+    // Schedule: every 4 hours
+    // "0 0 */4 * * *" => second, minute, hour, day, month, weekday
+    cron.schedule('0 0 */4 * * *', async () => {
+        const log = getLogger().child({ module: 'cronjob', job: 'clean dangling subscriptions' });
+
+        try {
+
+            log.info('deleting dangling subscriptions...');
+
+            const subscriptionRepository = new SubscriptionRepository()
+
+            log.info('cancelling subscriptions with status \'paymentNotCompleted\'...');
+            const subscriptionUpdateResult = await subscriptionRepository.cancelByStatus(['paymentNotCompleted'], 4)
+            log.info({ subscriptionUpdateResult })
+            if (!subscriptionUpdateResult.acknowledged) {
+                log.error({ subscriptionUpdateResult }, 'job failed to clean dangling subscriptions')
+                return
+            }
+
+            const cancel = async (subscription: Subscription) => {
+                log.info('updating subscription status to \'canceled\'')
+                let updateResult = await runWithLogger(log, () => subscriptionRepository.unsafeUpdate(subscription._id!.toString(), subscription.userId, { status: 'canceled' }))
+                log.debug({ updateResult })
+                if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
+                    log.info('failed to cancel user\'s subscription')
+                    // cronjob will clean up the subscription
+                }
+            }
+
+            const markAsInDebt = async (subscription: Subscription) => {
+                log.info('updating subscription status to \'inDebtToUser\'')
+                let updateResult = await runWithLogger(log, () => subscriptionRepository.unsafeUpdate(subscription._id!.toString(), subscription.userId, { status: 'inDebtToUser' }))
+                log.debug({ updateResult })
+                if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
+                    log.info('failed to cancel user\'s subscription')
+                    // cronjob will clean up the subscription
+                }
+            }
+
+            const handleSubscription = async (subscription: Subscription): Promise<boolean> => {
+                const { price: { amount }, paymentMethod, paymentAuthority: authority, userId } = subscription
+                const payment: IPay = payments[paymentMethod]!
+
+                log.info('verifying payment...')
+                const result = await runWithLogger(log, () => payment.verify({ authority, amount }))
+                log.debug({ result })
+                if (result == false) {
+                    log.info('this subscription is already rolled back automatically by the third party payment provider, cancelling this dangling subscription')
+                    await cancel(subscription)
+                    return false
+                }
+                const { refId, cardNumber, cardNumberHash } = result
+
+                log.info('remove user\'s valid subscriptions')
+                const deleteResult = await runWithLogger(log, () => subscriptionRepository.deleteByStatusForUser(userId, ['active', 'trialing']))
+                if (!deleteResult.acknowledged) {
+                    log.info('job failed to delete active subscriptions of user, since the transaction is not reverseable anymore, the subscription is marked as in debt')
+                    await markAsInDebt(subscription)
+
+                    return false
+                }
+
+                log.info('updating subscription status to \'active\'')
+                const updateResult = await runWithLogger(log, () => subscriptionRepository.unsafeUpdate(subscription._id!.toString(), userId, { status: 'active', verifiedAt: Date.now(), refId, cardNumber, cardNumberHash }))
+                log.debug({ updateResult })
+                if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
+                    log.info('job failed to activate user\' subscription, since the transaction is not reverseable anymore, the subscription is marked as in debt')
+                    log.info('failed to activate user\'s subscription')
+                    // rollback payment
+                    await markAsInDebt(subscription)
+
+                    return false
+                }
+
+                return true
+            }
+
+            const promises: Promise<boolean>[] = []
+
+            const subscriptions = await subscriptionRepository.getByStatus(['paymentNotVerified'])
+            for (const subscription of subscriptions) {
+                log.info({ subscription }, 'handling subscription')
+                promises.push(handleSubscription(subscription))
+            }
+
+            const results = await Promise.allSettled<boolean>(promises)
+            log.info({ fulfilledCount: results.map(m => m.status === 'fulfilled' ? m.value === true : false).filter((f) => f === true).length, rejectedCount: results.filter((f) => f.status === 'rejected').length }, 'handled all the subscriptions')
+
+            log.info('done');
+        } catch (error) {
+            log.error({ error }, 'job threw error, while trying to clean dangling subscriptions')
+        }
+    })
+
+    cronLog.info('Cron jobs scheduled')
 }

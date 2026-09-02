@@ -31,7 +31,10 @@ function resolveLevel(): pino.Level {
 const effectiveLevel = resolveLevel();
 
 // Never let these hit disk or stdout in plaintext, no matter how deep they're nested.
-const REDACT_PATHS = [
+// req.headers.*/res.headers[...] below only start doing anything once
+// httpLogger.ts's serializers actually include headers (debug level only) —
+// before that change these three paths matched nothing and were dead entries.
+const REDACT_PATHS = !isProduction ? [] : [
     'req.headers.authorization',
     'req.headers.cookie',
     'res.headers["set-cookie"]',
@@ -44,6 +47,23 @@ const REDACT_PATHS = [
     '*.token',
     '*.accessToken',
     '*.refreshToken',
+
+    // fast-redact's `*` wildcard matches exactly one path segment, so
+    // `*.password` does NOT reach two segments deep — req.body.password
+    // needs its own explicit entry. Same reasoning for every field below.
+    'req.body.password',
+    'req.body.newPassword',
+    'req.body.confirmPassword',
+    'req.body.token',
+    'req.body.accessToken',
+    'req.body.refreshToken',
+    'req.query.token',
+    // Auth login/register/refresh responses return a live access token in
+    // the body — without these, turning on debug logging would put a
+    // usable JWT in plaintext into every one of those log lines.
+    'res.body.accessToken',
+    'res.body.refreshToken',
+    'res.body.token',
 ];
 
 /**

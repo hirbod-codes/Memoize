@@ -74,6 +74,14 @@ class ImageRepository implements IRepository, ISeedable, IDropable {
         return await ImageRepository.collection!.find({ temporary: false, userId }, { session: this.session }).toArray()
     }
 
+    async getPageForUser(userId: string, skip: number, limit: number): Promise<Image[]> {
+        return await ImageRepository.collection!.find({ temporary: false, userId }, { session: this.session }).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray()
+    }
+
+    async countForUser(userId: string): Promise<number> {
+        return await ImageRepository.collection!.countDocuments({ temporary: false, userId }, { session: this.session })
+    }
+
     getFromCursor(fromTsMs: number) {
         return ImageRepository.collection!.find({ temporary: false, updatedAt: { $gte: fromTsMs } })
     }

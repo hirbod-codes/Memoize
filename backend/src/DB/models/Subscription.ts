@@ -1,23 +1,19 @@
 import { InferType, number, object, string } from 'yup';
-import { likeObjectId } from '../common_schemas';
+import { likeObjectId, priceSchema } from '../common_schemas';
 
 export const collectionName = 'subscription'
 
 export const schemaVersion = 'v1.0.0'
 
-const statusSchema = string().oneOf(['active', 'canceled', 'trialing'])
+const statusSchema = string().oneOf(['active', 'canceled', 'trialing', 'paymentNotVerified', 'paymentNotCompleted', 'inDebtToUser'])
+const processorSubscriptionIdSchema = string().when('status', { is: 'paymentNotVerified', then(s) { return s.optional() }, otherwise(s) { return s.required() } })
 
-const post = {
-    planTitle: string().required().label('Plan title'),
+export type PaymentMethod = "zarinpal" | "paypal" | "bitcoin"
 
-    currentPeriodEnd: number().required(),
-
-    processorSubscriptionId: string().required(),
-}
-export const subscriptionPostSchema = object().shape(post).required()
+export const paymentMethodSchema = string().oneOf<PaymentMethod>(['zarinpal', 'paypal', 'bitcoin'])
 
 const create = {
-    userId: likeObjectId.required(),
+    userId: string().required(),
 
     planTitle: string().required().label('Plan title'),
 
@@ -25,7 +21,11 @@ const create = {
 
     currentPeriodEnd: number().required(),
 
-    processorSubscriptionId: string().required(),
+    price: priceSchema.required(),
+
+    paymentMethod: paymentMethodSchema.required(),
+
+    processorSubscriptionId: processorSubscriptionIdSchema
 }
 export const subscriptionCreateSchema = object().shape(create).required()
 
@@ -38,6 +38,16 @@ const update = {
     currentPeriodEnd: number().optional(),
 
     processorSubscriptionId: string().optional(),
+
+    paymentAuthority: string().optional(),
+
+    completedAt: number().integer().min(0).optional(),
+
+    verifiedAt: number().integer().min(0).optional(),
+
+    refId: string().optional(),
+    cardNumber: string().optional(),
+    cardNumberHash: string().optional(),
 }
 export const subscriptionUpdateSchema = object().shape(update).required()
 
@@ -45,7 +55,7 @@ export const subscriptionSchema = object().shape({
     schemaVersion: string().optional().min(6).max(20),
     _id: likeObjectId.optional(),
 
-    userId: likeObjectId.required(),
+    userId: string().required(),
 
     planTitle: string().required().label('Plan title'),
 
@@ -53,13 +63,26 @@ export const subscriptionSchema = object().shape({
 
     currentPeriodEnd: number().required(),
 
-    processorSubscriptionId: string().required(),
+    processorSubscriptionId: processorSubscriptionIdSchema,
+
+    price: priceSchema.required(),
+
+    paymentMethod: paymentMethodSchema.required(),
+
+    paymentAuthority: string().optional(),
+
+    completedAt: number().integer().min(0).optional(),
+
+    verifiedAt: number().integer().min(0).optional(),
+
+    refId: string().optional(),
+    cardNumber: string().optional(),
+    cardNumberHash: string().optional(),
 
     createdAt: number().optional(),
     updatedAt: number().optional(),
 })
 
-export type SubscriptionPost = InferType<typeof subscriptionPostSchema>
 export type SubscriptionCreate = InferType<typeof subscriptionCreateSchema>
 export type SubscriptionUpdate = InferType<typeof subscriptionUpdateSchema>
 export type Subscription = InferType<typeof subscriptionSchema>
