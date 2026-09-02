@@ -1,3 +1,4 @@
+import { JwtPayload } from "jsonwebtoken";
 import { Privileges } from "../../DB/models/Plan";
 import { Usage, UsageField } from "../../DB/models/Usage";
 import { User } from "../../DB/models/User";
@@ -10,6 +11,7 @@ declare global {
                 userData: User
                 privileges?: Privileges
                 usages?: Usage
+                jwtPayload?: JwtPayload
             }
             quotaReservations?: {
                 userId: string
