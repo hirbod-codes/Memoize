@@ -1,5 +1,5 @@
 import express from 'express';
-import { string, ValidationError } from 'yup';
+import { number, string, ValidationError } from 'yup';
 import { auth } from '../middlewares/auth';
 import { BUCKET_NAME, imageUploadTmpDir } from '../configs';
 import ImageRepository from '../DB/repositories/ImageRepository';
@@ -14,7 +14,8 @@ import { UploadTooLargeError } from '../errors/UploadTooLargeError';
 import { createReadStream } from 'fs';
 import { InvalidMediaError } from '../errors/InvalidMediaError';
 import { Readable } from 'stream';
-import { getLogger } from '../observability/requestContext';
+import { getLogger } from '../observability/requestLoggerContext';
+import { DEFAULT_PAGE_SIZE, MAX_PAGE, MAX_PAGE_SIZE } from './schemas';
 
 const router = express.Router();
 
@@ -148,9 +149,55 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.image']), authoriz
         res.status(201).json({ id: imageId });
     } catch (err) {
         reqLog.error({ err }, 'Unhandled error in image upload route');
-        return res.status(500).json({ message: 'Error uploading video file' });
+        return res.status(500).json({ message: 'Error uploading image file' });
     }
 })
+
+router.get('/', auth, async (req, res) => {
+    let reqLog = getLogger().child({ module: 'image', route: 'GET /image' });
+
+    try {
+        reqLog.debug({ query: req.query }, 'Image list request received');
+
+        let page: number, pageSize: number;
+        try {
+            page = await number().integer().min(1).max(MAX_PAGE).default(1).label('Page').validate(req.query.page?.toString());
+            pageSize = await number().integer().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE).label('Page size').validate(req.query.pageSize?.toString());
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                reqLog.warn({ errors: err.errors }, 'Rejected image list request: invalid parameters');
+                return res.status(400).json({ errors: err.errors });
+            }
+            reqLog.warn({ err }, 'Rejected image list request: invalid parameters');
+            return res.status(400).json({ message: 'Invalid parameters' });
+        }
+
+        const userId = req.user!.userId;
+        reqLog = reqLog.child({ userId, page, pageSize });
+
+        const imageRepository = new ImageRepository();
+
+        const skip = (page - 1) * pageSize;
+        const [items, total] = await Promise.all([
+            imageRepository.getPageForUser(userId, skip, pageSize),
+            imageRepository.countForUser(userId),
+        ]);
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        reqLog.info({ count: items.length, total, totalPages }, 'Listed images');
+
+        res.status(200).json({
+            items,
+            page,
+            pageSize,
+            total,
+            totalPages,
+            hasMore: page < totalPages,
+        });
+    } catch (err) {
+        reqLog.error({ err }, 'Failed to list images');
+        res.status(500).json({ message: 'Error listing images' });
+    }
+});
 
 router.get('/info/', auth, async (req, res) => {
     let reqLog = getLogger().child({ module: 'image', route: 'GET /image/info' });

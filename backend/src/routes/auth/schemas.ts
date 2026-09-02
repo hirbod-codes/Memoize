@@ -33,5 +33,5 @@ export const refreshSchema = object({
 
 export const adminSettingsSchema = object({
     allowEmailRegistration: boolean().optional(),
-    allowPhoneRegistration: boolean().optional(),
+    allowOtp: boolean().optional(),
 });

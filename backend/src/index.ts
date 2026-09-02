@@ -55,7 +55,7 @@ import { audioRoutes } from './routes/audio';
 import { imageRoutes } from './routes/image';
 import { videoRoutes } from './routes/video';
 import { userRoutes } from './routes/user';
-import { ttsRoutes } from './routes/tts';
+// import { ttsRoutes } from './routes/tts';
 
 import { S3Client } from "@aws-sdk/client-s3";
 
@@ -207,7 +207,7 @@ export const otpService = OtpFactory.instantiate();
     app.use('/api/image', imageRoutes);
     app.use('/api/audio', audioRoutes);
     app.use('/api/video', videoRoutes);
-    app.use('/api/tts', ttsRoutes);
+    // app.use('/api/tts', ttsRoutes);
 
     app.use(notFoundHandler);
     app.use(errorHandler);

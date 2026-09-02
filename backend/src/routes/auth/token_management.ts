@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 import { accessTokenSecret } from '../../configs';
 import { Redis } from '../../DB/redis';
-import { getLogger } from '../../observability/requestContext';
+import { getLogger } from '../../observability/requestLoggerContext';
 
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 

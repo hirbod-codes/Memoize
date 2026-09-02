@@ -1,6 +1,6 @@
 import { randomBytes, createHash } from 'crypto';
 import { Redis } from '../../DB/redis';
-import { getLogger } from '../../observability/requestContext';
+import { getLogger } from '../../observability/requestLoggerContext';
 
 const REFRESH_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
 const REVOKED_TOMBSTONE_TTL_SECONDS = REFRESH_TTL_SECONDS;

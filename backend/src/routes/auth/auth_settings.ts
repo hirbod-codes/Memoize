@@ -1,40 +1,35 @@
+import { AppSettings, AppSettingsUpdate } from "../../DB/models/AppSettings";
 import { AppSettingsRepository } from "../../DB/repositories/AppSettingsRepository";
-import { getLogger } from '../../observability/requestContext';
+import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
 
 const AUTH_SETTINGS_KEY = 'auth';
 
-export interface AuthSettings {
-    allowEmailRegistration: boolean;
-    allowPhoneRegistration: boolean;
-}
+export async function getAuthSettings(): Promise<AppSettings> {
+    const log = getLogger().child({ step: 'getAuthSettings' });
 
-const DEFAULT_SETTINGS: AuthSettings = {
-    allowEmailRegistration: true,
-    allowPhoneRegistration: true,
-};
-
-export async function getAuthSettings(): Promise<AuthSettings> {
     const repo = new AppSettingsRepository();
-    const doc = await repo.getByKey(AUTH_SETTINGS_KEY);
+    const doc = await runWithLogger(log, () => repo.getByKey(AUTH_SETTINGS_KEY))
 
     if (!doc) {
-        getLogger().debug('No auth settings document found, using defaults');
-        return DEFAULT_SETTINGS;
+        log.info('No auth settings document found, using defaults');
+        return { key: 'auth', allowEmailRegistration: true, allowOtp: false };
     }
 
-    return {
-        allowEmailRegistration: doc.allowEmailRegistration ?? DEFAULT_SETTINGS.allowEmailRegistration,
-        allowPhoneRegistration: doc.allowPhoneRegistration ?? DEFAULT_SETTINGS.allowPhoneRegistration,
-    };
+    return doc
 }
 
-export async function updateAuthSettings(patch: Partial<AuthSettings>): Promise<AuthSettings> {
-    const repo = new AppSettingsRepository();
-    const current = await getAuthSettings();
-    const merged = { ...current, ...patch };
+export async function updateAuthSettings(patch: AppSettingsUpdate): Promise<AppSettings> {
+    const log = getLogger().child({ step: 'updateAuthSettings' });
 
-    await repo.upsertByKey(AUTH_SETTINGS_KEY, merged);
-    getLogger().debug({ patch, merged }, 'Persisted auth settings');
+    log.debug({ patch })
+
+    const repo = new AppSettingsRepository();
+    const current = await runWithLogger(log, () => getAuthSettings())
+    const merged = { ...current, ...patch };
+    log.debug({ current, merged })
+
+    await runWithLogger(log, () => repo.upsertByKey(AUTH_SETTINGS_KEY, merged))
+    log.info('Persisted auth settings');
 
     return merged;
 }

@@ -1,25 +1,26 @@
 import express, { Request, Response } from 'express';
-import { string, ValidationError } from 'yup';
-import { auth, authenticateToken } from '../middlewares/auth';
-import { audioUploadTmpDir, BUCKET_NAME, ttsApiKey } from '../configs';
-import AudioRepository from '../DB/repositories/AudioRepository';
+import { number, string, ValidationError } from 'yup';
+import { auth, authenticateToken } from '../../middlewares/auth';
+import { audioUploadTmpDir, BUCKET_NAME, ttsApiKey } from '../../configs';
+import AudioRepository from '../../DB/repositories/AudioRepository';
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { generateStreamToken, verifyStreamToken } from '../lib/signed_urls';
-import { UserRepository } from '../DB/repositories/UserRepository';
-import { httpsStreamRequest } from '../utils';
-import { s3 } from '..';
-import { authorizeFeature, authorizeQuota } from '../middlewares/authorization';
+import { generateStreamToken, verifyStreamToken } from '../../lib/signed_urls';
+import { UserRepository } from '../../DB/repositories/UserRepository';
+import { httpsStreamRequest } from '../../utils';
+import { s3 } from '../..';
+import { authorizeFeature, authorizeQuota } from '../../middlewares/authorization';
 import { basename, join } from 'path';
 import { mkdir, rm, stat, unlink } from 'fs/promises';
-import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../lib/file_management';
-import { extractCoverArt, generateWebCompatibleCopy, isWebCompatible, probeFile } from '../ffmpeg';
-import { InvalidMediaError } from '../errors/InvalidMediaError';
-import { UploadTooLargeError } from '../errors/UploadTooLargeError';
+import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../../lib/file_management';
+import { extractCoverArt, generateWebCompatibleCopy, isWebCompatible, probeFile } from '../../ffmpeg';
+import { InvalidMediaError } from '../../errors/InvalidMediaError';
+import { UploadTooLargeError } from '../../errors/UploadTooLargeError';
 import { createReadStream, createWriteStream } from 'fs';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
-import { UsageField } from '../DB/models/Usage';
-import { getLogger } from '../observability/requestContext';
+import { UsageField } from '../../DB/models/Usage';
+import { getLogger } from '../../observability/requestLoggerContext';
+import { DEFAULT_PAGE_SIZE, MAX_PAGE, MAX_PAGE_SIZE } from '../schemas';
 
 const router = express.Router();
 
@@ -207,6 +208,52 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authoriz
     }
 })
 
+router.get('/', auth, async (req, res) => {
+    let reqLog = getLogger().child({ module: 'audio', route: 'GET /audio' });
+
+    try {
+        reqLog.debug({ query: req.query }, 'Audio list request received');
+
+        let page: number, pageSize: number;
+        try {
+            page = await number().integer().min(1).max(MAX_PAGE).default(1).label('Page').validate(req.query.page?.toString());
+            pageSize = await number().integer().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE).label('Page size').validate(req.query.pageSize?.toString());
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                reqLog.warn({ errors: err.errors }, 'Rejected audio list request: invalid parameters');
+                return res.status(400).json({ errors: err.errors });
+            }
+            reqLog.warn({ err }, 'Rejected audio list request: invalid parameters');
+            return res.status(400).json({ message: 'Invalid parameters' });
+        }
+
+        const userId = req.user!.userId;
+        reqLog = reqLog.child({ userId, page, pageSize });
+
+        const audioRepository = new AudioRepository();
+
+        const skip = (page - 1) * pageSize;
+        const [items, total] = await Promise.all([
+            audioRepository.getPageForUser(userId, skip, pageSize),
+            audioRepository.countForUser(userId),
+        ]);
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        reqLog.info({ count: items.length, total, totalPages }, 'Listed audios');
+
+        res.status(200).json({
+            items,
+            page,
+            pageSize,
+            total,
+            totalPages,
+            hasMore: page < totalPages,
+        });
+    } catch (err) {
+        reqLog.error({ err }, 'Failed to list audios');
+        res.status(500).json({ message: 'Error listing audios' });
+    }
+});
+
 router.get('/info/', auth, async (req, res) => {
     let reqLog = getLogger().child({ module: 'audio', route: 'GET /audio/info' });
     try {
@@ -326,13 +373,13 @@ router.get('/tts', async (req, res) => {
         if (!userTtsApiKey) {
             const ur = new UserRepository()
             const user = await ur.get(userId);
-            if (user === false) {
+            if (!user) {
                 reqLog.warn('Rejected TTS request: user not found for authenticated token');
                 return res.status(401).send();
             }
 
-            if (user.role !== 'admin' && user?.plan === 'free') {
-                reqLog.info({ plan: user.plan }, 'Rejected TTS request: plan does not include TTS');
+            if (user.role !== 'admin' && user?.planTitle === 'free') {
+                reqLog.info({ plan: user.planTitle }, 'Rejected TTS request: plan does not include TTS');
                 return res.status(403).send();
             }
 
