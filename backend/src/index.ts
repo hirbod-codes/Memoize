@@ -51,17 +51,17 @@ export { ffmpeg };
 
 import { leafRoutes } from './routes/leaf';
 import { treeNodeRoutes } from './routes/treeNode';
-import { audioRoutes } from './routes/audio';
+import { audioRoutes } from './routes/audio/audio';
 import { imageRoutes } from './routes/image';
-import { videoRoutes } from './routes/video';
+import { videoRoutes } from './routes/video/video';
 import { userRoutes } from './routes/user';
 // import { ttsRoutes } from './routes/tts';
 
 import { S3Client } from "@aws-sdk/client-s3";
 
-import { isAdminIfAuthenticated } from './middlewares/auth';
+import { toggleDebugMode } from './middlewares/auth';
 import { startMetricsPush } from './observability/pushgateway';
-import { setRequestLogger } from './observability/requestContext';
+import { setRequestLogger } from './observability/requestLoggerContext';
 import { Redis } from './DB/redis';
 import { notFoundHandler } from './middlewares/notFoundHandler';
 import { errorHandler } from './middlewares/errorHandler';
@@ -71,6 +71,8 @@ import { rollbackQuotaOnFailure } from './middlewares/authorization';
 import { planGate } from './middlewares/planGate';
 import { OtpFactory } from './services/OTP/OtpFactory';
 import { authRoutes } from './routes/auth/auth';
+import { planRoutes } from './routes/plan/plan';
+import { PaymentFactory } from './services/Payments/zarinpal/factory';
 
 export const meili = new Meilisearch({
     host: meilisearchHost + ':' + meilisearchPort.toString(),
@@ -89,6 +91,11 @@ export const s3 = new S3Client({
 });
 
 export const otpService = OtpFactory.instantiate();
+export const payments = {
+    zarinpal: PaymentFactory.instantiate('zarinpal'),
+    paypal: undefined!,
+    bitcoin: undefined!,
+};
 
 (async () => {
     await setupSearch();
@@ -134,11 +141,12 @@ export const otpService = OtpFactory.instantiate();
 
     const app = express()
 
-    app.use(requestContextMiddleware);
-
     // --- Observability middleware first, so it wraps everything downstream ---
     app.use(metricsMiddleware());
+
     app.use(httpLogger);
+
+    app.use(requestContextMiddleware);
 
     app.use((req, res, next) => {
         setRequestLogger(req.log);
@@ -154,19 +162,7 @@ export const otpService = OtpFactory.instantiate();
 
     app.use(generalRateLimiter);
 
-    app.use(isAdminIfAuthenticated, (req, res, next) => {
-        const logLevelQueryParam = req.query.logLevel
-
-        if (logLevelQueryParam !== 'debug')
-            return next()
-
-        req.log.info({ logLevelQueryParam }, 'Switching effective log level to DEBUG')
-        req.log = req.log.child({}, { level: 'debug' })
-
-        setRequestLogger(req.log)
-
-        next()
-    })
+    app.use(toggleDebugMode)
 
     app.use(express.json())
 
@@ -208,6 +204,7 @@ export const otpService = OtpFactory.instantiate();
     app.use('/api/audio', audioRoutes);
     app.use('/api/video', videoRoutes);
     // app.use('/api/tts', ttsRoutes);
+    app.use('/api/plan', planRoutes);
 
     app.use(notFoundHandler);
     app.use(errorHandler);
@@ -220,7 +217,7 @@ export const otpService = OtpFactory.instantiate();
         }, app)
             .listen(hostPort, hostName, () => logger.info({ hostName, hostPort }, `listening on ${hostName}:${hostPort}...`))
     else
-        // Server is behind NginX proxy
+        // Server is behind NginX proxy in production
         server = app.listen(hostPort, hostName, () => logger.info({ hostName, hostPort }, `listening on ${hostName}:${hostPort}...`))
 
     startMetricsPush();
