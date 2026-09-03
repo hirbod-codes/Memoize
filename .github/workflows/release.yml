@@ -182,8 +182,8 @@ jobs:
       - name: Build android app
         run: |
           cd client
-          flutter build apk --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
-          flutter build appbundle --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+          flutter build apk --release --dart-define=API_URL=https://memoize.ir --dart-define=ENV=prod
+          flutter build appbundle --release --dart-define=API_URL=https://memoize.ir --dart-define=ENV=prod
 
       - name: Rename app release
         run: |
@@ -233,7 +233,7 @@ jobs:
       - name: Build windows app
         run: |
           cd client
-          flutter build windows --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+          flutter build windows --release --dart-define=API_URL=https://memoize.ir --dart-define=ENV=prod
 
       - name: Package Windows
         run: |
@@ -282,7 +282,7 @@ jobs:
       - name: Build linux app
         run: |
           cd client
-          flutter build linux --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+          flutter build linux --release --dart-define=API_URL=https://memoize.ir --dart-define=ENV=prod
 
       - name: Package Linux
         run: |
@@ -330,40 +330,32 @@ jobs:
       - name: Build web app
         run: |
           cd client
-          flutter build web --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+          flutter build web --release --dart-define=API_URL=https://memoize.ir --dart-define=ENV=prod
 
       - name: Package web
         run: |
-          cp client/build/web/* build/memoize
-          cd client/build/web
-          zip -r ../../../memoize-web-${{ needs.release.outputs.version }}.zip .
+          mkdir -o ./build/memoize/
+          mv client/build/web/* build/memoize/
+          cd build/memoize/
+          zip -r ../../memoize-web-${{ needs.release.outputs.version }}.zip .
 
       - name: Extract memoize
         run: mkdir -p build/memoize && unzip memoize/memoize-web-${{ needs.release.outputs.version }}.zip -d build/memoize
 
       - name: Create SSL files
         run: |
-          mkdir -p nginx/certs      
+          mkdir -p nginx/certs
           echo "${{ secrets.SSL_CERT }}" > nginx/certs/fullchain.pem
           echo "${{ secrets.SSL_KEY }}" > nginx/certs/privkey.pem
 
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Nginx image
-        run: docker build -t ghcr.io/hirbod-codes/nginx:latest -t ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }} .
-
-      - name: Push Docker image
+      - name: Build Docker image
         run: |
+          cd backend
+          echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker build -t ghcr.io/hirbod-codes/nginx:latest -t ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }} .
           docker push ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }}
           docker push ghcr.io/hirbod-codes/nginx:latest
-
-      - name: Export Docker image
-        run: docker save ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }} | gzip > nginx-image-${{ needs.release.outputs.version }}.tar.gz
+          docker save ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }} | gzip > nginx-image-${{ needs.release.outputs.version }}.tar.gz
 
       - run: |
           mkdir artifacts
@@ -412,7 +404,7 @@ jobs:
       - name: Build macOS app
         run: |
           cd client
-          flutter build macos --release --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+          flutter build macos --release --dart-define=API_URL=https://memoize.ir --dart-define=ENV=prod
 
       - name: Package macOS
         run: |
@@ -462,7 +454,7 @@ jobs:
       - name: Build ios app
         run: |
           cd client
-          flutter build ios --release --no-codesign --dart-define=API_URL=https://memoize.hirbod-codes.ir:1404 --dart-define=ENV=prod
+          flutter build ios --release --no-codesign --dart-define=API_URL=https://memoize.ir --dart-define=ENV=prod
 
       - name: Create the unsigned ipa
         run: |

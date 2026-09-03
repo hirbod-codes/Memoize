@@ -46,7 +46,11 @@ download nginx and run:
 
 ```cmd
 C:\nginx\nginx.exe -p C:\nginx\ -c <absolute\path\to\nginx.dev.conf>
+```
 
+for instance:
+
+```cmd
 C:\nginx\nginx.exe -p C:\nginx\ -c C:\projects\Memoize\client\nginx.dev.conf
 ```
 
