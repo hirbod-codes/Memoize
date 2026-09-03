@@ -334,14 +334,47 @@ jobs:
 
       - name: Package web
         run: |
+          cp client/build/web/* build/memoize
           cd client/build/web
           zip -r ../../../memoize-web-${{ needs.release.outputs.version }}.zip .
+
+      - name: Extract memoize
+        run: mkdir -p build/memoize && unzip memoize/memoize-web-${{ needs.release.outputs.version }}.zip -d build/memoize
+
+      - name: Create SSL files
+        run: |
+          mkdir -p nginx/certs      
+          echo "${{ secrets.SSL_CERT }}" > nginx/certs/fullchain.pem
+          echo "${{ secrets.SSL_KEY }}" > nginx/certs/privkey.pem
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Nginx image
+        run: docker build -t ghcr.io/hirbod-codes/nginx:latest -t ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }} .
+
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }}
+          docker push ghcr.io/hirbod-codes/nginx:latest
+
+      - name: Export Docker image
+        run: docker save ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }} | gzip > nginx-image-${{ needs.release.outputs.version }}.tar.gz
+
+      - run: |
+          mkdir artifacts
+          mv memoize-web-${{ needs.release.outputs.version }}.zip artifacts/memoize-web-${{ needs.release.outputs.version }}.zip
+          mv nginx-image-${{ needs.release.outputs.version }}.tar.gz artifacts/
 
       - name: Upload web artifacts
         uses: actions/upload-artifact@v4
         with:
           name: web
-          path: memoize-web-${{ needs.release.outputs.version }}.zip
+          path: artifacts/*
           retention-days: 1
 
   macos-build:
@@ -482,22 +515,3 @@ jobs:
           files: artifacts/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  dispatch-nginx-repo:
-    needs:
-      - release
-      - create-release
-    runs-on: ubuntu-latest
-    if: always() && needs.release.result == 'success' && needs.release.outputs.version != '' && needs.create-release.result == 'success'
-
-    steps:
-      - name: Send dispatch to Nginx repo
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.DISPATCH_TOKEN }}
-          repository: hirbod-codes/nginx
-          event-type: memoize-released
-          client-payload: |
-            {
-            "VERSION": "${{ needs.release.outputs.version }}"
-            }
