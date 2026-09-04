@@ -1,8 +1,8 @@
-import { randomInt, createHash } from 'crypto';
 import { Redis } from '../../DB/redis';
 import { otpService } from '../..';
 import { getLogger } from '../../observability/requestLoggerContext';
 import { isProduction } from '../../configs';
+import { generateCode, hashCode } from '../../lib';
 
 const OTP_TTL_SECONDS = 5 * 60;
 const OTP_REQUEST_COOLDOWN_SECONDS = 70;
@@ -14,11 +14,6 @@ interface OtpRecord {
     codeHash: string;
     attempts: number;
     purpose?: OtpPurpose;
-}
-
-function hashCode(code: string, phoneNumber: string): string {
-    // salted with the phone number so a leaked hash table isn't directly usable
-    return createHash('sha256').update(`${code}:${phoneNumber}`).digest('hex');
 }
 
 /**
@@ -38,7 +33,7 @@ export async function requestOtp(phoneNumber: string, locale: 'en' | 'fa', purpo
         return 'cooldown';
     }
 
-    const code = randomInt(100000, 999999).toString();
+    const code = generateCode();
 
     // Never log `code` or the resulting codeHash. codeHash is a fast, unsalted-beyond-phone-number SHA-256 digest of a 6-digit code — for anyone who also knows the phone number
     const codeHash = isProduction ? hashCode(code, phoneNumber) : `${code}:${phoneNumber}`

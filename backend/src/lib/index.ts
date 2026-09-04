@@ -3,6 +3,7 @@ import { ISchema } from "yup"
 import { getLogger } from "../observability/requestLoggerContext";
 import { Logger } from "pino";
 import { Response } from "express";
+import { createHash, randomInt } from "crypto";
 
 export const A_MONTH_IN_MILLISECONDS = 30 * 24 * 60 * 60 * 1000
 
@@ -20,4 +21,13 @@ export function handleError(res: Response, err: any, log?: Logger) {
 
     log.error({ err }, 'Unhandled error');
     try { return res.status(500).json({ status: 'error', error: 'INTERNAL' }); } catch (_) { }
+}
+
+export function generateCode() {
+    return randomInt(100000, 999999).toString();
+}
+
+export function hashCode(code: string, extra: string): string {
+    // salted with the extra string so a leaked hash table isn't directly usable
+    return createHash('sha256').update(`${code}:${extra}`).digest('hex');
 }

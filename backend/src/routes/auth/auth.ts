@@ -3,15 +3,17 @@ import bcrypt from 'bcrypt';
 import { UserRepository } from '../../DB/repositories/UserRepository';
 import { auth, REFRESH_COOKIE_NAME, unAuth } from '../../middlewares/auth';
 import { getAuthSettings, updateAuthSettings } from './auth_settings';
-import { requestOtp, verifyOtp } from './otp_management';
+import { requestOtp, verifyOtp } from '../../services/OTP/otp_management';
 import { rotateRefreshToken, revokeFamily, revokeAllSessions, revokeSessionByTokenId, listSessions } from './session_management';
 import { signAccessToken, blacklistAccessToken } from './token_management';
-import { otpRequestSchema, adminSettingsSchema, loginSchema, refreshSchema, registerSchema, otpVerifySchema } from './schemas';
+import { otpRequestSchema, adminSettingsSchema, loginSchema, refreshSchema, emailRegisterSchema, otpVerifySchema, emailVerifySchema, emailPasswordResetSchema, emailPasswordResetVerifySchema } from './schemas';
 import { clearAuthCookies, issueTokens, setAuthCookies } from './lib';
 import { isAdminIfAuthenticated } from '../../middlewares/auth';
 import { string } from 'yup';
 import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
 import { handleError, validate } from '../../lib';
+import { Redis } from '../../DB/redis';
+import { requestSmtp, verifySmtp } from '../../services/SMTP/SMTP_management';
 
 const router = Router();
 
@@ -40,7 +42,7 @@ router.post('/otp/request', unAuth, async (req: Request, res: Response) => {
         }
 
         log.info('OTP sent');
-        res.json({ status: 'ok', data: { message: 'Code sent' } });
+        res.json({ status: 'ok', message: 'Code sent' });
     } catch (err: any) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -60,8 +62,6 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
         const settings = await runWithLogger(log, () => getAuthSettings())
         log.debug({ settings });
 
-        const ur = new UserRepository();
-
         log.info('verifying OTP verification code');
         if (!(await runWithLogger(log, () => verifyOtp(phoneNumber!, code!)))) {
             log.info('Rejected OTP verification: invalid OTP code');
@@ -70,6 +70,8 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
         log.info('OTP code verified successfully.');
 
         let userId: string
+
+        const ur = new UserRepository();
 
         log.info('fetching user...')
         let user = await runWithLogger(log, () => ur.getByPhoneNumber(phoneNumber!))
@@ -124,37 +126,95 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
     }
 });
 
-router.post('/register', unAuth, async (req: Request, res: Response) => {
-    const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/register' });
+router.post('/email/register', unAuth, async (req: Request, res: Response) => {
+    const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/email/register' });
 
     try {
-        const { client, email, password } = await runWithLogger(log, () => validate(registerSchema, req.body))
-        log.debug({ client, email, password }, 'Register request received');
+        const { client, email, password, locale } = await runWithLogger(log, () => validate(emailRegisterSchema, req.body))
+        log.debug({ client, email, password, locale }, 'Register request received');
 
         const settings = await runWithLogger(log, () => getAuthSettings())
         const ur = new UserRepository();
 
+        log.info('checking app settings');
         if (!settings.allowEmailRegistration) {
             log.info('Rejected registration: email registration disabled');
             return res.status(403).json({ status: 'error', error: 'EMAIL_REGISTRATION_DISABLED' });
         }
 
+        log.info('fetching user data');
         if (await runWithLogger(log, () => ur.getByEmail(email!))) {
             log.info({ email }, 'Rejected registration: email already taken');
-            return res.status(409).json({ status: 'error', error: 'EMAIL_TAKEN' });
+            // successful response is sent, to improve users privacy
+            return res.status(204).json({ status: 'ok' });
         }
 
         const passwordHash = await bcrypt.hash(password!, 12);
+        log.debug({ passwordHash })
+        log.info('hashed user\'s password')
 
+        const redis = await Redis.getClient()
+
+        log.info('storing user email and hashed password in redis')
+        await redis.set(`email_registration:${email}`, `${email}:${passwordHash}`, 'EX', 120)
+
+        log.info('sending SMTP verification code');
+        const result = await runWithLogger(log, () => requestSmtp(email, locale))
+        log.debug({ requestSmtpResult: result });
+        if (result === 'cooldown') {
+            log.info('Rejected SMTP request: cooldown active');
+            return res.status(429).json({ status: 'error', error: 'SMTP_COOLDOWN' });
+        }
+
+        return res.status(204).json({ status: 'ok' });
+    } catch (err: any) {
+        runWithLogger(log, () => handleError(res, err))
+    }
+});
+
+router.post('/email/verify', unAuth, async (req: Request, res: Response) => {
+    const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/email/verify' });
+
+    try {
+        const { client, code, email, password, locale } = await runWithLogger(log, () => validate(emailVerifySchema, req.body))
+        log.debug({ client, code, email, password, locale }, 'Register request received');
+
+        const ur = new UserRepository();
+
+        log.info('verifying SMTP verification code');
+        if (!(await runWithLogger(log, () => verifySmtp(email, code!)))) {
+            log.info('Rejected SMTP verification: invalid SMTP code');
+            return res.status(400).json({ status: 'error', error: 'INVALID_INPUT' });
+        }
+        log.info('SMTP code verified successfully.');
+
+        const redis = await Redis.getClient()
+
+        log.info('fetching user email and hashed password in redis')
+        const redisKey = `email_registration:${email}`
+        const redisValue = await redis.get(`email_registration:${email}`)
+        if (!redisValue) {
+            log.info('failed to fetch user email and hashed password from redis')
+            return res.status(400).json({ status: 'error', error: 'EMAIL_NOT_FOUND' })
+        }
+        const [redisEmail, redisPassword] = redisValue.split(':')
+
+        log.info('validating user input against redis data')
+        if (redisEmail !== email || await bcrypt.compare(password, redisPassword)) {
+            log.info('invalid email or password provided')
+            return res.status(400).json({ status: 'error', error: 'INVALID_INPUT' })
+        }
+
+        log.info('creating user data in db');
         const created = await runWithLogger(log, () => ur.create({
             authMethod: 'email',
             role: 'user',
             planTitle: 'free',
             email,
             temporaryAvatar: true,
-            password: passwordHash,
+            password: redisPassword,
         }))
-
+        log.debug({ created })
         if (!created || !created.acknowledged) {
             log.error({ email }, 'User creation failed');
             return res.status(500).json({ status: 'error', error: 'CREATE_FAILED' });
@@ -162,6 +222,10 @@ router.post('/register', unAuth, async (req: Request, res: Response) => {
         const userId = created.insertedId.toString()
         log.info({ userId }, 'Registered new user');
 
+        await redis.del(redisKey)
+        log.info('deleted useless redis record')
+
+        log.info('fetching user data');
         const user = await runWithLogger(log, () => ur.get(userId))
         if (!user) {
             log.error({ userId }, 'User fetch failed');
@@ -169,6 +233,88 @@ router.post('/register', unAuth, async (req: Request, res: Response) => {
         }
 
         const { accessToken, refreshToken } = await runWithLogger(log, () => issueTokens(res, userId, client, req.headers['user-agent']))
+
+        if (client === 'web')
+            return res.json({ status: 'ok', data: { user, accessToken } });
+
+        return res.json({ status: 'ok', data: { user, accessToken, refreshToken } });
+    } catch (err: any) {
+        runWithLogger(log, () => handleError(res, err))
+    }
+});
+
+router.post('/email/password-reset', unAuth, async (req: Request, res: Response) => {
+    const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/email/register' });
+
+    try {
+        const { client, email, locale } = await runWithLogger(log, () => validate(emailPasswordResetSchema, req.body))
+        log.debug({ client, email, locale }, 'Register request received');
+
+        const settings = await runWithLogger(log, () => getAuthSettings())
+        const ur = new UserRepository();
+
+        log.info('checking app settings');
+        if (!settings.allowEmailRegistration) {
+            log.info('Rejected registration: email registration disabled');
+            return res.status(403).json({ status: 'error', error: 'EMAIL_REGISTRATION_DISABLED' });
+        }
+
+        log.info('fetching user with the email');
+        if (!await runWithLogger(log, () => ur.getByEmail(email!))) {
+            log.info({ email }, 'Rejected registration: email not found');
+            // successful response is sent, to improve users privacy
+            return res.status(204).json({ status: 'ok' });
+        }
+
+        log.info('sending SMTP verification code');
+        const result = await runWithLogger(log, () => requestSmtp(email, locale))
+        log.debug({ requestSmtpResult: result });
+        if (result === 'cooldown') {
+            log.info('Rejected SMTP request: cooldown active');
+            return res.status(429).json({ status: 'error', error: 'SMTP_COOLDOWN' });
+        }
+
+        return res.status(204).json({ status: 'ok' });
+    } catch (err: any) {
+        runWithLogger(log, () => handleError(res, err))
+    }
+});
+
+router.post('/email/password-reset/verify', unAuth, async (req: Request, res: Response) => {
+    const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/email/verify' });
+
+    try {
+        const { client, code, email, password, locale } = await runWithLogger(log, () => validate(emailPasswordResetVerifySchema, req.body))
+        log.debug({ client, code, email, password, locale }, 'Register request received');
+
+        const ur = new UserRepository();
+
+        log.info('verifying SMTP verification code');
+        if (!(await runWithLogger(log, () => verifySmtp(email, code!)))) {
+            log.info('Rejected SMTP verification: invalid SMTP code');
+            return res.status(400).json({ status: 'error', error: 'INVALID_INPUT' });
+        }
+
+        log.info('fetching user with the email');
+        const user = await runWithLogger(log, () => ur.getByEmail(email))
+        log.debug({ user })
+        if (!user) {
+            log.info('Rejected registration: email not found');
+            // successful response is sent, to improve users privacy
+            return res.status(204).json({ status: 'ok' });
+        }
+
+        log.info('hashing new password and updating user password');
+        const passwordHash = await bcrypt.hash(password!, 12);
+        const updated = await runWithLogger(log, () => ur.unsafeUpdate(user._id.toString(), { email, password: passwordHash, }))
+        log.debug({ updated })
+        if (!updated || !updated.acknowledged) {
+            log.error({ email }, 'User update failed');
+            return res.status(500).json({ status: 'error', error: 'UPDATE_FAILED' });
+        }
+
+        log.info('issuing auth tokens');
+        const { accessToken, refreshToken } = await runWithLogger(log, () => issueTokens(res, user._id.toString(), client, req.headers['user-agent']))
 
         if (client === 'web')
             return res.json({ status: 'ok', data: { user, accessToken } });

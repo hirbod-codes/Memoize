@@ -1,6 +1,7 @@
 import 'package:client/auth/responses/refresh_response.dart';
 import 'package:client/auth/token_storage.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class RefreshInterceptor extends Interceptor {
@@ -8,7 +9,7 @@ class RefreshInterceptor extends Interceptor {
   final TokenStorage storage;
   final Ref ref;
   final Future<void> Function() logout;
-  final Future<RefreshResponse> Function(String refreshToken) refresh;
+  final Future<RefreshResponse> Function(String? refreshToken) refresh;
 
   RefreshInterceptor({required this.dio, required this.storage, required this.ref, required this.logout, required this.refresh});
 
@@ -31,7 +32,7 @@ class RefreshInterceptor extends Interceptor {
     try {
       final refreshToken = await storage.getRefreshToken();
 
-      if (refreshToken == null) {
+      if (kIsWeb && refreshToken == null) {
         throw Exception();
       }
 

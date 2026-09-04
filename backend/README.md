@@ -112,5 +112,8 @@ Ctrl + C DOES NOT work to terminate the app, run `taskkill /IM node.exe /F` on w
 7. improve logging
 8. create API response schema
 9. catch s3 expected errors
-10. add redis
-11. finish health and ready checks
+10. catch redis expected errors
+11. add redis
+12. finish health and ready checks
+13. add forgot password and email and phone number change routes and ui
+14. enable localization aware builds and deployments

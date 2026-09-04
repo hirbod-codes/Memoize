@@ -1,7 +1,7 @@
 import 'package:client/app_shell.dart';
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
-import 'package:client/pages/login_page.dart';
+import 'package:client/pages/auth_page.dart';
 import 'package:client/pages/splash_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +24,7 @@ class AuthGate extends ConsumerWidget {
         return AppShell(title: title, child: child);
 
       case AuthStatus.unauthenticated:
-        return const LoginPage();
+        return const AuthPage();
     }
   }
 }

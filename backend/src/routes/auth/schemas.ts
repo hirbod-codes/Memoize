@@ -14,8 +14,31 @@ export const otpVerifySchema = object({
     code: string().length(6).required(),
 });
 
-export const registerSchema = object({
+export const emailRegisterSchema = object({
     client: clientSchema,
+    locale: string().oneOf(['en', 'fa']).optional().default('en'),
+    email: string().email().required(),
+    password: string().min(8).required(),
+});
+
+export const emailVerifySchema = object({
+    client: clientSchema,
+    locale: string().oneOf(['en', 'fa']).optional().default('en'),
+    code: string().length(6).required(),
+    email: string().email().required(),
+    password: string().min(8).required(),
+});
+
+export const emailPasswordResetSchema = object({
+    client: clientSchema,
+    locale: string().oneOf(['en', 'fa']).optional().default('en'),
+    email: string().email().required(),
+});
+
+export const emailPasswordResetVerifySchema = object({
+    client: clientSchema,
+    locale: string().oneOf(['en', 'fa']).optional().default('en'),
+    code: string().length(6).required(),
     email: string().email().required(),
     password: string().min(8).required(),
 });

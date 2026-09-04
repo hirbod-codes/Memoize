@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
+
 class LoginResponse {
   final String accessToken;
-  final String refreshToken;
+  final String? refreshToken;
 
   LoginResponse({required this.accessToken, required this.refreshToken});
 
@@ -8,7 +10,7 @@ class LoginResponse {
     final accessToken = json['accessToken'];
     final refreshToken = json['refreshToken'];
 
-    if (accessToken == null || refreshToken == null) {
+    if (accessToken == null || (kIsWeb && refreshToken == null)) {
       throw Exception('Invalid login response');
     }
 

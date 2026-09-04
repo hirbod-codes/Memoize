@@ -73,11 +73,12 @@ import { OtpFactory } from './services/OTP/OtpFactory';
 import { authRoutes } from './routes/auth/auth';
 import { planRoutes } from './routes/plan/plan';
 import { PaymentFactory } from './services/Payments/zarinpal/factory';
+import { SmtpFactory } from './services/SMTP/SmtpFactory';
 
 export const meili = new Meilisearch({
     host: meilisearchHost + ':' + meilisearchPort.toString(),
     apiKey: meilisearchKey
-});
+})
 
 export const s3 = new S3Client({
     region: 'us-east-1',
@@ -88,9 +89,12 @@ export const s3 = new S3Client({
         secretAccessKey: s3SecretKey
     },
     forcePathStyle: true // often required for S3-compatible services
-});
+})
 
-export const otpService = OtpFactory.instantiate();
+export const otpService = OtpFactory.instantiate()
+
+export const smtpService = SmtpFactory.instantiate()
+
 export const payments = {
     zarinpal: PaymentFactory.instantiate('zarinpal'),
     paypal: undefined!,

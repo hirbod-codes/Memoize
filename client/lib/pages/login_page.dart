@@ -32,7 +32,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final email = emailController.text.trim();
       final password = passwordController.text;
 
-      await ref.read(authControllerProvider.notifier).login(email, password);
+      await ref.read(authControllerProvider.notifier).loginWithEmail(email: email, password: password);
     } on DioException catch (e) {
       log(e.toString());
 
