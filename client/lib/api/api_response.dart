@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Mirrors the backend's response envelope:
 ///
 /// ```ts
@@ -22,26 +24,42 @@
 sealed class ApiResponse {
   const ApiResponse();
 
-  /// Parses a raw JSON body into the right variant. Returns null if the
-  /// body doesn't match any known shape (e.g. a non-JSON error page from
-  /// a proxy/load balancer, or a malformed response) — callers should
-  /// treat null as "unrecognized, fall back to a generic message".
+  /// Parses a raw response body into the right variant. Returns null if
+  /// the body doesn't match any known shape — callers should treat null
+  /// as "unrecognized, fall back to a generic message".
+  ///
+  /// Accepts either an already-decoded Map (the normal case, when Dio's
+  /// Content-Type detection worked) or a raw JSON String (fallback, for
+  /// when the backend didn't set `Content-Type: application/json` and
+  /// Dio left the body undecoded — rather than silently losing the
+  /// error_code/message in that case, we decode it ourselves here).
   static ApiResponse? tryParse(dynamic body) {
-    if (body is! Map) return null;
+    var value = body;
 
-    final status = body['status'];
+    print('response data: $value');
+    if (value is String) {
+      try {
+        value = jsonDecode(value);
+      } catch (_) {
+        return null; // not JSON at all — e.g. an HTML error page from a proxy
+      }
+    }
+
+    if (value is! Map) return null;
+
+    final status = value['status'];
     if (status == 'success') {
-      return ApiSuccess(body['data']);
+      return ApiSuccess(value['data']);
     }
 
     if (status == 'error') {
-      final errorCode = body['error_code'];
+      final errorCode = value['error_code'];
       if (errorCode is String) return ApiErrorCode(errorCode);
 
-      final message = body['message'];
+      final message = value['message'];
       if (message is String) return ApiErrorMessage(message);
 
-      final messages = body['messages'];
+      final messages = value['messages'];
       if (messages is List) {
         return ApiErrorMessages(messages.map((e) => e.toString()).toList());
       }
@@ -56,8 +74,8 @@ class ApiSuccess extends ApiResponse {
   const ApiSuccess(this.data);
 }
 
-/// Error identified by a machine-readable code (e.g. `INVALID_CREDENTIALS`).
-/// Needs a lookup table to become user-facing text — see error_codes.dart.
+/// Error identified by a machine-readable code (e.g. `INVALID_OTP`).
+/// Needs a lookup table to become user-facing text — see error_code.dart.
 class ApiErrorCode extends ApiResponse {
   final String code;
   const ApiErrorCode(this.code);

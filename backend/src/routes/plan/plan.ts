@@ -125,7 +125,7 @@ router.post('/', auth, async (req, res) => {
         log.info('storing session on redis')
         await redis.set(redisKey, JSON.stringify(subscription), 'EX', 60)
 
-        return res.status(200).json({ status: 'ok', data: result });
+        return res.status(200).json({ status: 'success', data: result });
     } catch (error) {
         runWithLogger(log, () => handleError(res, error))
     }
@@ -229,7 +229,7 @@ router.get(`/verify/:subscriptionId/:authority`, unAuth, async (req, res) => {
             return
         }
 
-        return res.status(204).json({ status: 'ok' })
+        return res.status(204).json({ status: 'success' })
     } catch (error) {
         runWithLogger(log, () => handleError(res, error))
     }
@@ -245,7 +245,7 @@ router.get('/', async (req: Request, res: Response) => {
         const plans = await runWithLogger(log, () => pr.getAll())
         log.debug({ plans });
 
-        res.status(200).json({ status: 'ok', data: { plans } })
+        res.status(200).json({ status: 'success', data: { plans } })
     } catch (error) {
         runWithLogger(log, () => handleError(res, error))
     }

@@ -7,7 +7,7 @@ export const healthRouter = Router();
  * Docker's HEALTHCHECK / your orchestrator, not by Prometheus.
  */
 healthRouter.get('/healthz', (_req, res) => {
-  res.status(200).json({ status: 'ok', uptimeSeconds: Math.round(process.uptime()) });
+  res.status(200).json({ status: 'success', uptimeSeconds: Math.round(process.uptime()) });
 });
 
 /**

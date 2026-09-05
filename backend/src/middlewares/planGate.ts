@@ -15,7 +15,7 @@ export const planGate = async (req: Request, res: Response, next: NextFunction) 
     log.debug({ subscription: subscriptions })
     if (subscriptions.length > 1) {
         log.error({ subscriptionsLength: subscriptions.length }, 'Rejected: more than one valid subscription found');
-        return res.status(403).json({ error_codes: 'INTERNAL_ERROR', })
+        return res.status(403).json({ error_code: 'INTERNAL_ERROR', })
     }
 
     const subscription = subscriptions[0]
@@ -26,5 +26,5 @@ export const planGate = async (req: Request, res: Response, next: NextFunction) 
 
     log.info('Rejected: plan state is invalid or expired');
 
-    return res.status(403).json({ error_codes: 'PLAN_STATE_INVALID', message: `You have exceed your plan limitations.`, })
+    return res.status(403).json({ error_code: 'PLAN_STATE_INVALID', message: `You have exceed your plan limitations.`, })
 }

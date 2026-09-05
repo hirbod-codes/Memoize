@@ -38,11 +38,11 @@ router.post('/otp/request', unAuth, async (req: Request, res: Response) => {
         log.debug({ requestOtpResult: result });
         if (result === 'cooldown') {
             log.info('Rejected OTP request: cooldown active');
-            return res.status(429).json({ status: 'error', error_codes: 'OTP_COOLDOWN' });
+            return res.status(429).json({ status: 'error', error_code: 'OTP_COOLDOWN' });
         }
 
         log.info('OTP sent');
-        res.json({ status: 'ok', message: 'Code sent' });
+        res.json({ status: 'success', message: 'Code sent' });
     } catch (err: any) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -65,7 +65,7 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
         log.info('verifying OTP verification code');
         if (!(await runWithLogger(log, () => verifyOtp(phoneNumber!, code!)))) {
             log.info('Rejected OTP verification: invalid OTP code');
-            return res.status(400).json({ status: 'error', error_codes: 'INVALID_CODE' });
+            return res.status(400).json({ status: 'error', error_code: 'INVALID_CODE' });
         }
         log.info('OTP code verified successfully.');
 
@@ -82,7 +82,7 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
             // phone registration
             if (!settings.allowOtp) {
                 log.info('Rejected registration: phone registration disabled');
-                return res.status(403).json({ status: 'error', error_codes: 'PHONE_REGISTRATION_DISABLED' });
+                return res.status(403).json({ status: 'error', error_code: 'PHONE_REGISTRATION_DISABLED' });
             }
 
             const created = await runWithLogger(log, () => ur.create({
@@ -95,7 +95,7 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
             log.debug({ creationResult: created });
             if (!created || !created.acknowledged) {
                 log.error('User creation failed');
-                return res.status(500).json({ status: 'error', error_codes: 'CREATE_FAILED' });
+                return res.status(500).json({ status: 'error', error_code: 'CREATE_FAILED' });
             }
 
             userId = created.insertedId.toString()
@@ -103,7 +103,7 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
             user = await runWithLogger(log, () => ur.get(userId))
             if (!user) {
                 log.error({ userId }, 'User fetch failed');
-                return res.status(500).json({ status: 'error', error_codes: 'FETCH_FAILED' });
+                return res.status(500).json({ status: 'error', error_code: 'FETCH_FAILED' });
             }
         }
         else userId = user._id.toString()
@@ -118,9 +118,9 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
         }
 
         if (client === 'web')
-            return res.json({ status: 'ok', data: { user, accessToken: tokens.accessToken } });
+            return res.json({ status: 'success', data: { user, accessToken: tokens.accessToken } });
 
-        return res.json({ status: 'ok', data: { user, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken } });
+        return res.json({ status: 'success', data: { user, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken } });
     } catch (err: any) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -139,14 +139,14 @@ router.post('/email/register', unAuth, async (req: Request, res: Response) => {
         log.info('checking app settings');
         if (!settings.allowEmailRegistration) {
             log.info('Rejected registration: email registration disabled');
-            return res.status(403).json({ status: 'error', error_codes: 'EMAIL_REGISTRATION_DISABLED' });
+            return res.status(403).json({ status: 'error', error_code: 'EMAIL_REGISTRATION_DISABLED' });
         }
 
         log.info('fetching user data');
         if (await runWithLogger(log, () => ur.getByEmail(email!))) {
             log.info({ email }, 'Rejected registration: email already taken');
             // successful response is sent, to improve users privacy
-            return res.status(204).json({ status: 'ok' });
+            return res.status(204).json({ status: 'success' });
         }
 
         const passwordHash = await bcrypt.hash(password!, 12);
@@ -163,10 +163,10 @@ router.post('/email/register', unAuth, async (req: Request, res: Response) => {
         log.debug({ requestSmtpResult: result });
         if (result === 'cooldown') {
             log.info('Rejected SMTP request: cooldown active');
-            return res.status(429).json({ status: 'error', error_codes: 'SMTP_COOLDOWN' });
+            return res.status(429).json({ status: 'error', error_code: 'SMTP_COOLDOWN' });
         }
 
-        return res.status(204).json({ status: 'ok' });
+        return res.status(204).json({ status: 'success' });
     } catch (err: any) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -184,7 +184,7 @@ router.post('/email/verify', unAuth, async (req: Request, res: Response) => {
         log.info('verifying SMTP verification code');
         if (!(await runWithLogger(log, () => verifySmtp(email, code!)))) {
             log.info('Rejected SMTP verification: invalid SMTP code');
-            return res.status(400).json({ status: 'error', error_codes: 'INVALID_INPUT' });
+            return res.status(400).json({ status: 'error', error_code: 'INVALID_INPUT' });
         }
         log.info('SMTP code verified successfully.');
 
@@ -195,14 +195,14 @@ router.post('/email/verify', unAuth, async (req: Request, res: Response) => {
         const redisValue = await redis.get(`email_registration:${email}`)
         if (!redisValue) {
             log.info('failed to fetch user email and hashed password from redis')
-            return res.status(400).json({ status: 'error', error_codes: 'EMAIL_NOT_FOUND' })
+            return res.status(400).json({ status: 'error', error_code: 'EMAIL_NOT_FOUND' })
         }
         const [redisEmail, redisPassword] = redisValue.split(':')
 
         log.info('validating user input against redis data')
         if (redisEmail !== email || await bcrypt.compare(password, redisPassword)) {
             log.info('invalid email or password provided')
-            return res.status(400).json({ status: 'error', error_codes: 'INVALID_INPUT' })
+            return res.status(400).json({ status: 'error', error_code: 'INVALID_INPUT' })
         }
 
         log.info('creating user data in db');
@@ -217,7 +217,7 @@ router.post('/email/verify', unAuth, async (req: Request, res: Response) => {
         log.debug({ created })
         if (!created || !created.acknowledged) {
             log.error({ email }, 'User creation failed');
-            return res.status(500).json({ status: 'error', error_codes: 'CREATE_FAILED' });
+            return res.status(500).json({ status: 'error', error_code: 'CREATE_FAILED' });
         }
         const userId = created.insertedId.toString()
         log.info({ userId }, 'Registered new user');
@@ -229,15 +229,15 @@ router.post('/email/verify', unAuth, async (req: Request, res: Response) => {
         const user = await runWithLogger(log, () => ur.get(userId))
         if (!user) {
             log.error({ userId }, 'User fetch failed');
-            return res.status(500).json({ status: 'error', error_codes: 'FETCH_FAILED' });
+            return res.status(500).json({ status: 'error', error_code: 'FETCH_FAILED' });
         }
 
         const { accessToken, refreshToken } = await runWithLogger(log, () => issueTokens(res, userId, client, req.headers['user-agent']))
 
         if (client === 'web')
-            return res.json({ status: 'ok', data: { user, accessToken } });
+            return res.json({ status: 'success', data: { user, accessToken } });
 
-        return res.json({ status: 'ok', data: { user, accessToken, refreshToken } });
+        return res.json({ status: 'success', data: { user, accessToken, refreshToken } });
     } catch (err: any) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -256,14 +256,14 @@ router.post('/email/password-reset', unAuth, async (req: Request, res: Response)
         log.info('checking app settings');
         if (!settings.allowEmailRegistration) {
             log.info('Rejected registration: email registration disabled');
-            return res.status(403).json({ status: 'error', error_codes: 'EMAIL_REGISTRATION_DISABLED' });
+            return res.status(403).json({ status: 'error', error_code: 'EMAIL_REGISTRATION_DISABLED' });
         }
 
         log.info('fetching user with the email');
         if (!await runWithLogger(log, () => ur.getByEmail(email!))) {
             log.info({ email }, 'Rejected registration: email not found');
             // successful response is sent, to improve users privacy
-            return res.status(204).json({ status: 'ok' });
+            return res.status(204).json({ status: 'success' });
         }
 
         log.info('sending SMTP verification code');
@@ -271,10 +271,10 @@ router.post('/email/password-reset', unAuth, async (req: Request, res: Response)
         log.debug({ requestSmtpResult: result });
         if (result === 'cooldown') {
             log.info('Rejected SMTP request: cooldown active');
-            return res.status(429).json({ status: 'error', error_codes: 'SMTP_COOLDOWN' });
+            return res.status(429).json({ status: 'error', error_code: 'SMTP_COOLDOWN' });
         }
 
-        return res.status(204).json({ status: 'ok' });
+        return res.status(204).json({ status: 'success' });
     } catch (err: any) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -292,7 +292,7 @@ router.post('/email/password-reset/verify', unAuth, async (req: Request, res: Re
         log.info('verifying SMTP verification code');
         if (!(await runWithLogger(log, () => verifySmtp(email, code!)))) {
             log.info('Rejected SMTP verification: invalid SMTP code');
-            return res.status(400).json({ status: 'error', error_codes: 'INVALID_INPUT' });
+            return res.status(400).json({ status: 'error', error_code: 'INVALID_INPUT' });
         }
 
         log.info('fetching user with the email');
@@ -301,7 +301,7 @@ router.post('/email/password-reset/verify', unAuth, async (req: Request, res: Re
         if (!user) {
             log.info('Rejected registration: email not found');
             // successful response is sent, to improve users privacy
-            return res.status(204).json({ status: 'ok' });
+            return res.status(204).json({ status: 'success' });
         }
 
         log.info('hashing new password and updating user password');
@@ -310,16 +310,16 @@ router.post('/email/password-reset/verify', unAuth, async (req: Request, res: Re
         log.debug({ updated })
         if (!updated || !updated.acknowledged) {
             log.error({ email }, 'User update failed');
-            return res.status(500).json({ status: 'error', error_codes: 'UPDATE_FAILED' });
+            return res.status(500).json({ status: 'error', error_code: 'UPDATE_FAILED' });
         }
 
         log.info('issuing auth tokens');
         const { accessToken, refreshToken } = await runWithLogger(log, () => issueTokens(res, user._id.toString(), client, req.headers['user-agent']))
 
         if (client === 'web')
-            return res.json({ status: 'ok', data: { user, accessToken } });
+            return res.json({ status: 'success', data: { user, accessToken } });
 
-        return res.json({ status: 'ok', data: { user, accessToken, refreshToken } });
+        return res.json({ status: 'success', data: { user, accessToken, refreshToken } });
     } catch (err: any) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -337,22 +337,22 @@ router.post('/login', unAuth, async (req: Request, res: Response) => {
         const user = await runWithLogger(log, () => ur.getByEmail(email!))
         if (!user || !user.email || !user.password) {
             log.info({ email }, 'Rejected login: no matching account');
-            return res.status(401).json({ status: 'error', error_codes: 'INVALID_CREDENTIALS' });
+            return res.status(401).json({ status: 'error', error_code: 'INVALID_CREDENTIALS' });
         }
 
         const match = await bcrypt.compare(password!, user.password);
         if (!match) {
             log.info({ userId: user._id!.toString() }, 'Rejected login: password mismatch');
-            return res.status(401).json({ status: 'error', error_codes: 'INVALID_CREDENTIALS' });
+            return res.status(401).json({ status: 'error', error_code: 'INVALID_CREDENTIALS' });
         }
 
         log.info({ userId: user._id!.toString() }, 'Login succeeded (email)');
         const { accessToken, refreshToken } = await runWithLogger(log, () => issueTokens(res, user._id!.toString(), client, req.headers['user-agent']))
 
         if (client === 'web')
-            return res.json({ status: 'ok', data: { user, accessToken } });
+            return res.json({ status: 'success', data: { user, accessToken } });
 
-        return res.json({ status: 'ok', data: { user, accessToken, refreshToken } });
+        return res.json({ status: 'success', data: { user, accessToken, refreshToken } });
     } catch (err: any) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -367,7 +367,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         const oldTokenId = body.refreshToken ?? req.cookies?.[REFRESH_COOKIE_NAME];
         if (!oldTokenId) {
             log.info({ client: body.client }, 'Rejected refresh: no refresh token supplied');
-            return res.status(401).json({ status: 'error', error_codes: 'NO_REFRESH_TOKEN' });
+            return res.status(401).json({ status: 'error', error_code: 'NO_REFRESH_TOKEN' });
         }
 
         let rotated;
@@ -376,7 +376,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         } catch {
             log.warn({ client: body.client }, 'Rejected refresh: token invalid, expired, or reused');
             runWithLogger(log, () => clearAuthCookies(res))
-            return res.status(401).json({ status: 'error', error_codes: 'REFRESH_INVALID' });
+            return res.status(401).json({ status: 'error', error_code: 'REFRESH_INVALID' });
         }
 
         const { token: accessToken, exp } = signAccessToken(rotated.userId);
@@ -384,10 +384,10 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
         if (body.client === 'web') {
             setAuthCookies(res, accessToken, rotated.newTokenId, exp - Math.floor(Date.now() / 1000));
-            return res.json({ status: 'ok', data: null });
+            return res.json({ status: 'success', data: null });
         }
 
-        res.json({ status: 'ok', data: { accessToken, refreshToken: rotated.newTokenId } });
+        res.json({ status: 'success', data: { accessToken, refreshToken: rotated.newTokenId } });
     } catch (err: any) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -409,7 +409,7 @@ router.post('/logout', auth, async (req: Request, res: Response) => {
 
         runWithLogger(log, () => clearAuthCookies(res))
         log.info({ userId: payload?.userId }, 'Logged out');
-        res.json({ status: 'ok', data: null });
+        res.json({ status: 'success', data: null });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -429,7 +429,7 @@ router.post('/logout-all', auth, async (req: Request, res: Response) => {
 
         runWithLogger(log, () => clearAuthCookies(res))
         log.info({ userId: payload?.userId }, 'Logged out of all sessions');
-        res.json({ status: 'ok', data: null });
+        res.json({ status: 'success', data: null });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -443,7 +443,7 @@ router.get('/sessions', auth, async (req: Request, res: Response) => {
         log.debug({ userId: payload.userId }, 'Listing sessions');
         const sessions = await runWithLogger(log, () => listSessions(payload.userId))
         log.debug({ userId: payload.userId, sessionCount: sessions.length }, 'Sessions listed');
-        res.json({ status: 'ok', data: { sessions } });
+        res.json({ status: 'success', data: { sessions } });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -460,7 +460,7 @@ router.delete('/sessions/:familyId', auth, async (req: Request, res: Response) =
         await runWithLogger(log, () => revokeFamily(req.params.familyId.toString(), payload.userId))
 
         log.info({ userId: payload.userId, familyId }, 'Session family revoked');
-        res.json({ status: 'ok', data: null });
+        res.json({ status: 'success', data: null });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -471,7 +471,7 @@ router.get('/admin/settings', auth, isAdminIfAuthenticated, async (req: Request,
 
     const settings = await runWithLogger(log, () => getAuthSettings())
     log.debug({ settings }, 'Fetched auth settings');
-    res.json({ status: 'ok', data: settings });
+    res.json({ status: 'success', data: settings });
 });
 
 router.patch('/admin/settings', auth, isAdminIfAuthenticated, async (req: Request, res: Response) => {
@@ -484,7 +484,7 @@ router.patch('/admin/settings', auth, isAdminIfAuthenticated, async (req: Reques
         const updated = await updateAuthSettings(patch);
         log.info({ updated }, 'Auth settings updated');
 
-        res.json({ status: 'ok', data: updated });
+        res.json({ status: 'success', data: updated });
     } catch (err: any) {
         runWithLogger(log, () => handleError(res, err))
     }

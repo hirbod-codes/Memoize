@@ -60,7 +60,7 @@ export function authorizeQuota(usages: Map<UsageField, number>, req?: Request): 
                     log.debug({ result })
                     log.info('Request is unauthorized')
                     return res.status(403).json({
-                        error_codes: 'QUOTA_EXCEEDED',
+                        error_code: 'QUOTA_EXCEEDED',
                         message: `You've reached your plan's limit for this action.`,
                     });
                 }
@@ -147,7 +147,7 @@ export function authorizeFeature(featureFields: FeatureField[], req?: Request): 
                     log.debug({ result })
                     log.info('Request is unauthorized')
                     return res.status(403).json({
-                        error_codes: 'QUOTA_EXCEEDED',
+                        error_code: 'QUOTA_EXCEEDED',
                         message: `You've reached your plan's limit for this action.`,
                     });
                 }

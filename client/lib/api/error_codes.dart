@@ -8,6 +8,7 @@ const Map<String, String> errorCodeMessages = {
   'INVALID_CREDENTIALS': 'Incorrect email or password.',
   'EMAIL_ALREADY_REGISTERED': 'An account with this email already exists.',
   'INVALID_OTP': 'That code is incorrect or expired.',
+  'INVALID_CODE': 'That code is incorrect or expired.',
   'OTP_EXPIRED': 'That code has expired. Request a new one.',
   'OTP_RATE_LIMITED': 'Too many attempts. Please wait before trying again.',
   'ACCOUNT_NOT_FOUND': 'No account found with that email or phone number.',
