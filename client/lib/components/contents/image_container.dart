@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:client/api/image_controller.dart';
+import 'package:client/api/controllers/image_controller.dart';
 import 'package:client/api/models/image.dart' show ImageInfo;
 import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';

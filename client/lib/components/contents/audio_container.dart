@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:client/api/audio_controller.dart';
+import 'package:client/api/controllers/audio_controller.dart';
 import 'package:client/api/models/audio.dart';
 import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';

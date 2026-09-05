@@ -75,7 +75,7 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
       onVerify: (code) async {
         tokens = await api.verifyEmailSignUp(email: email, code: code);
       },
-      onResend: () => api.resendSignUpVerificationCode(email: email),
+      onResend: () => api.signUpWithEmail(email: email, password: _passwordController.text),
     );
 
     if (verified == true && tokens != null) {
@@ -137,7 +137,6 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
               child: TextButton(onPressed: isLoading ? null : () => showForgotPasswordEmailSheet(context), child: const Text('Forgot password?')),
             ),
           ],
-          if (actionState.hasError) ...[const SizedBox(height: 4), Text(actionState.error.toString(), style: TextStyle(color: Theme.of(context).colorScheme.error))],
           const SizedBox(height: 16),
           FilledButton(
             onPressed: isLoading ? null : _submit,

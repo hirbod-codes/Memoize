@@ -117,3 +117,4 @@ Ctrl + C DOES NOT work to terminate the app, run `taskkill /IM node.exe /F` on w
 12. finish health and ready checks
 13. add forgot password and email and phone number change routes and ui
 14. enable localization aware builds and deployments
+15. implement smtp

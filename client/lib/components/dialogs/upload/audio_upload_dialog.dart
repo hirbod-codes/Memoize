@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:client/api/audio_controller.dart';
+import 'package:client/api/controllers/audio_controller.dart';
 import 'package:client/components/button.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';

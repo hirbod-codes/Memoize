@@ -27,11 +27,13 @@ export class Melipayamak implements IOtp {
             const message = locale === 'en'
                 ? `Your verification code: 
 ${code}
-@${this.verificationMessageReferenceAddress} #${code}
+
+لغو 11
 `
                 : `کد ورود شما: 
 ${code}
-@${this.verificationMessageReferenceAddress} #${code}
+
+لغو 11
 `
 
             return await runWithLogger(log, () => this.sendMessage(message, toPhoneNumber))
@@ -49,7 +51,7 @@ ${code}
 
             const result = await httpsRequest({
                 host: `${this.baseEndpoint.replace('https://', '')}`,
-                path: '/SendSMS/SendSMS',
+                path: '/api/SendSMS/SendSMS',
                 method: 'post',
                 headers: {
                     'Content-Type': 'application/json'

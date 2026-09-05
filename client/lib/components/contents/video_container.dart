@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:client/api/models/video.dart';
-import 'package:client/api/video_controller.dart';
+import 'package:client/api/controllers/video_controller.dart';
 import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
 import 'package:client/components/contents/players/video_player_screen.dart';

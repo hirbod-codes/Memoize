@@ -30,6 +30,7 @@ import ImageRepository from './DB/repositories/ImageRepository';
 import PlanRepository from './DB/repositories/PlanRepository';
 import SubscriptionRepository from './DB/repositories/SubscriptionRepository';
 import UsageRepository from './DB/repositories/UsageRepository';
+import AppSettingsRepository from './DB/repositories/AppSettingsRepository';
 
 import { runCronjobs } from './cronjobs';
 import { generalRateLimiter } from './middlewares/rateLimiting';
@@ -121,6 +122,10 @@ export const payments = {
 
             await db.reset();
 
+            db.addRepository(new AppSettingsRepository())
+            db.addRepository(new PlanRepository())
+            db.addRepository(new SubscriptionRepository())
+            db.addRepository(new UsageRepository())
             db.addRepository(new UserRepository())
             db.addRepository(new InvalidTokensRepository())
             db.addRepository(new AudioRepository())
@@ -128,9 +133,6 @@ export const payments = {
             db.addRepository(new VideoRepository())
             db.addRepository(new LeafRepository())
             db.addRepository(new TreeNodeRepository())
-            db.addRepository(new PlanRepository())
-            db.addRepository(new SubscriptionRepository())
-            db.addRepository(new UsageRepository())
 
             // if (!isProduction)
             //     await MongoDB.getDbInstance().dropSeedableCollections()

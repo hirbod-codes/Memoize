@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:client/api/folder_controller.dart';
-import 'package:client/api/leaf_controller.dart';
+import 'package:client/api/controllers/folder_controller.dart';
+import 'package:client/api/controllers/leaf_controller.dart';
 import 'package:client/api/models/folder.dart';
 import 'package:client/api/models/leaf.dart';
 import 'package:client/api/providers/folders_and_files.dart';

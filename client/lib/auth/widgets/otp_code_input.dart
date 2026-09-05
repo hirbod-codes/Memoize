@@ -10,13 +10,7 @@ class OtpCodeInput extends StatefulWidget {
   final ValueChanged<String>? onCompleted;
   final bool enabled;
 
-  const OtpCodeInput({
-    super.key,
-    this.length = 6,
-    this.onChanged,
-    this.onCompleted,
-    this.enabled = true,
-  });
+  const OtpCodeInput({super.key, this.length = 6, this.onChanged, this.onCompleted, this.enabled = true});
 
   @override
   State<OtpCodeInput> createState() => OtpCodeInputState();

@@ -12,8 +12,10 @@ const _resendCooldown = Duration(seconds: 30);
 /// [destination] (a phone number or an email address).
 ///
 /// [onVerify] should call the API to verify the code and return once it
-/// succeeds (throwing on failure — the sheet shows the error and lets the
-/// user retry without closing). [onResend] re-triggers the OTP send.
+/// succeeds (throwing on failure — the sheet clears the code and lets the
+/// user retry without closing; the error itself is shown by the global
+/// error interceptor's toast, not by this sheet). [onResend] re-triggers
+/// the OTP send.
 ///
 /// Returns `true` if verification succeeded, `false`/`null` if the sheet
 /// was dismissed without success.
@@ -107,7 +109,6 @@ class _OtpSheetContentState extends ConsumerState<_OtpSheetContent> {
           Text('Enter the 6-digit code sent to ${widget.destination}', style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 24),
           OtpCodeInput(key: _otpKey, enabled: !isLoading, onChanged: (value) => setState(() => _code = value), onCompleted: (_) => _submit()),
-          if (actionState.hasError) ...[const SizedBox(height: 12), Text(actionState.error.toString(), style: TextStyle(color: Theme.of(context).colorScheme.error))],
           const SizedBox(height: 24),
           FilledButton(
             onPressed: isLoading || _code.length != 6 ? null : _submit,

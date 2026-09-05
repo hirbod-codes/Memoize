@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:client/api/video_controller.dart' hide VideoController;
+import 'package:client/api/controllers/video_controller.dart' hide VideoController;
 import 'package:client/components/button.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';

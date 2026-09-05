@@ -20,7 +20,7 @@ export function handleError(res: Response, err: any, log?: Logger) {
     }
 
     log.error({ err }, 'Unhandled error');
-    try { return res.status(500).json({ status: 'error', error: 'INTERNAL' }); } catch (_) { }
+    try { return res.status(500).json({ status: 'error', error_codes: 'INTERNAL' }); } catch (_) { }
 }
 
 export function generateCode() {

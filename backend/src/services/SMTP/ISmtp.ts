@@ -1,3 +1,4 @@
 export interface ISmtp {
-    sendVerificationMessage(code: string, toPhoneNumber: string, locale: 'en' | 'fa'): Promise<boolean>;
+    sendVerificationMessage(code: string, toEmail: string, locale: 'en' | 'fa'): Promise<boolean>;
+    sendMessage(message: string, toEmail: string, locale: 'en' | 'fa'): Promise<boolean>;
 }

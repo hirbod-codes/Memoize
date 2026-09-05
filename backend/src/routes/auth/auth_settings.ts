@@ -1,5 +1,5 @@
 import { AppSettings, AppSettingsUpdate } from "../../DB/models/AppSettings";
-import { AppSettingsRepository } from "../../DB/repositories/AppSettingsRepository";
+import AppSettingsRepository from "../../DB/repositories/AppSettingsRepository";
 import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
 
 const AUTH_SETTINGS_KEY = 'auth';

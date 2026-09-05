@@ -48,7 +48,7 @@ class _PhoneOtpFormState extends ConsumerState<PhoneOtpForm> {
       onVerify: (code) async {
         tokens = await api.verifyPhoneOtp(phone: phone, code: code);
       },
-      onResend: () => api.resendPhoneOtp(phone: phone),
+      onResend: () => api.sendPhoneOtp(phone: phone),
     );
 
     if (verified == true && tokens != null) {
@@ -83,7 +83,6 @@ class _PhoneOtpFormState extends ConsumerState<PhoneOtpForm> {
               return null;
             },
           ),
-          if (actionState.hasError) ...[const SizedBox(height: 12), Text(actionState.error.toString(), style: TextStyle(color: Theme.of(context).colorScheme.error))],
           const SizedBox(height: 16),
           FilledButton(
             onPressed: isLoading ? null : _continue,

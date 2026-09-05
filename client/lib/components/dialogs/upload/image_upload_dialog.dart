@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:client/api/image_controller.dart';
+import 'package:client/api/controllers/image_controller.dart';
 import 'package:client/components/button.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';

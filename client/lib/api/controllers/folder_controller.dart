@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:talker/talker.dart';
 import 'package:client/api/models/folder.dart';
-import 'package:client/auth/dio_providers.dart';
+import 'package:client/api/dio/dio_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

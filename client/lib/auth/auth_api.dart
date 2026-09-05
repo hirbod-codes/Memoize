@@ -24,18 +24,12 @@ abstract class AuthApi {
   /// verified, returning tokens.
   Future<AuthTokens> verifyEmailSignUp({required String email, required String code});
 
-  /// Re-sends the sign-up verification code.
-  Future<void> resendSignUpVerificationCode({required String email});
-
   /// Step 1 of email password reset: sends a 6-digit code to an existing
   /// account's email.
   Future<void> requestEmailPasswordReset({required String email});
 
   /// Step 2: verifies the code and sets a new password.
   Future<void> completeEmailPasswordReset({required String email, required String code, required String newPassword});
-
-  /// Re-sends the password-reset code.
-  Future<void> resendPasswordResetCode({required String email});
 
   // ---- Phone (passwordless) ----
   // Login and signup are the same flow: send a code, verify it, get
@@ -49,7 +43,4 @@ abstract class AuthApi {
   /// Verifies the code. On success the backend has either logged the
   /// user in or created + logged in a new account for this number.
   Future<AuthTokens> verifyPhoneOtp({required String phone, required String code});
-
-  /// Re-sends the same code, e.g. for a "resend code" button.
-  Future<void> resendPhoneOtp({required String phone});
 }

@@ -45,7 +45,9 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
     if (!(_emailFormKey.currentState?.validate() ?? false)) return;
 
     final api = ref.read(authControllerProvider.notifier);
-    await  api.requestEmailPasswordReset(email: _emailController.text.trim());
+    final controller = ref.read(authActionControllerProvider.notifier);
+
+    await controller.run(() => api.requestEmailPasswordReset(email: _emailController.text.trim()));
 
     final state = ref.read(authActionControllerProvider);
     if (!state.hasError && mounted) setState(() => _step = _Step.enterCodeAndPassword);
@@ -53,7 +55,9 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
 
   Future<void> _resend() async {
     final api = ref.read(authControllerProvider.notifier);
-    await  api.resendPasswordResetCode(email: _emailController.text.trim());
+    final controller = ref.read(authActionControllerProvider.notifier);
+
+    await controller.run(() => api.requestEmailPasswordReset(email: _emailController.text.trim()));
   }
 
   Future<void> _submit() async {
@@ -61,7 +65,9 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
     if (!(_passwordFormKey.currentState?.validate() ?? false)) return;
 
     final api = ref.read(authControllerProvider.notifier);
-    await  api.completeEmailPasswordReset(email: _emailController.text.trim(), code: _code, newPassword: _newPasswordController.text);
+    final controller = ref.read(authActionControllerProvider.notifier);
+
+    await controller.run(() => api.completeEmailPasswordReset(email: _emailController.text.trim(), code: _code, newPassword: _newPasswordController.text));
 
     final state = ref.read(authActionControllerProvider);
     if (state.hasError) {
@@ -101,7 +107,6 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
                       return null;
                     },
                   ),
-                  if (actionState.hasError) ...[const SizedBox(height: 12), Text(actionState.error.toString(), style: TextStyle(color: Theme.of(context).colorScheme.error))],
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: isLoading ? null : _sendCode,
@@ -146,7 +151,6 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
                       return null;
                     },
                   ),
-                  if (actionState.hasError) ...[const SizedBox(height: 12), Text(actionState.error.toString(), style: TextStyle(color: Theme.of(context).colorScheme.error))],
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: isLoading || _code.length != 6 ? null : _submit,

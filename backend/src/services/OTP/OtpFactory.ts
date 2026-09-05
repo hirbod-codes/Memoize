@@ -1,6 +1,6 @@
 import { smsProvider } from "../../configs";
 import { IOtp } from "./IOtp";
-import { Melipayamak } from "./SmsProviders/melipayamak";
+import { Melipayamak } from "./providers/melipayamak";
 
 export class OtpFactory {
     static instantiate(): IOtp {

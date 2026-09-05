@@ -1,4 +1,4 @@
-import { ClientSession, Collection, Db, UpdateResult, WithId } from 'mongodb';
+import { ClientSession, Collection, Db, WithId } from 'mongodb';
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
@@ -6,7 +6,7 @@ import { collectionName, AppSettings, AppSettingsUpdate } from '../models/AppSet
 import { MongoDB } from '../mongodb';
 import { Redis } from '../redis';
 
-export class AppSettingsRepository implements IRepository, ISeedable, IDropable {
+export default class AppSettingsRepository implements IRepository, ISeedable, IDropable {
     IDropable: 'IDropable' = 'IDropable';
     IRepository: 'IRepository' = 'IRepository';
     ISeedable: 'ISeedable' = 'ISeedable';
