@@ -17,11 +17,37 @@ import { requestSmtp, verifySmtp } from '../../services/SMTP/smtp_management';
 
 const router = Router();
 
+router.get('/supported_auth_methods', async (req: Request, res: Response) => {
+    const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/supported_auth_methods' });
+
+    try {
+        log.info('auth methods request received');
+
+        log.info('Fetching auth settings')
+        const settings = await runWithLogger(log, () => getAuthSettings())
+        log.debug({ settings });
+
+        const authMethods = []
+        if (settings.allowEmailRegistration === true)
+            authMethods.push('email')
+
+        if (settings.allowOtp === true)
+            authMethods.push('phone')
+
+        log.debug({ authMethods })
+
+        log.info('responding with auth settings')
+        res.status(200).json({ status: 'success', data: authMethods })
+    } catch (err: any) {
+        runWithLogger(log, () => handleError(res, err))
+    }
+});
+
 router.post('/otp/request', unAuth, async (req: Request, res: Response) => {
     const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/otp/request' });
 
     try {
-        log.info('OTP request received');
+        log.info('OTP verify request received');
 
         log.debug({ body: req.body })
         const { phoneNumber, locale } = await runWithLogger(log, () => validate(otpRequestSchema, req.body))
@@ -39,6 +65,11 @@ router.post('/otp/request', unAuth, async (req: Request, res: Response) => {
         if (result === 'cooldown') {
             log.info('Rejected OTP request: cooldown active');
             return res.status(429).json({ status: 'error', error_code: 'OTP_COOLDOWN' });
+        }
+
+        if (result === 'failed') {
+            log.info('Rejected OTP request');
+            return res.status(429).json({ status: 'error', error_code: 'OTP_FAILED' });
         }
 
         log.info('OTP sent');

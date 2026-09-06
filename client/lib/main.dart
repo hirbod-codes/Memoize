@@ -37,6 +37,11 @@ class MyApp extends ConsumerWidget {
       );
     }
 
-    return MaterialApp.router(localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate, GlobalWidgetsLocalizations.delegate, FlutterQuillLocalizations.delegate], routerConfig: goRouter, title: 'Memoize', theme: AppTheme.light(), darkTheme: AppTheme.dark(), themeMode: ref.watch(themeModeProvider), debugShowCheckedModeBanner: false);
+    // Read (not built until now) since the loading branch above already
+    // guarantees the initial session check has resolved by this point —
+    // goRouterProvider's redirect logic depends on that being settled.
+    final router = ref.watch(goRouterProvider);
+
+    return MaterialApp.router(localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate, GlobalWidgetsLocalizations.delegate, FlutterQuillLocalizations.delegate], routerConfig: router, title: 'Memoize', theme: AppTheme.light(), darkTheme: AppTheme.dark(), themeMode: ref.watch(themeModeProvider), debugShowCheckedModeBanner: false);
   }
 }

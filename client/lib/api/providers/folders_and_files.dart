@@ -481,7 +481,6 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       return _persistContents(response: result, message: 'Failure while trying to add new content.', contents: contents);
     } catch (e) {
-      print(e);
       Talker().error('FoldersAndFiles.addContentValue throws an error', e);
       return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to add new content.', error: e);
     } finally {

@@ -3,6 +3,7 @@ import 'package:client/api/error_codes.dart';
 import 'package:client/api/root_navigator_key.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:dio/dio.dart';
+import 'package:talker/talker.dart';
 
 /// The single place that reads a failed API response and shows the
 /// error to the user. Attach this to every Dio instance that talks to
@@ -21,18 +22,26 @@ class GlobalErrorInterceptor extends Interceptor {
   static const silentErrorsKey = 'silentErrors';
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    final silent = err.requestOptions.extra[silentErrorsKey] == true;
+  void onError(Exception err, ErrorInterceptorHandler? handler) {
+    Talker().error('error caught in GlobalErrorInterceptor', err);
+    if (err is DioException) {
+      final silent = err.requestOptions.extra[silentErrorsKey] == true;
 
-    if (!silent) {
-      final message = _messageFor(err);
+      if (!silent) {
+        final message = _messageFor(err);
+        final context = rootContext;
+        if (context != null) {
+          NotificationService.showError(context: context, message: message);
+        }
+      }
+
+      handler?.next(err);
+    } else {
       final context = rootContext;
       if (context != null) {
-        NotificationService.showError(context: context, message: message);
+        NotificationService.showError(context: context, message: 'Something went wrong. Please try again.');
       }
     }
-
-    handler.next(err);
   }
 
   String _messageFor(DioException err) {

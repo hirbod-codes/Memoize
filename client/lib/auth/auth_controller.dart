@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:client/auth/auth_api.dart';
 import 'package:client/api/dio/dio_providers.dart';
+import 'package:client/api/api_call_extensions.dart';
 import 'package:client/auth/auth_state.dart';
 import 'package:client/auth/token_storage.dart';
 import 'package:client/auth/responses/login_response.dart';
@@ -15,7 +16,6 @@ import 'package:talker/talker.dart';
 class AuthController extends Notifier<AuthState> implements AuthApi {
   late final TokenStorage _storage;
   late final Dio _authDio;
-  late final Dio _dio;
 
   String? _client;
 
@@ -26,7 +26,14 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   @override
   AuthState build() {
     _storage = ref.read(tokenStorageProvider);
-    _dio = ref.watch(dioProvider);
+    // Every auth endpoint — including pre-login ones like signup/OTP —
+    // goes through authDioProvider now. It carries AuthInterceptor (a
+    // harmless no-op if there's no token yet), RefreshInterceptor, and
+    // GlobalErrorInterceptor, so error handling stays consistent across
+    // every call this controller makes. Previously several methods used
+    // a plain `_dio` with no interceptors attached, which is why the
+    // notifyOnSuccess/error toast pipeline wasn't reachable from those
+    // calls at all.
     _authDio = ref.watch(authDioProvider);
 
     _initialize();
@@ -82,14 +89,14 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     final response = await _authDio.post('/api/auth/refresh', data: {'refreshToken': kIsWeb ? null : refreshToken, 'client': _client});
     Talker().info('response status code: ${response.statusCode}');
 
-    return RefreshResponse(accessToken: response.data['accessToken']);
+    return RefreshResponse(accessToken: response.data['data']['accessToken']);
   }
 
   @override
   Future<AuthTokens> loginWithEmail({required String email, required String password}) async {
-    final response = await _authDio.post('/api/auth/login', data: {'identifier': email, 'password': password, 'client': _client});
+    final response = await _authDio.post('/api/auth/login', data: {'identifier': email, 'password': password, 'client': _client}).notifyOnSuccess('Welcome back!');
 
-    final loginResponse = LoginResponse.fromJson(response.data);
+    final loginResponse = LoginResponse.fromJson(response.data['data']);
 
     return _completeAuthentication(loginResponse.accessToken, loginResponse.refreshToken);
   }
@@ -106,39 +113,39 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
 
   @override
   Future<void> signUpWithEmail({required String email, required String password}) async {
-    await _dio.post('/api/auth/email/register', data: {'email': email, 'password': password, 'client': _client});
+    await _authDio.post('/api/auth/email/register', data: {'email': email, 'password': password, 'client': _client}).notifyOnSuccess('Verification code sent to your email.');
   }
 
   @override
   Future<AuthTokens> verifyEmailSignUp({required String email, required String code}) async {
-    final response = await _dio.post('/api/auth/email/verify', data: {'email': email, 'code': code, 'client': _client});
-    final result = LoginResponse.fromJson(response.data);
+    final response = await _authDio.post('/api/auth/email/verify', data: {'email': email, 'code': code, 'client': _client}).notifyOnSuccess("You're all set! Account created.");
+    final result = LoginResponse.fromJson(response.data['data']);
     return _completeAuthentication(result.accessToken, result.refreshToken);
   }
 
   @override
   Future<void> requestEmailPasswordReset({required String email}) async {
-    await _dio.post('/api/auth/email/password-reset', data: {'email': email, 'client': _client});
+    await _authDio.post('/api/auth/email/password-reset', data: {'email': email, 'client': _client}).notifyOnSuccess('Reset code sent to your email.');
   }
 
   /// Assumes the backend logs the user in as part of completing the reset (nicer UX than making them log in again right after).
   @override
   Future<void> completeEmailPasswordReset({required String email, required String code, required String newPassword}) async {
-    final response = await _dio.post('/api/auth/email/password-reset/verify', data: {'email': email, 'code': code, 'password': newPassword, 'client': _client});
-    final result = LoginResponse.fromJson(response.data);
+    final response = await _authDio.post('/api/auth/email/password-reset/verify', data: {'email': email, 'code': code, 'password': newPassword, 'client': _client}).notifyOnSuccess('Password updated successfully.');
+    final result = LoginResponse.fromJson(response.data['data']);
     await _completeAuthentication(result.accessToken, result.refreshToken);
   }
 
   @override
   Future<void> sendPhoneOtp({required String phone}) async {
-    await _dio.post('/api/auth/otp/request', data: {'phoneNumber': phone, 'locale': 'fa', 'client': _client});
+    await _authDio.post('/api/auth/otp/request', data: {'phoneNumber': phone, 'locale': 'fa', 'client': _client}).notifyOnSuccess('Code sent to your phone.');
   }
 
   /// Backend decides whether this creates a new account or logs into an existing one — the client doesn't need to know which happened.
   @override
   Future<AuthTokens> verifyPhoneOtp({required String phone, required String code}) async {
-    final response = await _dio.post('/api/auth/otp/verify', data: {'phoneNumber': phone, 'code': code, 'client': _client});
-    final result = LoginResponse.fromJson(response.data);
+    final response = await _authDio.post('/api/auth/otp/verify', data: {'phoneNumber': phone, 'code': code, 'client': _client}).notifyOnSuccess("You're logged in!");
+    final result = LoginResponse.fromJson(response.data['data']);
     return _completeAuthentication(result.accessToken, result.refreshToken);
   }
 }

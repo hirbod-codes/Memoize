@@ -36,7 +36,6 @@ sealed class ApiResponse {
   static ApiResponse? tryParse(dynamic body) {
     var value = body;
 
-    print('response data: $value');
     if (value is String) {
       try {
         value = jsonDecode(value);

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:client/api/dio/global_error_interceptor.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Generic loading/error wrapper for a single in-flight auth action
@@ -22,7 +23,13 @@ class AuthActionController extends AsyncNotifier<void> {
   /// each form needing its own try/catch/setState boilerplate.
   Future<void> run(Future<void> Function() action) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(action);
+    state = await AsyncValue.guard(action).onError((e, s) {
+      if (e is Exception) {
+        GlobalErrorInterceptor().onError(e, null);
+      }
+
+      return AsyncValue<void>.data(null);
+    });
   }
 }
 

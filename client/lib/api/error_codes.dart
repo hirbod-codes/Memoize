@@ -7,6 +7,7 @@
 const Map<String, String> errorCodeMessages = {
   'INVALID_CREDENTIALS': 'Incorrect email or password.',
   'EMAIL_ALREADY_REGISTERED': 'An account with this email already exists.',
+  'OTP_FAILED': 'unfortunately, we failed to send verification code.',
   'INVALID_OTP': 'That code is incorrect or expired.',
   'INVALID_CODE': 'That code is incorrect or expired.',
   'OTP_EXPIRED': 'That code has expired. Request a new one.',

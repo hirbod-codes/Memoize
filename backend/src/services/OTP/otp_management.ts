@@ -1,8 +1,9 @@
 import { Redis } from '../../DB/redis';
 import { otpService } from '../..';
-import { getLogger } from '../../observability/requestLoggerContext';
+import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
 import { isProduction } from '../../configs';
 import { generateCode, hashCode } from '../../lib';
+import { compare } from 'bcrypt';
 
 const OTP_TTL_SECONDS = 5 * 60;
 const OTP_REQUEST_COOLDOWN_SECONDS = 70;
@@ -22,7 +23,7 @@ interface OtpRecord {
  * account (or vice versa) if the two flows ever share a phone number window.
  */
 export async function requestOtp(phoneNumber: string, locale: 'en' | 'fa', purpose?: OtpPurpose): Promise<'sent' | 'cooldown' | 'failed'> {
-    const log = getLogger().child({ module: 'otp', phoneNumber, purpose });
+    const log = getLogger().child({ module: 'otp', step: 'requestOtp', phoneNumber, purpose });
     log.debug({ phoneNumber, locale, purpose })
 
     const redis = await Redis.getClient();
@@ -36,8 +37,8 @@ export async function requestOtp(phoneNumber: string, locale: 'en' | 'fa', purpo
     const code = generateCode();
 
     // Never log `code` or the resulting codeHash. codeHash is a fast, unsalted-beyond-phone-number SHA-256 digest of a 6-digit code — for anyone who also knows the phone number
-    const codeHash = isProduction ? hashCode(code, phoneNumber) : `${code}:${phoneNumber}`
-    log.debug({ codeHash })
+    const codeHash = hashCode(code, phoneNumber)
+    !isProduction && log.debug({ codeHash: `${code}:${phoneNumber}` })
 
     const record: OtpRecord = { codeHash, attempts: 0, purpose };
 
@@ -47,7 +48,7 @@ export async function requestOtp(phoneNumber: string, locale: 'en' | 'fa', purpo
 
     let result: boolean
     try {
-        result = await otpService.sendVerificationMessage(code, phoneNumber, locale);
+        result = await runWithLogger(log, () => otpService.sendVerificationMessage(code, phoneNumber, locale))
         log.debug({ result }, 'OTP send result')
     } catch (error) {
         log.warn({ error }, 'Sending OTP verification code, failed')
@@ -64,7 +65,7 @@ export async function requestOtp(phoneNumber: string, locale: 'en' | 'fa', purpo
 }
 
 export async function verifyOtp(phoneNumber: string, code: string, purpose?: OtpPurpose): Promise<boolean> {
-    const log = getLogger().child({ module: 'otp', phoneNumber, purpose });
+    const log = getLogger().child({ module: 'otp', step: 'verifyOtp', phoneNumber, purpose });
     log.debug({ phoneNumber, code, purpose })
 
     const redis = await Redis.getClient();
@@ -93,10 +94,13 @@ export async function verifyOtp(phoneNumber: string, code: string, purpose?: Otp
         return false;
     }
 
-    const codeHash = isProduction ? hashCode(code, phoneNumber) : `${code}:${phoneNumber}`
-    log.debug({ codeHash })
+    const codeHash = `${code}:${phoneNumber}`
+    !isProduction && log.debug({ code: codeHash, codeHash: hashCode(code, phoneNumber) })
 
-    if (record.codeHash !== codeHash) {
+    const match = await compare(codeHash!, record.codeHash);
+    log.debug({ match })
+    // if (!match) {
+    if (hashCode(code, phoneNumber) !== record.codeHash) {
         record.attempts += 1;
 
         const ttl = await redis.ttl(key);

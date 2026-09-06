@@ -19,7 +19,7 @@ export class Melipayamak implements IOtp {
     }
 
     async sendVerificationMessage(code: string, toPhoneNumber: string, locale: 'en' | 'fa'): Promise<boolean> {
-        const log = getLogger().child({ step: 'sendVerificationMessage' });
+        const log = getLogger().child({ module: 'otp', step: 'sendVerificationMessage' });
 
         try {
             log.debug({ ...(isProduction ? {} : { code }), toPhoneNumber, locale })
@@ -44,7 +44,7 @@ ${code}
     }
 
     async sendMessage(message: string, toPhoneNumber: string): Promise<boolean> {
-        const log = getLogger().child({ step: 'sendMessage' });
+        const log = getLogger().child({ module: 'otp', step: 'sendMessage' });
 
         try {
             log.debug({ ...(isProduction ? {} : { message }), toPhoneNumber })
@@ -68,7 +68,7 @@ ${code}
             if (result.response.statusCode && result.response.statusCode > 199 && result.response.statusCode < 300) {
                 const data = JSON.parse(result.data)
                 log.debug({ data })
-                if (data.RetStatus === 1 && data.StrRetStatus === 'ok') {
+                if (data.RetStatus === 1) {
                     log.info('successfully sent verification code')
                     return true
                 }
