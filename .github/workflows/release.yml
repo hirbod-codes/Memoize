@@ -334,28 +334,25 @@ jobs:
 
       - name: Package web
         run: |
-          mkdir -o ./build/memoize/
-          mv client/build/web/* build/memoize/
-          cd build/memoize/
-          zip -r ../../memoize-web-${{ needs.release.outputs.version }}.zip .
-
-      - name: Extract memoize
-        run: mkdir -p build/memoize && unzip memoize/memoize-web-${{ needs.release.outputs.version }}.zip -d build/memoize
+          mkdir -p ./NginX/build/memoize/
+          mv client/build/web/* ./NginXbuild/memoize/
+          cd ./NginX/build/memoize/
+          zip -r ../../../memoize-web-${{ needs.release.outputs.version }}.zip .
 
       - name: Create SSL files
         run: |
-          mkdir -p nginx/certs
-          echo "${{ secrets.SSL_CERT }}" > nginx/certs/fullchain.pem
-          echo "${{ secrets.SSL_KEY }}" > nginx/certs/privkey.pem
+          mkdir -p ./NginX/certs
+          echo "${{ secrets.SSL_CERT }}" > ./NginX/certs/fullchain.pem
+          echo "${{ secrets.SSL_KEY }}" > ./NginX/certs/privkey.pem
 
       - name: Build Docker image
         run: |
-          cd backend
+          cd NginX
           echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker build -t ghcr.io/hirbod-codes/nginx:latest -t ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }} .
           docker push ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }}
           docker push ghcr.io/hirbod-codes/nginx:latest
-          docker save ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }} | gzip > nginx-image-${{ needs.release.outputs.version }}.tar.gz
+          docker save ghcr.io/hirbod-codes/nginx:${{ needs.release.outputs.version }} | gzip > ../nginx-image-${{ needs.release.outputs.version }}.tar.gz
 
       - run: |
           mkdir artifacts
