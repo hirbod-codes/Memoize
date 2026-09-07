@@ -335,7 +335,7 @@ jobs:
       - name: Package web
         run: |
           mkdir -p ./NginX/build/memoize/
-          mv client/build/web/* ./NginXbuild/memoize/
+          mv client/build/web/* ./NginX/build/memoize/
           cd ./NginX/build/memoize/
           zip -r ../../../memoize-web-${{ needs.release.outputs.version }}.zip .
 
