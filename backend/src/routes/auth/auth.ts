@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { UserRepository } from '../../DB/repositories/UserRepository';
-import { auth, REFRESH_COOKIE_NAME, unAuth } from '../../middlewares/auth';
+import { auth, authenticateRequest, REFRESH_COOKIE_NAME, unAuth } from '../../middlewares/auth';
 import { getAuthSettings, updateAuthSettings } from './auth_settings';
 import { requestOtp, verifyOtp } from '../../services/OTP/otp_management';
 import { rotateRefreshToken, revokeFamily, revokeAllSessions, revokeSessionByTokenId, listSessions } from './session_management';
@@ -428,6 +428,7 @@ router.post('/logout', auth, async (req: Request, res: Response) => {
     const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/logout' });
 
     try {
+        authenticateRequest(req)
         const payload = req.user as any;
         log.debug({ userId: payload?.userId }, 'Logout request received');
         const tokenId = req.body?.refreshToken ?? req.cookies?.[REFRESH_COOKIE_NAME];

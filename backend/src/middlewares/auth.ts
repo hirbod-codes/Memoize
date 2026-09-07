@@ -163,10 +163,6 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
     }
 }
 
-/**
- * @param req
- * @returns user id in a string or a jwt.JwtPayload
- */
 export function authenticateRequest(req: Request): false | jwt.JwtPayload {
     const log = getLogger().child({ step: 'authenticateRequest' });
 
@@ -180,21 +176,17 @@ export function authenticateRequest(req: Request): false | jwt.JwtPayload {
     return runWithLogger(log, () => authenticateToken(authToken))
 }
 
-/**
- * @param token The JWT access token
- * @returns user id as a string or a jwt.JwtPayload
- */
-export function authenticateToken(token: string): false | jwt.JwtPayload {
-    const log = getLogger().child({ step: 'authenticateToken' });
+export function authenticateToken(accessToken: string): false | jwt.JwtPayload {
+    const log = getLogger().child({ step: 'authenticateToken' })
 
-    log.debug({ token })
-    if (!token) {
+    log.debug({ token: accessToken })
+    if (!accessToken) {
         log.info('No token found')
         return false
     }
 
     try {
-        const decoded = jwt.verify(token, accessTokenSecret);
+        const decoded = jwt.verify(accessToken, accessTokenSecret);
         log.debug({ decoded })
         if (typeof decoded === 'string')
             throw new Error('INVALID_JWT')

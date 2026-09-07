@@ -12,7 +12,7 @@ import 'package:go_router/go_router.dart';
 /// Routes that don't require authentication. Everything else is
 /// protected by default — a new route needs no extra wiring to be
 /// gated, it only needs adding here to be made public.
-const _publicPaths = {'/login'};
+const _publicPaths = {'/auth'};
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -29,7 +29,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       if (!loggedIn && !isPublicRoute) {
         final from = Uri.encodeComponent(state.uri.toString());
-        return '/login?from=$from';
+        return '/auth?from=$from';
       }
 
       if (loggedIn && isPublicRoute) {
@@ -41,7 +41,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(
-        path: '/login',
+        path: '/auth',
         builder: (context, state) {
           final from = state.uri.queryParameters['from'];
           return AuthPage(onAuthenticated: (_) => context.go((from != null && from.isNotEmpty) ? from : '/'));
