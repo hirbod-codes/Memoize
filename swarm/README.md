@@ -26,6 +26,11 @@ MEMOIZE_S3_API_KEY=api_key \
 ./deploy.sh memoize
 ```
 
+## To add a new secret
+
+1. Add them in SECRET_ORDER, MODE and TARGET_SERVICE collections in `rotate_secrets.sh` file
+2. Add them in top level secrets object and secrets object of each service
+
 ## Note before running ./deploy.sh
 
 In case compose and env and configuration files have transferred with windows line endings, run:

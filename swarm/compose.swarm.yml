@@ -1,3 +1,5 @@
+# ROOT_ABSOLUTE_PATH is set in deploy.sh file
+
 networks:
   observability:
     driver: overlay
@@ -50,6 +52,20 @@ secrets:
     external: true
   MEMOIZE_GF_SECURITY_ADMIN_PASSWORD:
     external: true
+  MEMOIZE_REDIS_USERNAME:
+    external: true
+  MEMOIZE_REDIS_PASSWORD:
+    external: true
+  MEMOIZE_REDIS_MASTER_PASSWORD:
+    external: true
+  MEMOIZE_MELIPAYAMAK_USERNAME:
+    external: true
+  MEMOIZE_MELIPAYAMAK_API_KEY:
+    external: true
+  MEMOIZE_MELIPAYAMAK_FROM:
+    external: true
+  MEMOIZE_ZARINPAL_MERCHANT_ID:
+    external: true
 
 services:
   nginx:
@@ -77,22 +93,43 @@ services:
       NODE_ENV: production
       LOG_LEVEL: info
       LOG_DIR: /app/logs
+      VIDEO_UPLOAD_TMP_DIR: ./video_tmp/
+      AUDIO_UPLOAD_TMP_DIR: ./audio_tmp/
+      IMAGE_UPLOAD_TMP_DIR: ./image_tmp/
       OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
       LOKI_PUSH_URL: http://loki:3100
       PUSHGATEWAY_URL: http://pushgateway:9091
       HOST: 0.0.0.0
       PORT: 3000
+      APP_URL: memoize.ir
       ALLOWED_ORIGINS: ${MEMOIZE_ALLOWED_ORIGINS}
       ENV_PREFIX: ${MEMOIZE_ENV_PREFIX}
       ENV_SUFFIX: ${MEMOIZE_ENV_SUFFIX}
       DB_DATABASE_NAME: Memoize
       DB_SUPPORTS_TRANSACTION: "false"
       DB_URL: mongodb://mongo:27017
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DATABASE_INDEX: 0
+      # REDIS_SUPPORTS_TRANSACTION:
+      # REDIS_URL:
+
       MEILISEARCH_PORT: 7700
       MEILISEARCH_HOST: meilisearch
+
+      SMS_PROVIDER_IDENTIFIER: melipayamak
+      MELIPAYAMAK_BASE_ENDPOINT: ${MEMOIZE_MELIPAYAMAK_BASE_ENDPOINT}
+      MELIPAYAMAK_VERIFICATION_MESSAGE_REFERENCE_ADDRESS: ${MEMOIZE_MELIPAYAMAK_VERIFICATION_MESSAGE_REFERENCE_ADDRESS}
+
+      SUPPORTED_PAYMENT_METHODS: zarinpal
+      ZARINPAL_URL: ${MEMOIZE_ZARINPAL_URL}
+
       TTS_API_KEY_FILE: /run/secrets/MEMOIZE_TTS_API_KEY
       MONGODB_USERNAME_FILE: /run/secrets/MEMOIZE_MONGODB_USERNAME
       MONGODB_PASSWORD_FILE: /run/secrets/MEMOIZE_MONGODB_PASSWORD
+      REDIS_USERNAME_FILE: /run/secrets/MEMOIZE_REDIS_USERNAME
+      REDIS_PASSWORD_FILE: /run/secrets/MEMOIZE_REDIS_PASSWORD
       MEILISEARCH_KEY_FILE: /run/secrets/MEMOIZE_MEILISEARCH_KEY
       STREAM_SIGNING_SECRET_FILE: /run/secrets/MEMOIZE_STREAM_SIGNING_SECRET
       ACCESS_TOKEN_SECRET_FILE: /run/secrets/MEMOIZE_ACCESS_TOKEN_SECRET
@@ -102,6 +139,12 @@ services:
       S3_STORAGE_ACCESS_KEY_FILE: /run/secrets/MEMOIZE_S3_STORAGE_ACCESS_KEY
       S3_STORAGE_SECRET_KEY_FILE: /run/secrets/MEMOIZE_S3_STORAGE_SECRET_KEY
       S3_API_KEY_FILE: /run/secrets/MEMOIZE_S3_API_KEY
+
+      MELIPAYAMAK_USERNAME_FILE: /run/secrets/MEMOIZE_MELIPAYAMAK_USERNAME
+      MELIPAYAMAK_API_KEY_FILE: /run/secrets/MEMOIZE_MELIPAYAMAK_API_KEY
+      MELIPAYAMAK_FROM_FILE: /run/secrets/MEMOIZE_MELIPAYAMAK_FROM
+
+      ZARINPAL_MERCHANT_ID_FILE: /run/secrets/MEMOIZE_ZARINPAL_MERCHANT_ID
     secrets:
       - MEMOIZE_TTS_API_KEY
       - MEMOIZE_MONGODB_USERNAME
@@ -115,6 +158,12 @@ services:
       - MEMOIZE_S3_STORAGE_ACCESS_KEY
       - MEMOIZE_S3_STORAGE_SECRET_KEY
       - MEMOIZE_S3_API_KEY
+      - MEMOIZE_REDIS_USERNAME
+      - MEMOIZE_REDIS_PASSWORD
+      - MEMOIZE_MELIPAYAMAK_USERNAME
+      - MEMOIZE_MELIPAYAMAK_API_KEY
+      - MEMOIZE_MELIPAYAMAK_FROM
+      - MEMOIZE_ZARINPAL_MERCHANT_ID
     volumes:
       - ${ROOT_ABSOLUTE_PATH}/memoize_logs:/app/logs:rw
     networks:
@@ -211,11 +260,13 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    command: redis-server --requirepass "$(cat /run/secrets/MEMOIZE_REDIS_MASTER_PASSWORD)" --appendonly yes
+    secrets:
+      - MEMOIZE_REDIS_MASTER_PASSWORD
     volumes:
       - ./redis_data:/data
     networks:
-      - backend_net
+      - db_net
     deploy:
       replicas: 1
       restart_policy:
