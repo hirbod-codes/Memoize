@@ -77,7 +77,6 @@ export const planSchema = object().shape({
     updatedAt: number().optional(),
 })
 
-
 export type Privileges = InferType<typeof privilegesSchema>
 export type QuotaField = Exclude<keyof Privileges, 'allowedContentTypes' | 'maxValuePerContent'> | `maxValuePerContent.${keyof Privileges['maxValuePerContent'] & string}`
 export type FeatureField = `allowedContentTypes.${keyof Privileges['allowedContentTypes'] & string}`

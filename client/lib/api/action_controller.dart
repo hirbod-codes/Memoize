@@ -1,7 +1,10 @@
 import 'dart:async';
 
-import 'package:client/api/dio/global_error_interceptor.dart';
+import 'package:client/api/root_navigator_key.dart';
+import 'package:client/components/global/notification_service.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 /// Generic loading/error wrapper for a single in-flight auth action
 /// (login, signup, send-otp, verify-otp, reset-password — whichever
@@ -21,15 +24,20 @@ class AuthActionController extends AsyncNotifier<void> {
   /// Runs [action], exposing loading/error state via [state] so widgets
   /// can watch it (spinner on the button, error text below it) without
   /// each form needing its own try/catch/setState boilerplate.
-  Future<void> run(Future<void> Function() action) async {
+  Future<void> run(Future<void> Function() action, {bool shouldNotifyUser = true}) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(action).onError((e, s) {
-      if (e is Exception) {
-        GlobalErrorInterceptor().onError(e, null);
-      }
+    final result = await AsyncValue.guard(action);
+    state = result;
 
-      return AsyncValue<void>.data(null);
-    });
+    final error = result.error;
+    if (shouldNotifyUser && error != null && error is! DioException) {
+      Talker().error(error, result.stackTrace);
+
+      final context = rootContext;
+      if (context != null) {
+        NotificationService.showError(context: context, message: 'Something wen wrong!');
+      }
+    }
   }
 }
 

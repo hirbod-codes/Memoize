@@ -71,8 +71,8 @@ services:
   nginx:
     image: ghcr.io/hirbod-codes/nginx:${MEMOIZE_NGINX_VERSION}
     ports:
-      - "${MEMOIZE_NGINX_PORT}:443"
-      - "443:443"
+      - "${MEMOIZE_NGINX_HTTPS_PORT}:443"
+      - "${MEMOIZE_NGINX_HTTP_PORT}:80"
     networks:
       - backend_net
     deploy:
@@ -260,7 +260,12 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: redis-server --requirepass "$(cat /run/secrets/MEMOIZE_REDIS_MASTER_PASSWORD)" --appendonly yes
+    command:
+      [
+        "sh",
+        "-c",
+        'redis-server --requirepass "$$(cat /run/secrets/MEMOIZE_REDIS_MASTER_PASSWORD)" --appendonly yes',
+      ]
     secrets:
       - MEMOIZE_REDIS_MASTER_PASSWORD
     volumes:

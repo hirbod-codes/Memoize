@@ -2,7 +2,7 @@ import 'package:client/auth/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../auth_action_controller.dart';
+import '../../api/action_controller.dart';
 import '../models/auth_models.dart';
 import 'otp_sheet.dart';
 

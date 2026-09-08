@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../auth_action_controller.dart';
+import '../../api/action_controller.dart';
 import 'otp_code_input.dart';
 
 const _resendCooldown = Duration(seconds: 30);
