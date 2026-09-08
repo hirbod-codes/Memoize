@@ -34,6 +34,7 @@ export ROOT_ABSOLUTE_PATH
 
 mkdir -p \
     "$ROOT_ABSOLUTE_PATH/memoize_logs" \
+    "$ROOT_ABSOLUTE_PATH/redis_data" \
     "$ROOT_ABSOLUTE_PATH/mongo_data" \
     "$ROOT_ABSOLUTE_PATH/meili_data" \
     "$ROOT_ABSOLUTE_PATH/prometheus_data" \

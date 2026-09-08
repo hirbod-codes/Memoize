@@ -5,7 +5,6 @@ import 'package:client/auth/auth_state.dart';
 import 'package:client/go_router_refresh_notifier.dart';
 import 'package:client/pages/auth_page.dart';
 import 'package:client/pages/home_page.dart';
-import 'package:client/pages/pricing_page.dart';
 // import 'package:client/pages/settings_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,7 +12,7 @@ import 'package:go_router/go_router.dart';
 /// Routes that don't require authentication. Everything else is
 /// protected by default — a new route needs no extra wiring to be
 /// gated, it only needs adding here to be made public.
-const _publicPaths = {'/auth', '/', '/pricing'};
+const _publicPaths = {'/auth'};
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -51,11 +50,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) => const AppShell(child: HomePage()),
-      ),
-      GoRoute(
-        path: '/pricing',
-        builder: (context, state) => PricingPage(onSelectPlan: (plan) => context.go('/login?plan=${plan.id}')),
-      ),
+      )
       // GoRoute(
       //   path: '/notes',
       //   builder: (context, state) => const AuthGate(child: HomePage()),

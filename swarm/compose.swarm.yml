@@ -260,22 +260,50 @@ services:
 
   redis:
     image: redis:7-alpine
-    command:
-      [
-        "sh",
-        "-c",
-        'redis-server --requirepass "$$(cat /run/secrets/MEMOIZE_REDIS_MASTER_PASSWORD)" --appendonly yes',
-      ]
+    command: >
+      sh -c '
+        redis-server
+        --requirepass "$$(cat /run/secrets/MEMOIZE_REDIS_MASTER_PASSWORD)"
+        --appendonly yes
+        --appendfsync everysec
+        --save 900 1
+        --save 300 10
+        --maxmemory 512mb
+        --maxmemory-policy allkeys-lru
+        --tcp-keepalive 60
+        --dir /data
+      '
     secrets:
       - MEMOIZE_REDIS_MASTER_PASSWORD
     volumes:
       - ./redis_data:/data
     networks:
       - db_net
+    healthcheck:
+      test: >
+        sh -c '
+          redis-cli -a "$$(cat /run/secrets/MEMOIZE_REDIS_MASTER_PASSWORD)" --no-auth-warning ping | grep -q PONG
+        '
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     deploy:
       replicas: 1
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+        reservations:
+          cpus: "0.25"
+          memory: 512M
       restart_policy:
         condition: on-failure
+        delay: 5s
+        max_attempts: 5
+        window: 120s
+      update_config:
+        order: stop-first    # Redis is stateful; don't start a new one before the old one releases the volume
 
   prometheus:
     image: prom/prometheus:v3.13.2
