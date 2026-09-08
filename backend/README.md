@@ -1,6 +1,4 @@
-# Memoize
-
-## for production
+# for production
 
 run (with production env values):
 
