@@ -10,7 +10,7 @@ import 'package:client/api/models/plan.dart';
 final plansProvider = FutureProvider.autoDispose<List<Plan>>((ref) async {
   final dio = ref.watch(dioProvider);
   final response = await dio.get('/api/plan');
-  final data = response.unwrapData<List<dynamic>>();
+  final data = response.unwrapData()['plans'] as List<dynamic>;
 
-  return data.map((e) => Plan.fromJson(e as Map<String, dynamic>)).toList();
+  return data.toList().map((e) => Plan.fromJson(e)).toList();
 });

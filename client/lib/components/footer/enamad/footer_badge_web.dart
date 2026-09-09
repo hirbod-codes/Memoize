@@ -38,7 +38,7 @@ Widget buildFooterBadgeWidget() {
         ..src = 'https://trustseal.enamad.ir/logo.aspx?id=7649114&Code=73PTlAXHjPhgtZVV7hxJPlvoz0D1AWKq'
         ..attributes['code'] = '73PTlAXHjPhgtZVV7hxJPlvoz0D1AWKq'
         ..style.cursor = 'pointer'
-        ..style.height = '32px'
+        ..style.height = '64px'
         ..style.width = 'auto';
 
       anchor.append(img);

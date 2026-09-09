@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:client/api/models/plan.dart';
+import 'package:talker/talker.dart';
 import 'currency_formatter.dart';
 import 'plans_provider.dart';
 
@@ -28,11 +29,13 @@ class PricingPage extends ConsumerWidget {
       body: SafeArea(
         child: plansAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => _RetryState(message: "Couldn't load pricing right now.", onRetry: () => ref.invalidate(plansProvider)),
+          error: (error, stackTrace) {
+            Talker().error('plansProvider threw an error', error, stackTrace);
+            return _RetryState(message: "Couldn't load pricing right now.", onRetry: () => ref.invalidate(plansProvider));
+          },
           data: (plans) {
-            if (plans.isEmpty) {
-              return const _RetryState(message: 'No plans are available right now.');
-            }
+            if (plans.isEmpty) return const _RetryState(message: 'No plans are available right now.');
+
             return _PricingContent(plans: plans, onSelectPlan: onSelectPlan);
           },
         ),

@@ -82,7 +82,8 @@ class PlanRepository implements IRepository, ISeedable, IDropable {
 
         const result = await PlanRepository.collection!.find({}, { session: this.session }).toArray()
 
-        await redis.set('allPlans', JSON.stringify(result))
+        if (result.length !== 0)
+            await redis.set('allPlans', JSON.stringify(result))
 
         return result
     }
