@@ -4,6 +4,7 @@ import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class TopBar extends ConsumerWidget implements PreferredSizeWidget {
   final Widget? title;
@@ -16,6 +17,14 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
       title: title,
       centerTitle: false,
       actions: [
+        Button(
+          color: ThemeColorName.primary,
+          type: ButtonType.text,
+          label: 'pricing',
+          onPressed: () {
+            context.go('/pricing');
+          },
+        ),
         Button(
           icon: ref.watch(themeModeProvider) == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
           color: ThemeColorName.primary,

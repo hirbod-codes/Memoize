@@ -75,6 +75,7 @@ import { authRoutes } from './routes/auth/auth';
 import { planRoutes } from './routes/plan/plan';
 import { PaymentFactory } from './services/Payments/zarinpal/factory';
 import { SmtpFactory } from './services/SMTP/SmtpFactory';
+import { subscriptionRoutes } from './routes/subscription/subscription';
 
 export const meili = new Meilisearch({
     host: meilisearchHost + ':' + meilisearchPort.toString(),
@@ -210,6 +211,7 @@ export const payments = {
     app.use('/api/audio', audioRoutes);
     app.use('/api/video', videoRoutes);
     // app.use('/api/tts', ttsRoutes);
+    app.use('/api/subscription', subscriptionRoutes);
     app.use('/api/plan', planRoutes);
 
     app.use(notFoundHandler);
