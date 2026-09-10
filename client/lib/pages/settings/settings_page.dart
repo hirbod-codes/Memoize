@@ -6,6 +6,7 @@ import 'package:client/pages/settings/change_password_sheet.dart';
 import 'package:client/pages/settings/change_phone_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 /// Wrap this in AppShell at the route level, same as HomePage:
 ///   GoRoute(path: '/settings', builder: (context, state) => const AppShell(child: SettingsPage())),
@@ -29,7 +30,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     return userInfoAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => _RetryState(onRetry: () => ref.invalidate(userInfoProvider)),
+      error: (error, stackTrace) {
+        Talker().error('caught error in settings page initial load', error, stackTrace);
+        return _RetryState(onRetry: () => ref.invalidate(userInfoProvider));
+      },
       data: (userInfo) => _SettingsContent(userInfo: userInfo),
     );
   }
