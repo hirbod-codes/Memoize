@@ -2,7 +2,7 @@ import 'package:client/api/api_call_extensions.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../auth/models/auth_models.dart';
+import '../../auth/models/auth_models.dart';
 
 /// Which auth methods the backend currently supports, per
 /// `/api/auth/supported_auth_methods` → `{ status: 'success', data: ['phone', 'email'] }`.

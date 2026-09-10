@@ -1,3 +1,4 @@
+import 'package:client/api/dio/web/dio_web_config.dart';
 import 'package:client/app_config.dart';
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/api/dio/auth_interceptor.dart';
@@ -16,6 +17,8 @@ final dioProvider = Provider<Dio>((ref) {
   // toast for something that was actually handled transparently.
   dio.interceptors.add(GlobalErrorInterceptor());
 
+  configureDioForWeb(dio);
+
   return dio;
 });
 
@@ -23,6 +26,8 @@ final authDioProvider = Provider<Dio>((ref) {
   final storage = ref.read(tokenStorageProvider);
 
   final dio = Dio(BaseOptions(baseUrl: AppConfig.apiUrl));
+
+  configureDioForWeb(dio);
 
   dio.interceptors.add(AuthInterceptor(storage));
 

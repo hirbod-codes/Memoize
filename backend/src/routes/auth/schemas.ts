@@ -3,25 +3,25 @@ import { ClientType } from './session_management';
 
 export const clientSchema = mixed<ClientType>().oneOf(['web', 'mobile', 'desktop']).required();
 
-export const otpRequestSchema = object({
+export const otpRequestSchema = object().shape({
     phoneNumber: string().matches(/^09[0-9]{9}$/).required(),
     locale: string().oneOf(['en', 'fa']).optional().default('en'),
 });
 
-export const otpVerifySchema = object({
+export const otpVerifySchema = object().shape({
     client: clientSchema,
     phoneNumber: string().matches(/^09[0-9]{9}$/).required(),
     code: string().length(6).required(),
 });
 
-export const emailRegisterSchema = object({
+export const emailRegisterSchema = object().shape({
     client: clientSchema,
     locale: string().oneOf(['en', 'fa']).optional().default('en'),
     email: string().email().required(),
     password: string().min(8).required(),
 });
 
-export const emailVerifySchema = object({
+export const emailVerifySchema = object().shape({
     client: clientSchema,
     locale: string().oneOf(['en', 'fa']).optional().default('en'),
     code: string().length(6).required(),
@@ -29,13 +29,13 @@ export const emailVerifySchema = object({
     password: string().min(8).required(),
 });
 
-export const emailPasswordResetSchema = object({
+export const emailPasswordResetSchema = object().shape({
     client: clientSchema,
     locale: string().oneOf(['en', 'fa']).optional().default('en'),
     email: string().email().required(),
 });
 
-export const emailPasswordResetVerifySchema = object({
+export const emailPasswordResetVerifySchema = object().shape({
     client: clientSchema,
     locale: string().oneOf(['en', 'fa']).optional().default('en'),
     code: string().length(6).required(),
@@ -43,18 +43,18 @@ export const emailPasswordResetVerifySchema = object({
     password: string().min(8).required(),
 });
 
-export const loginSchema = object({
+export const loginSchema = object().shape({
     client: clientSchema,
     email: string().email().required(),
     password: string().required(),
 });
 
-export const refreshSchema = object({
+export const refreshSchema = object().shape({
     client: clientSchema.default('web'),
-    refreshToken: string().optional(), // mobile/desktop send this; web relies on the cookie
+    refreshToken: string().nullable().optional(), // mobile/desktop send this; web relies on the cookie
 });
 
-export const adminSettingsSchema = object({
+export const adminSettingsSchema = object().shape({
     allowEmailRegistration: boolean().optional(),
     allowOtp: boolean().optional(),
 });

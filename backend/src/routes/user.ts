@@ -24,7 +24,7 @@ router.get('/info', async (req, res) => {
             return
         }
 
-        res.status(200).json(result)
+        res.status(200).json({ status: 'success', data: result })
 
         console.log('------------end------------')
     } catch (err) {
@@ -43,12 +43,12 @@ router.post('/avatar', async (req, res) => {
             fileName = req.query.name?.toString()
             console.log('fileName', fileName)
             if (!string().required().isValidSync(fileName)) {
-                res.status(400).json({ message: 'Invalid file name' });
+                res.status(400).json({ status: 'error', message: 'Invalid file name' });
                 return
             }
         } catch (err) {
             console.error(err)
-            res.status(400).json({ message: 'Invalid file' });
+            res.status(400).json({ status: 'error', message: 'Invalid file' });
             return
         }
 

@@ -8,6 +8,7 @@ import 'package:client/auth/token_storage.dart';
 import 'package:client/auth/responses/login_response.dart';
 import 'package:client/auth/responses/refresh_response.dart';
 import 'package:client/auth/models/auth_models.dart';
+import 'package:dio/browser.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,14 +27,6 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   @override
   AuthState build() {
     _storage = ref.read(tokenStorageProvider);
-    // Every auth endpoint — including pre-login ones like signup/OTP —
-    // goes through authDioProvider now. It carries AuthInterceptor (a
-    // harmless no-op if there's no token yet), RefreshInterceptor, and
-    // GlobalErrorInterceptor, so error handling stays consistent across
-    // every call this controller makes. Previously several methods used
-    // a plain `_dio` with no interceptors attached, which is why the
-    // notifyOnSuccess/error toast pipeline wasn't reachable from those
-    // calls at all.
     _authDio = ref.watch(authDioProvider);
 
     _initialize();
@@ -42,8 +35,26 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   }
 
   Future<void> _initialize() async {
-    Talker().info('AuthController._initialize called...');
+    Talker().info('kIsWeb: $kIsWeb, AuthController._initialize called...');
 
+    if (kIsWeb) {
+      try {
+        final result = await refresh(null);
+        Talker().info('refresh result: $result');
+
+        await _storage.saveAccessToken(result.accessToken);
+        state = const AuthState(AuthStatus.authenticated);
+      } catch (e) {
+        Talker().error('error: $e');
+        await _storage.clear();
+        state = const AuthState(AuthStatus.unauthenticated);
+      }
+      Talker().info('AuthController._initialize ended (web)');
+      return;
+    }
+
+    // Mobile/desktop: no cookie jar, so a refresh attempt is only
+    // worth making if we actually have a token to send.
     final refreshToken = await _storage.getRefreshToken();
     Talker().info('refreshToken: $refreshToken');
 
@@ -86,6 +97,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
 
   Future<RefreshResponse> refresh(String? refreshToken) async {
     Talker().info('AuthController.refresh called...');
+
     final response = await _authDio.post('/api/auth/refresh', data: {'refreshToken': kIsWeb ? null : refreshToken, 'client': _client});
     Talker().info('response status code: ${response.statusCode}');
 
@@ -128,7 +140,6 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     await _authDio.post('/api/auth/email/password-reset', data: {'email': email, 'client': _client}).notifyOnSuccess('Reset code sent to your email.');
   }
 
-  /// Assumes the backend logs the user in as part of completing the reset (nicer UX than making them log in again right after).
   @override
   Future<void> completeEmailPasswordReset({required String email, required String code, required String newPassword}) async {
     final response = await _authDio.post('/api/auth/email/password-reset/verify', data: {'email': email, 'code': code, 'password': newPassword, 'client': _client}).notifyOnSuccess('Password updated successfully.');
@@ -141,7 +152,6 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     await _authDio.post('/api/auth/otp/request', data: {'phoneNumber': phone, 'locale': 'fa', 'client': _client}).notifyOnSuccess('Code sent to your phone.');
   }
 
-  /// Backend decides whether this creates a new account or logs into an existing one — the client doesn't need to know which happened.
   @override
   Future<AuthTokens> verifyPhoneOtp({required String phone, required String code}) async {
     final response = await _authDio.post('/api/auth/otp/verify', data: {'phoneNumber': phone, 'code': code, 'client': _client}).notifyOnSuccess("You're logged in!");

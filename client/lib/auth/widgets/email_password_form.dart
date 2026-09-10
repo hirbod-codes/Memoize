@@ -41,14 +41,14 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
 
   Future<void> _submitLogin() async {
     final api = ref.read(authControllerProvider.notifier);
-    final controller = ref.read(authActionControllerProvider.notifier);
+    final controller = ref.read(actionControllerProvider.notifier);
     AuthTokens? tokens;
 
     await controller.run(() async {
       tokens = await api.loginWithEmail(email: _emailController.text.trim(), password: _passwordController.text);
     });
 
-    final state = ref.read(authActionControllerProvider);
+    final state = ref.read(actionControllerProvider);
     if (!state.hasError && tokens != null) {
       widget.onAuthenticated?.call(tokens!);
     }
@@ -57,11 +57,11 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
   Future<void> _submitSignUp() async {
     final email = _emailController.text.trim();
     final api = ref.read(authControllerProvider.notifier);
-    final controller = ref.read(authActionControllerProvider.notifier);
+    final controller = ref.read(actionControllerProvider.notifier);
 
     // Step 1: create the (unverified) account and trigger the code email.
     await controller.run(() => api.signUpWithEmail(email: email, password: _passwordController.text));
-    final sendState = ref.read(authActionControllerProvider);
+    final sendState = ref.read(actionControllerProvider);
     if (sendState.hasError || !mounted) return;
 
     // Step 2: same OTP sheet used for phone — the user must verify the
@@ -85,7 +85,7 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
 
   @override
   Widget build(BuildContext context) {
-    final actionState = ref.watch(authActionControllerProvider);
+    final actionState = ref.watch(actionControllerProvider);
     final isLoading = actionState.isLoading;
 
     return Form(

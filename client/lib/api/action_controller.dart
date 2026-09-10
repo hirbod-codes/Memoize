@@ -17,7 +17,7 @@ import 'package:talker/talker.dart';
 /// tracks whether *this specific button* is mid-request. They never need
 /// to agree with each other; a signup-code-verify request can be loading
 /// here while the global session is still `unauthenticated`.
-class AuthActionController extends AsyncNotifier<void> {
+class ActionController extends AsyncNotifier<void> {
   @override
   FutureOr<void> build() {}
 
@@ -28,10 +28,11 @@ class AuthActionController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     final result = await AsyncValue.guard(action);
     state = result;
+    Talker().debug({state});
 
     final error = result.error;
     if (shouldNotifyUser && error != null && error is! DioException) {
-      Talker().error(error, result.stackTrace);
+      Talker().error('caught error in action controller', error, result.stackTrace);
 
       final context = rootContext;
       if (context != null) {
@@ -41,4 +42,4 @@ class AuthActionController extends AsyncNotifier<void> {
   }
 }
 
-final authActionControllerProvider = AsyncNotifierProvider.autoDispose<AuthActionController, void>(AuthActionController.new);
+final actionControllerProvider = AsyncNotifierProvider.autoDispose<ActionController, void>(ActionController.new);

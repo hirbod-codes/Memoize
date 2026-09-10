@@ -34,10 +34,10 @@ class _PhoneOtpFormState extends ConsumerState<PhoneOtpForm> {
 
     final phone = _phoneController.text.trim();
     final api = ref.read(authControllerProvider.notifier);
-    final controller = ref.read(authActionControllerProvider.notifier);
+    final controller = ref.read(actionControllerProvider.notifier);
 
     await controller.run(() => api.sendPhoneOtp(phone: phone));
-    final sendState = ref.read(authActionControllerProvider);
+    final sendState = ref.read(actionControllerProvider);
     if (sendState.hasError || !mounted) return;
 
     AuthTokens? tokens;
@@ -58,7 +58,7 @@ class _PhoneOtpFormState extends ConsumerState<PhoneOtpForm> {
 
   @override
   Widget build(BuildContext context) {
-    final actionState = ref.watch(authActionControllerProvider);
+    final actionState = ref.watch(actionControllerProvider);
     final isLoading = actionState.isLoading;
 
     return Form(

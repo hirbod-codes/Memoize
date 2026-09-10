@@ -1,4 +1,5 @@
 import 'package:client/auth/auth_controller.dart';
+import 'package:client/auth/auth_state.dart';
 import 'package:client/components/button.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
@@ -33,14 +34,24 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
             ref.read(themeModeProvider.notifier).toggle();
           },
         ),
-        Button(
-          icon: Icons.logout,
-          color: ThemeColorName.error,
-          type: ButtonType.text,
-          onPressed: () {
-            ref.read(authControllerProvider.notifier).logout();
-          },
-        ),
+        if (ref.watch(authControllerProvider).status == AuthStatus.unauthenticated)
+          Button(
+            icon: Icons.login,
+            color: ThemeColorName.success,
+            type: ButtonType.text,
+            onPressed: () {
+              context.go('/auth');
+            },
+          ),
+        if (ref.watch(authControllerProvider).status == AuthStatus.authenticated)
+          Button(
+            icon: Icons.logout,
+            color: ThemeColorName.error,
+            type: ButtonType.text,
+            onPressed: () {
+              ref.read(authControllerProvider.notifier).logout();
+            },
+          ),
       ],
     );
   }
