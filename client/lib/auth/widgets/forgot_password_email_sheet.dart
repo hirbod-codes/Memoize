@@ -1,5 +1,5 @@
 import 'package:client/auth/auth_controller.dart';
-import 'package:client/auth/auth_action_controller.dart';
+import 'package:client/api/action_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -45,17 +45,17 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
     if (!(_emailFormKey.currentState?.validate() ?? false)) return;
 
     final api = ref.read(authControllerProvider.notifier);
-    final controller = ref.read(authActionControllerProvider.notifier);
+    final controller = ref.read(actionControllerProvider.notifier);
 
     await controller.run(() => api.requestEmailPasswordReset(email: _emailController.text.trim()));
 
-    final state = ref.read(authActionControllerProvider);
+    final state = ref.read(actionControllerProvider);
     if (!state.hasError && mounted) setState(() => _step = _Step.enterCodeAndPassword);
   }
 
   Future<void> _resend() async {
     final api = ref.read(authControllerProvider.notifier);
-    final controller = ref.read(authActionControllerProvider.notifier);
+    final controller = ref.read(actionControllerProvider.notifier);
 
     await controller.run(() => api.requestEmailPasswordReset(email: _emailController.text.trim()));
   }
@@ -65,11 +65,11 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
     if (!(_passwordFormKey.currentState?.validate() ?? false)) return;
 
     final api = ref.read(authControllerProvider.notifier);
-    final controller = ref.read(authActionControllerProvider.notifier);
+    final controller = ref.read(actionControllerProvider.notifier);
 
     await controller.run(() => api.completeEmailPasswordReset(email: _emailController.text.trim(), code: _code, newPassword: _newPasswordController.text));
 
-    final state = ref.read(authActionControllerProvider);
+    final state = ref.read(actionControllerProvider);
     if (state.hasError) {
       _otpKey.currentState?.clear();
       return;
@@ -79,7 +79,7 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
 
   @override
   Widget build(BuildContext context) {
-    final actionState = ref.watch(authActionControllerProvider);
+    final actionState = ref.watch(actionControllerProvider);
     final isLoading = actionState.isLoading;
 
     return Padding(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:client/api/root_navigator_key.dart';
 import 'package:client/components/button.dart';
 import 'package:client/main.dart';
@@ -6,17 +8,6 @@ import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
 
 class NotificationService {
-  /// Resolves an OverlayState for [context].
-  ///
-  /// For a context that comes from inside the widget tree (a widget's own
-  /// `context`), `Overlay.maybeOf` finds the ancestor Overlay normally.
-  ///
-  /// For `rootNavigatorKey.currentContext` — the context of the Navigator
-  /// widget itself, used by the global error interceptor which has no
-  /// widget context of its own — `Overlay.maybeOf` returns null, because
-  /// the Overlay a Navigator manages is a *descendant* of the Navigator's
-  /// own context, not an ancestor. `NavigatorState.overlay` sidesteps the
-  /// ancestor search entirely and hands back the OverlayState directly.
   static OverlayState? _resolveOverlay(BuildContext context) {
     return Overlay.maybeOf(context) ?? rootNavigatorKey.currentState?.overlay;
   }
@@ -25,9 +16,23 @@ class NotificationService {
     final theme = ThemeModeNotifier.getTheme(container.read(themeModeProvider));
 
     final overlay = _resolveOverlay(context);
-    if (overlay == null) return; // nothing mounted yet to show this on
+    if (overlay == null) return;
 
     OverlayEntry? entry;
+    Timer? timer;
+
+    // Both the auto-dismiss timer and the manual close button need to
+    // remove the same entry, and either one can fire first — a plain
+    // `entry?.remove()` in each place would double-remove if the user
+    // taps close right before the timer was going to fire anyway.
+    // Routing both through one guarded dismiss() makes a second call
+    // (from whichever path loses the race) a safe no-op instead of an
+    // assertion failure.
+    void dismiss() {
+      timer?.cancel();
+      entry?.remove();
+      entry = null;
+    }
 
     entry = OverlayEntry(
       builder: (_) => Positioned(
@@ -44,15 +49,10 @@ class NotificationService {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(message, style: TextStyle(color: theme.onError)),
-                Button(
-                  type: ButtonType.text,
-                  icon: Icons.close,
-                  color: ThemeColorName.onError,
-                  onPressed: () {
-                    entry?.remove();
-                  },
+                Expanded(
+                  child: Text(message, style: TextStyle(color: theme.onError)),
                 ),
+                Button(type: ButtonType.text, icon: Icons.close, color: ThemeColorName.onError, onPressed: dismiss),
               ],
             ),
           ),
@@ -60,11 +60,9 @@ class NotificationService {
       ),
     );
 
-    overlay.insert(entry);
+    overlay.insert(entry!);
 
-    Future.delayed(duration ?? const Duration(seconds: 6), () {
-      entry?.remove();
-    });
+    timer = Timer(duration ?? const Duration(seconds: 6), dismiss);
   }
 
   static void showSuccess({required BuildContext context, required String message, Duration? duration}) {
@@ -73,7 +71,14 @@ class NotificationService {
     final overlay = _resolveOverlay(context);
     if (overlay == null) return;
 
-    late OverlayEntry? entry;
+    OverlayEntry? entry;
+    Timer? timer;
+
+    void dismiss() {
+      timer?.cancel();
+      entry?.remove();
+      entry = null;
+    }
 
     entry = OverlayEntry(
       builder: (_) => Positioned(
@@ -90,15 +95,10 @@ class NotificationService {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(message, style: TextStyle(color: theme.onSuccess)),
-                Button(
-                  type: ButtonType.text,
-                  icon: Icons.close,
-                  color: ThemeColorName.onSuccess,
-                  onPressed: () {
-                    entry?.remove();
-                  },
+                Expanded(
+                  child: Text(message, style: TextStyle(color: theme.onSuccess)),
                 ),
+                Button(type: ButtonType.text, icon: Icons.close, color: ThemeColorName.onSuccess, onPressed: dismiss),
               ],
             ),
           ),
@@ -106,10 +106,8 @@ class NotificationService {
       ),
     );
 
-    overlay.insert(entry);
+    overlay.insert(entry!);
 
-    Future.delayed(duration ?? const Duration(seconds: 6), () {
-      entry?.remove();
-    });
+    timer = Timer(duration ?? const Duration(seconds: 6), dismiss);
   }
 }

@@ -13,7 +13,7 @@ export function setAuthCookies(res: Response, accessToken: string, refreshTokenI
 
     res.cookie(ACCESS_COOKIE_NAME, accessToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: accessExpSeconds * 1000, path: '/', });
 
-    res.cookie(REFRESH_COOKIE_NAME, refreshTokenId, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: REFRESH_TTL_SECONDS * 1000, path: '/auth', });
+    res.cookie(REFRESH_COOKIE_NAME, refreshTokenId, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: REFRESH_TTL_SECONDS * 1000, path: '/', });
 
     log.info('Set auth cookies');
 }

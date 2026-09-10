@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../auth_action_controller.dart';
+import '../../api/action_controller.dart';
 import 'otp_code_input.dart';
 
 const _resendCooldown = Duration(seconds: 30);
@@ -75,10 +75,10 @@ class _OtpSheetContentState extends ConsumerState<_OtpSheetContent> {
     final code = _code;
     if (code.length != 6) return;
 
-    final controller = ref.read(authActionControllerProvider.notifier);
+    final controller = ref.read(actionControllerProvider.notifier);
     await controller.run(() => widget.onVerify(code));
 
-    final state = ref.read(authActionControllerProvider);
+    final state = ref.read(actionControllerProvider);
     if (state.hasError) {
       _otpKey.currentState?.clear();
       return;
@@ -87,15 +87,15 @@ class _OtpSheetContentState extends ConsumerState<_OtpSheetContent> {
   }
 
   Future<void> _resend() async {
-    final controller = ref.read(authActionControllerProvider.notifier);
+    final controller = ref.read(actionControllerProvider.notifier);
     await controller.run(widget.onResend);
-    final state = ref.read(authActionControllerProvider);
+    final state = ref.read(actionControllerProvider);
     if (!state.hasError) _startCooldown();
   }
 
   @override
   Widget build(BuildContext context) {
-    final actionState = ref.watch(authActionControllerProvider);
+    final actionState = ref.watch(actionControllerProvider);
     final isLoading = actionState.isLoading;
 
     return Padding(

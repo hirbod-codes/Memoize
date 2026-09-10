@@ -24,7 +24,7 @@ router.get('/info', async (req, res) => {
             return
         }
 
-        res.status(200).json(result)
+        res.status(200).json({ status: 200, data: result })
 
         console.log('------------end------------')
     } catch (err) {

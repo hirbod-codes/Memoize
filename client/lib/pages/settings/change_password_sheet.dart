@@ -1,0 +1,93 @@
+import 'package:client/account/account_controller.dart';
+import 'package:client/api/action_controller.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+Future<void> showChangePasswordSheet(BuildContext context) {
+  return showModalBottomSheet(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => const _ChangePasswordContent());
+}
+
+class _ChangePasswordContent extends ConsumerStatefulWidget {
+  const _ChangePasswordContent();
+
+  @override
+  ConsumerState<_ChangePasswordContent> createState() => _ChangePasswordContentState();
+}
+
+class _ChangePasswordContentState extends ConsumerState<_ChangePasswordContent> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentController = TextEditingController();
+  final _newController = TextEditingController();
+  final _confirmController = TextEditingController();
+
+  @override
+  void dispose() {
+    _currentController.dispose();
+    _newController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final account = ref.read(accountControllerProvider);
+    final controller = ref.read(actionControllerProvider.notifier);
+
+    await controller.run(() => account.changePassword(currentPassword: _currentController.text, newPassword: _newController.text));
+
+    final state = ref.read(actionControllerProvider);
+    if (!state.hasError && mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final actionState = ref.watch(actionControllerProvider);
+    final isLoading = actionState.isLoading;
+
+    return Padding(
+      padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Change password', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _currentController,
+              enabled: !isLoading,
+              obscureText: true,
+              autofillHints: const [AutofillHints.password],
+              decoration: const InputDecoration(labelText: 'Current password', border: OutlineInputBorder()),
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _newController,
+              enabled: !isLoading,
+              obscureText: true,
+              autofillHints: const [AutofillHints.newPassword],
+              decoration: const InputDecoration(labelText: 'New password', border: OutlineInputBorder()),
+              validator: (v) => (v == null || v.length < 8) ? 'At least 8 characters' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _confirmController,
+              enabled: !isLoading,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Confirm new password', border: OutlineInputBorder()),
+              validator: (v) => v != _newController.text ? 'Passwords do not match' : null,
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: isLoading ? null : _submit,
+              child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Update password'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

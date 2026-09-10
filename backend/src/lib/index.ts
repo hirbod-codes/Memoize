@@ -16,7 +16,7 @@ export function handleError(res: Response, err: any, log?: Logger) {
 
     if (err.name === 'ValidationError') {
         log.info({ errors: err.errors ?? err.message }, 'request input validation failed');
-        try { return res.status(400).json({ status: 'error', error: err.message }); } catch (_) { }
+        try { return res.status(400).json({ status: 'error', error: err.errors ?? err.message }); } catch (_) { }
     }
 
     log.error({ err }, 'Unhandled error');

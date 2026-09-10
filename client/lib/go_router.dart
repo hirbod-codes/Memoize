@@ -3,9 +3,12 @@ import 'package:client/app_shell.dart';
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
 import 'package:client/go_router_refresh_notifier.dart';
+import 'package:client/pages/app_page.dart';
 import 'package:client/pages/auth_page.dart';
 import 'package:client/pages/home_page.dart';
-// import 'package:client/pages/settings_page.dart';
+import 'package:client/pages/not_found_page.dart';
+import 'package:client/pages/pricing_page.dart';
+import 'package:client/pages/settings/settings_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,13 +21,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     refreshListenable: GoRouterRefreshNotifier(ref),
-    redirect: (context, state) {
+    redirect: (context, state) async {
       final authStatus = ref.read(authControllerProvider).status;
 
       if (authStatus == AuthStatus.loading) return null;
 
       final loggedIn = authStatus == AuthStatus.authenticated;
-      print('state.matchedLocation --------------------->  ${state.matchedLocation} ${state.path} ${state.uri}');
       final isPublicRoute = _publicPaths.contains(state.matchedLocation);
 
       if (!loggedIn && !isPublicRoute) {
@@ -34,31 +36,37 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       if (loggedIn && isPublicRoute) {
         final from = state.uri.queryParameters['from'];
-        return (from != null && from.isNotEmpty) ? from : '/';
+        return (from != null && from.isNotEmpty) ? from : null;
       }
 
       return null;
     },
+    initialLocation: '/',
+    errorBuilder: (b, c) => const AppShell(child: NotFoundPage()),
     routes: [
-      GoRoute(
-        path: '/auth',
-        builder: (context, state) {
-          final from = state.uri.queryParameters['from'];
-          return AuthPage(onAuthenticated: (_) => context.go((from != null && from.isNotEmpty) ? from : '/'));
-        },
-      ),
       GoRoute(
         path: '/',
         builder: (context, state) => const AppShell(child: HomePage()),
       ),
-      // GoRoute(
-      //   path: '/notes',
-      //   builder: (context, state) => const AuthGate(child: HomePage()),
-      // ),
-      // GoRoute(
-      //   path: '/settings',
-      //   builder: (context, state) => const AuthGate(child: SettingsPage()),
-      // ),
+      GoRoute(
+        path: '/app',
+        builder: (context, state) => const AppShell(child: AppPage()),
+      ),
+      GoRoute(
+        path: '/pricing',
+        builder: (context, state) => AppShell(child: PricingPage(onSelectPlan: (plan) => context.go('/login?plan=${plan.id}'))),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const AppShell(child: SettingsPage()),
+      ),
+      GoRoute(
+        path: '/auth',
+        builder: (context, state) {
+          final from = state.uri.queryParameters['from'];
+          return AppShell(child: AuthPage(onAuthenticated: (_) => context.go((from != null && from.isNotEmpty) ? from : '/app')));
+        },
+      ),
     ],
   );
 });

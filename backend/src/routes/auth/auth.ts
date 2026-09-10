@@ -43,6 +43,10 @@ router.get('/supported_auth_methods', async (req: Request, res: Response) => {
     }
 });
 
+router.post('/otp/reset', auth, async (req: Request, res: Response) => { })
+
+router.post('/otp/reset/verify', auth, async (req: Request, res: Response) => { })
+
 router.post('/otp/request', unAuth, async (req: Request, res: Response) => {
     const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/otp/request' });
 
@@ -202,6 +206,10 @@ router.post('/email/register', unAuth, async (req: Request, res: Response) => {
         runWithLogger(log, () => handleError(res, err))
     }
 });
+
+router.post('/email/reset', auth, async (req: Request, res: Response) => { })
+
+router.post('/email/reset/verify', auth, async (req: Request, res: Response) => { })
 
 router.post('/email/verify', unAuth, async (req: Request, res: Response) => {
     const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/email/verify' });
@@ -415,7 +423,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
         if (body.client === 'web') {
             setAuthCookies(res, accessToken, rotated.newTokenId, exp - Math.floor(Date.now() / 1000));
-            return res.json({ status: 'success', data: null });
+            return res.json({ status: 'success', data: { accessToken } });
         }
 
         res.json({ status: 'success', data: { accessToken, refreshToken: rotated.newTokenId } });
