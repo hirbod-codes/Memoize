@@ -1,0 +1,7 @@
+{
+  "@@locale": "fa",
+  "appTitle": "مموایز",
+  "login": "ورود",
+  "logout": "خروج",
+  "welcome": "خوش آمدید، {name}"
+}

@@ -1,6 +1,7 @@
 import 'package:client/account/account_controller.dart';
 import 'package:client/account/models/user_info.dart';
 import 'package:client/auth/models/auth_models.dart';
+import 'package:client/components/language_dropdown.dart';
 import 'package:client/pages/settings/change_email_sheet.dart';
 import 'package:client/pages/settings/change_password_sheet.dart';
 import 'package:client/pages/settings/change_phone_sheet.dart';
@@ -59,8 +60,34 @@ class _SettingsContent extends StatelessWidget {
         // 'email' XOR 'phone') — email accounts have a password to
         // change, phone accounts are passwordless, so there's nothing
         // to reset there. Never show both sets of sections.
-        if (isEmailAccount) ...[const _SectionHeader(title: 'Email & password'), _SettingsTile(icon: Icons.email_outlined, title: 'Email', subtitle: userInfo.email ?? '—', actionLabel: 'Change', onTap: () => showChangeEmailSheet(context)), _SettingsTile(icon: Icons.lock_outline, title: 'Password', subtitle: '••••••••', actionLabel: 'Change', onTap: () => showChangePasswordSheet(context))] else ...[const _SectionHeader(title: 'Phone number'), _SettingsTile(icon: Icons.phone_outlined, title: 'Phone number', subtitle: userInfo.phoneNumber ?? '—', actionLabel: 'Change', onTap: () => showChangePhoneSheet(context))],
+        if (isEmailAccount) ...[
+          const _SectionHeader(title: 'Email & password'),
+          _SettingsTile(
+            icon: Icons.email_outlined,
+            title: 'Email',
+            subtitle: userInfo.email ?? '—',
+            actionLabel: 'Change',
+            onTap: () => showChangeEmailSheet(context),
+          ),
+          _SettingsTile(
+            icon: Icons.lock_outline,
+            title: 'Password',
+            subtitle: '••••••••',
+            actionLabel: 'Change',
+            onTap: () => showChangePasswordSheet(context),
+          ),
+        ] else ...[
+          const _SectionHeader(title: 'Phone number'),
+          _SettingsTile(
+            icon: Icons.phone_outlined,
+            title: 'Phone number',
+            subtitle: userInfo.phoneNumber ?? '—',
+            actionLabel: 'Change',
+            onTap: () => showChangePhoneSheet(context),
+          ),
+        ],
         const SizedBox(height: 24),
+        const LanguageDropdown(),
       ],
     );
   }

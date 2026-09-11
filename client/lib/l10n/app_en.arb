@@ -1,0 +1,14 @@
+{
+  "@@locale": "en",
+  "appTitle": "Memoize",
+  "login": "Login",
+  "logout": "Logout",
+  "welcome": "Welcome, {name}",
+  "@welcome": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}

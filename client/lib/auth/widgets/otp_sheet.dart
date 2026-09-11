@@ -19,7 +19,13 @@ const _resendCooldown = Duration(seconds: 30);
 ///
 /// Returns `true` if verification succeeded, `false`/`null` if the sheet
 /// was dismissed without success.
-Future<bool?> showOtpSheet({required BuildContext context, required String destination, required String title, required Future<void> Function(String code) onVerify, required Future<void> Function() onResend}) {
+Future<bool?> showOtpSheet({
+  required BuildContext context,
+  required String destination,
+  required String title,
+  required Future<void> Function(String code) onVerify,
+  required Future<void> Function() onResend,
+}) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -75,10 +81,10 @@ class _OtpSheetContentState extends ConsumerState<_OtpSheetContent> {
     final code = _code;
     if (code.length != 6) return;
 
-    final controller = ref.read(actionControllerProvider.notifier);
+    final controller = ref.read(authActionControllerProvider.notifier);
     await controller.run(() => widget.onVerify(code));
 
-    final state = ref.read(actionControllerProvider);
+    final state = ref.read(authActionControllerProvider);
     if (state.hasError) {
       _otpKey.currentState?.clear();
       return;
@@ -87,15 +93,15 @@ class _OtpSheetContentState extends ConsumerState<_OtpSheetContent> {
   }
 
   Future<void> _resend() async {
-    final controller = ref.read(actionControllerProvider.notifier);
+    final controller = ref.read(authActionControllerProvider.notifier);
     await controller.run(widget.onResend);
-    final state = ref.read(actionControllerProvider);
+    final state = ref.read(authActionControllerProvider);
     if (!state.hasError) _startCooldown();
   }
 
   @override
   Widget build(BuildContext context) {
-    final actionState = ref.watch(actionControllerProvider);
+    final actionState = ref.watch(authActionControllerProvider);
     final isLoading = actionState.isLoading;
 
     return Padding(
@@ -116,7 +122,10 @@ class _OtpSheetContentState extends ConsumerState<_OtpSheetContent> {
           ),
           const SizedBox(height: 12),
           Center(
-            child: TextButton(onPressed: _cooldown == Duration.zero && !isLoading ? _resend : null, child: Text(_cooldown == Duration.zero ? 'Resend code' : 'Resend code in ${_cooldown.inSeconds}s')),
+            child: TextButton(
+              onPressed: _cooldown == Duration.zero && !isLoading ? _resend : null,
+              child: Text(_cooldown == Duration.zero ? 'Resend code' : 'Resend code in ${_cooldown.inSeconds}s'),
+            ),
           ),
         ],
       ),

@@ -1,6 +1,8 @@
+import 'package:client/api/controllers/locale_controller.dart';
 import 'package:client/go_router.dart';
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/app_theme.dart';
 import 'package:flutter/foundation.dart';
@@ -37,11 +39,30 @@ class MyApp extends ConsumerWidget {
       );
     }
 
+    final locale = ref.watch(localeProvider);
+
     // Read (not built until now) since the loading branch above already
     // guarantees the initial session check has resolved by this point —
     // goRouterProvider's redirect logic depends on that being settled.
     final router = ref.watch(goRouterProvider);
 
-    return MaterialApp.router(localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate, GlobalWidgetsLocalizations.delegate, FlutterQuillLocalizations.delegate], routerConfig: router, title: 'Memoize', theme: AppTheme.light(), darkTheme: AppTheme.dark(), themeMode: ref.watch(themeModeProvider), debugShowCheckedModeBanner: false);
+    return MaterialApp.router(
+      locale: locale,
+      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        FlutterQuillLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('fa'), Locale('de')],
+      routerConfig: router,
+      title: 'Memoize',
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ref.watch(themeModeProvider),
+      debugShowCheckedModeBanner: false,
+    );
   }
 }

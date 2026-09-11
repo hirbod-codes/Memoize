@@ -32,15 +32,15 @@ class RefreshInterceptor extends Interceptor {
     try {
       final refreshToken = await storage.getRefreshToken();
 
-      if (kIsWeb && refreshToken == null) {
-        throw Exception();
-      }
+      if (!kIsWeb && refreshToken == null) throw err;
 
       final response = await refresh(refreshToken);
 
       final accessToken = response.accessToken;
-
       await storage.saveAccessToken(accessToken);
+
+      final newRefreshToken = response.refreshToken;
+      if (newRefreshToken != null) await storage.saveRefreshToken(newRefreshToken);
 
       final request = err.requestOptions;
 

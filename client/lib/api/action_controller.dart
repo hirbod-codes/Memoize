@@ -36,10 +36,19 @@ class ActionController extends AsyncNotifier<void> {
 
       final context = rootContext;
       if (context != null) {
-        NotificationService.showError(context: context, message: 'Something wen wrong!');
+        NotificationService.showError(context: context, message: 'Something went wrong!');
       }
     }
   }
 }
 
-final actionControllerProvider = AsyncNotifierProvider.autoDispose<ActionController, void>(ActionController.new);
+final authActionControllerProvider = AsyncNotifierProvider.autoDispose<ActionController, void>(ActionController.new);
+
+/// use case:
+///
+/// final provider = instantiateProvider();
+///
+/// await ref.read(provider.notifier).run(() => ref.read(authDioProvider).post('/api/user/preferences'));
+///
+/// final state = ref.read(provider);
+AsyncNotifierProvider<ActionController, void> instantiateProvider() => AsyncNotifierProvider.autoDispose<ActionController, void>(ActionController.new);

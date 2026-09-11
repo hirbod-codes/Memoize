@@ -32,17 +32,17 @@ class _ChangePasswordContentState extends ConsumerState<_ChangePasswordContent> 
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final account = ref.read(accountControllerProvider);
-    final controller = ref.read(actionControllerProvider.notifier);
+    final controller = ref.read(authActionControllerProvider.notifier);
 
     await controller.run(() => account.changePassword(currentPassword: _currentController.text, newPassword: _newController.text));
 
-    final state = ref.read(actionControllerProvider);
+    final state = ref.read(authActionControllerProvider);
     if (!state.hasError && mounted) Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final actionState = ref.watch(actionControllerProvider);
+    final actionState = ref.watch(authActionControllerProvider);
     final isLoading = actionState.isLoading;
 
     return Padding(

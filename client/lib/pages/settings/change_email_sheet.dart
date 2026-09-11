@@ -30,10 +30,10 @@ class _ChangeEmailContentState extends ConsumerState<_ChangeEmailContent> {
 
     final newEmail = _emailController.text.trim();
     final account = ref.read(accountControllerProvider);
-    final controller = ref.read(actionControllerProvider.notifier);
+    final controller = ref.read(authActionControllerProvider.notifier);
 
     await controller.run(() => account.requestEmailChange(newEmail: newEmail));
-    final sendState = ref.read(actionControllerProvider);
+    final sendState = ref.read(authActionControllerProvider);
     if (sendState.hasError || !mounted) return;
 
     final verified = await showOtpSheet(
@@ -49,7 +49,7 @@ class _ChangeEmailContentState extends ConsumerState<_ChangeEmailContent> {
 
   @override
   Widget build(BuildContext context) {
-    final actionState = ref.watch(actionControllerProvider);
+    final actionState = ref.watch(authActionControllerProvider);
     final isLoading = actionState.isLoading;
 
     return Padding(

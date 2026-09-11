@@ -8,7 +8,6 @@ import 'package:client/auth/token_storage.dart';
 import 'package:client/auth/responses/login_response.dart';
 import 'package:client/auth/responses/refresh_response.dart';
 import 'package:client/auth/models/auth_models.dart';
-import 'package:dio/browser.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -101,7 +100,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     final response = await _authDio.post('/api/auth/refresh', data: {'refreshToken': kIsWeb ? null : refreshToken, 'client': _client});
     Talker().info('response status code: ${response.statusCode}');
 
-    return RefreshResponse(accessToken: response.data['data']['accessToken']);
+    return RefreshResponse(accessToken: response.data['data']['accessToken'], refreshToken: response.data['data']?['refreshToken']);
   }
 
   @override

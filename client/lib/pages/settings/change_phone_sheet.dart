@@ -30,10 +30,10 @@ class _ChangePhoneContentState extends ConsumerState<_ChangePhoneContent> {
 
     final newPhone = _phoneController.text.trim();
     final account = ref.read(accountControllerProvider);
-    final controller = ref.read(actionControllerProvider.notifier);
+    final controller = ref.read(authActionControllerProvider.notifier);
 
     await controller.run(() => account.requestPhoneChange(newPhone: newPhone));
-    final sendState = ref.read(actionControllerProvider);
+    final sendState = ref.read(authActionControllerProvider);
     if (sendState.hasError || !mounted) return;
 
     final verified = await showOtpSheet(
@@ -49,7 +49,7 @@ class _ChangePhoneContentState extends ConsumerState<_ChangePhoneContent> {
 
   @override
   Widget build(BuildContext context) {
-    final actionState = ref.watch(actionControllerProvider);
+    final actionState = ref.watch(authActionControllerProvider);
     final isLoading = actionState.isLoading;
 
     return Padding(
