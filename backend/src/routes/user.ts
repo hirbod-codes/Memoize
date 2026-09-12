@@ -7,6 +7,9 @@ import { Upload } from '@aws-sdk/lib-storage';
 import { BUCKET_NAME } from '../configs';
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { s3 } from '..';
+import { getLogger, runWithLogger } from '../observability/requestLoggerContext';
+import { handleError, validate } from '../lib';
+import { preferencesSchema } from './user/schemas';
 
 const router = express.Router();
 
@@ -30,6 +33,37 @@ router.get('/info', async (req, res) => {
     } catch (err) {
         console.error(err)
         res.status(500).send()
+    }
+})
+
+router.post('/preferences', async (req, res) => {
+    const log = getLogger().child({ module: 'user', route: 'POST /api/user/refresh' });
+
+    try {
+        log.info('update user preferences request received')
+
+        const { language, calendar, timezone } = await runWithLogger(log, () => validate(preferencesSchema, req.body ?? {}))
+        log.debug({ language, calendar, timezone })
+
+        const userId = req.user?.userId
+        log.debug({ userId })
+        if (!userId) {
+            log.info('user is not authenticated');
+            return res.status(401).send()
+        }
+
+        const ur = new UserRepository()
+
+        const updateResult = await runWithLogger(log, () => ur.unsafeUpdate(userId, { language, calendar, timezone }));
+        log.debug({ updateResult })
+        if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
+            log.warn('system failed to update user\'s preferences');
+            return res.status(500).json({ status: 'error', error_code: 'UPDATE_FAILED' })
+        }
+
+        return res.status(204).json({ status: 'success' })
+    } catch (err: any) {
+        runWithLogger(log, () => handleError(res, err))
     }
 })
 

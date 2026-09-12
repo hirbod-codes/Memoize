@@ -1,6 +1,6 @@
 import 'package:client/account/account_controller.dart';
 import 'package:client/api/action_controller.dart';
-import 'package:client/auth/widgets/otp_sheet.dart';
+import 'package:client/auth/components/otp_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

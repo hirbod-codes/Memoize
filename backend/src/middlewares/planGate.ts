@@ -8,7 +8,8 @@ export const planGate = async (req: Request, res: Response, next: NextFunction) 
     log.debug({ reqUser: req.user })
     if (!req.user || !req.user.userId) {
         log.info('request is not authenticated')
-        return next()
+        next()
+        return
     }
 
     const subscriptions = await runWithLogger(log, () => (new SubscriptionRepository()).getByStatusForUser(req.user!.userId, ['active', 'trialing']))
@@ -21,7 +22,8 @@ export const planGate = async (req: Request, res: Response, next: NextFunction) 
     const subscription = subscriptions[0]
     if (subscription && ['active', 'trialing'].includes(subscription.status) && subscription.currentPeriodEnd >= Date.now()) {
         log.info('subscription is valid')
-        return next();
+        next()
+        return
     }
 
     log.info('Rejected: plan state is invalid or expired');

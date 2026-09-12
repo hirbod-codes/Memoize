@@ -1,7 +1,7 @@
 import 'package:client/api/action_controller.dart';
-import 'package:client/api/controllers/locale_controller.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/components/global/notification_service.dart';
+import 'package:client/localization/locale_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker/talker.dart';
@@ -11,7 +11,7 @@ class LanguageDropdown extends ConsumerWidget {
   static const languages = {'en': 'English', 'fa': 'فارسی', 'de': 'Deutsch'};
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final locale = ref.watch(localeProvider);
+    final locale = ref.watch(localeControllerProvider);
 
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -60,7 +60,7 @@ class LanguageDropdown extends ConsumerWidget {
 
         await ref.read(provider.notifier).run(() => ref.read(authDioProvider).post('/api/user/preferences'));
         final state = ref.read(provider);
-        if (!state.hasError) await ref.read(localeProvider.notifier).setLocale(newLocale);
+        if (!state.hasError) await ref.read(localeControllerProvider.notifier).setLocale(newLocale);
       },
     );
   }

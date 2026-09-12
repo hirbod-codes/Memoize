@@ -5,6 +5,10 @@ export const collectionName = 'user'
 
 export const schemaVersion = 'v1.0.0'
 
+export const languageSchema = string().oneOf(['en', 'fa', 'de'])
+export const calendarSchema = string().oneOf(['Persian', 'Gregorian'])
+export const timezoneSchema = string()
+
 const update = {
     schemaVersion: string().optional().min(6).max(20),
     role: string().optional(),
@@ -20,6 +24,10 @@ const update = {
 
     password: string().optional(),
     refreshToken: string().optional(),
+
+    language: string().oneOf(['en', 'fa', 'de']).optional(),
+    calendar: string().oneOf(['Persian', 'Gregorian']).optional(),
+    timezone: string().optional(),
 }
 export const userUpdateSchema = object().shape(update).required()
 
@@ -40,6 +48,10 @@ export const userSchema = object().required().stripUnknown().strict(true).shape(
     temporaryAvatar: boolean().required(),
 
     refreshToken: string().optional(),
+
+    language: languageSchema.required(),
+    calendar: calendarSchema.required(),
+    timezone: timezoneSchema.required(),
 
     createdAt: number().optional(),
     updatedAt: number().optional(),

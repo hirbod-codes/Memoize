@@ -1,3 +1,4 @@
+import 'package:client/account/account_controller.dart';
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
 import 'package:client/components/button.dart';
@@ -14,18 +15,13 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isAuthenticated = ref.watch(authControllerProvider).status == AuthStatus.authenticated;
+    final avatarBytes = ref.watch(avatarBytesProvider);
+
     return AppBar(
       title: title,
       centerTitle: false,
       actions: [
-        Button(
-          color: ThemeColorName.primary,
-          type: ButtonType.text,
-          label: 'pricing',
-          onPressed: () {
-            context.go('/pricing');
-          },
-        ),
         Button(
           icon: ref.watch(themeModeProvider) == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
           color: ThemeColorName.primary,
@@ -34,7 +30,7 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
             ref.read(themeModeProvider.notifier).toggle();
           },
         ),
-        if (ref.watch(authControllerProvider).status == AuthStatus.unauthenticated)
+        if (!isAuthenticated)
           Button(
             icon: Icons.login,
             color: ThemeColorName.success,
@@ -43,7 +39,18 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
               context.go('/auth');
             },
           ),
-        if (ref.watch(authControllerProvider).status == AuthStatus.authenticated)
+        if (isAuthenticated) ...[
+          // Set by AuthController._onAuthenticated() during login/signup/
+          // startup — falls back to a plain person icon when null (no
+          // avatarKey on the account, or the fetch failed silently).
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundImage: avatarBytes != null ? MemoryImage(avatarBytes) : null,
+              child: avatarBytes == null ? const Icon(Icons.person, size: 18) : null,
+            ),
+          ),
           Button(
             icon: Icons.logout,
             color: ThemeColorName.error,
@@ -52,6 +59,7 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
               ref.read(authControllerProvider.notifier).logout();
             },
           ),
+        ],
       ],
     );
   }

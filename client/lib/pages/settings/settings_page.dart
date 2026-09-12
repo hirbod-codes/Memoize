@@ -1,7 +1,10 @@
 import 'package:client/account/account_controller.dart';
 import 'package:client/account/models/user_info.dart';
 import 'package:client/auth/models/auth_models.dart';
-import 'package:client/components/language_dropdown.dart';
+import 'package:client/localization/components/calendar_switcher.dart';
+import 'package:client/localization/components/language_dropdown.dart';
+import 'package:client/localization/components/locale_switcher.dart';
+import 'package:client/localization/components/timezone_switcher.dart';
 import 'package:client/pages/settings/change_email_sheet.dart';
 import 'package:client/pages/settings/change_password_sheet.dart';
 import 'package:client/pages/settings/change_phone_sheet.dart';
@@ -87,7 +90,30 @@ class _SettingsContent extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 24),
-        const LanguageDropdown(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const _SectionHeader(title: 'Language'),
+            const LocaleSwitcher(),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const _SectionHeader(title: 'Calendar'),
+            const CalendarSwitcher(),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const _SectionHeader(title: 'Time zone'),
+            const TimezoneSwitcher(),
+          ],
+        ),
+        const SizedBox(height: 24),
       ],
     );
   }

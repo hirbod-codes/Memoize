@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/models/auth_models.dart';
-import '../../auth/widgets/email_password_form.dart';
-import '../../auth/widgets/phone_otp_form.dart';
+import '../../auth/components/email_password_form.dart';
+import '../../auth/components/phone_otp_form.dart';
 import 'supported_auth_methods_provider.dart';
 
 /// Top-level auth page. Toggles between email+password (with its own

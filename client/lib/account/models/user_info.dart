@@ -1,14 +1,18 @@
 import 'package:client/auth/models/auth_models.dart';
+import 'package:client/localization/calendars/calendar_system.dart';
 
 /// Mirrors /api/auth/info's response shape. Deliberately has no
 /// `password` field — even though the backend's validation schema
-/// includes one (it's shared with write/insert validation), an info
+/// includes one (shared with write/insert validation), an info
 /// endpoint should never actually send a password or hash back to the
-/// client. If yours currently does, that's worth fixing server-side
-/// regardless of anything here.
+/// client.
 ///
-/// Reuses AuthMethod from lib/auth/models/auth_models.dart rather than
-/// defining a second email/phone enum — same concept, one source of truth.
+/// locale/calendarType/timeZone are NOT in the schema you gave me —
+/// added here as optional fields on the assumption the backend will
+/// store per-account localization preferences that should follow the
+/// user across devices. If that assumption is wrong, these just stay
+/// null forever and nothing breaks; if it's right, the backend needs
+/// matching fields added to planSchema^H^H^H^H the user document schema.
 class UserInfo {
   final String? id;
   final String role;
@@ -19,6 +23,9 @@ class UserInfo {
   final String? email;
   final String? avatarKey;
   final bool temporaryAvatar;
+  final String? locale;
+  final CalendarType? calendarType;
+  final String? timeZone;
 
   const UserInfo({
     this.id,
@@ -30,6 +37,9 @@ class UserInfo {
     this.email,
     this.avatarKey,
     required this.temporaryAvatar,
+    this.locale,
+    this.calendarType,
+    this.timeZone,
   });
 
   factory UserInfo.fromJson(Map<String, dynamic> json) => UserInfo(
@@ -42,5 +52,31 @@ class UserInfo {
     email: json['email'] as String?,
     avatarKey: json['avatarKey'] as String?,
     temporaryAvatar: json['temporaryAvatar'] as bool,
+    locale: json['locale'] as String?,
+    calendarType: _parseCalendarType(json['calendarType'] as String?),
+    timeZone: json['timeZone'] as String?,
   );
+
+  static CalendarType? _parseCalendarType(String? value) {
+    if (value == null) return null;
+    for (final t in CalendarType.values) {
+      if (t.name == value) return t;
+    }
+    return null;
+  }
+
+  Map<String, dynamic> toJson() => {
+    '_id': id,
+    'role': role,
+    'planTitle': planTitle,
+    'authMethod': authMethod.name,
+    'username': username,
+    'phoneNumber': phoneNumber,
+    'email': email,
+    'avatarKey': avatarKey,
+    'temporaryAvatar': temporaryAvatar,
+    'locale': locale,
+    'calendarType': calendarType?.name,
+    'timeZone': timeZone,
+  };
 }

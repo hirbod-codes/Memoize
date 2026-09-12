@@ -1,14 +1,29 @@
 {
   "@@locale": "en",
   "appTitle": "Memoize",
-  "login": "Login",
-  "logout": "Logout",
-  "welcome": "Welcome, {name}",
-  "@welcome": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  }
+  "login": "Log in",
+  "signUp": "Sign up",
+  "email": "Email",
+  "password": "Password",
+  "confirmPassword": "Confirm password",
+  "forgotPassword": "Forgot password?",
+  "phoneNumber": "Phone number",
+  "sendCode": "Send code",
+  "resendCode": "Resend code",
+  "verify": "Verify",
+  "logout": "Log out",
+  "settings": "Settings",
+  "pricing": "Pricing",
+  "changeEmail": "Change email",
+  "changePassword": "Change password",
+  "changePhoneNumber": "Change phone number",
+  "getStarted": "Get started",
+  "tryAgain": "Try again",
+  "somethingWentWrong": "Something went wrong.",
+  "welcomeBack": "Welcome back",
+  "createYourAccount": "Create your account",
+  "logInOrSignUp": "Log in or sign up",
+  "language": "Language",
+  "calendar": "Calendar",
+  "timeZone": "Time zone"
 }

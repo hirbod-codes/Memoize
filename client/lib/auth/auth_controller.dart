@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'dart:ui';
 
+import 'package:client/account/account_controller.dart';
+import 'package:client/account/user_info_storage.dart';
 import 'package:client/auth/auth_api.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/api/api_call_extensions.dart';
@@ -8,6 +11,9 @@ import 'package:client/auth/token_storage.dart';
 import 'package:client/auth/responses/login_response.dart';
 import 'package:client/auth/responses/refresh_response.dart';
 import 'package:client/auth/models/auth_models.dart';
+import 'package:client/localization/calendars/calendar_controller.dart';
+import 'package:client/localization/locale_controller.dart';
+import 'package:client/localization/timezone_controller.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,8 +47,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
         final result = await refresh(null);
         Talker().info('refresh result: $result');
 
-        await _storage.saveAccessToken(result.accessToken);
-        state = const AuthState(AuthStatus.authenticated);
+        await _completeAuthentication(result.accessToken, null);
       } catch (e) {
         Talker().error('error: $e');
         await _storage.clear();
@@ -67,9 +72,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
       final result = await refresh(refreshToken);
       Talker().info('refresh result: $result');
 
-      await _storage.saveAccessToken(result.accessToken);
-
-      state = const AuthState(AuthStatus.authenticated);
+      await _completeAuthentication(result.accessToken, result.refreshToken);
     } catch (e) {
       Talker().error('error: $e');
 
@@ -89,9 +92,35 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     await _storage.saveAccessToken(accessToken);
     if (refreshToken != null) await _storage.saveRefreshToken(refreshToken);
 
+    await _onAuthenticated();
+
     state = const AuthState(AuthStatus.authenticated);
 
     return AuthTokens(accessToken: accessToken, refreshToken: refreshToken);
+  }
+
+  Future<void> _onAuthenticated() async {
+    final account = ref.read(accountControllerProvider);
+    final userInfo = await account.getUserInfo();
+
+    await UserInfoStorage.save(userInfo);
+
+    if (userInfo.avatarKey != null) {
+      final bytes = await account.fetchAvatar(userInfo.avatarKey!);
+      ref.read(avatarBytesProvider.notifier).state = bytes;
+    }
+
+    // Account is the source of truth once logged in — whatever's saved
+    // there overwrites whatever was already on this device.
+    if (userInfo.locale != null) {
+      await ref.read(localeControllerProvider.notifier).setLocale(Locale(userInfo.locale!));
+    }
+    if (userInfo.calendarType != null) {
+      await ref.read(calendarControllerProvider.notifier).setCalendarType(userInfo.calendarType!);
+    }
+    if (userInfo.timeZone != null) {
+      await ref.read(timezoneControllerProvider.notifier).setZone(userInfo.timeZone!);
+    }
   }
 
   Future<RefreshResponse> refresh(String? refreshToken) async {
@@ -105,7 +134,9 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
 
   @override
   Future<AuthTokens> loginWithEmail({required String email, required String password}) async {
-    final response = await _authDio.post('/api/auth/login', data: {'identifier': email, 'password': password, 'client': _client}).notifyOnSuccess('Welcome back!');
+    final response = await _authDio
+        .post('/api/auth/login', data: {'identifier': email, 'password': password, 'client': _client})
+        .notifyOnSuccess('Welcome back!');
 
     final loginResponse = LoginResponse.fromJson(response.data['data']);
 
@@ -119,17 +150,24 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     final accessToken = await _storage.getAccessToken();
     await _storage.clear();
 
+    await UserInfoStorage.clear();
+    ref.read(avatarBytesProvider.notifier).set(null);
+
     await _authDio.post('/api/auth/logout', data: {'refreshToken': refreshToken, 'accessToken': accessToken});
   }
 
   @override
   Future<void> signUpWithEmail({required String email, required String password}) async {
-    await _authDio.post('/api/auth/email/register', data: {'email': email, 'password': password, 'client': _client}).notifyOnSuccess('Verification code sent to your email.');
+    await _authDio
+        .post('/api/auth/email/register', data: {'email': email, 'password': password, 'client': _client})
+        .notifyOnSuccess('Verification code sent to your email.');
   }
 
   @override
   Future<AuthTokens> verifyEmailSignUp({required String email, required String code}) async {
-    final response = await _authDio.post('/api/auth/email/verify', data: {'email': email, 'code': code, 'client': _client}).notifyOnSuccess("You're all set! Account created.");
+    final response = await _authDio
+        .post('/api/auth/email/verify', data: {'email': email, 'code': code, 'client': _client})
+        .notifyOnSuccess("You're all set! Account created.");
     final result = LoginResponse.fromJson(response.data['data']);
     return _completeAuthentication(result.accessToken, result.refreshToken);
   }
@@ -141,7 +179,9 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
 
   @override
   Future<void> completeEmailPasswordReset({required String email, required String code, required String newPassword}) async {
-    final response = await _authDio.post('/api/auth/email/password-reset/verify', data: {'email': email, 'code': code, 'password': newPassword, 'client': _client}).notifyOnSuccess('Password updated successfully.');
+    final response = await _authDio
+        .post('/api/auth/email/password-reset/verify', data: {'email': email, 'code': code, 'password': newPassword, 'client': _client})
+        .notifyOnSuccess('Password updated successfully.');
     final result = LoginResponse.fromJson(response.data['data']);
     await _completeAuthentication(result.accessToken, result.refreshToken);
   }
@@ -153,7 +193,9 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
 
   @override
   Future<AuthTokens> verifyPhoneOtp({required String phone, required String code}) async {
-    final response = await _authDio.post('/api/auth/otp/verify', data: {'phoneNumber': phone, 'code': code, 'client': _client}).notifyOnSuccess("You're logged in!");
+    final response = await _authDio
+        .post('/api/auth/otp/verify', data: {'phoneNumber': phone, 'code': code, 'client': _client})
+        .notifyOnSuccess("You're logged in!");
     final result = LoginResponse.fromJson(response.data['data']);
     return _completeAuthentication(result.accessToken, result.refreshToken);
   }

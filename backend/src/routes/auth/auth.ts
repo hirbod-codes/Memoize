@@ -126,6 +126,9 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
                 planTitle: 'free',
                 phoneNumber: phoneNumber,
                 temporaryAvatar: true,
+                language: 'fa',
+                calendar: 'Persian',
+                timezone: 'utc',
             }))
             log.debug({ creationResult: created });
             if (!created || !created.acknowledged) {
@@ -160,6 +163,10 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
         runWithLogger(log, () => handleError(res, err))
     }
 });
+
+router.post('/email/reset', auth, async (req: Request, res: Response) => { })
+
+router.post('/email/reset/verify', auth, async (req: Request, res: Response) => { })
 
 router.post('/email/register', unAuth, async (req: Request, res: Response) => {
     const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/email/register' });
@@ -207,10 +214,6 @@ router.post('/email/register', unAuth, async (req: Request, res: Response) => {
     }
 });
 
-router.post('/email/reset', auth, async (req: Request, res: Response) => { })
-
-router.post('/email/reset/verify', auth, async (req: Request, res: Response) => { })
-
 router.post('/email/verify', unAuth, async (req: Request, res: Response) => {
     const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/email/verify' });
 
@@ -252,6 +255,9 @@ router.post('/email/verify', unAuth, async (req: Request, res: Response) => {
             email,
             temporaryAvatar: true,
             password: redisPassword,
+            language: 'fa',
+            calendar: 'Persian',
+            timezone: 'utc',
         }))
         log.debug({ created })
         if (!created || !created.acknowledged) {

@@ -12,13 +12,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Memoize';
 
   @override
-  String get login => 'Login';
+  String get login => 'Log in';
 
   @override
-  String get logout => 'Logout';
+  String get signUp => 'Sign up';
 
   @override
-  String welcome(String name) {
-    return 'Welcome, $name';
-  }
+  String get email => 'Email';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get confirmPassword => 'Confirm password';
+
+  @override
+  String get forgotPassword => 'Forgot password?';
+
+  @override
+  String get phoneNumber => 'Phone number';
+
+  @override
+  String get sendCode => 'Send code';
+
+  @override
+  String get resendCode => 'Resend code';
+
+  @override
+  String get verify => 'Verify';
+
+  @override
+  String get logout => 'Log out';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get pricing => 'Pricing';
+
+  @override
+  String get changeEmail => 'Change email';
+
+  @override
+  String get changePassword => 'Change password';
+
+  @override
+  String get changePhoneNumber => 'Change phone number';
+
+  @override
+  String get getStarted => 'Get started';
+
+  @override
+  String get tryAgain => 'Try again';
+
+  @override
+  String get somethingWentWrong => 'Something went wrong.';
+
+  @override
+  String get welcomeBack => 'Welcome back';
+
+  @override
+  String get createYourAccount => 'Create your account';
+
+  @override
+  String get logInOrSignUp => 'Log in or sign up';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get calendar => 'Calendar';
+
+  @override
+  String get timeZone => 'Time zone';
 }

@@ -1,8 +1,9 @@
-import 'package:client/api/controllers/locale_controller.dart';
 import 'package:client/go_router.dart';
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
 import 'package:client/l10n/app_localizations.dart';
+import 'package:client/localization/locale_controller.dart';
+import 'package:client/localization/timezone_service.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/app_theme.dart';
 import 'package:flutter/foundation.dart';
@@ -31,6 +32,8 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    TimezoneService.initialize();
+
     final auth = ref.watch(authControllerProvider);
 
     if (auth.status == AuthStatus.loading) {
@@ -39,12 +42,11 @@ class MyApp extends ConsumerWidget {
       );
     }
 
-    final locale = ref.watch(localeProvider);
-
     // Read (not built until now) since the loading branch above already
     // guarantees the initial session check has resolved by this point —
     // goRouterProvider's redirect logic depends on that being settled.
     final router = ref.watch(goRouterProvider);
+    final locale = ref.watch(localeControllerProvider);
 
     return MaterialApp.router(
       locale: locale,
@@ -56,7 +58,7 @@ class MyApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         FlutterQuillLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('en'), Locale('fa'), Locale('de')],
+      supportedLocales: supportedLocales,
       routerConfig: router,
       title: 'Memoize',
       theme: AppTheme.light(),
