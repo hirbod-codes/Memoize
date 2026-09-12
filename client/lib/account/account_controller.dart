@@ -18,7 +18,7 @@ class AccountController implements AccountApi {
 
   @override
   Future<UserInfo> getUserInfo() async {
-    final response = await _authDio.get('/api/auth/info');
+    final response = await _authDio.get('/api/user/info');
     return UserInfo.fromJson(response.unwrapData<Map<String, dynamic>>());
   }
 
