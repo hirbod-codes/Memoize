@@ -3,7 +3,7 @@ import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/locale_controller.dart';
-import 'package:client/localization/timezone_service.dart';
+import 'package:client/localization/timezone/timezone_service.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/app_theme.dart';
 import 'package:flutter/foundation.dart';

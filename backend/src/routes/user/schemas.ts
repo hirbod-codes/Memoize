@@ -1,4 +1,4 @@
-import { object } from "yup";
+import { object, string } from "yup";
 import { calendarSchema, languageSchema, timezoneSchema } from "../../DB/models/User";
 
 export const preferencesSchema = object().shape({
@@ -6,3 +6,11 @@ export const preferencesSchema = object().shape({
     calendar: calendarSchema.required(),
     timezone: timezoneSchema.required(),
 }).required()
+
+export const uploadAvatarSchema = object().shape({
+    fileName: string().required()
+})
+
+export const fetchAvatarSchema = object().shape({
+    download: string().oneOf(['true']).nullable().optional()
+})

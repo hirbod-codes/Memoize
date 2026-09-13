@@ -3,6 +3,7 @@ import 'package:client/api/controllers/image_controller.dart';
 import 'package:client/components/button.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -93,7 +94,7 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
                     ? const Center(child: Text("No image selected"))
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.file(_image!, fit: BoxFit.fitWidth),
+                        child:  kIsWeb ? Image.network(_image!.path, fit: BoxFit.fitWidth) :Image.file(_image!, fit: BoxFit.fitWidth),
                       ),
               ),
 
@@ -119,7 +120,13 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
 
                   const SizedBox(width: 8),
 
-                  Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: isButtonDisabled() ? null : _upload, isLoading: _loading, label: "Upload"),
+                  Button(
+                    type: ButtonType.elevated,
+                    color: ThemeColorName.secondary,
+                    onPressed: isButtonDisabled() ? null : _upload,
+                    isLoading: _loading,
+                    label: "Upload",
+                  ),
                 ],
               ),
             ],

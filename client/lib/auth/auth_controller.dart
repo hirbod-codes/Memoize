@@ -12,8 +12,9 @@ import 'package:client/auth/responses/login_response.dart';
 import 'package:client/auth/responses/refresh_response.dart';
 import 'package:client/auth/models/auth_models.dart';
 import 'package:client/localization/calendars/calendar_controller.dart';
+import 'package:client/localization/calendars/calendar_system.dart';
 import 'package:client/localization/locale_controller.dart';
-import 'package:client/localization/timezone_controller.dart';
+import 'package:client/localization/timezone/timezone_controller.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -106,7 +107,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     await UserInfoStorage.save(userInfo);
 
     if (userInfo.avatarKey != null) {
-      final bytes = await account.fetchAvatar(userInfo.avatarKey!);
+      final bytes = await account.fetchAvatar();
       ref.read(avatarBytesProvider.notifier).state = bytes;
     }
 

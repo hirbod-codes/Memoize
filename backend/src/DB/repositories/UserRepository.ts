@@ -151,7 +151,20 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
-    async unsafeUpdate(userId: string, updates: UserUpdate) {
-        return await UserRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(userId) }, { $set: { ...updates, updatedAt: Date.now() } }, { session: this.session })
+    async unsafeUpdate(id: string, updates: UserUpdate) {
+        try {
+            const redis = await Redis.getClient()
+
+            const user = await UserRepository.collection!.findOneAndUpdate({ _id: ObjectId.createFromHexString(id) }, { $set: { ...updates, updatedAt: Date.now() } }, { session: this.session })
+            if (!user)
+                return false
+
+            await redis.set(`${collectionName}:${id}`, JSON.stringify(user), 'EX', UserRepository.USER_DATA_CACHE_TTL_SECONDS)
+
+            return true
+        } catch (err) {
+            console.error(err)
+            return false
+        }
     }
 }

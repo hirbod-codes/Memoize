@@ -353,7 +353,7 @@ router.post('/email/password-reset/verify', unAuth, async (req: Request, res: Re
         const passwordHash = await bcrypt.hash(password!, 12);
         const updated = await runWithLogger(log, () => ur.unsafeUpdate(user._id.toString(), { email, password: passwordHash, }))
         log.debug({ updated })
-        if (!updated || !updated.acknowledged) {
+        if (updated !== true) {
             log.error({ email }, 'User update failed');
             return res.status(500).json({ status: 'error', error_code: 'UPDATE_FAILED' });
         }

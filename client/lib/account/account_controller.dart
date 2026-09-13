@@ -26,9 +26,9 @@ class AccountController implements AccountApi {
   /// null on failure rather than throwing: a broken avatar shouldn't
   /// block startup or force the user back to a login screen the way a
   /// failed getUserInfo() call should.
-  Future<Uint8List?> fetchAvatar(String avatarKey) async {
+  Future<Uint8List?> fetchAvatar() async {
     try {
-      final response = await _authDio.get('/api/avatar/$avatarKey', options: Options(responseType: ResponseType.bytes));
+      final response = await _authDio.get('/api/user/avatar', options: Options(responseType: ResponseType.bytes));
       return Uint8List.fromList(response.data as List<int>);
     } on DioException {
       return null;
