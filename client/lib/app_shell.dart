@@ -1,3 +1,5 @@
+import 'package:client/auth/auth_controller.dart';
+import 'package:client/auth/auth_state.dart';
 import 'package:client/components/nav_bar.dart';
 import 'package:client/components/nav_destinations.dart';
 import 'package:client/components/topbar.dart';
@@ -34,22 +36,26 @@ class AppShell extends ConsumerWidget {
 
         final content = Container(width: double.infinity, height: double.infinity, padding: EdgeInsetsGeometry.all(spacing.padding), child: child);
 
-        final body = navOnSide
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  NavBar(placement: placement),
-                  const VerticalDivider(width: 1),
-                  Expanded(child: content),
-                ],
-              )
-            : content;
+        bool unauthenticated = ref.read(authControllerProvider).status == AuthStatus.unauthenticated;
+
+        final body = unauthenticated
+            ? content
+            : (navOnSide
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        NavBar(placement: placement),
+                        const VerticalDivider(width: 1),
+                        Expanded(child: content),
+                      ],
+                    )
+                  : content);
 
         return Scaffold(
           backgroundColor: theme.surface,
           appBar: TopBar(title: title),
           body: body,
-          bottomNavigationBar: navOnBottom ? const NavBar(placement: NavBarPlacement.bottom) : null,
+          bottomNavigationBar: unauthenticated ? null : (navOnBottom ? const NavBar(placement: NavBarPlacement.bottom) : null),
         );
       },
     );

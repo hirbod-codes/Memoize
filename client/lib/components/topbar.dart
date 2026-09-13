@@ -55,8 +55,11 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
             icon: Icons.logout,
             color: ThemeColorName.error,
             type: ButtonType.text,
-            onPressed: () {
-              ref.read(authControllerProvider.notifier).logout();
+            onPressed: () async {
+              await ref.read(authControllerProvider.notifier).logout();
+              try {
+                context.go('/');
+              } catch (_) {}
             },
           ),
         ],

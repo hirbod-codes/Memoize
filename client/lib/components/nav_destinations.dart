@@ -16,7 +16,7 @@ class NavDestinationItem {
 /// crash — this is exactly why it's been commented out until now: only
 /// one route existed. Uncomment/add entries below once you have more.
 const List<NavDestinationItem> navDestinations = [
-  NavDestinationItem(path: '/', label: 'Home', icon: Icons.home_outlined, selectedIcon: Icons.home),
+  // NavDestinationItem(path: '/', label: 'Home', icon: Icons.home_outlined, selectedIcon: Icons.home),
   NavDestinationItem(path: '/app', label: 'App', icon: Icons.dashboard_outlined, selectedIcon: Icons.dashboard),
   NavDestinationItem(path: '/pricing', label: 'Plan', icon: Icons.star_border, selectedIcon: Icons.star),
   NavDestinationItem(path: '/settings', label: 'Settings', icon: Icons.settings_outlined, selectedIcon: Icons.settings),

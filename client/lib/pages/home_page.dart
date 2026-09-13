@@ -1,4 +1,4 @@
-import 'package:client/components/footer/app_footer.dart';
+import 'package:client/pages/web/landing_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,11 +35,8 @@ class MobileHomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<MobileHomePage> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(child: Text('Home Page')),
-        if (kIsWeb) const AppFooter(),
-      ],
-    );
+    if (kIsWeb) return const LandingPage();
+
+    return Column(children: [Expanded(child: Text('Home Page'))]);
   }
 }

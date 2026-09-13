@@ -14,18 +14,18 @@ class AppFooter extends StatelessWidget {
 
     return Container(
       width: double.infinity,
+      height: 150,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: theme.dividerColor)),
       ),
-      child: Wrap(
-        alignment: WrapAlignment.spaceBetween,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        runSpacing: 12,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text('© ${DateTime.now().year} Memoize', style: theme.textTheme.bodySmall),
-          const FooterBadge(),
-          Text('© ${DateTime.now().year} Memoize', style: theme.textTheme.bodySmall),
+          SizedBox(width: 100, height: 20, child: Text('© ${DateTime.now().year} Memoize', style: theme.textTheme.bodySmall)),
+          SizedBox(width: 70, height: 70, child: const FooterBadge()),
+          SizedBox(width: 100, height: 20),
         ],
       ),
     );

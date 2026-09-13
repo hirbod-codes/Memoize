@@ -1,3 +1,4 @@
+import 'package:client/api/dio/global_error_interceptor.dart';
 import 'package:client/auth/responses/refresh_response.dart';
 import 'package:client/auth/token_storage.dart';
 import 'package:dio/dio.dart';
@@ -8,12 +9,21 @@ class RefreshInterceptor extends Interceptor {
   final Dio dio;
   final TokenStorage storage;
   final Ref ref;
-  final Future<void> Function() logout;
-  final Future<RefreshResponse> Function(String? refreshToken) refresh;
+  final Future<void> Function({bool silent}) logout;
+  final Future<RefreshResponse> Function(String? refreshToken, {bool silent}) refresh;
 
   RefreshInterceptor({required this.dio, required this.storage, required this.ref, required this.logout, required this.refresh});
 
   bool _isRefreshing = false;
+
+  bool _isSilent = false;
+
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler? handler) {
+    _isSilent = options.extra[GlobalErrorInterceptor.silentErrorsKey] == true;
+
+    handler?.next(options);
+  }
 
   @override
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
@@ -34,7 +44,7 @@ class RefreshInterceptor extends Interceptor {
 
       if (!kIsWeb && refreshToken == null) throw err;
 
-      final response = await refresh(refreshToken);
+      final response = await refresh(refreshToken, silent: _isSilent);
 
       final accessToken = response.accessToken;
       await storage.saveAccessToken(accessToken);
@@ -52,7 +62,7 @@ class RefreshInterceptor extends Interceptor {
     } catch (e) {
       await storage.clear();
 
-      await logout();
+      await logout(silent: _isSilent);
 
       handler.next(err);
     } finally {

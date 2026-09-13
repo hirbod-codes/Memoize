@@ -34,6 +34,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return '/auth?from=$from';
       }
 
+      if (loggedIn && state.matchedLocation == '/') {
+        return '/app';
+      }
+
+      if (loggedIn && state.matchedLocation == '/auth') {
+        return '/app';
+      }
+
       return null;
     },
     initialLocation: '/',

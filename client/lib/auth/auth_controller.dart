@@ -12,7 +12,6 @@ import 'package:client/auth/responses/login_response.dart';
 import 'package:client/auth/responses/refresh_response.dart';
 import 'package:client/auth/models/auth_models.dart';
 import 'package:client/localization/calendars/calendar_controller.dart';
-import 'package:client/localization/calendars/calendar_system.dart';
 import 'package:client/localization/locale_controller.dart';
 import 'package:client/localization/timezone/timezone_controller.dart';
 import 'package:dio/dio.dart';
@@ -45,7 +44,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
 
     if (kIsWeb) {
       try {
-        final result = await refresh(null);
+        final result = await refresh(null, silent: true);
         Talker().info('refresh result: $result');
 
         await _completeAuthentication(result.accessToken, null);
@@ -70,7 +69,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     }
 
     try {
-      final result = await refresh(refreshToken);
+      final result = await refresh(refreshToken, silent: true);
       Talker().info('refresh result: $result');
 
       await _completeAuthentication(result.accessToken, result.refreshToken);
@@ -124,10 +123,14 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     }
   }
 
-  Future<RefreshResponse> refresh(String? refreshToken) async {
+  Future<RefreshResponse> refresh(String? refreshToken, {bool silent = false}) async {
     Talker().info('AuthController.refresh called...');
 
-    final response = await _authDio.post('/api/auth/refresh', data: {'refreshToken': kIsWeb ? null : refreshToken, 'client': _client});
+    final response = await _authDio.post(
+      '/api/auth/refresh',
+      data: {'refreshToken': kIsWeb ? null : refreshToken, 'client': _client},
+      options: Options(extra: {'silentErrors': silent}),
+    );
     Talker().info('response status code: ${response.statusCode}');
 
     return RefreshResponse(accessToken: response.data['data']['accessToken'], refreshToken: response.data['data']?['refreshToken']);
@@ -144,7 +147,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     return _completeAuthentication(loginResponse.accessToken, loginResponse.refreshToken);
   }
 
-  Future<void> logout() async {
+  Future<void> logout({bool silent = false}) async {
     state = const AuthState(AuthStatus.unauthenticated);
 
     final refreshToken = await _storage.getRefreshToken();
@@ -154,7 +157,11 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     await UserInfoStorage.clear();
     ref.read(avatarBytesProvider.notifier).set(null);
 
-    await _authDio.post('/api/auth/logout', data: {'refreshToken': refreshToken, 'accessToken': accessToken});
+    await _authDio.post(
+      '/api/auth/logout',
+      data: {'refreshToken': refreshToken, 'accessToken': accessToken},
+      options: Options(extra: {'silentErrors': silent}),
+    );
   }
 
   @override
