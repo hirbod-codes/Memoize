@@ -36,7 +36,29 @@ class PricingPage extends ConsumerWidget {
           data: (plans) {
             if (plans.isEmpty) return const _RetryState(message: 'No plans are available right now.');
 
-            return _PricingContent(plans: plans, onSelectPlan: onSelectPlan);
+            List<Plan> sortedPlans = List.empty(growable: true);
+            try {
+              for (var j = 0; j < plans.length; j++) {
+                int max = 10000000;
+                int? maxIndex;
+                for (var i = 0; i < plans.length; i++) {
+                  final p = plans[i];
+                  if (p.price.usd < max && p.price.usd > (sortedPlans.lastOrNull?.price.usd ?? -1)) {
+                    max = p.price.usd;
+                    maxIndex = i;
+                  }
+
+                  if (i == plans.length - 1) {
+                    sortedPlans.add(plans[maxIndex!]);
+                  }
+                }
+              }
+            } catch (e, st) {
+              Talker().error('sorting plans failed', e, st);
+              sortedPlans = plans;
+            }
+
+            return _PricingContent(plans: sortedPlans, onSelectPlan: onSelectPlan);
           },
         ),
       ),
@@ -98,7 +120,10 @@ class _PricingContentState extends State<_PricingContent> {
               }
               return Column(
                 children: [
-                  for (final plan in widget.plans) ...[_PlanCard(plan: plan, currency: _currency, onSelect: widget.onSelectPlan), if (plan != widget.plans.last) const SizedBox(height: 16)],
+                  for (final plan in widget.plans) ...[
+                    _PlanCard(plan: plan, currency: _currency, onSelect: widget.onSelectPlan),
+                    if (plan != widget.plans.last) const SizedBox(height: 16),
+                  ],
                 ],
               );
             },
@@ -133,7 +158,10 @@ class _PlanCard extends StatelessWidget {
           children: [
             Text(plan.title, style: theme.textTheme.titleLarge),
             const SizedBox(height: 12),
-            Text(price.isFree ? 'Free' : CurrencyFormatter.format(price.forCurrency(currency), currency), style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              price.isFree ? 'Free' : CurrencyFormatter.format(price.forCurrency(currency), currency),
+              style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 20),
             const Divider(height: 1),
             const SizedBox(height: 20),
