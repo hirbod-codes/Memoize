@@ -61,9 +61,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
   @override
   Widget build(BuildContext context) {
     return const SingleChildScrollView(
-      child: Column(
-        children: [_LandingHeader(), _HeroSection(), _HowItWorksSection(), _ContentTypesSection(), _UseCasesSection(), _FinalCtaSection(), AppFooter()],
-      ),
+      child: Column(children: [_LandingHeader(), _HeroSection(), _HowItWorksSection(), _ContentTypesSection(), _UseCasesSection(), _FinalCtaSection(), AppFooter()]),
     );
   }
 }
