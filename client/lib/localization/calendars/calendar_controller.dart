@@ -1,5 +1,7 @@
 import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
+import 'package:client/auth/auth_controller.dart';
+import 'package:client/auth/auth_state.dart';
 import 'package:client/localization/device_defaults.dart';
 import 'package:client/localization/locale_controller.dart';
 import 'package:client/localization/timezone/timezone_controller.dart';
@@ -13,39 +15,41 @@ import 'persian_calendar.dart';
 const Map<CalendarType, CalendarSystem> calendarSystems = {CalendarType.gregorian: GregorianCalendar(), CalendarType.persian: PersianCalendar()};
 
 class CalendarController extends Notifier<CalendarType> {
-  static const _preferencesKey = 'calendarType';
+  static const preferencesKey = 'calendarType';
 
   @override
   CalendarType build() {
     _restore();
     final (_, calendar) = defaultLocaleAndCalendarForDevice();
     return calendar;
-
   }
 
   Future<void> _restore() async {
     final preferences = await SharedPreferences.getInstance();
-    final saved = preferences.getString(_preferencesKey);
+    final saved = preferences.getString(preferencesKey);
     if (saved == null) return;
 
     final match = CalendarType.values.where((t) => t.name == saved);
     if (match.isNotEmpty) state = match.first;
   }
 
-  Future<void> setCalendarType(CalendarType type) async {
-    final dio = ref.read(authDioProvider);
+  Future<void> setCalendarType(CalendarType? type) async {
+    type ??= CalendarType.gregorian;
 
-    final result = await apiCall(
-      () => dio.post(
-        '/api/user/preferences',
-        data: {'language': ref.read(localeControllerProvider).languageCode, 'calendar': type.name, 'timezone': ref.read(timezoneControllerProvider)},
-      ),
-    );
-    if (result.isFailure) return;
+    if (ref.read(authControllerProvider).status == AuthStatus.authenticated) {
+      final dio = ref.read(authDioProvider);
+      final result = await apiCall(
+        () => dio.post(
+          '/api/user/preferences',
+          data: {'language': ref.read(localeControllerProvider).languageCode, 'calendar': type!.name, 'timezone': ref.read(timezoneControllerProvider)},
+        ),
+      );
+      if (result.isFailure) return;
+    }
 
     state = type;
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_preferencesKey, type.name);
+    await preferences.setString(preferencesKey, type.name);
   }
 }
 

@@ -1,5 +1,7 @@
 import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
+import 'package:client/auth/auth_controller.dart';
+import 'package:client/auth/auth_state.dart';
 import 'package:client/localization/calendars/calendar_controller.dart';
 import 'package:client/localization/locale_controller.dart';
 import 'package:client/localization/timezone/device_timezone.dart';
@@ -33,18 +35,21 @@ class TimezoneController extends Notifier<String> {
     }
   }
 
-  Future<void> setZone(String zoneName) async {
+  Future<void> setZone(String? zoneName) async {
+    zoneName ??= _fallbackZone;
+
     if (!TimezoneService.allZoneNames.contains(zoneName)) return;
 
-    final dio = ref.read(authDioProvider);
-
-    final result = await apiCall(
-      () => dio.post(
-        '/api/user/preferences',
-        data: {'language': ref.read(localeControllerProvider).languageCode, 'calendar': ref.read(calendarControllerProvider).name, 'timezone': zoneName},
-      ),
-    );
-    if (result.isFailure) return;
+    if (ref.read(authControllerProvider).status == AuthStatus.authenticated) {
+      final dio = ref.read(authDioProvider);
+      final result = await apiCall(
+        () => dio.post(
+          '/api/user/preferences',
+          data: {'language': ref.read(localeControllerProvider).languageCode, 'calendar': ref.read(calendarControllerProvider).name, 'timezone': zoneName},
+        ),
+      );
+      if (result.isFailure) return;
+    }
 
     state = zoneName;
 

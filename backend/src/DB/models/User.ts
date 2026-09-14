@@ -49,9 +49,9 @@ export const userSchema = object().required().stripUnknown().strict(true).shape(
 
     refreshToken: string().optional(),
 
-    language: languageSchema.required(),
-    calendar: calendarSchema.required(),
-    timezone: timezoneSchema.required(),
+    language: languageSchema.optional(),
+    calendar: calendarSchema.optional(),
+    timezone: timezoneSchema.optional(),
 
     createdAt: number().optional(),
     updatedAt: number().optional(),

@@ -1,5 +1,7 @@
 import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
+import 'package:client/auth/auth_controller.dart';
+import 'package:client/auth/auth_state.dart';
 import 'package:client/localization/calendars/calendar_controller.dart';
 import 'package:client/localization/device_defaults.dart';
 import 'package:client/localization/timezone/timezone_controller.dart';
@@ -14,7 +16,7 @@ const List<Locale> supportedLocales = [Locale('en'), Locale('fa'), Locale('de')]
 const Map<String, String> localeDisplayNames = {'en': 'English', 'fa': 'فارسی', 'de': 'Deutsch'};
 
 class LocaleController extends Notifier<Locale> {
-  static const _preferencesKey = 'locale';
+  static const preferencesKey = 'locale';
 
   @override
   Locale build() {
@@ -27,30 +29,33 @@ class LocaleController extends Notifier<Locale> {
 
   Future<void> _restore() async {
     final preferences = await SharedPreferences.getInstance();
-    final saved = preferences.getString(_preferencesKey);
+    final saved = preferences.getString(preferencesKey);
     if (saved == null) return;
 
     final match = supportedLocales.where((l) => l.languageCode == saved);
     if (match.isNotEmpty) state = match.first;
   }
 
-  Future<void> setLocale(Locale locale) async {
+  Future<void> setLocale(Locale? locale) async {
+    locale ??= Locale('en');
+
     if (!supportedLocales.contains(locale)) return;
 
-    final dio = ref.read(authDioProvider);
-
-    final result = await apiCall(
-      () => dio.post(
-        '/api/user/preferences',
-        data: {'language': locale.languageCode, 'calendar': ref.read(calendarControllerProvider).name, 'timezone': ref.read(timezoneControllerProvider)},
-      ),
-    );
-    if (result.isFailure) return;
+    if (ref.read(authControllerProvider).status == AuthStatus.authenticated) {
+      final dio = ref.read(authDioProvider);
+      final result = await apiCall(
+        () => dio.post(
+          '/api/user/preferences',
+          data: {'language': locale!.languageCode, 'calendar': ref.read(calendarControllerProvider).name, 'timezone': ref.read(timezoneControllerProvider)},
+        ),
+      );
+      if (result.isFailure) return;
+    }
 
     state = locale;
 
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_preferencesKey, locale.languageCode);
+    await preferences.setString(preferencesKey, locale.languageCode);
   }
 }
 

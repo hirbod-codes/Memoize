@@ -25,6 +25,7 @@
         "riverpod",
         "sadd",
         "Seedable",
+        "signup",
         "smembers",
         "springify",
         "srem",

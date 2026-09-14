@@ -112,15 +112,13 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
 
     // Account is the source of truth once logged in — whatever's saved
     // there overwrites whatever was already on this device.
-    if (userInfo.locale != null) {
-      await ref.read(localeControllerProvider.notifier).setLocale(Locale(userInfo.locale!));
-    }
-    if (userInfo.calendarType != null) {
-      await ref.read(calendarControllerProvider.notifier).setCalendarType(userInfo.calendarType!);
-    }
-    if (userInfo.timeZone != null) {
-      await ref.read(timezoneControllerProvider.notifier).setZone(userInfo.timeZone!);
-    }
+    await ref.read(localeControllerProvider.notifier).setLocale(userInfo.locale != null ? Locale(userInfo.locale!) : ref.read(localeControllerProvider));
+
+    await ref
+        .read(calendarControllerProvider.notifier)
+        .setCalendarType(userInfo.calendarType != null ? userInfo.calendarType! : ref.read(calendarControllerProvider));
+
+    await ref.read(timezoneControllerProvider.notifier).setZone(userInfo.timeZone != null ? userInfo.timeZone! : ref.read(timezoneControllerProvider));
   }
 
   Future<RefreshResponse> refresh(String? refreshToken, {bool silent = false}) async {

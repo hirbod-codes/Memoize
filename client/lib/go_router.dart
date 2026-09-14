@@ -3,19 +3,24 @@ import 'package:client/app_shell.dart';
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
 import 'package:client/go_router_refresh_notifier.dart';
+import 'package:client/localization/on_boarding_status.dart';
+import 'package:client/pages/about_page.dart';
 import 'package:client/pages/app_page.dart';
 import 'package:client/pages/auth/auth_page.dart';
-import 'package:client/pages/home_page.dart';
-import 'package:client/pages/not_found_page.dart';
+import 'package:client/pages/contact_page.dart';
+import 'package:client/pages/on_boarding_page.dart';
 import 'package:client/pages/plan/pricing_page.dart';
 import 'package:client/pages/settings/settings_page.dart';
+import 'package:client/pages/web/landing_page.dart';
+import 'package:client/public_shell.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Routes that don't require authentication. Everything else is
-/// protected by default — a new route needs no extra wiring to be
-/// gated, it only needs adding here to be made public.
-const _publicPaths = {'/auth', '/', '/pricing'};
+/// Routes that don't require authentication. Differs by platform:
+/// web has a public landing page at '/'; non-web has an onboarding
+/// step instead, and no '/' route at all.
+final Set<String> _publicPaths = {'/login', '/pricing', '/about', '/contact', if (kIsWeb) '/', if (!kIsWeb) '/onboarding'};
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -23,52 +28,92 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: GoRouterRefreshNotifier(ref),
     redirect: (context, state) async {
       final authStatus = ref.read(authControllerProvider).status;
-
       if (authStatus == AuthStatus.loading) return null;
 
       final loggedIn = authStatus == AuthStatus.authenticated;
-      final isPublicRoute = _publicPaths.contains(state.matchedLocation);
+      final path = state.matchedLocation;
+      final isPublicRoute = _publicPaths.contains(path);
+
+      if (kIsWeb) {
+        // '/' is the public landing page. An authenticated visitor
+        // lands straight in the app instead of seeing marketing copy.
+        if (loggedIn && path == '/') return '/app';
+
+        if (!loggedIn && !isPublicRoute) {
+          final from = Uri.encodeComponent(state.uri.toString());
+          return '/login?from=$from';
+        }
+
+        if (loggedIn && path == '/login') {
+          final from = state.uri.queryParameters['from'];
+          return (from != null && from.isNotEmpty) ? from : '/app';
+        }
+
+        return null;
+      }
+
+      // Non-web: no landing page, so a bare '/' is never a real
+      // destination — always bounce it somewhere real first, before
+      // any other check, since '/' isn't a registered route here and
+      // would otherwise fall through to NotFoundPage.
+      final onBoarded = await hasChosenLocaleAndCalendar();
+
+      if (path == '/') {
+        if (!onBoarded) return '/onboarding';
+        return loggedIn ? '/app' : '/login';
+      }
+
+      // Onboarding (language + calendar) gates everything else,
+      // including login — asked once, before the very first
+      // login/signup attempt.
+      if (!onBoarded && path != '/onboarding') return '/onboarding';
+      if (onBoarded && path == '/onboarding') return loggedIn ? '/app' : '/login';
 
       if (!loggedIn && !isPublicRoute) {
         final from = Uri.encodeComponent(state.uri.toString());
-        return '/auth?from=$from';
+        return '/login?from=$from';
       }
 
-      if (loggedIn && state.matchedLocation == '/') {
-        return '/app';
-      }
-
-      if (loggedIn && state.matchedLocation == '/auth') {
-        return '/app';
+      if (loggedIn && path == '/login') {
+        final from = state.uri.queryParameters['from'];
+        return (from != null && from.isNotEmpty) ? from : '/app';
       }
 
       return null;
     },
-    initialLocation: '/',
-    errorBuilder: (b, c) => const AppShell(child: NotFoundPage()),
     routes: [
+      if (kIsWeb)
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const PublicShell(child: LandingPage()),
+        ),
+      if (!kIsWeb) GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingPage()),
       GoRoute(
-        path: '/',
-        builder: (context, state) => const AppShell(child: HomePage()),
+        path: '/login',
+        builder: (context, state) {
+          final from = state.uri.queryParameters['from'];
+          return AuthPage(onAuthenticated: (_) => context.go((from != null && from.isNotEmpty) ? from : '/app'));
+        },
+      ),
+      GoRoute(
+        path: '/pricing',
+        builder: (context, state) => PricingPage(onSelectPlan: (plan) => context.go('/login?plan=${plan.id}')),
+      ),
+      GoRoute(
+        path: '/about',
+        builder: (context, state) => const PublicShell(child: AboutPage()),
+      ),
+      GoRoute(
+        path: '/contact',
+        builder: (context, state) => const PublicShell(child: ContactPage()),
       ),
       GoRoute(
         path: '/app',
         builder: (context, state) => const AppShell(child: AppPage()),
       ),
       GoRoute(
-        path: '/pricing',
-        builder: (context, state) => AppShell(child: PricingPage(onSelectPlan: (plan) => context.go('/login?plan=${plan.id}'))),
-      ),
-      GoRoute(
         path: '/settings',
         builder: (context, state) => const AppShell(child: SettingsPage()),
-      ),
-      GoRoute(
-        path: '/auth',
-        builder: (context, state) {
-          final from = state.uri.queryParameters['from'];
-          return AppShell(child: AuthPage(onAuthenticated: (_) => context.go((from != null && from.isNotEmpty) ? from : '/app')));
-        },
       ),
     ],
   );

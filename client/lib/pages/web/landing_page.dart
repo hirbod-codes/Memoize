@@ -1,14 +1,120 @@
+import 'package:client/components/button.dart';
 import 'package:client/components/footer/app_footer.dart';
+import 'package:client/localization/components/locale_switcher.dart';
+import 'package:client/localization/locale_controller.dart';
+import 'package:client/localization/on_boarding_status.dart';
+import 'package:client/theme/theme_colors.dart';
+import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class LandingPage extends StatelessWidget {
+/// Public marketing page — no auth chrome, meant to be wrapped in
+/// PublicShell at the route level, not AppShell. Only ever rendered
+/// while unauthenticated: go_router's redirect immediately bounces an
+/// authenticated visitor away from '/' to '/app' before this ever
+/// builds, so no auth-conditional logic is needed inside here at all.
+class LandingPage extends ConsumerStatefulWidget {
   const LandingPage({super.key});
+
+  @override
+  ConsumerState<LandingPage> createState() => _LandingPageState();
+}
+
+class _LandingPageState extends ConsumerState<LandingPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Deferred to after the first frame — showDialog needs a Navigator/
+    // Overlay above it in the tree, which isn't guaranteed to exist yet
+    // synchronously inside initState.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybePromptLanguage());
+  }
+
+  Future<void> _maybePromptLanguage() async {
+    final alreadyChosen = await hasChosenLocale();
+    if (alreadyChosen || !mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Choose your language'),
+        content: const LocaleSwitcher(),
+        actions: [
+          FilledButton(
+            onPressed: () async {
+              // Persist whatever's currently selected — even the
+              // device-derived default the switcher already shows —
+              // so this dialog never asks again once dismissed.
+              final locale = ref.read(localeControllerProvider);
+              await ref.read(localeControllerProvider.notifier).setLocale(locale);
+              if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return const SingleChildScrollView(
-      child: Column(children: [_HeroSection(), _HowItWorksSection(), _ContentTypesSection(), _UseCasesSection(), _FinalCtaSection(), AppFooter()]),
+      child: Column(
+        children: [_LandingHeader(), _HeroSection(), _HowItWorksSection(), _ContentTypesSection(), _UseCasesSection(), _FinalCtaSection(), AppFooter()],
+      ),
+    );
+  }
+}
+
+/// Two-row header, unique to the landing page: app name + locale/theme
+/// controls + "Log in" on the first row, marketing nav links (Pricing,
+/// About us, Contact us — the pages themselves are stubbed for now) on
+/// the second. Built here rather than as a PublicShell feature, since
+/// other pages using PublicShell will likely want a different header
+/// entirely (see public_shell.dart's own reasoning on this).
+class _LandingHeader extends ConsumerWidget {
+  const _LandingHeader();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Text('Memoize', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const Spacer(),
+              const LocaleSwitcher(),
+              const SizedBox(width: 4),
+              Button(
+                icon: ref.watch(themeModeProvider) == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+                color: ThemeColorName.primary,
+                type: ButtonType.text,
+                onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(onPressed: () => context.go('/login'), child: const Text('Log in')),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Wrap(
+            spacing: 8,
+            children: [
+              TextButton(onPressed: () => context.go('/pricing'), child: const Text('Pricing')),
+              TextButton(onPressed: () => context.go('/about'), child: const Text('About us')),
+              TextButton(onPressed: () => context.go('/contact'), child: const Text('Contact us')),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
