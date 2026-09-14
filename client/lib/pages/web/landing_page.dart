@@ -1,10 +1,8 @@
-import 'package:client/components/button.dart';
 import 'package:client/components/footer/app_footer.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/components/locale_switcher.dart';
 import 'package:client/localization/locale_controller.dart';
 import 'package:client/localization/on_boarding_status.dart';
-import 'package:client/theme/theme_colors.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -60,60 +58,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return const SingleChildScrollView(
-      child: Column(children: [_LandingHeader(), _HeroSection(), _HowItWorksSection(), _ContentTypesSection(), _UseCasesSection(), _FinalCtaSection(), AppFooter()]),
-    );
-  }
-}
-
-/// Two-row header, unique to the landing page: app name + locale/theme
-/// controls + "Log in" on the first row, marketing nav links (Pricing,
-/// About us, Contact us — the pages themselves are stubbed for now) on
-/// the second. Built here rather than as a PublicShell feature, since
-/// other pages using PublicShell will likely want a different header
-/// entirely (see public_shell.dart's own reasoning on this).
-class _LandingHeader extends ConsumerWidget {
-  const _LandingHeader();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Text('Memoize', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-              const Spacer(),
-              const LocaleSwitcher(),
-              const SizedBox(width: 4),
-              Button(
-                icon: ref.watch(themeModeProvider) == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
-                color: ThemeColorName.primary,
-                type: ButtonType.text,
-                onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(onPressed: () => context.go('/login'), child: const Text('Log in')),
-            ],
-          ),
-        ),
-        const Divider(height: 1),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Wrap(
-            spacing: 8,
-            children: [
-              TextButton(onPressed: () => context.go('/pricing'), child: const Text('Pricing')),
-              TextButton(onPressed: () => context.go('/about'), child: const Text('About us')),
-              TextButton(onPressed: () => context.go('/contact'), child: const Text('Contact us')),
-            ],
-          ),
-        ),
-      ],
-    );
+    return Column(children: [_HeroSection(), _HowItWorksSection(), _ContentTypesSection(), _UseCasesSection(), _FinalCtaSection(), AppFooter()]);
   }
 }
 
@@ -124,6 +69,8 @@ class _HeroSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),
@@ -133,17 +80,18 @@ class _HeroSection extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                'MEMORIZE ANYTHING',
+                l10n.landing_page_memorize_anything,
                 style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.primary, letterSpacing: 2, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               Text(
-                'Turn your own material into flashcards you actually remember',
+                l10n.landing_page_hero_title,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               Text(
+                // l10n.landing_page_hero_secondary,
                 'Upload text, images, audio, or video — organize it however makes '
                 'sense to you — and review it whenever you have a few minutes.',
                 textAlign: TextAlign.center,
@@ -176,19 +124,29 @@ class _HeroSection extends StatelessWidget {
 class _HowItWorksSection extends StatelessWidget {
   const _HowItWorksSection();
 
-  static const _steps = [
-    (icon: Icons.upload_file_outlined, title: 'Upload your content', description: 'Text, images, audio, or video — right onto either side of a card.'),
+  static final _steps = [
+    (
+      icon: Icons.upload_file_outlined,
+      title: (AppLocalizations l10n) => l10n.landing_page_upload_your_content,
+      description: (AppLocalizations l10n) => l10n.landing_page_upload_your_content_description,
+    ),
     (
       icon: Icons.account_tree_outlined,
-      title: 'Organize it your way',
-      description: 'Nest categories as deep as you need — by subject, by chapter, by whatever makes sense to you.',
+      title: (AppLocalizations l10n) => l10n.landing_page_organize_id_your_way,
+      description: (AppLocalizations l10n) => l10n.landing_page_organize_id_your_way_description,
     ),
-    (icon: Icons.replay_outlined, title: 'Come back and review', description: 'Work through your cards whenever you have a few spare minutes.'),
+    (
+      icon: Icons.replay_outlined,
+      title: (AppLocalizations l10n) => l10n.landing_page_come_back_review,
+      description: (AppLocalizations l10n) => l10n.landing_page_come_back_review_description,
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    AppLocalizations l10n = AppLocalizations.of(context)!;
 
     return Container(
       width: double.infinity,
@@ -204,7 +162,7 @@ class _HowItWorksSection extends StatelessWidget {
               LayoutBuilder(
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth > 800;
-                  final children = [for (final step in _steps) _StepCard(icon: step.icon, title: step.title, description: step.description)];
+                  final children = [for (final step in _steps) _StepCard(icon: step.icon, title: step.title(l10n), description: step.description(l10n))];
                   return isWide
                       ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: _withGaps(children, 24, horizontal: true))
                       : Column(children: _withGaps(children, 24, horizontal: false));
@@ -244,17 +202,19 @@ class _StepCard extends StatelessWidget {
 class _ContentTypesSection extends StatelessWidget {
   const _ContentTypesSection();
 
-  static const _types = [
-    (icon: Icons.text_fields, label: 'Text'),
-    (icon: Icons.article_outlined, label: 'Rich text'),
-    (icon: Icons.image_outlined, label: 'Images'),
-    (icon: Icons.audiotrack_outlined, label: 'Audio'),
-    (icon: Icons.videocam_outlined, label: 'Video'),
+  static final _types = [
+    (icon: Icons.text_fields, label: (AppLocalizations l10n) => l10n.text),
+    (icon: Icons.article_outlined, label: (AppLocalizations l10n) => l10n.richText),
+    (icon: Icons.image_outlined, label: (AppLocalizations l10n) => l10n.images),
+    (icon: Icons.audiotrack_outlined, label: (AppLocalizations l10n) => l10n.audio),
+    (icon: Icons.videocam_outlined, label: (AppLocalizations l10n) => l10n.video),
   ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    AppLocalizations l10n = AppLocalizations.of(context)!;
 
     return Container(
       width: double.infinity,
@@ -265,16 +225,12 @@ class _ContentTypesSection extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                'Any kind of content, on either side of a card',
+                l10n.landing_page_content_type,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
-              Text(
-                "A vocabulary word with its pronunciation. A diagram next to your own explanation. It's your material — Memoize doesn't limit how you represent it.",
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge,
-              ),
+              Text(l10n.landing_page_content_type_description, textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
               const SizedBox(height: 32),
               Wrap(
                 spacing: 24,
@@ -291,7 +247,7 @@ class _ContentTypesSection extends StatelessWidget {
                           child: Icon(type.icon, color: theme.colorScheme.onPrimaryContainer),
                         ),
                         const SizedBox(height: 8),
-                        Text(type.label, style: theme.textTheme.bodyMedium),
+                        Text(type.label(l10n), style: theme.textTheme.bodyMedium),
                       ],
                     ),
                 ],
@@ -320,21 +276,19 @@ class _UseCasesSection extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 1000),
           child: LayoutBuilder(
             builder: (context, constraints) {
+              AppLocalizations l10n = AppLocalizations.of(context)!;
+
               final isWide = constraints.maxWidth > 700;
-              const cards = [
-                _UseCaseCard(
-                  icon: Icons.translate,
-                  title: 'Learning a new language',
-                  description:
-                      'Pair a word with an audio clip of its pronunciation and a picture instead of just a translation — build cards the way you actually think about the word.',
-                ),
+
+              final cards = [
+                _UseCaseCard(icon: Icons.translate, title: l10n.landing_page_use_case_first_title, description: l10n.landing_page_use_case_first_description),
                 _UseCaseCard(
                   icon: Icons.school_outlined,
-                  title: 'Studying for an exam',
-                  description:
-                      'Turn lecture slides, diagrams, and your own notes into cards organized by subject and chapter, nested exactly the way your course is structured.',
+                  title: l10n.landing_page_use_case_second_title,
+                  description: l10n.landing_page_use_case_second_description,
                 ),
               ];
+
               return isWide
                   ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: _withGaps(cards, 24, horizontal: true))
                   : Column(children: _withGaps(cards, 24, horizontal: false));
@@ -356,6 +310,7 @@ class _UseCaseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Card(
       elevation: 0,
       color: theme.colorScheme.surface,
@@ -384,17 +339,19 @@ class _FinalCtaSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 72),
       child: Center(
         child: Column(
           children: [
-            Text('Ready to remember more?', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(l10n.landing_page_final_cta, style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () => context.go('/login'),
-              child: const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Text('Get started free')),
+              child: Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Text(l10n.landing_page_final_cta_button)),
             ),
           ],
         ),

@@ -1,3 +1,4 @@
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/calendars/calendar_controller.dart';
 import 'package:client/localization/components/calendar_switcher.dart';
 import 'package:client/localization/components/locale_switcher.dart';
@@ -15,6 +16,8 @@ class OnboardingPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -29,11 +32,7 @@ class OnboardingPage extends ConsumerWidget {
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Choose your language and calendar to get started. You can change these later in Settings.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
+              Text(l10n.message_choose_language, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 40),
               const Center(child: LocaleSwitcher()),
               const SizedBox(height: 16),
@@ -54,7 +53,7 @@ class OnboardingPage extends ConsumerWidget {
 
                   if (context.mounted) context.go('/login');
                 },
-                child: const Text('Continue'),
+                child: Text(l10n.$continue),
               ),
             ],
           ),

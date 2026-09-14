@@ -54,7 +54,8 @@ class AppShell extends ConsumerWidget {
         return Scaffold(
           backgroundColor: theme.surface,
           appBar: TopBar(title: title),
-          body: body,
+          body: Expanded(child: SingleChildScrollView(child: body)),
+          // SingleChildScrollView(child: body),
           bottomNavigationBar: unauthenticated ? null : (navOnBottom ? const NavBar(placement: NavBarPlacement.bottom) : null),
         );
       },

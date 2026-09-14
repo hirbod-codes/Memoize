@@ -1,5 +1,6 @@
 import 'package:client/account/account_controller.dart';
 import 'package:client/api/action_controller.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -45,6 +46,8 @@ class _ChangePasswordContentState extends ConsumerState<_ChangePasswordContent> 
     final actionState = ref.watch(authActionControllerProvider);
     final isLoading = actionState.isLoading;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
       child: Form(
@@ -53,15 +56,15 @@ class _ChangePasswordContentState extends ConsumerState<_ChangePasswordContent> 
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Change password', style: Theme.of(context).textTheme.titleLarge),
+            Text(l10n.change_password_sheet, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             TextFormField(
               controller: _currentController,
               enabled: !isLoading,
               obscureText: true,
               autofillHints: const [AutofillHints.password],
-              decoration: const InputDecoration(labelText: 'Current password', border: OutlineInputBorder()),
-              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+              decoration: InputDecoration(labelText: l10n.change_password_sheet_current_password, border: OutlineInputBorder()),
+              validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -69,21 +72,21 @@ class _ChangePasswordContentState extends ConsumerState<_ChangePasswordContent> 
               enabled: !isLoading,
               obscureText: true,
               autofillHints: const [AutofillHints.newPassword],
-              decoration: const InputDecoration(labelText: 'New password', border: OutlineInputBorder()),
-              validator: (v) => (v == null || v.length < 8) ? 'At least 8 characters' : null,
+              decoration: InputDecoration(labelText: l10n.change_password_sheet_new_password, border: OutlineInputBorder()),
+              validator: (v) => (v == null || v.length < 8) ? "At least 8 characters" : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _confirmController,
               enabled: !isLoading,
               obscureText: true,
-              decoration: const InputDecoration(labelText: 'Confirm new password', border: OutlineInputBorder()),
-              validator: (v) => v != _newController.text ? 'Passwords do not match' : null,
+              decoration: InputDecoration(labelText: l10n.change_password_sheet_confirm_new_password, border: OutlineInputBorder()),
+              validator: (v) => v != _newController.text ? "Passwords do not match" : null,
             ),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: isLoading ? null : _submit,
-              child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Update password'),
+              child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(l10n.update_password),
             ),
           ],
         ),

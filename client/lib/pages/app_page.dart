@@ -9,6 +9,7 @@ import 'package:client/components/button.dart';
 import 'package:client/components/dialogs/folder_file_create_dialog.dart';
 import 'package:client/components/file_manager.dart';
 import 'package:client/components/global/notification_service.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_spacing.dart';
@@ -42,10 +43,10 @@ class MobileAppPage extends ConsumerStatefulWidget {
   const MobileAppPage({super.key});
 
   @override
-  ConsumerState<MobileAppPage> createState() => _AppPageState();
+  ConsumerState<MobileAppPage> createState() => _MobileAppPage();
 }
 
-class _AppPageState extends ConsumerState<MobileAppPage> {
+class _MobileAppPage extends ConsumerState<MobileAppPage> {
   final TextEditingController _searchController = TextEditingController();
   Filter _filter = Filter.folder;
 
@@ -309,7 +310,10 @@ class _AppPageState extends ConsumerState<MobileAppPage> {
     } finally {
       if (mounted) {
         if (result?.status == FoldersAndFilesStateResponseStatus.failure) {
-          NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to add one ${_filter == Filter.folder ? 'folder' : 'file'}.');
+          NotificationService.showError(
+            context: context,
+            message: result?.message ?? 'Failure while trying to add one ${_filter == Filter.folder ? 'folder' : 'file'}.',
+          );
         }
         if (result?.status == FoldersAndFilesStateResponseStatus.success) {
           NotificationService.showSuccess(context: context, message: 'Successfully added one ${_filter == Filter.folder ? 'folder' : 'file'}.');
@@ -373,6 +377,8 @@ class _AppPageState extends ConsumerState<MobileAppPage> {
     final folders = pState.folders ?? [];
     final files = pState.files;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
@@ -392,7 +398,9 @@ class _AppPageState extends ConsumerState<MobileAppPage> {
                   mainAxisAlignment: _location.length > 1 ? MainAxisAlignment.spaceBetween : MainAxisAlignment.end,
                   children: [
                     // Back Button
-                    if (_location.length > 1) ...[Button(type: ButtonType.text, iconSize: 28, isLoading: _fetching, icon: Icons.chevron_left, onPressed: _previousLocation)],
+                    if (_location.length > 1) ...[
+                      Button(type: ButtonType.text, iconSize: 28, isLoading: _fetching, icon: Icons.chevron_left, onPressed: _previousLocation),
+                    ],
                     // Edit Button
                     Button(
                       type: ButtonType.text,
@@ -415,21 +423,32 @@ class _AppPageState extends ConsumerState<MobileAppPage> {
                 SizedBox(height: spacing.listItemSpacing),
                 TextField(
                   controller: _searchController,
-                  decoration: const InputDecoration(labelText: 'Search', prefixIcon: Icon(Icons.search)),
+                  decoration: InputDecoration(labelText: l10n.search, prefixIcon: Icon(Icons.search)),
                   onChanged: _onSearchChange,
                 ),
 
                 // Add new Button
                 if (_editing) SizedBox(height: spacing.listItemSpacing),
-                if (_editing) Button(type: ButtonType.elevated, color: ThemeColorName.success, icon: Icons.add, label: 'Add New', onPressed: _addNew, isLoading: _adding),
+                if (_editing)
+                  Button(type: ButtonType.elevated, color: ThemeColorName.success, icon: Icons.add, label: l10n.addNew, onPressed: _addNew, isLoading: _adding),
 
                 // Move buttons
                 if (_movingFolder != null || _movingFile != null) SizedBox(height: spacing.listItemSpacing),
                 if (_movingFolder != null || _movingFile != null)
                   Row(
                     children: [
-                      Button(type: ButtonType.elevated, color: ThemeColorName.success, label: 'Move here', onPressed: ((_movingFolder != null && _location.last == _movingFolder!.parentId) || (_movingFile != null && (_location.last == 'root' || _location.last == _movingFile!.treeNodeId))) ? null : (_movingFolder != null ? _moveFolder : _moveFile), isLoading: _isMovingFolder || _isMovingFile),
-                      Button(type: ButtonType.elevated, color: ThemeColorName.error, label: 'Cancel move', onPressed: _cancelMove),
+                      Button(
+                        type: ButtonType.elevated,
+                        color: ThemeColorName.success,
+                        label: l10n.moveHere,
+                        onPressed:
+                            ((_movingFolder != null && _location.last == _movingFolder!.parentId) ||
+                                (_movingFile != null && (_location.last == 'root' || _location.last == _movingFile!.treeNodeId)))
+                            ? null
+                            : (_movingFolder != null ? _moveFolder : _moveFile),
+                        isLoading: _isMovingFolder || _isMovingFile,
+                      ),
+                      Button(type: ButtonType.elevated, color: ThemeColorName.error, label: l10n.cancelMove, onPressed: _cancelMove),
                     ],
                   ),
 
@@ -446,10 +465,12 @@ class _AppPageState extends ConsumerState<MobileAppPage> {
                       children: [
                         Container(
                           decoration: BoxDecoration(
-                            border: _filter == Filter.folder ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary)) : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
+                            border: _filter == Filter.folder
+                                ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary))
+                                : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
                           ),
                           child: Button(
-                            label: 'Categories',
+                            label: l10n.categories,
                             width: 100,
                             height: 40,
                             radius: 0,
@@ -463,10 +484,12 @@ class _AppPageState extends ConsumerState<MobileAppPage> {
 
                         Container(
                           decoration: BoxDecoration(
-                            border: _filter == Filter.file ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary)) : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
+                            border: _filter == Filter.file
+                                ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary))
+                                : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
                           ),
                           child: Button(
-                            label: 'Cards',
+                            label: l10n.cards,
                             width: 100,
                             height: 40,
                             radius: 0,
@@ -542,9 +565,13 @@ class _AppPageState extends ConsumerState<MobileAppPage> {
                                             }
                                           },
                                           itemBuilder: (context) => [
-                                            const PopupMenuItem(
+                                            PopupMenuItem(
                                               value: 'move',
-                                              child: ListTile(leading: Icon(Icons.drive_file_move_outlined), title: Text('Move'), contentPadding: EdgeInsets.zero),
+                                              child: ListTile(
+                                                leading: Icon(Icons.drive_file_move_outlined),
+                                                title: Text(l10n.move),
+                                                contentPadding: EdgeInsets.zero,
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -625,9 +652,13 @@ class _AppPageState extends ConsumerState<MobileAppPage> {
                                               }
                                             },
                                             itemBuilder: (context) => [
-                                              const PopupMenuItem(
+                                              PopupMenuItem(
                                                 value: 'move',
-                                                child: ListTile(leading: Icon(Icons.drive_file_move_outlined), title: Text('Move'), contentPadding: EdgeInsets.zero),
+                                                child: ListTile(
+                                                  leading: Icon(Icons.drive_file_move_outlined),
+                                                  title: Text(l10n.move),
+                                                  contentPadding: EdgeInsets.zero,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -647,7 +678,7 @@ class _AppPageState extends ConsumerState<MobileAppPage> {
 
                 if (_hasMore)
                   Button(
-                    label: 'Load More',
+                    label: l10n.loadMore,
                     type: ButtonType.outlined,
                     color: ThemeColorName.secondary,
                     onPressed: () {

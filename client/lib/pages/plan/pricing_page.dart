@@ -1,3 +1,4 @@
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,42 +26,43 @@ class PricingPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final plansAsync = ref.watch(plansProvider);
 
-    return Scaffold(
-      body: SafeArea(
-        child: plansAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) {
-            Talker().error('plansProvider threw an error', error, stackTrace);
-            return _RetryState(message: "Couldn't load pricing right now.", onRetry: () => ref.invalidate(plansProvider));
-          },
-          data: (plans) {
-            if (plans.isEmpty) return const _RetryState(message: 'No plans are available right now.');
+    AppLocalizations l10n = AppLocalizations.of(context)!;
 
-            List<Plan> sortedPlans = List.empty(growable: true);
-            try {
-              for (var j = 0; j < plans.length; j++) {
-                int max = 10000000;
-                int? maxIndex;
-                for (var i = 0; i < plans.length; i++) {
-                  final p = plans[i];
-                  if (p.price.usd < max && p.price.usd > (sortedPlans.lastOrNull?.price.usd ?? -1)) {
-                    max = p.price.usd;
-                    maxIndex = i;
-                  }
+    return Padding(
+      padding: const EdgeInsets.all(48.0),
+      child: plansAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) {
+          Talker().error('plansProvider threw an error', error, stackTrace);
+          return _RetryState(message: "Couldn't load pricing right now.", onRetry: () => ref.invalidate(plansProvider));
+        },
+        data: (plans) {
+          if (plans.isEmpty) return const _RetryState(message: 'No plans are available right now.');
 
-                  if (i == plans.length - 1) {
-                    sortedPlans.add(plans[maxIndex!]);
-                  }
+          List<Plan> sortedPlans = List.empty(growable: true);
+          try {
+            for (var j = 0; j < plans.length; j++) {
+              int max = 10000000;
+              int? maxIndex;
+              for (var i = 0; i < plans.length; i++) {
+                final p = plans[i];
+                if (p.price.usd < max && p.price.usd > (sortedPlans.lastOrNull?.price.usd ?? -1)) {
+                  max = p.price.usd;
+                  maxIndex = i;
+                }
+
+                if (i == plans.length - 1) {
+                  sortedPlans.add(plans[maxIndex!]);
                 }
               }
-            } catch (e, st) {
-              Talker().error('sorting plans failed', e, st);
-              sortedPlans = plans;
             }
+          } catch (e, st) {
+            Talker().error('sorting plans failed', e, st);
+            sortedPlans = plans;
+          }
 
-            return _PricingContent(plans: sortedPlans, onSelectPlan: onSelectPlan);
-          },
-        ),
+          return _PricingContent(plans: sortedPlans, onSelectPlan: onSelectPlan);
+        },
       ),
     );
   }
@@ -81,55 +83,52 @@ class _PricingContentState extends State<_PricingContent> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 16),
-          Text('Choose your plan', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
-          const SizedBox(height: 8),
-          Text('Pick the plan that fits how you use Memoize.', style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center),
-          const SizedBox(height: 24),
-          Center(
-            child: SegmentedButton<Currency>(
-              segments: Currency.values.map((c) => ButtonSegment(value: c, label: Text(c.label))).toList(),
-              selected: {_currency},
-              onSelectionChanged: (selection) => setState(() => _currency = selection.first),
-              showSelectedIcon: false,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 16),
+        Text('Choose your plan', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+        const SizedBox(height: 8),
+        Text('Pick the plan that fits how you use Memoize.', style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center),
+        const SizedBox(height: 24),
+        Center(
+          child: SegmentedButton<Currency>(
+            segments: Currency.values.map((c) => ButtonSegment(value: c, label: Text(c.label))).toList(),
+            selected: {_currency},
+            onSelectionChanged: (selection) => setState(() => _currency = selection.first),
+            showSelectedIcon: false,
           ),
-          const SizedBox(height: 32),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 900;
-              if (isWide) {
-                return IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final plan in widget.plans) ...[
-                        Expanded(
-                          child: _PlanCard(plan: plan, currency: _currency, onSelect: widget.onSelectPlan),
-                        ),
-                        if (plan != widget.plans.last) const SizedBox(width: 16),
-                      ],
+        ),
+        const SizedBox(height: 32),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 900;
+            if (isWide) {
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final plan in widget.plans) ...[
+                      Expanded(
+                        child: _PlanCard(plan: plan, currency: _currency, onSelect: widget.onSelectPlan),
+                      ),
+                      if (plan != widget.plans.last) const SizedBox(width: 16),
                     ],
-                  ),
-                );
-              }
-              return Column(
-                children: [
-                  for (final plan in widget.plans) ...[
-                    _PlanCard(plan: plan, currency: _currency, onSelect: widget.onSelectPlan),
-                    if (plan != widget.plans.last) const SizedBox(height: 16),
                   ],
-                ],
+                ),
               );
-            },
-          ),
-        ],
-      ),
+            }
+            return Column(
+              children: [
+                for (final plan in widget.plans) ...[
+                  _PlanCard(plan: plan, currency: _currency, onSelect: widget.onSelectPlan),
+                  if (plan != widget.plans.last) const SizedBox(height: 16),
+                ],
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }

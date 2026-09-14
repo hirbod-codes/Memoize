@@ -1,6 +1,7 @@
 import 'package:client/account/account_controller.dart';
 import 'package:client/api/action_controller.dart';
 import 'package:client/auth/components/otp_sheet.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -36,10 +37,11 @@ class _ChangePhoneContentState extends ConsumerState<_ChangePhoneContent> {
     final sendState = ref.read(authActionControllerProvider);
     if (sendState.hasError || !mounted) return;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
     final verified = await showOtpSheet(
       context: context,
       destination: newPhone,
-      title: 'Verify your new number',
+      title: l10n.verify_your_new_number,
       onVerify: (code) => account.verifyPhoneChange(newPhone: newPhone, code: code),
       onResend: () => account.requestPhoneChange(newPhone: newPhone),
     );
@@ -52,6 +54,8 @@ class _ChangePhoneContentState extends ConsumerState<_ChangePhoneContent> {
     final actionState = ref.watch(authActionControllerProvider);
     final isLoading = actionState.isLoading;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
       child: Form(
@@ -60,21 +64,21 @@ class _ChangePhoneContentState extends ConsumerState<_ChangePhoneContent> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Change phone number', style: Theme.of(context).textTheme.titleLarge),
+            Text(l10n.change_phone_sheet, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
-            Text("We'll text a code to your new number to confirm it.", style: Theme.of(context).textTheme.bodyMedium),
+            Text(l10n.change_phone_sheet_code_sent_confirm, style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 16),
             TextFormField(
               controller: _phoneController,
               enabled: !isLoading,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'New phone number', border: OutlineInputBorder()),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Phone number is required' : null,
+              decoration: InputDecoration(labelText: l10n.change_phone_sheet_new_phone_number, border: OutlineInputBorder()),
+              validator: (v) => (v == null || v.trim().isEmpty) ? l10n.change_phone_sheet_phone_number_required : null,
             ),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: isLoading ? null : _submit,
-              child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Send code'),
+              child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(l10n.sendCode),
             ),
           ],
         ),

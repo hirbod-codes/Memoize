@@ -97,7 +97,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/pricing',
-        builder: (context, state) => PricingPage(onSelectPlan: (plan) => context.go('/login?plan=${plan.id}')),
+        builder: (context, state) => PublicShell(child: PricingPage(onSelectPlan: (plan) => context.go('/login?plan=${plan.id}'))),
       ),
       GoRoute(
         path: '/about',

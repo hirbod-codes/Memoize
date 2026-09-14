@@ -7,6 +7,7 @@ import 'package:client/api/api_call_extensions.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/auth/models/auth_models.dart';
 import 'package:client/components/button.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/components/calendar_switcher.dart';
 import 'package:client/localization/components/locale_switcher.dart';
 import 'package:client/localization/components/timezone_switcher.dart';
@@ -70,36 +71,38 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
   Widget build(BuildContext context) {
     final isEmailAccount = widget.userInfo.authMethod == AuthMethod.email;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return ListView(
       children: [
-        const _SectionHeader(title: 'Account'),
-        _InfoTile(label: 'Plan', value: widget.userInfo.planTitle),
-        if (widget.userInfo.username != null) _InfoTile(label: 'Username', value: widget.userInfo.username!),
+        _SectionHeader(title: l10n.account),
+        _InfoTile(label: l10n.plan, value: widget.userInfo.planTitle),
+        if (widget.userInfo.username != null) _InfoTile(label: l10n.username, value: widget.userInfo.username!),
         const SizedBox(height: 8),
 
         if (isEmailAccount) ...[
-          const _SectionHeader(title: 'Email & password'),
+          _SectionHeader(title: l10n.email_password),
           _SettingsTile(
             icon: Icons.email_outlined,
-            title: 'Email',
+            title: l10n.email,
             subtitle: widget.userInfo.email ?? '—',
-            actionLabel: 'Change',
+            actionLabel: l10n.change,
             onTap: () => showChangeEmailSheet(context),
           ),
           _SettingsTile(
             icon: Icons.lock_outline,
-            title: 'Password',
+            title: l10n.password,
             subtitle: '••••••••',
-            actionLabel: 'Change',
+            actionLabel: l10n.change,
             onTap: () => showChangePasswordSheet(context),
           ),
         ] else ...[
-          const _SectionHeader(title: 'Phone number'),
+          _SectionHeader(title: l10n.phoneNumber),
           _SettingsTile(
             icon: Icons.phone_outlined,
-            title: 'Phone number',
+            title: l10n.phoneNumber,
             subtitle: widget.userInfo.phoneNumber ?? '—',
-            actionLabel: 'Change',
+            actionLabel: l10n.change,
             onTap: () => showChangePhoneSheet(context),
           ),
         ],
@@ -108,7 +111,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const _SectionHeader(title: 'Language'),
+            _SectionHeader(title: l10n.language),
             const LocaleSwitcher(),
           ],
         ),
@@ -117,7 +120,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const _SectionHeader(title: 'Calendar'),
+            _SectionHeader(title: l10n.calendar),
             const CalendarSwitcher(),
           ],
         ),
@@ -126,7 +129,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const _SectionHeader(title: 'Time zone'),
+            _SectionHeader(title: l10n.timeZone),
             const TimezoneSwitcher(),
           ],
         ),
@@ -135,10 +138,10 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const _SectionHeader(title: 'Avatar'),
+            _SectionHeader(title: l10n.avatar),
             Button(
               type: ButtonType.outlined,
-              label: 'Update',
+              label: l10n.update,
               isLoading: _isUploadingAvatar,
               onPressed: () async {
                 setState(() {
@@ -215,13 +218,15 @@ class _RetryState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text("Couldn't load your account info.", style: Theme.of(context).textTheme.bodyLarge),
+          Text(l10n.account_load_failed, style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: 16),
-          OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
+          OutlinedButton(onPressed: onRetry, child: Text(l10n.tryAgain)),
         ],
       ),
     );
@@ -261,6 +266,8 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
     setState(() => _loading = true);
 
     try {
+      AppLocalizations l10n = AppLocalizations.of(context)!;
+
       final length = await _image!.length();
 
       final authDio = ref.read(authDioProvider);
@@ -272,7 +279,7 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
               data: _imageBytes!,
               options: Options(headers: {Headers.contentLengthHeader: length}),
             )
-            .notifyOnSuccess('Avatar image successfully uploaded'),
+            .notifyOnSuccess(l10n.avatar_upload_success),
       );
 
       if (result.isSuccess) ref.read(avatarBytesProvider.notifier).set(_imageBytes);
@@ -289,6 +296,8 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
   Widget build(BuildContext context) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Dialog(
       insetPadding: const EdgeInsets.all(20),
       child: ConstrainedBox(
@@ -298,7 +307,7 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Upload Image", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(l10n.upload_image, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
               const SizedBox(height: 16),
 
@@ -311,7 +320,7 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: _image == null
-                    ? const Center(child: Text("No image selected"))
+                    ? Center(child: Text(l10n.no_image_selected))
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: kIsWeb ? Image.network(_image!.path, fit: BoxFit.fitWidth) : Image.file(File(_image!.path), fit: BoxFit.fitWidth),
@@ -324,9 +333,9 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  TextButton.icon(onPressed: () => _pickImage(ImageSource.gallery), icon: const Icon(Icons.photo), label: const Text("Gallery")),
+                  TextButton.icon(onPressed: () => _pickImage(ImageSource.gallery), icon: const Icon(Icons.photo), label: Text(l10n.gallery)),
 
-                  TextButton.icon(onPressed: () => _pickImage(ImageSource.camera), icon: const Icon(Icons.camera_alt), label: const Text("Camera")),
+                  TextButton.icon(onPressed: () => _pickImage(ImageSource.camera), icon: const Icon(Icons.camera_alt), label: Text(l10n.camera)),
                 ],
               ),
 
@@ -336,7 +345,7 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: _loading ? null : () => Navigator.pop(context), child: const Text("Cancel")),
+                  TextButton(onPressed: _loading ? null : () => Navigator.pop(context), child: Text(l10n.cancel)),
 
                   const SizedBox(width: 8),
 
@@ -345,7 +354,7 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
                     color: ThemeColorName.secondary,
                     onPressed: isButtonDisabled() ? null : _upload,
                     isLoading: _loading,
-                    label: "Upload",
+                    label: l10n.upload,
                   ),
                 ],
               ),

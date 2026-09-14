@@ -1,6 +1,7 @@
 import 'package:client/account/account_controller.dart';
 import 'package:client/api/action_controller.dart';
 import 'package:client/auth/components/otp_sheet.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -52,6 +53,8 @@ class _ChangeEmailContentState extends ConsumerState<_ChangeEmailContent> {
     final actionState = ref.watch(authActionControllerProvider);
     final isLoading = actionState.isLoading;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
       child: Form(
@@ -60,25 +63,25 @@ class _ChangeEmailContentState extends ConsumerState<_ChangeEmailContent> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Change email', style: Theme.of(context).textTheme.titleLarge),
+            Text(l10n.change_email_sheet, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
-            Text("We'll send a code to your new address to confirm it.", style: Theme.of(context).textTheme.bodyMedium),
+            Text(l10n.change_email_sheet_code_sent_confirm, style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 16),
             TextFormField(
               controller: _emailController,
               enabled: !isLoading,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'New email', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: l10n.change_email_sheet_new_email, border: OutlineInputBorder()),
               validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Email is required';
-                if (!v.contains('@')) return 'Enter a valid email';
+                if (v == null || v.trim().isEmpty) return l10n.email_required;
+                if (!v.contains("@")) return l10n.enter_valid_email;
                 return null;
               },
             ),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: isLoading ? null : _submit,
-              child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Send code'),
+              child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(l10n.sendCode),
             ),
           ],
         ),

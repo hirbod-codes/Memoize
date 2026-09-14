@@ -93,89 +93,17 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[Locale('de'), Locale('en'), Locale('fa')];
 
+  /// No description provided for @addNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add new'**
+  String get addNew;
+
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
   /// **'Memoize'**
   String get appTitle;
-
-  /// No description provided for @login.
-  ///
-  /// In en, this message translates to:
-  /// **'Log in'**
-  String get login;
-
-  /// No description provided for @signUp.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign up'**
-  String get signUp;
-
-  /// No description provided for @email.
-  ///
-  /// In en, this message translates to:
-  /// **'Email'**
-  String get email;
-
-  /// No description provided for @password.
-  ///
-  /// In en, this message translates to:
-  /// **'Password'**
-  String get password;
-
-  /// No description provided for @confirmPassword.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm password'**
-  String get confirmPassword;
-
-  /// No description provided for @forgotPassword.
-  ///
-  /// In en, this message translates to:
-  /// **'Forgot password?'**
-  String get forgotPassword;
-
-  /// No description provided for @phoneNumber.
-  ///
-  /// In en, this message translates to:
-  /// **'Phone number'**
-  String get phoneNumber;
-
-  /// No description provided for @sendCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Send code'**
-  String get sendCode;
-
-  /// No description provided for @resendCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Resend code'**
-  String get resendCode;
-
-  /// No description provided for @verify.
-  ///
-  /// In en, this message translates to:
-  /// **'Verify'**
-  String get verify;
-
-  /// No description provided for @logout.
-  ///
-  /// In en, this message translates to:
-  /// **'Log out'**
-  String get logout;
-
-  /// No description provided for @settings.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get settings;
-
-  /// No description provided for @pricing.
-  ///
-  /// In en, this message translates to:
-  /// **'Pricing'**
-  String get pricing;
 
   /// No description provided for @changeEmail.
   ///
@@ -195,29 +123,11 @@ abstract class AppLocalizations {
   /// **'Change phone number'**
   String get changePhoneNumber;
 
-  /// No description provided for @getStarted.
+  /// No description provided for @confirmPassword.
   ///
   /// In en, this message translates to:
-  /// **'Get started'**
-  String get getStarted;
-
-  /// No description provided for @tryAgain.
-  ///
-  /// In en, this message translates to:
-  /// **'Try again'**
-  String get tryAgain;
-
-  /// No description provided for @somethingWentWrong.
-  ///
-  /// In en, this message translates to:
-  /// **'Something went wrong.'**
-  String get somethingWentWrong;
-
-  /// No description provided for @welcomeBack.
-  ///
-  /// In en, this message translates to:
-  /// **'Welcome back'**
-  String get welcomeBack;
+  /// **'Confirm password'**
+  String get confirmPassword;
 
   /// No description provided for @createYourAccount.
   ///
@@ -225,11 +135,23 @@ abstract class AppLocalizations {
   /// **'Create your account'**
   String get createYourAccount;
 
-  /// No description provided for @logInOrSignUp.
+  /// No description provided for @email.
   ///
   /// In en, this message translates to:
-  /// **'Log in or sign up'**
-  String get logInOrSignUp;
+  /// **'Email'**
+  String get email;
+
+  /// No description provided for @forgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get forgotPassword;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get getStarted;
 
   /// No description provided for @language.
   ///
@@ -237,17 +159,503 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get language;
 
-  /// No description provided for @calendar.
+  /// No description provided for @loadMore.
   ///
   /// In en, this message translates to:
-  /// **'Calendar'**
-  String get calendar;
+  /// **'Load More'**
+  String get loadMore;
+
+  /// No description provided for @logInOrSignUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in or sign up'**
+  String get logInOrSignUp;
+
+  /// No description provided for @signUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up'**
+  String get signUp;
+
+  /// No description provided for @login.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in'**
+  String get login;
+
+  /// No description provided for @logout.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out'**
+  String get logout;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @phoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get phoneNumber;
+
+  /// No description provided for @resendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get resendCode;
+
+  /// No description provided for @search.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get search;
+
+  /// No description provided for @sendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get sendCode;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @welcomeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get welcomeBack;
+
+  /// No description provided for @verify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get verify;
+
+  /// No description provided for @username.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get username;
+
+  /// No description provided for @email_password.
+  ///
+  /// In en, this message translates to:
+  /// **'Email & password'**
+  String get email_password;
+
+  /// No description provided for @update_password.
+  ///
+  /// In en, this message translates to:
+  /// **'Update password'**
+  String get update_password;
+
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get plan;
+
+  /// No description provided for @avatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Avatar'**
+  String get avatar;
+
+  /// No description provided for @update.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get update;
+
+  /// No description provided for @email_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Email is required'**
+  String get email_required;
+
+  /// No description provided for @enter_valid_email.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email'**
+  String get enter_valid_email;
+
+  /// No description provided for @account_load_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your account info.'**
+  String get account_load_failed;
+
+  /// No description provided for @verify_your_new_number.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your new number'**
+  String get verify_your_new_number;
+
+  /// No description provided for @change_phone_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Change phone number'**
+  String get change_phone_sheet;
+
+  /// No description provided for @change_phone_sheet_code_sent_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll text a code to your new number to confirm it.'**
+  String get change_phone_sheet_code_sent_confirm;
+
+  /// No description provided for @change_phone_sheet_new_phone_number.
+  ///
+  /// In en, this message translates to:
+  /// **'New phone number'**
+  String get change_phone_sheet_new_phone_number;
+
+  /// No description provided for @change_phone_sheet_phone_number_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number is required'**
+  String get change_phone_sheet_phone_number_required;
+
+  /// No description provided for @change_password_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get change_password_sheet;
+
+  /// No description provided for @change_password_sheet_current_password.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get change_password_sheet_current_password;
+
+  /// No description provided for @change_password_sheet_new_password.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get change_password_sheet_new_password;
+
+  /// No description provided for @change_password_sheet_confirm_new_password.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm new password'**
+  String get change_password_sheet_confirm_new_password;
+
+  /// No description provided for @change_email_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Change email'**
+  String get change_email_sheet;
+
+  /// No description provided for @change_email_sheet_code_sent_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll send a code to your new address to confirm it.'**
+  String get change_email_sheet_code_sent_confirm;
+
+  /// No description provided for @change_email_sheet_new_email.
+  ///
+  /// In en, this message translates to:
+  /// **'New email'**
+  String get change_email_sheet_new_email;
+
+  /// No description provided for @change.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get change;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @move.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get move;
+
+  /// No description provided for @$continue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get $continue;
+
+  /// No description provided for @moveHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Move here'**
+  String get moveHere;
+
+  /// No description provided for @gallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get gallery;
+
+  /// No description provided for @camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// No description provided for @upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get upload;
+
+  /// No description provided for @uncaughtError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong.'**
+  String get uncaughtError;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgain;
+
+  /// No description provided for @message_choose_language.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your language and calendar to get started. You can change these later in Settings.'**
+  String get message_choose_language;
+
+  /// No description provided for @errors_page_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find that page.'**
+  String get errors_page_not_found;
+
+  /// No description provided for @errors_page_path_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find \"{path}\".'**
+  String errors_page_path_not_found(String path);
 
   /// No description provided for @timeZone.
   ///
   /// In en, this message translates to:
   /// **'Time zone'**
   String get timeZone;
+
+  /// No description provided for @calendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get calendar;
+
+  /// No description provided for @card.
+  ///
+  /// In en, this message translates to:
+  /// **'Card'**
+  String get card;
+
+  /// No description provided for @cards.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards'**
+  String get cards;
+
+  /// No description provided for @categories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categories;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @cancelMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel move'**
+  String get cancelMove;
+
+  /// No description provided for @title_about_us.
+  ///
+  /// In en, this message translates to:
+  /// **'About Us'**
+  String get title_about_us;
+
+  /// No description provided for @title_contact_us.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Us'**
+  String get title_contact_us;
+
+  /// No description provided for @title_pricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing'**
+  String get title_pricing;
+
+  /// No description provided for @landing_page_memorize_anything.
+  ///
+  /// In en, this message translates to:
+  /// **'MEMORIZE ANYTHING'**
+  String get landing_page_memorize_anything;
+
+  /// No description provided for @landing_page_hero_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn your own material into flashcards you actually remember'**
+  String get landing_page_hero_title;
+
+  /// No description provided for @landing_page_hero_secondary.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload text, images, audio, or video — organize it however makes sense to you — and review it whenever you have a few minutes.'**
+  String get landing_page_hero_secondary;
+
+  /// No description provided for @landing_page_upload_your_content.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload your content'**
+  String get landing_page_upload_your_content;
+
+  /// No description provided for @landing_page_upload_your_content_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Text, images, audio, or video — right onto either side of a card.'**
+  String get landing_page_upload_your_content_description;
+
+  /// No description provided for @landing_page_organize_id_your_way.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize it your way'**
+  String get landing_page_organize_id_your_way;
+
+  /// No description provided for @landing_page_organize_id_your_way_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Nest categories as deep as you need — by subject, by chapter, by whatever makes sense to you.'**
+  String get landing_page_organize_id_your_way_description;
+
+  /// No description provided for @landing_page_come_back_review.
+  ///
+  /// In en, this message translates to:
+  /// **'Come back and review'**
+  String get landing_page_come_back_review;
+
+  /// No description provided for @landing_page_come_back_review_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Work through your cards whenever you have a few spare minutes.'**
+  String get landing_page_come_back_review_description;
+
+  /// No description provided for @text.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get text;
+
+  /// No description provided for @richText.
+  ///
+  /// In en, this message translates to:
+  /// **'Rich text'**
+  String get richText;
+
+  /// No description provided for @images.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get images;
+
+  /// No description provided for @audio.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get audio;
+
+  /// No description provided for @video.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get video;
+
+  /// No description provided for @landing_page_content_type.
+  ///
+  /// In en, this message translates to:
+  /// **'Any kind of content, on either side of a card'**
+  String get landing_page_content_type;
+
+  /// No description provided for @landing_page_content_type_description.
+  ///
+  /// In en, this message translates to:
+  /// **'A vocabulary word with its pronunciation. A diagram next to your own explanation. It\'s your material — Memoize doesn\'t limit how you represent it.'**
+  String get landing_page_content_type_description;
+
+  /// No description provided for @landing_page_use_case_first_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning a new language'**
+  String get landing_page_use_case_first_title;
+
+  /// No description provided for @landing_page_use_case_first_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair a word with an audio clip of its pronunciation and a picture instead of just a translation — build cards the way you actually think about the word.'**
+  String get landing_page_use_case_first_description;
+
+  /// No description provided for @landing_page_use_case_second_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Studying for an exam'**
+  String get landing_page_use_case_second_title;
+
+  /// No description provided for @landing_page_use_case_second_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn lecture slides, diagrams, and your own notes into cards organized by subject and chapter, nested exactly the way your course is structured.'**
+  String get landing_page_use_case_second_description;
+
+  /// No description provided for @landing_page_final_cta.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to remember more?'**
+  String get landing_page_final_cta;
+
+  /// No description provided for @landing_page_final_cta_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started free'**
+  String get landing_page_final_cta_button;
+
+  /// No description provided for @avatar_upload_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Avatar image successfully uploaded'**
+  String get avatar_upload_success;
+
+  /// No description provided for @upload_image.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Image'**
+  String get upload_image;
+
+  /// No description provided for @no_image_selected.
+  ///
+  /// In en, this message translates to:
+  /// **'No image selected'**
+  String get no_image_selected;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1,3 +1,4 @@
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,14 +7,15 @@ import 'package:go_router/go_router.dart';
 /// and settings_page.dart each built their own near-identical version)
 /// — one shared widget instead of three copies drifting apart over time.
 class ErrorPage extends StatelessWidget {
-  final String message;
+  final String? message;
   final VoidCallback? onRetry;
   final bool showHomeButton;
 
-  const ErrorPage({super.key, this.message = 'Something went wrong.', this.onRetry, this.showHomeButton = false});
+  const ErrorPage({super.key, this.message, this.onRetry, this.showHomeButton = false});
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Center(
         child: Padding(
@@ -23,7 +25,7 @@ class ErrorPage extends StatelessWidget {
             children: [
               Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
               const SizedBox(height: 16),
-              Text(message, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
+              Text(message ?? l10n.uncaughtError, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 24),
               Wrap(
                 spacing: 12,

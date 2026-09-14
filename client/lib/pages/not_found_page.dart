@@ -1,3 +1,4 @@
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -17,6 +18,9 @@ class NotFoundPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = state?.uri.toString();
-    return ErrorPage(message: path != null ? "We couldn't find \"$path\"." : "We couldn't find that page.", showHomeButton: true);
+
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    return ErrorPage(message: path != null ? l10n.errors_page_path_not_found(path) : l10n.errors_page_not_found, showHomeButton: true);
   }
 }
