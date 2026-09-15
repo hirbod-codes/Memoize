@@ -9,10 +9,10 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
-  String get addNew => 'Add new';
+  String get addNew => 'افزودن مورد جدید';
 
   @override
-  String get appTitle => 'مموآیز';
+  String get appTitle => 'ممویز';
 
   @override
   String get changeEmail => 'تغییر ایمیل';
@@ -24,10 +24,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get changePhoneNumber => 'تغییر شماره تلفن';
 
   @override
-  String get confirmPassword => 'تکرار رمز عبور';
+  String get confirmPassword => 'تأیید رمز عبور';
 
   @override
-  String get createYourAccount => 'ایجاد حساب کاربری';
+  String get createYourAccount => 'حساب کاربری خود را ایجاد کنید';
 
   @override
   String get email => 'ایمیل';
@@ -42,7 +42,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get language => 'زبان';
 
   @override
-  String get loadMore => 'Load More';
+  String get loadMore => 'بارگذاری بیشتر';
 
   @override
   String get logInOrSignUp => 'ورود یا ثبت‌نام';
@@ -63,13 +63,13 @@ class AppLocalizationsFa extends AppLocalizations {
   String get phoneNumber => 'شماره تلفن';
 
   @override
-  String get phone => 'Phone';
+  String get phone => 'تلفن';
 
   @override
   String get resendCode => 'ارسال مجدد کد';
 
   @override
-  String get search => 'Search';
+  String get search => 'جستجو';
 
   @override
   String get sendCode => 'ارسال کد';
@@ -84,152 +84,152 @@ class AppLocalizationsFa extends AppLocalizations {
   String get verify => 'تأیید';
 
   @override
-  String get username => 'Username';
+  String get username => 'نام کاربری';
 
   @override
-  String get email_password => 'Email & password';
+  String get email_password => 'ایمیل و رمز عبور';
 
   @override
-  String get update_password => 'Update password';
+  String get update_password => 'به‌روزرسانی رمز عبور';
 
   @override
-  String get account => 'Account';
+  String get account => 'حساب کاربری';
 
   @override
-  String get plan => 'Plan';
+  String get plan => 'طرح';
 
   @override
-  String get avatar => 'Avatar';
+  String get avatar => 'آواتار';
 
   @override
-  String get update => 'Update';
+  String get update => 'به‌روزرسانی';
 
   @override
-  String get email_required => 'Email is required';
+  String get email_required => 'وارد کردن ایمیل الزامی است';
 
   @override
-  String get enter_valid_email => 'Enter a valid email';
+  String get enter_valid_email => 'یک ایمیل معتبر وارد کنید';
 
   @override
-  String get account_load_failed => 'Couldn\'t load your account info.';
+  String get account_load_failed => 'بارگذاری اطلاعات حساب کاربری شما ممکن نبود.';
 
   @override
-  String get verify_your_new_number => 'Verify your new number';
+  String get verify_your_new_number => 'شماره جدید خود را تأیید کنید';
 
   @override
-  String get auth_page_checking_sign_in_methods_failed => 'Couldn\'t check available sign-in methods.';
+  String get auth_page_checking_sign_in_methods_failed => 'بررسی روش‌های ورود در دسترس ممکن نبود.';
 
   @override
-  String get auth_page_sign_in_unavailable => 'Sign-in is temporarily unavailable. Please try again shortly.';
+  String get auth_page_sign_in_unavailable => 'ورود موقتاً در دسترس نیست. لطفاً کمی بعد دوباره تلاش کنید.';
 
   @override
-  String get change_phone_sheet => 'Change phone number';
+  String get change_phone_sheet => 'تغییر شماره تلفن';
 
   @override
-  String get change_phone_sheet_code_sent_confirm => 'We\'ll text a code to your new number to confirm it.';
+  String get change_phone_sheet_code_sent_confirm => 'برای تأیید شماره جدید، یک کد برای شما پیامک می‌کنیم.';
 
   @override
-  String get change_phone_sheet_new_phone_number => 'New phone number';
+  String get change_phone_sheet_new_phone_number => 'شماره تلفن جدید';
 
   @override
-  String get change_phone_sheet_phone_number_required => 'Phone number is required';
+  String get change_phone_sheet_phone_number_required => 'وارد کردن شماره تلفن الزامی است';
 
   @override
-  String get change_password_sheet => 'Change password';
+  String get change_password_sheet => 'تغییر رمز عبور';
 
   @override
-  String get change_password_sheet_current_password => 'Current password';
+  String get change_password_sheet_current_password => 'رمز عبور فعلی';
 
   @override
-  String get change_password_sheet_new_password => 'New password';
+  String get change_password_sheet_new_password => 'رمز عبور جدید';
 
   @override
-  String get change_password_sheet_confirm_new_password => 'Confirm new password';
+  String get change_password_sheet_confirm_new_password => 'تأیید رمز عبور جدید';
 
   @override
-  String get change_email_sheet => 'Change email';
+  String get change_email_sheet => 'تغییر ایمیل';
 
   @override
-  String get change_email_sheet_code_sent_confirm => 'We\'ll send a code to your new address to confirm it.';
+  String get change_email_sheet_code_sent_confirm => 'برای تأیید آدرس جدید، یک کد برای شما ارسال می‌کنیم.';
 
   @override
-  String get change_email_sheet_new_email => 'New email';
+  String get change_email_sheet_new_email => 'ایمیل جدید';
 
   @override
-  String get change => 'Change';
+  String get change => 'تغییر';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'لغو';
 
   @override
-  String get move => 'Move';
+  String get move => 'انتقال';
 
   @override
-  String get $continue => 'Continue';
+  String get $continue => 'ادامه';
 
   @override
-  String get moveHere => 'Move here';
+  String get moveHere => 'انتقال به اینجا';
 
   @override
-  String get gallery => 'Gallery';
+  String get gallery => 'گالری';
 
   @override
-  String get camera => 'Camera';
+  String get camera => 'دوربین';
 
   @override
-  String get upload => 'Upload';
+  String get upload => 'آپلود';
 
   @override
-  String get uncaughtError => 'Something went wrong.';
+  String get uncaughtError => 'مشکلی پیش آمد.';
 
   @override
-  String get tryAgain => 'تلاش مجدد';
+  String get tryAgain => 'دوباره تلاش کنید';
 
   @override
-  String get contentTypes => 'Content types';
+  String get contentTypes => 'انواع محتوا';
 
   @override
-  String get storage => 'storage';
+  String get storage => 'فضای ذخیره‌سازی';
 
   @override
-  String get text => 'Text';
+  String get text => 'متن';
 
   @override
-  String get texts => 'Texts';
+  String get texts => 'متن‌ها';
 
   @override
-  String get richText => 'Rich text';
+  String get richText => 'متن غنی';
 
   @override
-  String get images => 'Images';
+  String get images => 'تصاویر';
 
   @override
-  String get image => 'Image';
+  String get image => 'تصویر';
 
   @override
-  String get audio => 'Audio';
+  String get audio => 'صوت';
 
   @override
-  String get audios => 'Audios';
+  String get audios => 'صوت‌ها';
 
   @override
-  String get video => 'Video';
+  String get video => 'ویدیو';
 
   @override
-  String get videos => 'Videos';
+  String get videos => 'ویدیوها';
 
   @override
-  String get message_choose_language => 'Choose your language and calendar to get started. You can change these later in Settings.';
+  String get message_choose_language => 'برای شروع، زبان و تقویم خود را انتخاب کنید. بعداً می‌توانید این موارد را در تنظیمات تغییر دهید.';
 
   @override
-  String get system_failed => 'system failed to set new language, try again.';
+  String get system_failed => 'تنظیم زبان جدید توسط سیستم انجام نشد، دوباره تلاش کنید.';
 
   @override
-  String get errors_page_not_found => 'We couldn\'t find that page.';
+  String get errors_page_not_found => 'نتوانستیم آن صفحه را پیدا کنیم.';
 
   @override
   String errors_page_path_not_found(String path) {
-    return 'We couldn\'t find \"$path\".';
+    return 'نتوانستیم «$path» را پیدا کنیم.';
   }
 
   @override
@@ -239,219 +239,220 @@ class AppLocalizationsFa extends AppLocalizations {
   String get calendar => 'تقویم';
 
   @override
-  String get card => 'Card';
+  String get card => 'کارت';
 
   @override
-  String get cards => 'Cards';
+  String get cards => 'کارت‌ها';
 
   @override
-  String get categories => 'Categories';
+  String get categories => 'دسته‌بندی‌ها';
 
   @override
-  String get category => 'Category';
+  String get category => 'دسته‌بندی';
 
   @override
-  String get cancelMove => 'Cancel move';
+  String get cancelMove => 'لغو انتقال';
 
   @override
   String get title_about_us => 'درباره ما';
 
   @override
-  String get title_contact_us => 'ارتباط با ما';
+  String get title_contact_us => 'تماس با ما';
 
   @override
-  String get title_pricing => 'قیمت ها';
+  String get title_pricing => 'قیمت‌گذاری';
 
   @override
-  String get landing_page_memorize_anything => 'MEMORIZE ANYTHING';
+  String get landing_page_memorize_anything => 'هر چیزی را به خاطر بسپارید';
 
   @override
-  String get landing_page_hero_title => 'Turn your own material into flashcards you actually remember';
+  String get landing_page_hero_title => 'مطالب خودتان را به فلش‌کارت‌هایی تبدیل کنید که واقعاً به خاطر می‌سپارید';
 
   @override
   String get landing_page_hero_secondary =>
-      'Upload text, images, audio, or video — organize it however makes sense to you — and review it whenever you have a few minutes.';
+      'متن، تصویر، صوت یا ویدیو را آپلود کنید — آن‌ها را هرطور که برایتان منطقی است سازمان‌دهی کنید — و هر زمان چند دقیقه فرصت داشتید مرورشان کنید.';
 
   @override
-  String get landing_page_upload_your_content => 'Upload your content';
+  String get landing_page_upload_your_content => 'محتوای خود را آپلود کنید';
 
   @override
-  String get landing_page_upload_your_content_description => 'Text, images, audio, or video — right onto either side of a card.';
+  String get landing_page_upload_your_content_description => 'متن، تصویر، صوت یا ویدیو — مستقیماً روی هر یک از دو طرف کارت.';
 
   @override
-  String get landing_page_organize_id_your_way => 'Organize it your way';
+  String get landing_page_organize_id_your_way => 'آن را به روش خودتان سازمان‌دهی کنید';
 
   @override
-  String get landing_page_organize_id_your_way_description => 'Nest categories as deep as you need — by subject, by chapter, by whatever makes sense to you.';
+  String get landing_page_organize_id_your_way_description =>
+      'دسته‌بندی‌ها را به هر اندازه که نیاز دارید تو در تو کنید — بر اساس موضوع، فصل یا هر چیزی که برایتان منطقی است.';
 
   @override
-  String get landing_page_come_back_review => 'Come back and review';
+  String get landing_page_come_back_review => 'برگردید و مرور کنید';
 
   @override
-  String get landing_page_come_back_review_description => 'Work through your cards whenever you have a few spare minutes.';
+  String get landing_page_come_back_review_description => 'هر زمان چند دقیقه فرصت داشتید، کارت‌هایتان را مرور کنید.';
 
   @override
-  String get landing_page_content_type => 'Any kind of content, on either side of a card';
+  String get landing_page_content_type => 'هر نوع محتوایی، در هر یک از دو طرف کارت';
 
   @override
   String get landing_page_content_type_description =>
-      'A vocabulary word with its pronunciation. A diagram next to your own explanation. It\'s your material — Memoize doesn\'t limit how you represent it.';
+      'یک واژه با تلفظ آن. یک نمودار در کنار توضیح خودتان. این مطالب شما هستند — Memoize محدودیتی برای نحوه نمایش آن‌ها ایجاد نمی‌کند.';
 
   @override
-  String get landing_page_use_case_first_title => 'Learning a new language';
+  String get landing_page_use_case_first_title => 'یادگیری یک زبان جدید';
 
   @override
   String get landing_page_use_case_first_description =>
-      'Pair a word with an audio clip of its pronunciation and a picture instead of just a translation — build cards the way you actually think about the word.';
+      'یک واژه را به فایل صوتی تلفظ آن و یک تصویر مرتبط کنید، به‌جای اینکه فقط ترجمه را بنویسید — کارت‌ها را همان‌طور بسازید که واقعاً آن واژه را در ذهن خود تصور می‌کنید.';
 
   @override
-  String get landing_page_use_case_second_title => 'Studying for an exam';
+  String get landing_page_use_case_second_title => 'مطالعه برای امتحان';
 
   @override
   String get landing_page_use_case_second_description =>
-      'Turn lecture slides, diagrams, and your own notes into cards organized by subject and chapter, nested exactly the way your course is structured.';
+      'اسلایدهای درس، نمودارها و یادداشت‌های خودتان را به کارت‌هایی تبدیل کنید که بر اساس موضوع و فصل سازمان‌دهی شده‌اند، دقیقاً مطابق ساختار دوره شما.';
 
   @override
-  String get landing_page_final_cta => 'Ready to remember more?';
+  String get landing_page_final_cta => 'آماده‌اید بیشتر به خاطر بسپارید؟';
 
   @override
-  String get landing_page_final_cta_button => 'Get started free';
+  String get landing_page_final_cta_button => 'رایگان شروع کنید';
 
   @override
-  String get pricing_page_could_not_load => 'Couldn\'t load pricing right now.';
+  String get pricing_page_could_not_load => 'در حال حاضر بارگذاری قیمت‌گذاری ممکن نیست.';
 
   @override
-  String get pricing_page_no_plan_available => 'No plans are available right now.';
+  String get pricing_page_no_plan_available => 'در حال حاضر هیچ طرحی در دسترس نیست.';
 
   @override
-  String get pricing_page_choose_plan => 'Choose your plan';
+  String get pricing_page_choose_plan => 'طرح خود را انتخاب کنید';
 
   @override
-  String get pricing_page_choose_plan_description => 'Pick the plan that fits how you use Memoize.';
+  String get pricing_page_choose_plan_description => 'طرحی را انتخاب کنید که با نحوه استفاده شما از Memoize متناسب باشد.';
 
   @override
-  String get pricing_page_levels_of_nesting => 'levels of nesting';
+  String get pricing_page_levels_of_nesting => 'سطوح تو‌در‌تو بودن';
 
   @override
-  String get pricing_page_cards_per_category => 'cards per category';
+  String get pricing_page_cards_per_category => 'کارت به ازای هر دسته‌بندی';
 
   @override
-  String get pricing_page_contents_per_card_side => 'contents per card side';
+  String get pricing_page_contents_per_card_side => 'محتوا به ازای هر طرف کارت';
 
   @override
-  String get avatar_upload_success => 'Avatar image successfully uploaded';
+  String get avatar_upload_success => 'تصویر آواتار با موفقیت آپلود شد';
 
   @override
-  String get upload_image => 'Upload Image';
+  String get upload_image => 'آپلود تصویر';
 
   @override
-  String get no_image_selected => 'No image selected';
+  String get no_image_selected => 'تصویری انتخاب نشده است';
 
   @override
-  String get folder_add_success => 'Successfully added new folder.';
+  String get folder_add_success => 'پوشه جدید با موفقیت اضافه شد.';
 
   @override
-  String get folder_add_failed => 'Failure while trying to add new folder.';
+  String get folder_add_failed => 'افزودن پوشه جدید با مشکل مواجه شد.';
 
   @override
-  String get folder_move_success => 'Successfully moved the folder.';
+  String get folder_move_success => 'پوشه با موفقیت منتقل شد.';
 
   @override
-  String get folder_move_failed => 'Failure while trying to move the folder.';
+  String get folder_move_failed => 'انتقال پوشه با مشکل مواجه شد.';
 
   @override
-  String get folders_not_found => 'Folders not found!';
+  String get folders_not_found => 'پوشه‌ای پیدا نشد!';
 
   @override
-  String get folder_not_found => 'No folder found!';
+  String get folder_not_found => 'هیچ پوشه‌ای پیدا نشد!';
 
   @override
-  String get folder_set_success => 'Successfully updated folder.';
+  String get folder_set_success => 'پوشه با موفقیت به‌روزرسانی شد.';
 
   @override
-  String get folder_set_failed => 'Failure while trying to update folder.';
+  String get folder_set_failed => 'به‌روزرسانی پوشه با مشکل مواجه شد.';
 
   @override
-  String get folder_remove_success => 'Successfully removed folder.';
+  String get folder_remove_success => 'پوشه با موفقیت حذف شد.';
 
   @override
-  String get folder_remove_failed => 'Failure while trying to remove folder.';
+  String get folder_remove_failed => 'حذف پوشه با مشکل مواجه شد.';
 
   @override
-  String get file_add_success => 'Successfully added new file.';
+  String get file_add_success => 'فایل جدید با موفقیت اضافه شد.';
 
   @override
-  String get file_add_failed => 'Failure while trying to add new file.';
+  String get file_add_failed => 'افزودن فایل جدید با مشکل مواجه شد.';
 
   @override
-  String get files_not_found => 'Files not found!';
+  String get files_not_found => 'فایلی پیدا نشد!';
 
   @override
-  String get file_not_found => 'No file found!';
+  String get file_not_found => 'هیچ فایلی پیدا نشد!';
 
   @override
-  String get file_set_success => 'Successfully updated file.';
+  String get file_set_success => 'فایل با موفقیت به‌روزرسانی شد.';
 
   @override
-  String get file_set_failed => 'Failure while trying to update file.';
+  String get file_set_failed => 'به‌روزرسانی فایل با مشکل مواجه شد.';
 
   @override
-  String get file_remove_success => 'Successfully removed file.';
+  String get file_remove_success => 'فایل با موفقیت حذف شد.';
 
   @override
-  String get file_remove_failed => 'Failure while trying to remove file.';
+  String get file_remove_failed => 'حذف فایل با مشکل مواجه شد.';
 
   @override
-  String get file_move_success => 'Successfully moved the file.';
+  String get file_move_success => 'فایل با موفقیت منتقل شد.';
 
   @override
-  String get file_move_failed => 'Failure while trying to move the file.';
+  String get file_move_failed => 'انتقال فایل با مشکل مواجه شد.';
 
   @override
-  String get content_set_success => 'Successfully updated content.';
+  String get content_set_success => 'محتوا با موفقیت به‌روزرسانی شد.';
 
   @override
-  String get content_set_failed => 'Failure while trying to update content.';
+  String get content_set_failed => 'به‌روزرسانی محتوا با مشکل مواجه شد.';
 
   @override
-  String get content_add_success => 'Successfully added content.';
+  String get content_add_success => 'محتوا با موفقیت اضافه شد.';
 
   @override
-  String get content_add_failed => 'Failure while trying to add content.';
+  String get content_add_failed => 'افزودن محتوا با مشکل مواجه شد.';
 
   @override
-  String get content_remove_success => 'Successfully removed content.';
+  String get content_remove_success => 'محتوا با موفقیت حذف شد.';
 
   @override
-  String get content_remove_failed => 'Failure while trying to remove content.';
+  String get content_remove_failed => 'حذف محتوا با مشکل مواجه شد.';
 
   @override
-  String get content_value_set_success => 'Successfully updated content.';
+  String get content_value_set_success => 'محتوا با موفقیت به‌روزرسانی شد.';
 
   @override
-  String get content_value_set_failed => 'Failure while trying to update content.';
+  String get content_value_set_failed => 'به‌روزرسانی محتوا با مشکل مواجه شد.';
 
   @override
-  String get content_value_add_success => 'Successfully added content.';
+  String get content_value_add_success => 'محتوا با موفقیت اضافه شد.';
 
   @override
-  String get content_value_add_failed => 'Failure while trying to add content.';
+  String get content_value_add_failed => 'افزودن محتوا با مشکل مواجه شد.';
 
   @override
-  String get content_value_remove_success => 'Successfully removed content.';
+  String get content_value_remove_success => 'محتوا با موفقیت حذف شد.';
 
   @override
-  String get content_value_remove_failed => 'Failure while trying to remove content.';
+  String get content_value_remove_failed => 'حذف محتوا با مشکل مواجه شد.';
 
   @override
-  String get content_move_failed => 'Failure while trying to move content.';
+  String get content_move_failed => 'انتقال محتوا با مشکل مواجه شد.';
 
   @override
-  String get content_not_found => 'No content found!';
+  String get content_not_found => 'هیچ محتوایی پیدا نشد!';
 
   @override
-  String get app_page_file_pagination_failed => 'Failure while trying to load cards';
+  String get app_page_file_pagination_failed => 'بارگذاری کارت‌ها با مشکل مواجه شد';
 
   @override
-  String get app_page_folder_pagination_failed => 'Failure while trying to load categories';
+  String get app_page_folder_pagination_failed => 'بارگذاری دسته‌بندی‌ها با مشکل مواجه شد';
 }

@@ -9,7 +9,7 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
-  String get addNew => 'Add new';
+  String get addNew => 'Neu hinzufügen';
 
   @override
   String get appTitle => 'Memoize';
@@ -42,7 +42,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get language => 'Sprache';
 
   @override
-  String get loadMore => 'Load More';
+  String get loadMore => 'Mehr laden';
 
   @override
   String get logInOrSignUp => 'Anmelden oder registrieren';
@@ -63,13 +63,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get phoneNumber => 'Telefonnummer';
 
   @override
-  String get phone => 'Phone';
+  String get phone => 'Telefon';
 
   @override
   String get resendCode => 'Code erneut senden';
 
   @override
-  String get search => 'Search';
+  String get search => 'Suchen';
 
   @override
   String get sendCode => 'Code senden';
@@ -84,133 +84,133 @@ class AppLocalizationsDe extends AppLocalizations {
   String get verify => 'Bestätigen';
 
   @override
-  String get username => 'Username';
+  String get username => 'Benutzername';
 
   @override
-  String get email_password => 'Email & password';
+  String get email_password => 'E-Mail und Passwort';
 
   @override
-  String get update_password => 'Update password';
+  String get update_password => 'Passwort aktualisieren';
 
   @override
-  String get account => 'Account';
+  String get account => 'Konto';
 
   @override
-  String get plan => 'Plan';
+  String get plan => 'Tarif';
 
   @override
   String get avatar => 'Avatar';
 
   @override
-  String get update => 'Update';
+  String get update => 'Aktualisieren';
 
   @override
-  String get email_required => 'Email is required';
+  String get email_required => 'E-Mail ist erforderlich';
 
   @override
-  String get enter_valid_email => 'Enter a valid email';
+  String get enter_valid_email => 'Geben Sie eine gültige E-Mail-Adresse ein';
 
   @override
-  String get account_load_failed => 'Couldn\'t load your account info.';
+  String get account_load_failed => 'Kontoinformationen konnten nicht geladen werden.';
 
   @override
-  String get verify_your_new_number => 'Verify your new number';
+  String get verify_your_new_number => 'Neue Telefonnummer bestätigen';
 
   @override
-  String get auth_page_checking_sign_in_methods_failed => 'Couldn\'t check available sign-in methods.';
+  String get auth_page_checking_sign_in_methods_failed => 'Verfügbare Anmeldemethoden konnten nicht geprüft werden.';
 
   @override
-  String get auth_page_sign_in_unavailable => 'Sign-in is temporarily unavailable. Please try again shortly.';
+  String get auth_page_sign_in_unavailable => 'Die Anmeldung ist vorübergehend nicht verfügbar. Bitte versuchen Sie es in Kürze erneut.';
 
   @override
-  String get change_phone_sheet => 'Change phone number';
+  String get change_phone_sheet => 'Telefonnummer ändern';
 
   @override
-  String get change_phone_sheet_code_sent_confirm => 'We\'ll text a code to your new number to confirm it.';
+  String get change_phone_sheet_code_sent_confirm => 'Wir senden einen Code per SMS an Ihre neue Nummer, um sie zu bestätigen.';
 
   @override
-  String get change_phone_sheet_new_phone_number => 'New phone number';
+  String get change_phone_sheet_new_phone_number => 'Neue Telefonnummer';
 
   @override
-  String get change_phone_sheet_phone_number_required => 'Phone number is required';
+  String get change_phone_sheet_phone_number_required => 'Telefonnummer ist erforderlich';
 
   @override
-  String get change_password_sheet => 'Change password';
+  String get change_password_sheet => 'Passwort ändern';
 
   @override
-  String get change_password_sheet_current_password => 'Current password';
+  String get change_password_sheet_current_password => 'Aktuelles Passwort';
 
   @override
-  String get change_password_sheet_new_password => 'New password';
+  String get change_password_sheet_new_password => 'Neues Passwort';
 
   @override
-  String get change_password_sheet_confirm_new_password => 'Confirm new password';
+  String get change_password_sheet_confirm_new_password => 'Neues Passwort bestätigen';
 
   @override
-  String get change_email_sheet => 'Change email';
+  String get change_email_sheet => 'E-Mail ändern';
 
   @override
-  String get change_email_sheet_code_sent_confirm => 'We\'ll send a code to your new address to confirm it.';
+  String get change_email_sheet_code_sent_confirm => 'Wir senden einen Code an Ihre neue Adresse, um sie zu bestätigen.';
 
   @override
-  String get change_email_sheet_new_email => 'New email';
+  String get change_email_sheet_new_email => 'Neue E-Mail';
 
   @override
-  String get change => 'Change';
+  String get change => 'Ändern';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Abbrechen';
 
   @override
-  String get move => 'Move';
+  String get move => 'Verschieben';
 
   @override
-  String get $continue => 'Continue';
+  String get $continue => 'Weiter';
 
   @override
-  String get moveHere => 'Move here';
+  String get moveHere => 'Hierher verschieben';
 
   @override
-  String get gallery => 'Gallery';
+  String get gallery => 'Galerie';
 
   @override
-  String get camera => 'Camera';
+  String get camera => 'Kamera';
 
   @override
-  String get upload => 'Upload';
+  String get upload => 'Hochladen';
 
   @override
-  String get uncaughtError => 'Something went wrong.';
+  String get uncaughtError => 'Etwas ist schiefgelaufen.';
 
   @override
   String get tryAgain => 'Erneut versuchen';
 
   @override
-  String get contentTypes => 'Content types';
+  String get contentTypes => 'Inhaltstypen';
 
   @override
-  String get storage => 'storage';
+  String get storage => 'Speicher';
 
   @override
   String get text => 'Text';
 
   @override
-  String get texts => 'Texts';
+  String get texts => 'Texte';
 
   @override
-  String get richText => 'Rich text';
+  String get richText => 'Rich-Text';
 
   @override
-  String get images => 'Images';
+  String get images => 'Bilder';
 
   @override
-  String get image => 'Image';
+  String get image => 'Bild';
 
   @override
   String get audio => 'Audio';
 
   @override
-  String get audios => 'Audios';
+  String get audios => 'Audiodateien';
 
   @override
   String get video => 'Video';
@@ -219,17 +219,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get videos => 'Videos';
 
   @override
-  String get message_choose_language => 'Choose your language and calendar to get started. You can change these later in Settings.';
+  String get message_choose_language => 'Wählen Sie zum Start Ihre Sprache und Ihren Kalender aus. Sie können diese später in den Einstellungen ändern.';
 
   @override
-  String get system_failed => 'system failed to set new language, try again.';
+  String get system_failed => 'Die neue Sprache konnte vom System nicht eingestellt werden. Bitte versuchen Sie es erneut.';
 
   @override
-  String get errors_page_not_found => 'We couldn\'t find that page.';
+  String get errors_page_not_found => 'Diese Seite konnte nicht gefunden werden.';
 
   @override
   String errors_page_path_not_found(String path) {
-    return 'We couldn\'t find \"$path\".';
+    return '„$path“ konnte nicht gefunden werden.';
   }
 
   @override
@@ -239,219 +239,220 @@ class AppLocalizationsDe extends AppLocalizations {
   String get calendar => 'Kalender';
 
   @override
-  String get card => 'Card';
+  String get card => 'Karte';
 
   @override
-  String get cards => 'Cards';
+  String get cards => 'Karten';
 
   @override
-  String get categories => 'Categories';
+  String get categories => 'Kategorien';
 
   @override
-  String get category => 'Category';
+  String get category => 'Kategorie';
 
   @override
-  String get cancelMove => 'Cancel move';
+  String get cancelMove => 'Verschieben abbrechen';
 
   @override
-  String get title_about_us => 'About Us';
+  String get title_about_us => 'Über uns';
 
   @override
-  String get title_contact_us => 'Contact Us';
+  String get title_contact_us => 'Kontakt';
 
   @override
-  String get title_pricing => 'Pricing';
+  String get title_pricing => 'Preise';
 
   @override
-  String get landing_page_memorize_anything => 'MEMORIZE ANYTHING';
+  String get landing_page_memorize_anything => 'ALLES MERKEN';
 
   @override
-  String get landing_page_hero_title => 'Turn your own material into flashcards you actually remember';
+  String get landing_page_hero_title => 'Verwandeln Sie Ihre eigenen Inhalte in Lernkarten, die Sie sich wirklich merken';
 
   @override
   String get landing_page_hero_secondary =>
-      'Upload text, images, audio, or video — organize it however makes sense to you — and review it whenever you have a few minutes.';
+      'Laden Sie Text, Bilder, Audio oder Video hoch — organisieren Sie alles so, wie es für Sie sinnvoll ist — und wiederholen Sie es, wann immer Sie ein paar Minuten Zeit haben.';
 
   @override
-  String get landing_page_upload_your_content => 'Upload your content';
+  String get landing_page_upload_your_content => 'Laden Sie Ihre Inhalte hoch';
 
   @override
-  String get landing_page_upload_your_content_description => 'Text, images, audio, or video — right onto either side of a card.';
+  String get landing_page_upload_your_content_description => 'Text, Bilder, Audio oder Video — direkt auf jede Seite einer Karte.';
 
   @override
-  String get landing_page_organize_id_your_way => 'Organize it your way';
+  String get landing_page_organize_id_your_way => 'Organisieren Sie es auf Ihre Weise';
 
   @override
-  String get landing_page_organize_id_your_way_description => 'Nest categories as deep as you need — by subject, by chapter, by whatever makes sense to you.';
+  String get landing_page_organize_id_your_way_description =>
+      'Verschachteln Sie Kategorien so tief, wie Sie möchten — nach Thema, Kapitel oder ganz nach Ihren eigenen Vorstellungen.';
 
   @override
-  String get landing_page_come_back_review => 'Come back and review';
+  String get landing_page_come_back_review => 'Kommen Sie zurück und wiederholen Sie';
 
   @override
-  String get landing_page_come_back_review_description => 'Work through your cards whenever you have a few spare minutes.';
+  String get landing_page_come_back_review_description => 'Arbeiten Sie Ihre Karten durch, wann immer Sie ein paar freie Minuten haben.';
 
   @override
-  String get landing_page_content_type => 'Any kind of content, on either side of a card';
+  String get landing_page_content_type => 'Jede Art von Inhalt auf jeder Seite einer Karte';
 
   @override
   String get landing_page_content_type_description =>
-      'A vocabulary word with its pronunciation. A diagram next to your own explanation. It\'s your material — Memoize doesn\'t limit how you represent it.';
+      'Ein Vokabelwort mit seiner Aussprache. Ein Diagramm neben Ihrer eigenen Erklärung. Es sind Ihre Inhalte — Memoize schränkt nicht ein, wie Sie sie darstellen.';
 
   @override
-  String get landing_page_use_case_first_title => 'Learning a new language';
+  String get landing_page_use_case_first_title => 'Eine neue Sprache lernen';
 
   @override
   String get landing_page_use_case_first_description =>
-      'Pair a word with an audio clip of its pronunciation and a picture instead of just a translation — build cards the way you actually think about the word.';
+      'Kombinieren Sie ein Wort mit einer Audioaufnahme seiner Aussprache und einem Bild statt nur mit einer Übersetzung — erstellen Sie Karten so, wie Sie tatsächlich über das Wort denken.';
 
   @override
-  String get landing_page_use_case_second_title => 'Studying for an exam';
+  String get landing_page_use_case_second_title => 'Für eine Prüfung lernen';
 
   @override
   String get landing_page_use_case_second_description =>
-      'Turn lecture slides, diagrams, and your own notes into cards organized by subject and chapter, nested exactly the way your course is structured.';
+      'Verwandeln Sie Vorlesungsfolien, Diagramme und Ihre eigenen Notizen in Karten, die nach Thema und Kapitel organisiert und genau so verschachtelt sind, wie Ihr Kurs aufgebaut ist.';
 
   @override
-  String get landing_page_final_cta => 'Ready to remember more?';
+  String get landing_page_final_cta => 'Bereit, sich mehr zu merken?';
 
   @override
-  String get landing_page_final_cta_button => 'Get started free';
+  String get landing_page_final_cta_button => 'Kostenlos loslegen';
 
   @override
-  String get pricing_page_could_not_load => 'Couldn\'t load pricing right now.';
+  String get pricing_page_could_not_load => 'Die Preise konnten derzeit nicht geladen werden.';
 
   @override
-  String get pricing_page_no_plan_available => 'No plans are available right now.';
+  String get pricing_page_no_plan_available => 'Derzeit sind keine Tarife verfügbar.';
 
   @override
-  String get pricing_page_choose_plan => 'Choose your plan';
+  String get pricing_page_choose_plan => 'Wählen Sie Ihren Tarif';
 
   @override
-  String get pricing_page_choose_plan_description => 'Pick the plan that fits how you use Memoize.';
+  String get pricing_page_choose_plan_description => 'Wählen Sie den Tarif, der zu Ihrer Nutzung von Memoize passt.';
 
   @override
-  String get pricing_page_levels_of_nesting => 'levels of nesting';
+  String get pricing_page_levels_of_nesting => 'Verschachtelungsebenen';
 
   @override
-  String get pricing_page_cards_per_category => 'cards per category';
+  String get pricing_page_cards_per_category => 'Karten pro Kategorie';
 
   @override
-  String get pricing_page_contents_per_card_side => 'contents per card side';
+  String get pricing_page_contents_per_card_side => 'Inhalte pro Kartenseite';
 
   @override
-  String get avatar_upload_success => 'Avatar image successfully uploaded';
+  String get avatar_upload_success => 'Avatarbild erfolgreich hochgeladen';
 
   @override
-  String get upload_image => 'Upload Image';
+  String get upload_image => 'Bild hochladen';
 
   @override
-  String get no_image_selected => 'No image selected';
+  String get no_image_selected => 'Kein Bild ausgewählt';
 
   @override
-  String get folder_add_success => 'Successfully added new folder.';
+  String get folder_add_success => 'Neuer Ordner erfolgreich hinzugefügt.';
 
   @override
-  String get folder_add_failed => 'Failure while trying to add new folder.';
+  String get folder_add_failed => 'Beim Hinzufügen des neuen Ordners ist ein Fehler aufgetreten.';
 
   @override
-  String get folder_move_success => 'Successfully moved the folder.';
+  String get folder_move_success => 'Ordner erfolgreich verschoben.';
 
   @override
-  String get folder_move_failed => 'Failure while trying to move the folder.';
+  String get folder_move_failed => 'Beim Verschieben des Ordners ist ein Fehler aufgetreten.';
 
   @override
-  String get folders_not_found => 'Folders not found!';
+  String get folders_not_found => 'Keine Ordner gefunden!';
 
   @override
-  String get folder_not_found => 'No folder found!';
+  String get folder_not_found => 'Kein Ordner gefunden!';
 
   @override
-  String get folder_set_success => 'Successfully updated folder.';
+  String get folder_set_success => 'Ordner erfolgreich aktualisiert.';
 
   @override
-  String get folder_set_failed => 'Failure while trying to update folder.';
+  String get folder_set_failed => 'Beim Aktualisieren des Ordners ist ein Fehler aufgetreten.';
 
   @override
-  String get folder_remove_success => 'Successfully removed folder.';
+  String get folder_remove_success => 'Ordner erfolgreich entfernt.';
 
   @override
-  String get folder_remove_failed => 'Failure while trying to remove folder.';
+  String get folder_remove_failed => 'Beim Entfernen des Ordners ist ein Fehler aufgetreten.';
 
   @override
-  String get file_add_success => 'Successfully added new file.';
+  String get file_add_success => 'Neue Datei erfolgreich hinzugefügt.';
 
   @override
-  String get file_add_failed => 'Failure while trying to add new file.';
+  String get file_add_failed => 'Beim Hinzufügen der neuen Datei ist ein Fehler aufgetreten.';
 
   @override
-  String get files_not_found => 'Files not found!';
+  String get files_not_found => 'Keine Dateien gefunden!';
 
   @override
-  String get file_not_found => 'No file found!';
+  String get file_not_found => 'Keine Datei gefunden!';
 
   @override
-  String get file_set_success => 'Successfully updated file.';
+  String get file_set_success => 'Datei erfolgreich aktualisiert.';
 
   @override
-  String get file_set_failed => 'Failure while trying to update file.';
+  String get file_set_failed => 'Beim Aktualisieren der Datei ist ein Fehler aufgetreten.';
 
   @override
-  String get file_remove_success => 'Successfully removed file.';
+  String get file_remove_success => 'Datei erfolgreich entfernt.';
 
   @override
-  String get file_remove_failed => 'Failure while trying to remove file.';
+  String get file_remove_failed => 'Beim Entfernen der Datei ist ein Fehler aufgetreten.';
 
   @override
-  String get file_move_success => 'Successfully moved the file.';
+  String get file_move_success => 'Datei erfolgreich verschoben.';
 
   @override
-  String get file_move_failed => 'Failure while trying to move the file.';
+  String get file_move_failed => 'Beim Verschieben der Datei ist ein Fehler aufgetreten.';
 
   @override
-  String get content_set_success => 'Successfully updated content.';
+  String get content_set_success => 'Inhalt erfolgreich aktualisiert.';
 
   @override
-  String get content_set_failed => 'Failure while trying to update content.';
+  String get content_set_failed => 'Beim Aktualisieren des Inhalts ist ein Fehler aufgetreten.';
 
   @override
-  String get content_add_success => 'Successfully added content.';
+  String get content_add_success => 'Inhalt erfolgreich hinzugefügt.';
 
   @override
-  String get content_add_failed => 'Failure while trying to add content.';
+  String get content_add_failed => 'Beim Hinzufügen des Inhalts ist ein Fehler aufgetreten.';
 
   @override
-  String get content_remove_success => 'Successfully removed content.';
+  String get content_remove_success => 'Inhalt erfolgreich entfernt.';
 
   @override
-  String get content_remove_failed => 'Failure while trying to remove content.';
+  String get content_remove_failed => 'Beim Entfernen des Inhalts ist ein Fehler aufgetreten.';
 
   @override
-  String get content_value_set_success => 'Successfully updated content.';
+  String get content_value_set_success => 'Inhalt erfolgreich aktualisiert.';
 
   @override
-  String get content_value_set_failed => 'Failure while trying to update content.';
+  String get content_value_set_failed => 'Beim Aktualisieren des Inhalts ist ein Fehler aufgetreten.';
 
   @override
-  String get content_value_add_success => 'Successfully added content.';
+  String get content_value_add_success => 'Inhalt erfolgreich hinzugefügt.';
 
   @override
-  String get content_value_add_failed => 'Failure while trying to add content.';
+  String get content_value_add_failed => 'Beim Hinzufügen des Inhalts ist ein Fehler aufgetreten.';
 
   @override
-  String get content_value_remove_success => 'Successfully removed content.';
+  String get content_value_remove_success => 'Inhalt erfolgreich entfernt.';
 
   @override
-  String get content_value_remove_failed => 'Failure while trying to remove content.';
+  String get content_value_remove_failed => 'Beim Entfernen des Inhalts ist ein Fehler aufgetreten.';
 
   @override
-  String get content_move_failed => 'Failure while trying to move content.';
+  String get content_move_failed => 'Beim Verschieben des Inhalts ist ein Fehler aufgetreten.';
 
   @override
-  String get content_not_found => 'No content found!';
+  String get content_not_found => 'Kein Inhalt gefunden!';
 
   @override
-  String get app_page_file_pagination_failed => 'Failure while trying to load cards';
+  String get app_page_file_pagination_failed => 'Beim Laden der Karten ist ein Fehler aufgetreten';
 
   @override
-  String get app_page_folder_pagination_failed => 'Failure while trying to load categories';
+  String get app_page_folder_pagination_failed => 'Beim Laden der Kategorien ist ein Fehler aufgetreten';
 }
