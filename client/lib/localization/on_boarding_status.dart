@@ -1,3 +1,5 @@
+import 'package:client/localization/calendars/calendar_controller.dart';
+import 'package:client/localization/locale_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Distinguishes "the user explicitly chose this" from "a device-derived
@@ -8,12 +10,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// never as a side effect of just computing a default.
 Future<bool> hasChosenLocale() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.containsKey('locale');
+  return prefs.containsKey(LocaleController.preferencesKey);
 }
 
 Future<bool> hasChosenCalendar() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.containsKey('calendarType');
+  return prefs.containsKey(CalendarController.preferencesKey);
 }
 
 Future<bool> hasChosenLocaleAndCalendar() async {

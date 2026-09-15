@@ -1,4 +1,6 @@
 import 'package:client/api/models/plan.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/number_symbols_data.dart';
 
 /// Formats a raw integer price for display.
 ///
@@ -65,6 +67,12 @@ String formatBytes(int bytes) {
 }
 
 /// Thousands-separated integer, for limits like "5,000 cards".
-String formatCount(int value) {
-  return value.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+String formatCount(int value, {String locale = 'en'}) {
+  if (!NumberFormat.localeExists(locale)) {
+    locale = 'en';
+  }
+
+  return NumberFormat.decimalPattern(locale).format(value);
+
+  // return value.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
 }

@@ -75,32 +75,18 @@ class _ContentState extends ConsumerState<ContentContainer> {
           : IconButton(
               icon: Icon(Icons.remove),
               onPressed: () async {
-                FoldersAndFilesStateResponse? result;
-                try {
-                  if (_isRemoving.contains(index)) return;
+                if (_isRemoving.contains(index)) return;
 
-                  setState(() {
-                    _isRemoving.add(index);
-                  });
+                setState(() {
+                  _isRemoving.add(index);
+                });
 
-                  result = await ref.read(foldersAndFilesProvider.notifier).removeContentValue(widget.contentIndex, index);
-                  if (!mounted) return;
-                } catch (e) {
-                  Talker().error('Failure while trying to remove content.', e);
-                  if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to remove content.');
-                } finally {
-                  if (mounted) {
-                    if (result?.status == FoldersAndFilesStateResponseStatus.failure) {
-                      NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to remove content.');
-                    }
-                    if (result?.status == FoldersAndFilesStateResponseStatus.success) {
-                      NotificationService.showSuccess(context: context, message: 'Successfully removed content.');
-                    }
-                    setState(() {
-                      _isRemoving.remove(index);
-                    });
-                  }
-                }
+                await ref.read(foldersAndFilesProvider.notifier).removeContentValue(widget.contentIndex, index);
+                if (!mounted) return;
+
+                setState(() {
+                  _isRemoving.remove(index);
+                });
               },
               color: theme.error,
               padding: EdgeInsetsGeometry.all(3),
@@ -156,16 +142,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           editing: widget.editing,
                           json: v,
                           onSave: (json) async {
-                            FoldersAndFilesStateResponse result = await ref.read(foldersAndFilesProvider.notifier).setContentValue(jsonEncode(json), widget.contentIndex, contentValueIndex);
-                            if (!mounted) return;
-
-                            if (result.status == FoldersAndFilesStateResponseStatus.failure) {
-                              if (mounted) NotificationService.showError(context: context, message: result.message ?? 'Failure while trying to remove content.');
-                            }
-
-                            if (result.status == FoldersAndFilesStateResponseStatus.success) {
-                              if (mounted) NotificationService.showSuccess(context: context, message: 'Successfully removed content.');
-                            }
+                            await ref.read(foldersAndFilesProvider.notifier).setContentValue(jsonEncode(json), widget.contentIndex, contentValueIndex);
                           },
                         ),
                       ),
@@ -284,37 +261,26 @@ class _ContentState extends ConsumerState<ContentContainer> {
                                       });
                                     },
                             ),
-                            if (_isUpdatingString.contains(contentValueIndex)) SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.success)),
+                            if (_isUpdatingString.contains(contentValueIndex))
+                              SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.success)),
                             if (!_isUpdatingString.contains(contentValueIndex))
                               IconButton(
                                 icon: Icon(Icons.done),
                                 onPressed: () async {
-                                  FoldersAndFilesStateResponse? result;
-                                  try {
-                                    if (_isUpdatingString.contains(contentValueIndex)) return;
+                                  if (_isUpdatingString.contains(contentValueIndex)) return;
 
-                                    setState(() {
-                                      _isUpdatingString.add(contentValueIndex);
-                                    });
+                                  setState(() {
+                                    _isUpdatingString.add(contentValueIndex);
+                                  });
 
-                                    result = await ref.read(foldersAndFilesProvider.notifier).setContentValue(stringControllers[contentValueIndex].text.trim(), widget.contentIndex, contentValueIndex);
-                                    if (!mounted) return;
-                                  } catch (e) {
-                                    Talker().error('onPressed function in done IconButton throws an error.', e);
-                                    if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to update content.');
-                                  } finally {
-                                    if (mounted) {
-                                      if (result?.status == FoldersAndFilesStateResponseStatus.failure) {
-                                        NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to update content.');
-                                      }
-                                      if (result?.status == FoldersAndFilesStateResponseStatus.success) {
-                                        NotificationService.showSuccess(context: context, message: 'Successfully update content.');
-                                      }
-                                      setState(() {
-                                        _isUpdatingString.remove(contentValueIndex);
-                                      });
-                                    }
-                                  }
+                                  await ref
+                                      .read(foldersAndFilesProvider.notifier)
+                                      .setContentValue(stringControllers[contentValueIndex].text.trim(), widget.contentIndex, contentValueIndex);
+                                  if (!mounted) return;
+
+                                  setState(() {
+                                    _isUpdatingString.remove(contentValueIndex);
+                                  });
                                 },
                                 color: theme.success,
                                 padding: EdgeInsetsGeometry.all(2.5),
@@ -342,7 +308,9 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref.watch(foldersAndFilesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
+                        await ref
+                            .watch(foldersAndFilesProvider.notifier)
+                            .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 
                         setState(() {
@@ -449,7 +417,9 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref.watch(foldersAndFilesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
+                        await ref
+                            .watch(foldersAndFilesProvider.notifier)
+                            .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 
                         setState(() {
@@ -543,7 +513,9 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref.watch(foldersAndFilesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
+                        await ref
+                            .watch(foldersAndFilesProvider.notifier)
+                            .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 
                         setState(() {
@@ -610,7 +582,9 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref.watch(foldersAndFilesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
+                        await ref
+                            .watch(foldersAndFilesProvider.notifier)
+                            .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 
                         setState(() {

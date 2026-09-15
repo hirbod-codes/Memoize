@@ -1,21 +1,21 @@
-import 'package:client/l10n/app_localizations.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import "package:client/l10n/app_localizations.dart";
+import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
 
-import 'package:client/api/models/plan.dart';
-import 'package:talker/talker.dart';
-import 'currency_formatter.dart';
-import 'plans_provider.dart';
+import "package:client/api/models/plan.dart";
+import "package:talker/talker.dart";
+import "currency_formatter.dart";
+import "plans_provider.dart";
 
 /// Public pricing page. No auth required — this is meant to be
 /// reachable by anyone, logged in or not, which is why it goes through
-/// plansProvider's plain dioProvider rather than anything auth-related.
+/// plansProvider"s plain dioProvider rather than anything auth-related.
 ///
-/// [onSelectPlan] fires when someone taps a plan's CTA button. Wire it
-/// to whatever your app's actual next step is — e.g. navigate to
+/// [onSelectPlan] fires when someone taps a plan"s CTA button. Wire it
+/// to whatever your app"s actual next step is — e.g. navigate to
 /// /login?plan=<id> so signup can pre-select that plan, or straight to
-/// checkout if the user's already authenticated. Left as a callback
-/// since that routing decision depends on your app's flow, not
+/// checkout if the user"s already authenticated. Left as a callback
+/// since that routing decision depends on your app"s flow, not
 /// something this page should assume.
 class PricingPage extends ConsumerWidget {
   final ValueChanged<Plan>? onSelectPlan;
@@ -33,11 +33,11 @@ class PricingPage extends ConsumerWidget {
       child: plansAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) {
-          Talker().error('plansProvider threw an error', error, stackTrace);
-          return _RetryState(message: "Couldn't load pricing right now.", onRetry: () => ref.invalidate(plansProvider));
+          Talker().error("plansProvider threw an error", error, stackTrace);
+          return _RetryState(message: l10n.pricing_page_could_not_load, onRetry: () => ref.invalidate(plansProvider));
         },
         data: (plans) {
-          if (plans.isEmpty) return const _RetryState(message: 'No plans are available right now.');
+          if (plans.isEmpty) return _RetryState(message: l10n.pricing_page_no_plan_available);
 
           List<Plan> sortedPlans = List.empty(growable: true);
           try {
@@ -57,7 +57,7 @@ class PricingPage extends ConsumerWidget {
               }
             }
           } catch (e, st) {
-            Talker().error('sorting plans failed', e, st);
+            Talker().error("sorting plans failed", e, st);
             sortedPlans = plans;
           }
 
@@ -83,13 +83,15 @@ class _PricingContentState extends State<_PricingContent> {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 16),
-        Text('Choose your plan', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+        Text(l10n.pricing_page_choose_plan, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
         const SizedBox(height: 8),
-        Text('Pick the plan that fits how you use Memoize.', style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center),
+        Text(l10n.pricing_page_choose_plan_description, style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center),
         const SizedBox(height: 24),
         Center(
           child: SegmentedButton<Currency>(
@@ -146,6 +148,8 @@ class _PlanCard extends StatelessWidget {
     final price = plan.price;
     final privileges = plan.privileges;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -158,33 +162,33 @@ class _PlanCard extends StatelessWidget {
             Text(plan.title, style: theme.textTheme.titleLarge),
             const SizedBox(height: 12),
             Text(
-              price.isFree ? 'Free' : CurrencyFormatter.format(price.forCurrency(currency), currency),
+              price.isFree ? "Free" : CurrencyFormatter.format(price.forCurrency(currency), currency),
               style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             const Divider(height: 1),
             const SizedBox(height: 20),
-            _Feature(icon: Icons.folder_outlined, text: '${formatCount(privileges.maxCategories)} categories'),
-            _Feature(icon: Icons.account_tree_outlined, text: '${formatCount(privileges.maxNestedCategories)} levels of nesting'),
-            _Feature(icon: Icons.style_outlined, text: '${formatCount(privileges.maxCardsPerCategory)} cards per category'),
-            _Feature(icon: Icons.view_agenda_outlined, text: '${formatCount(privileges.maxContentsPerCardSide)} contents per card side'),
-            _Feature(icon: Icons.storage_outlined, text: '${formatBytes(privileges.maxStorageBytes)} storage'),
+            _Feature(icon: Icons.folder_outlined, text: "${formatCount(privileges.maxCategories)} ${l10n.categories}"),
+            _Feature(icon: Icons.account_tree_outlined, text: "${formatCount(privileges.maxNestedCategories)} ${l10n.pricing_page_levels_of_nesting}"),
+            _Feature(icon: Icons.style_outlined, text: "${formatCount(privileges.maxCardsPerCategory)} ${l10n.pricing_page_cards_per_category}"),
+            _Feature(icon: Icons.view_agenda_outlined, text: "${formatCount(privileges.maxContentsPerCardSide)} ${l10n.pricing_page_contents_per_card_side}"),
+            _Feature(icon: Icons.storage_outlined, text: "${formatBytes(privileges.maxStorageBytes)} ${l10n.storage}"),
             const SizedBox(height: 12),
-            Text('Content types', style: theme.textTheme.labelLarge),
+            Text(l10n.contentTypes, style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
             Wrap(
               spacing: 12,
               runSpacing: 8,
               children: [
-                _ContentTypeChip(label: 'Text', enabled: privileges.allowedContentTypes.string, icon: Icons.text_fields),
-                _ContentTypeChip(label: 'Rich text', enabled: privileges.allowedContentTypes.richText, icon: Icons.article_outlined),
-                _ContentTypeChip(label: 'Image', enabled: privileges.allowedContentTypes.image, icon: Icons.image_outlined),
-                _ContentTypeChip(label: 'Audio', enabled: privileges.allowedContentTypes.audio, icon: Icons.audiotrack_outlined),
-                _ContentTypeChip(label: 'Video', enabled: privileges.allowedContentTypes.video, icon: Icons.videocam_outlined),
+                _ContentTypeChip(label: l10n.text, enabled: privileges.allowedContentTypes.string, icon: Icons.text_fields),
+                _ContentTypeChip(label: l10n.richText, enabled: privileges.allowedContentTypes.richText, icon: Icons.article_outlined),
+                _ContentTypeChip(label: l10n.image, enabled: privileges.allowedContentTypes.image, icon: Icons.image_outlined),
+                _ContentTypeChip(label: l10n.audio, enabled: privileges.allowedContentTypes.audio, icon: Icons.audiotrack_outlined),
+                _ContentTypeChip(label: l10n.video, enabled: privileges.allowedContentTypes.video, icon: Icons.videocam_outlined),
               ],
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: onSelect == null ? null : () => onSelect!(plan), child: const Text('Get started')),
+            FilledButton(onPressed: onSelect == null ? null : () => onSelect!(plan), child: const Text("Get started")),
           ],
         ),
       ),
@@ -244,6 +248,8 @@ class _RetryState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -251,7 +257,7 @@ class _RetryState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(message, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
-            if (onRetry != null) ...[const SizedBox(height: 16), OutlinedButton(onPressed: onRetry, child: const Text('Try again'))],
+            if (onRetry != null) ...[const SizedBox(height: 16), OutlinedButton(onPressed: onRetry, child: Text(l10n.tryAgain))],
           ],
         ),
       ),

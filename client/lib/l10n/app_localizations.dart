@@ -201,6 +201,12 @@ abstract class AppLocalizations {
   /// **'Phone number'**
   String get phoneNumber;
 
+  /// No description provided for @phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phone;
+
   /// No description provided for @resendCode.
   ///
   /// In en, this message translates to:
@@ -302,6 +308,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Verify your new number'**
   String get verify_your_new_number;
+
+  /// No description provided for @auth_page_checking_sign_in_methods_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t check available sign-in methods.'**
+  String get auth_page_checking_sign_in_methods_failed;
+
+  /// No description provided for @auth_page_sign_in_unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in is temporarily unavailable. Please try again shortly.'**
+  String get auth_page_sign_in_unavailable;
 
   /// No description provided for @change_phone_sheet.
   ///
@@ -429,11 +447,83 @@ abstract class AppLocalizations {
   /// **'Try again'**
   String get tryAgain;
 
+  /// No description provided for @contentTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Content types'**
+  String get contentTypes;
+
+  /// No description provided for @storage.
+  ///
+  /// In en, this message translates to:
+  /// **'storage'**
+  String get storage;
+
+  /// No description provided for @text.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get text;
+
+  /// No description provided for @texts.
+  ///
+  /// In en, this message translates to:
+  /// **'Texts'**
+  String get texts;
+
+  /// No description provided for @richText.
+  ///
+  /// In en, this message translates to:
+  /// **'Rich text'**
+  String get richText;
+
+  /// No description provided for @images.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get images;
+
+  /// No description provided for @image.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get image;
+
+  /// No description provided for @audio.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get audio;
+
+  /// No description provided for @audios.
+  ///
+  /// In en, this message translates to:
+  /// **'Audios'**
+  String get audios;
+
+  /// No description provided for @video.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get video;
+
+  /// No description provided for @videos.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get videos;
+
   /// No description provided for @message_choose_language.
   ///
   /// In en, this message translates to:
   /// **'Choose your language and calendar to get started. You can change these later in Settings.'**
   String get message_choose_language;
+
+  /// No description provided for @system_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'system failed to set new language, try again.'**
+  String get system_failed;
 
   /// No description provided for @errors_page_not_found.
   ///
@@ -561,36 +651,6 @@ abstract class AppLocalizations {
   /// **'Work through your cards whenever you have a few spare minutes.'**
   String get landing_page_come_back_review_description;
 
-  /// No description provided for @text.
-  ///
-  /// In en, this message translates to:
-  /// **'Text'**
-  String get text;
-
-  /// No description provided for @richText.
-  ///
-  /// In en, this message translates to:
-  /// **'Rich text'**
-  String get richText;
-
-  /// No description provided for @images.
-  ///
-  /// In en, this message translates to:
-  /// **'Images'**
-  String get images;
-
-  /// No description provided for @audio.
-  ///
-  /// In en, this message translates to:
-  /// **'Audio'**
-  String get audio;
-
-  /// No description provided for @video.
-  ///
-  /// In en, this message translates to:
-  /// **'Video'**
-  String get video;
-
   /// No description provided for @landing_page_content_type.
   ///
   /// In en, this message translates to:
@@ -639,6 +699,48 @@ abstract class AppLocalizations {
   /// **'Get started free'**
   String get landing_page_final_cta_button;
 
+  /// No description provided for @pricing_page_could_not_load.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load pricing right now.'**
+  String get pricing_page_could_not_load;
+
+  /// No description provided for @pricing_page_no_plan_available.
+  ///
+  /// In en, this message translates to:
+  /// **'No plans are available right now.'**
+  String get pricing_page_no_plan_available;
+
+  /// No description provided for @pricing_page_choose_plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your plan'**
+  String get pricing_page_choose_plan;
+
+  /// No description provided for @pricing_page_choose_plan_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the plan that fits how you use Memoize.'**
+  String get pricing_page_choose_plan_description;
+
+  /// No description provided for @pricing_page_levels_of_nesting.
+  ///
+  /// In en, this message translates to:
+  /// **'levels of nesting'**
+  String get pricing_page_levels_of_nesting;
+
+  /// No description provided for @pricing_page_cards_per_category.
+  ///
+  /// In en, this message translates to:
+  /// **'cards per category'**
+  String get pricing_page_cards_per_category;
+
+  /// No description provided for @pricing_page_contents_per_card_side.
+  ///
+  /// In en, this message translates to:
+  /// **'contents per card side'**
+  String get pricing_page_contents_per_card_side;
+
   /// No description provided for @avatar_upload_success.
   ///
   /// In en, this message translates to:
@@ -656,6 +758,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No image selected'**
   String get no_image_selected;
+
+  /// No description provided for @folder_add_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully added new folder.'**
+  String get folder_add_success;
+
+  /// No description provided for @folder_add_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to add new folder.'**
+  String get folder_add_failed;
+
+  /// No description provided for @folder_move_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully moved the folder.'**
+  String get folder_move_success;
+
+  /// No description provided for @folder_move_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to move the folder.'**
+  String get folder_move_failed;
+
+  /// No description provided for @folders_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders not found!'**
+  String get folders_not_found;
+
+  /// No description provided for @folder_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder found!'**
+  String get folder_not_found;
+
+  /// No description provided for @folder_set_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully updated folder.'**
+  String get folder_set_success;
+
+  /// No description provided for @folder_set_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to update folder.'**
+  String get folder_set_failed;
+
+  /// No description provided for @folder_remove_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully removed folder.'**
+  String get folder_remove_success;
+
+  /// No description provided for @folder_remove_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to remove folder.'**
+  String get folder_remove_failed;
+
+  /// No description provided for @file_add_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully added new file.'**
+  String get file_add_success;
+
+  /// No description provided for @file_add_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to add new file.'**
+  String get file_add_failed;
+
+  /// No description provided for @files_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Files not found!'**
+  String get files_not_found;
+
+  /// No description provided for @file_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'No file found!'**
+  String get file_not_found;
+
+  /// No description provided for @file_set_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully updated file.'**
+  String get file_set_success;
+
+  /// No description provided for @file_set_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to update file.'**
+  String get file_set_failed;
+
+  /// No description provided for @file_remove_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully removed file.'**
+  String get file_remove_success;
+
+  /// No description provided for @file_remove_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to remove file.'**
+  String get file_remove_failed;
+
+  /// No description provided for @file_move_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully moved the file.'**
+  String get file_move_success;
+
+  /// No description provided for @file_move_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to move the file.'**
+  String get file_move_failed;
+
+  /// No description provided for @content_set_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully updated content.'**
+  String get content_set_success;
+
+  /// No description provided for @content_set_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to update content.'**
+  String get content_set_failed;
+
+  /// No description provided for @content_add_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully added content.'**
+  String get content_add_success;
+
+  /// No description provided for @content_add_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to add content.'**
+  String get content_add_failed;
+
+  /// No description provided for @content_remove_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully removed content.'**
+  String get content_remove_success;
+
+  /// No description provided for @content_remove_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to remove content.'**
+  String get content_remove_failed;
+
+  /// No description provided for @content_value_set_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully updated content.'**
+  String get content_value_set_success;
+
+  /// No description provided for @content_value_set_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to update content.'**
+  String get content_value_set_failed;
+
+  /// No description provided for @content_value_add_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully added content.'**
+  String get content_value_add_success;
+
+  /// No description provided for @content_value_add_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to add content.'**
+  String get content_value_add_failed;
+
+  /// No description provided for @content_value_remove_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully removed content.'**
+  String get content_value_remove_success;
+
+  /// No description provided for @content_value_remove_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to remove content.'**
+  String get content_value_remove_failed;
+
+  /// No description provided for @content_move_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to move content.'**
+  String get content_move_failed;
+
+  /// No description provided for @content_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'No content found!'**
+  String get content_not_found;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

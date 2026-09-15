@@ -63,6 +63,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phoneNumber => 'Phone number';
 
   @override
+  String get phone => 'Phone';
+
+  @override
   String get resendCode => 'Resend code';
 
   @override
@@ -112,6 +115,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verify_your_new_number => 'Verify your new number';
+
+  @override
+  String get auth_page_checking_sign_in_methods_failed => 'Couldn\'t check available sign-in methods.';
+
+  @override
+  String get auth_page_sign_in_unavailable => 'Sign-in is temporarily unavailable. Please try again shortly.';
 
   @override
   String get change_phone_sheet => 'Change phone number';
@@ -177,7 +186,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tryAgain => 'Try again';
 
   @override
+  String get contentTypes => 'Content types';
+
+  @override
+  String get storage => 'storage';
+
+  @override
+  String get text => 'Text';
+
+  @override
+  String get texts => 'Texts';
+
+  @override
+  String get richText => 'Rich text';
+
+  @override
+  String get images => 'Images';
+
+  @override
+  String get image => 'Image';
+
+  @override
+  String get audio => 'Audio';
+
+  @override
+  String get audios => 'Audios';
+
+  @override
+  String get video => 'Video';
+
+  @override
+  String get videos => 'Videos';
+
+  @override
   String get message_choose_language => 'Choose your language and calendar to get started. You can change these later in Settings.';
+
+  @override
+  String get system_failed => 'system failed to set new language, try again.';
 
   @override
   String get errors_page_not_found => 'We couldn\'t find that page.';
@@ -246,21 +291,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get landing_page_come_back_review_description => 'Work through your cards whenever you have a few spare minutes.';
 
   @override
-  String get text => 'Text';
-
-  @override
-  String get richText => 'Rich text';
-
-  @override
-  String get images => 'Images';
-
-  @override
-  String get audio => 'Audio';
-
-  @override
-  String get video => 'Video';
-
-  @override
   String get landing_page_content_type => 'Any kind of content, on either side of a card';
 
   @override
@@ -288,6 +318,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get landing_page_final_cta_button => 'Get started free';
 
   @override
+  String get pricing_page_could_not_load => 'Couldn\'t load pricing right now.';
+
+  @override
+  String get pricing_page_no_plan_available => 'No plans are available right now.';
+
+  @override
+  String get pricing_page_choose_plan => 'Choose your plan';
+
+  @override
+  String get pricing_page_choose_plan_description => 'Pick the plan that fits how you use Memoize.';
+
+  @override
+  String get pricing_page_levels_of_nesting => 'levels of nesting';
+
+  @override
+  String get pricing_page_cards_per_category => 'cards per category';
+
+  @override
+  String get pricing_page_contents_per_card_side => 'contents per card side';
+
+  @override
   String get avatar_upload_success => 'Avatar image successfully uploaded';
 
   @override
@@ -295,4 +346,106 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get no_image_selected => 'No image selected';
+
+  @override
+  String get folder_add_success => 'Successfully added new folder.';
+
+  @override
+  String get folder_add_failed => 'Failure while trying to add new folder.';
+
+  @override
+  String get folder_move_success => 'Successfully moved the folder.';
+
+  @override
+  String get folder_move_failed => 'Failure while trying to move the folder.';
+
+  @override
+  String get folders_not_found => 'Folders not found!';
+
+  @override
+  String get folder_not_found => 'No folder found!';
+
+  @override
+  String get folder_set_success => 'Successfully updated folder.';
+
+  @override
+  String get folder_set_failed => 'Failure while trying to update folder.';
+
+  @override
+  String get folder_remove_success => 'Successfully removed folder.';
+
+  @override
+  String get folder_remove_failed => 'Failure while trying to remove folder.';
+
+  @override
+  String get file_add_success => 'Successfully added new file.';
+
+  @override
+  String get file_add_failed => 'Failure while trying to add new file.';
+
+  @override
+  String get files_not_found => 'Files not found!';
+
+  @override
+  String get file_not_found => 'No file found!';
+
+  @override
+  String get file_set_success => 'Successfully updated file.';
+
+  @override
+  String get file_set_failed => 'Failure while trying to update file.';
+
+  @override
+  String get file_remove_success => 'Successfully removed file.';
+
+  @override
+  String get file_remove_failed => 'Failure while trying to remove file.';
+
+  @override
+  String get file_move_success => 'Successfully moved the file.';
+
+  @override
+  String get file_move_failed => 'Failure while trying to move the file.';
+
+  @override
+  String get content_set_success => 'Successfully updated content.';
+
+  @override
+  String get content_set_failed => 'Failure while trying to update content.';
+
+  @override
+  String get content_add_success => 'Successfully added content.';
+
+  @override
+  String get content_add_failed => 'Failure while trying to add content.';
+
+  @override
+  String get content_remove_success => 'Successfully removed content.';
+
+  @override
+  String get content_remove_failed => 'Failure while trying to remove content.';
+
+  @override
+  String get content_value_set_success => 'Successfully updated content.';
+
+  @override
+  String get content_value_set_failed => 'Failure while trying to update content.';
+
+  @override
+  String get content_value_add_success => 'Successfully added content.';
+
+  @override
+  String get content_value_add_failed => 'Failure while trying to add content.';
+
+  @override
+  String get content_value_remove_success => 'Successfully removed content.';
+
+  @override
+  String get content_value_remove_failed => 'Failure while trying to remove content.';
+
+  @override
+  String get content_move_failed => 'Failure while trying to move content.';
+
+  @override
+  String get content_not_found => 'No content found!';
 }

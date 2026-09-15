@@ -1,10 +1,16 @@
-import 'package:client/api/controllers/folder_controller.dart';
-import 'package:client/api/controllers/leaf_controller.dart';
-import 'package:client/api/models/folder.dart';
-import 'package:client/api/models/leaf.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import "dart:convert";
+
+import "package:client/api/api_call.dart";
+import "package:client/api/api_call_extensions.dart";
+import "package:client/api/dio/dio_providers.dart";
+import "package:client/api/models/folder.dart";
+import "package:client/api/models/leaf.dart";
+import "package:client/api/root_navigator_key.dart";
+import "package:client/components/global/notification_service.dart";
+import "package:client/l10n/app_localizations.dart";
+import "package:dio/dio.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:talker/talker.dart";
 
 enum FoldersAndFilesStateResponseStatus { success, failure }
 
@@ -26,11 +32,19 @@ class FoldersAndFilesState {
   FoldersAndFilesState({required this.folders, required this.files, required this.folderIndex, required this.fileIndex, required this.isTerm});
 
   FoldersAndFilesState copyWith({List<Folder>? folders, List<Leaf>? files, int? folderIndex, int? fileIndex, bool? isTerm}) {
-    return FoldersAndFilesState(folders: folders ?? this.folders?.map((m) => m.copyWith()).toList(), files: files ?? this.files?.map((m) => m.copyWith()).toList(), folderIndex: folderIndex ?? this.folderIndex, fileIndex: fileIndex ?? this.fileIndex, isTerm: isTerm ?? this.isTerm);
+    return FoldersAndFilesState(
+      folders: folders ?? this.folders?.map((m) => m.copyWith()).toList(),
+      files: files ?? this.files?.map((m) => m.copyWith()).toList(),
+      folderIndex: folderIndex ?? this.folderIndex,
+      fileIndex: fileIndex ?? this.fileIndex,
+      isTerm: isTerm ?? this.isTerm,
+    );
   }
 }
 
 class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
+  Dio get _authDio => ref.read(authDioProvider);
+
   @override
   FoldersAndFilesState build() {
     return FoldersAndFilesState(folders: null, files: null, fileIndex: 0, folderIndex: 0, isTerm: true);
@@ -43,34 +57,51 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
   void setFolderIndex(int index) => state = state.copyWith(folderIndex: index);
 
-  Future<FoldersAndFilesStateResponse> addFolder(String title, String? parentId) async {
-    try {
-      Talker().info('FoldersAndFiles.addFolder is called...');
+  Future<String?> addFolder(String title, String? parentId) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (state.folders == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No folders found!');
+    try {
+      Talker().info("FoldersAndFiles.addFolder is called...");
+
+      final Map<String, dynamic> data = {"title": title};
+      if (parentId != null) data["parentId"] = parentId;
 
       // Send request
-      String newId = await ref.read(folderControllerProvider).create(title: title, parentId: parentId);
+      final result = await apiCall(() => _authDio.post("/api/treeNode/", data: {"treeNode": data}).notifyOnSuccess(l10n.folder_add_success));
+      if (result.isFailure || result.dataOrNull == null) {
+        NotificationService.showError(context: rootContext!, message: l10n.folder_add_failed);
+        return null;
+      }
+      final newId = result.dataOrNull!["id"];
 
-      return _persist(
-        errorMessage: 'Failure while trying to add new folder.',
-        update: () {
-          state.folders!.add(Folder(id: newId, title: title));
-        },
-      );
+      if (state.folders == null) {
+        state.folders = List.from([Folder(id: newId, title: title)]);
+      } else {
+        state.folders!.add(Folder(id: newId, title: title));
+        state = state.copyWith();
+      }
+
+      return newId;
     } catch (e) {
-      Talker().error('FoldersAndFiles.addFolder throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to add new folder.', error: e);
+      Talker().error("FoldersAndFiles.addFolder throws an error", e);
+      NotificationService.showError(context: rootContext!, message: l10n.folder_add_failed);
+      return null;
     } finally {
-      Talker().info('FoldersAndFiles.addFolder call ended');
+      Talker().info("FoldersAndFiles.addFolder call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> setFolder(Folder folder) async {
-    try {
-      Talker().info('FoldersAndFiles.setFolder is called...');
+  /// Currently supports Folder.title field only
+  Future<bool> setFolder(Folder folder) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (state.folders == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No folders found!');
+    try {
+      Talker().info("FoldersAndFiles.setFolder is called...");
+
+      if (state.folders == null) {
+        NotificationService.showError(message: l10n.folders_not_found);
+        return false;
+      }
 
       int? folderIndex;
       for (int i = 0; i < state.folders!.length; i++) {
@@ -78,56 +109,75 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
         folderIndex = i;
         break;
       }
-      if (folderIndex == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Folder not found!');
+      if (folderIndex == null) {
+        NotificationService.showError(message: l10n.folder_not_found);
+        return false;
+      }
 
-      // Send request
-      Response<dynamic> response = await ref.read(folderControllerProvider).patch(id: folder.id, title: folder.title);
+      final Map<String, dynamic> data = {'_id': folder.id, 'title': folder.title};
+      var result = await apiCall(() => _authDio.patch('/api/treeNode/', data: {'treeNode': data}).notifyOnSuccess(l10n.folder_set_success));
+      if (result.isFailure) {
+        NotificationService.showError(message: l10n.folder_set_failed);
+        return false;
+      }
 
-      return _persist(
-        response: response,
-        errorMessage: 'Failure while trying to update folder.',
-        update: () {
-          state.folders![folderIndex!] = folder;
-        },
-      );
+      state.folders![folderIndex] = folder;
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.setFolder throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update folder.', error: e);
+      Talker().error("FoldersAndFiles.setFolder throws an error", e);
+      NotificationService.showError(message: l10n.folder_set_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.setFolder call ended');
+      Talker().info("FoldersAndFiles.setFolder call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> removeFolder(int index) async {
+  Future<bool> removeFolder(int index) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
+
     try {
-      Talker().info('FoldersAndFiles.removeFolder is called...');
+      Talker().info("FoldersAndFiles.removeFolder is called...");
 
-      if (state.folders == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No folders found!');
-      if (index >= state.folders!.length || index < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Folder not found!');
+      if (state.folders == null) {
+        NotificationService.showError(message: l10n.folders_not_found);
+        return false;
+      }
+      if (index >= state.folders!.length || index < 0) {
+        NotificationService.showError(message: l10n.folder_not_found);
+        return false;
+      }
 
-      // Send request
-      Response<dynamic> response = await ref.read(folderControllerProvider).delete(id: state.folders![index].id);
+      final result = await apiCall(() => _authDio.delete('/api/treeNode/?treeNodeId=${state.folders![index].id}').notifyOnSuccess(l10n.folder_remove_success));
+      if (result.isFailure) {
+        NotificationService.showError(message: l10n.folder_remove_failed);
+        return false;
+      }
 
-      return _persist(
-        response: response,
-        errorMessage: 'Failure while trying to remove folder.',
-        update: () {
-          state.folders!.removeAt(index);
-        },
-      );
+      state.folders!.removeAt(index);
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.removeFolder throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove folder.', error: e);
+      Talker().error("FoldersAndFiles.removeFolder throws an error", e);
+      NotificationService.showError(message: l10n.folder_remove_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.removeFolder call ended');
+      Talker().info("FoldersAndFiles.removeFolder call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> removeFolderById(String id) async {
-    try {
-      Talker().info('FoldersAndFiles.removeFolderById is called...');
+  Future<bool> removeFolderById(String id) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (state.folders == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No folders found!');
+    try {
+      Talker().info("FoldersAndFiles.removeFolderById is called...");
+
+      if (state.folders == null) {
+        NotificationService.showError(message: l10n.folders_not_found);
+        return false;
+      }
 
       int? folderIndex;
       for (int i = 0; i < state.folders!.length; i++) {
@@ -135,41 +185,53 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
         folderIndex = i;
         break;
       }
-      if (folderIndex == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'folder not found!');
+      if (folderIndex == null) {
+        NotificationService.showError(message: l10n.folder_not_found);
+        return false;
+      }
 
-      // Send request
-      Response<dynamic> response = await ref.read(folderControllerProvider).delete(id: id);
+      final result = await apiCall(() => _authDio.delete('/api/treeNode/?treeNodeId=$id').notifyOnSuccess(l10n.folder_remove_success));
+      if (result.isFailure) {
+        NotificationService.showError(message: l10n.folder_remove_failed);
+        return false;
+      }
 
-      return _persist(
-        response: response,
-        errorMessage: 'Failure while trying to remove folder.',
-        update: () {
-          state.folders!.removeWhere((f) => f.id == id);
-        },
-      );
+      state.folders!.removeWhere((f) => f.id == id);
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.removeFolderById throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove folder.', error: e);
+      Talker().error("FoldersAndFiles.removeFolderById throws an error", e);
+      NotificationService.showError(message: l10n.folder_remove_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.removeFolderById call ended');
+      Talker().info("FoldersAndFiles.removeFolderById call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> moveFolder(Folder folder, String? destId) async {
-    try {
-      Talker().info('FoldersAndFiles.moveFolder is called...');
-      Response<dynamic> response = await ref.read(folderControllerProvider).patchParentId(id: folder.id, parentId: destId);
+  Future<bool> moveFolder(Folder folder, String? destId) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! > 299) {
-        return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move folder.');
+    try {
+      Talker().info("FoldersAndFiles.moveFolder is called...");
+
+      final Map<String, dynamic> data = {"_id": folder.id};
+      data["parentId"] = destId;
+
+      // Send request
+      final result = await apiCall(() => _authDio.patch("/api/treeNode/", data: {"treeNode": data}).notifyOnSuccess(l10n.folder_move_success));
+      if (result.isFailure) {
+        NotificationService.showError(context: rootContext!, message: l10n.folder_move_failed);
+        return false;
       }
 
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.success);
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.moveFolder throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update file.', error: e);
+      Talker().error("FoldersAndFiles.moveFolder throws an error", e);
+      NotificationService.showError(context: rootContext!, message: l10n.folder_move_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.moveFolder call ended');
+      Talker().info("FoldersAndFiles.moveFolder call ended");
     }
   }
 
@@ -178,34 +240,50 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
   void setFileIndex(int index) => state = state.copyWith(fileIndex: index);
 
-  Future<FoldersAndFilesStateResponse> addFile(String title, String treeNodeId) async {
-    try {
-      Talker().info('FoldersAndFiles.addFile is called...');
+  Future<String?> addFile(String title, String treeNodeId) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
+    try {
+      Talker().info("FoldersAndFiles.addFile is called...");
+
+      final Map<String, dynamic> data = {"title": title, "treeNodeId": treeNodeId, "termContents": [], "definitionContents": []};
 
       // Send request
-      String newId = await ref.read(leafControllerProvider).create(title: title, treeNodeId: treeNodeId, termContents: [], definitionContents: []);
+      final result = await apiCall(() => _authDio.post("/api/leaf/", data: {"leaf": data}).notifyOnSuccess(l10n.file_add_success));
+      if (result.isFailure || result.dataOrNull == null) {
+        NotificationService.showError(context: rootContext!, message: l10n.file_add_failed);
+        return null;
+      }
 
-      return _persist(
-        errorMessage: 'Failure while trying to add new file.',
-        update: () {
-          state.files!.add(Leaf(id: newId, treeNodeId: treeNodeId, title: title, termContents: [], definitionContents: []));
-        },
-      );
+      final newId = result.dataOrNull!["id"];
+
+      if (state.files == null) {
+        state.files = List.from([Leaf(id: newId, treeNodeId: treeNodeId, title: title, termContents: [], definitionContents: [])]);
+      } else {
+        state.files!.add(Leaf(id: newId, treeNodeId: treeNodeId, title: title, termContents: [], definitionContents: []));
+        state = state.copyWith();
+      }
+
+      return newId;
     } catch (e) {
-      Talker().error('FoldersAndFiles.addFile throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to add new file.', error: e);
+      Talker().error("FoldersAndFiles.addFile throws an error", e);
+      NotificationService.showError(context: rootContext!, message: l10n.file_add_failed);
+      return null;
     } finally {
-      Talker().info('FoldersAndFiles.addFile call ended');
+      Talker().info("FoldersAndFiles.addFile call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> setFile(Leaf file) async {
-    try {
-      Talker().info('FoldersAndFiles.setFile is called...');
+  Future<bool> setFile(Leaf file) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
+    try {
+      Talker().info("FoldersAndFiles.setFile is called...");
+
+      if (state.files == null) {
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
 
       int? fileIndex;
       for (int i = 0; i < state.files!.length; i++) {
@@ -213,144 +291,204 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
         fileIndex = i;
         break;
       }
-      if (fileIndex == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
+      if (fileIndex == null) {
+        NotificationService.showError(message: l10n.file_not_found);
+        return false;
+      }
 
-      // Send request
-      Response<dynamic> response = await ref.read(leafControllerProvider).patch(id: file.id, title: file.title, termContents: file.termContents, definitionContents: file.definitionContents);
-
-      return _persist(
-        response: response,
-        errorMessage: 'Failure while trying to update file.',
-        update: () {
-          state.files![fileIndex!] = file;
-        },
+      ApiCallResult<dynamic> result = await _updateLeaf(
+        id: file.id,
+        title: file.title,
+        definitionContents: file.definitionContents,
+        termContents: file.termContents,
+        successMessage: l10n.file_move_success,
       );
+      if (result.isFailure) {
+        NotificationService.showError(context: rootContext!, message: l10n.file_move_failed);
+        return false;
+      }
+
+      state.files![fileIndex] = file;
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.setFile throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update file.', error: e);
+      Talker().error("FoldersAndFiles.setFile throws an error", e);
+      NotificationService.showError(message: l10n.file_set_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.setFile call ended');
+      Talker().info("FoldersAndFiles.setFile call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> removeFile(int index) async {
+  Future<bool> removeFile(int index) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
+
     try {
-      Talker().info('FoldersAndFiles.removeFile is called...');
+      Talker().info("FoldersAndFiles.removeFile is called...");
 
-      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
-      if (index >= state.files!.length || index < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
+      if (state.files == null) {
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
+      if (index >= state.files!.length || index < 0) {
+        NotificationService.showError(message: l10n.file_not_found);
+        return false;
+      }
 
-      // Send request
-      Response<dynamic> response = await ref.read(leafControllerProvider).delete(id: state.files![index].id);
+      final result = await apiCall(() => _authDio.delete('/api/leaf/?id=${state.files![index].id}').notifyOnSuccess(l10n.file_remove_success));
+      if (result.isFailure) {
+        NotificationService.showError(message: l10n.file_remove_failed);
+        return false;
+      }
 
-      return _persist(
-        response: response,
-        errorMessage: 'Failure while trying to remove file.',
-        update: () {
-          state.files!.removeAt(index);
-        },
-      );
+      state.files!.removeAt(index);
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.removeFile throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove file.', error: e);
+      Talker().error("FoldersAndFiles.removeFile throws an error", e);
+      NotificationService.showError(message: l10n.file_remove_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.removeFile call ended');
+      Talker().info("FoldersAndFiles.removeFile call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> removeFileById(String id) async {
+  Future<bool> removeFileById(String id) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
+
     try {
-      Talker().info('FoldersAndFiles.removeFileById is called...');
+      Talker().info("FoldersAndFiles.removeFileById is called...");
 
-      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
+      if (state.files == null) {
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
 
-      Leaf? file;
+      int? fileIndex;
       for (int i = 0; i < state.files!.length; i++) {
         if (state.files![i].id != id) continue;
-        file = state.files![i];
+        fileIndex = i;
         break;
       }
-      if (file == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
+      if (fileIndex == null) {
+        NotificationService.showError(message: l10n.file_not_found);
+        return false;
+      }
 
-      // Send request
-      Response<dynamic> response = await ref.read(leafControllerProvider).delete(id: id);
+      final result = await apiCall(() => _authDio.delete('/api/leaf/?id=$id').notifyOnSuccess(l10n.file_remove_success));
+      if (result.isFailure) {
+        NotificationService.showError(message: l10n.file_remove_failed);
+        return false;
+      }
 
-      return _persist(
-        response: response,
-        errorMessage: 'Failure while trying to remove file.',
-        update: () {
-          state.files!.removeWhere((f) => f.id == id);
-        },
-      );
+      state.files!.removeWhere((f) => f.id == id);
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.removeFileById throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove file.', error: e);
+      Talker().error("FoldersAndFiles.removeFileById throws an error", e);
+      NotificationService.showError(message: l10n.file_remove_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.removeFileById call ended');
+      Talker().info("FoldersAndFiles.removeFileById call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> moveFile(Leaf file, String? destId) async {
-    try {
-      Talker().info('FoldersAndFiles.moveFile is called...');
-      Response<dynamic> response = await ref.read(leafControllerProvider).patch(id: file.id, treeNodeId: destId);
+  Future<bool> moveFile(Leaf file, String destId) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! > 299) {
-        return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move folder.');
+    try {
+      Talker().info("FoldersAndFiles.moveFile is called...");
+
+      ApiCallResult<dynamic> result = await _updateLeaf(id: file.id, treeNodeId: destId, successMessage: l10n.file_move_success);
+      if (result.isFailure) {
+        NotificationService.showError(context: rootContext!, message: l10n.file_move_failed);
+        return false;
       }
 
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.success);
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.moveFile throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update file.', error: e);
+      Talker().error("FoldersAndFiles.moveFile throws an error", e);
+      NotificationService.showError(context: rootContext!, message: l10n.file_move_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.moveFile call ended');
+      Talker().info("FoldersAndFiles.moveFile call ended");
     }
   }
 
   // Contents
-  Future<FoldersAndFilesStateResponse> setContent(Content content, int contentIndex) async {
-    try {
-      Talker().info('FoldersAndFiles.setContent is called...');
+  Future<bool> setContent(Content content, int contentIndex) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
+    try {
+      Talker().info("FoldersAndFiles.setContent is called...");
+
+      if (state.files == null) {
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
       final List<Content> contents;
       if (state.isTerm) {
-        if (contentIndex >= state.files![state.fileIndex].termContents.length || contentIndex < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
+        if (contentIndex >= state.files![state.fileIndex].termContents.length || contentIndex < 0) {
+          NotificationService.showError(message: l10n.file_not_found);
+          return false;
+        }
         contents = tempFile.termContents.map((m) => m.copyWith()).toList();
       } else {
-        if (contentIndex >= state.files![state.fileIndex].definitionContents.length || contentIndex < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
+        if (contentIndex >= state.files![state.fileIndex].definitionContents.length || contentIndex < 0) {
+          NotificationService.showError(message: l10n.file_not_found);
+          return false;
+        }
         contents = tempFile.definitionContents.map((m) => m.copyWith()).toList();
       }
 
       // Update
       contents[contentIndex] = content;
 
-      // Send request
-      Response<dynamic> result;
+      ApiCallResult<dynamic> result;
       if (state.isTerm) {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, termContents: contents);
+        result = await _updateLeaf(id: tempFile.id, termContents: contents, successMessage: l10n.content_set_success);
       } else {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, definitionContents: contents);
+        result = await _updateLeaf(id: tempFile.id, definitionContents: contents, successMessage: l10n.content_set_success);
+      }
+      if (result.isFailure) {
+        NotificationService.showError(context: rootContext!, message: l10n.content_set_failed);
+        return false;
       }
 
-      return _persistContents(response: result, message: 'Failure while trying to update content.', contents: contents);
+      if (state.isTerm) {
+        state.files![state.fileIndex].termContents = contents;
+      } else {
+        state.files![state.fileIndex].definitionContents = contents;
+      }
+
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.setContent throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update content.', error: e);
+      Talker().error("FoldersAndFiles.setContent throws an error", e);
+      NotificationService.showError(context: rootContext!, message: l10n.content_set_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.setContent call ended');
+      Talker().info("FoldersAndFiles.setContent call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> addContent(Content content) async {
-    try {
-      Talker().info('FoldersAndFiles.addContent is called...');
+  Future<bool> addContent(Content content) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
+    try {
+      Talker().info("FoldersAndFiles.addContent is called...");
+
+      if (state.files == null) {
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
@@ -364,28 +502,45 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       // Update
       contents.add(content);
 
-      // Send request
-      Response<dynamic> result;
+      ApiCallResult<dynamic> result;
       if (state.isTerm) {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, termContents: contents);
+        result = await _updateLeaf(id: tempFile.id, termContents: contents, successMessage: l10n.content_add_success);
       } else {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, definitionContents: contents);
+        result = await _updateLeaf(id: tempFile.id, definitionContents: contents, successMessage: l10n.content_add_success);
+      }
+      if (result.isFailure) {
+        NotificationService.showError(context: rootContext!, message: l10n.content_add_failed);
+        return false;
       }
 
-      return _persistContents(response: result, message: 'Failure while trying to add new content.', contents: contents);
+      if (state.isTerm) {
+        state.files![state.fileIndex].termContents = contents;
+      } else {
+        state.files![state.fileIndex].definitionContents = contents;
+      }
+
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.addContent throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to add new content.', error: e);
+      Talker().error("FoldersAndFiles.addContent throws an error", e);
+      NotificationService.showError(context: rootContext!, message: l10n.content_add_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.addContent call ended');
+      Talker().info("FoldersAndFiles.addContent call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> removeContent(int index) async {
-    try {
-      Talker().info('FoldersAndFiles.removeContent is called...');
+  Future<bool> removeContent(int index) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
+    try {
+      Talker().info("FoldersAndFiles.removeContent is called...");
+
+      if (state.files == null) {
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
@@ -399,65 +554,111 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       // Update
       contents.removeAt(index);
 
-      // Send request
-      Response<dynamic> result;
+      ApiCallResult<dynamic> result;
       if (state.isTerm) {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, termContents: contents);
+        result = await _updateLeaf(id: tempFile.id, termContents: contents, successMessage: l10n.content_remove_success);
       } else {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, definitionContents: contents);
+        result = await _updateLeaf(id: tempFile.id, definitionContents: contents, successMessage: l10n.content_remove_success);
+      }
+      if (result.isFailure) {
+        NotificationService.showError(context: rootContext!, message: l10n.content_remove_failed);
+        return false;
       }
 
-      return _persistContents(response: result, message: 'Failure while trying to remove content.', contents: contents);
+      if (state.isTerm) {
+        state.files![state.fileIndex].termContents = contents;
+      } else {
+        state.files![state.fileIndex].definitionContents = contents;
+      }
+
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.removeContent throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove content.', error: e);
+      Talker().error("FoldersAndFiles.removeContent throws an error", e);
+      NotificationService.showError(context: rootContext!, message: l10n.content_remove_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.removeContent call ended');
+      Talker().info("FoldersAndFiles.removeContent call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> setContentValue(String value, int contentIndex, int contentValueIndex) async {
-    try {
-      Talker().info('FoldersAndFiles.setContent is called...');
+  Future<bool> setContentValue(String value, int contentIndex, int contentValueIndex) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
+    try {
+      Talker().info("FoldersAndFiles.setContent is called...");
+
+      if (state.files == null) {
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
       final List<Content> contents;
       if (state.isTerm) {
-        if (contentIndex < 0 || contentValueIndex < 0 || contentIndex >= state.files![state.fileIndex].termContents.length || contentValueIndex >= state.files![state.fileIndex].termContents[contentIndex].value.length) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
+        if (contentIndex < 0 ||
+            contentValueIndex < 0 ||
+            contentIndex >= state.files![state.fileIndex].termContents.length ||
+            contentValueIndex >= state.files![state.fileIndex].termContents[contentIndex].value.length) {
+          NotificationService.showError(message: l10n.file_not_found);
+          return false;
+        }
         contents = tempFile.termContents.map((m) => m.copyWith()).toList();
       } else {
-        if (contentIndex < 0 || contentValueIndex < 0 || contentIndex >= state.files![state.fileIndex].definitionContents.length || contentValueIndex >= state.files![state.fileIndex].definitionContents[contentIndex].value.length) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'File not found!');
+        if (contentIndex < 0 ||
+            contentValueIndex < 0 ||
+            contentIndex >= state.files![state.fileIndex].definitionContents.length ||
+            contentValueIndex >= state.files![state.fileIndex].definitionContents[contentIndex].value.length) {
+          NotificationService.showError(message: l10n.file_not_found);
+          return false;
+        }
         contents = tempFile.definitionContents.map((m) => m.copyWith()).toList();
       }
 
       // Update
       contents[contentIndex].value[contentValueIndex] = value;
 
-      // Send request
-      Response<dynamic> result;
+      ApiCallResult<dynamic> result;
       if (state.isTerm) {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, termContents: contents);
+        result = await _updateLeaf(id: tempFile.id, termContents: contents, successMessage: l10n.content_value_set_success);
       } else {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, definitionContents: contents);
+        result = await _updateLeaf(id: tempFile.id, definitionContents: contents, successMessage: l10n.content_value_set_success);
+      }
+      if (result.isFailure) {
+        NotificationService.showError(context: rootContext!, message: l10n.content_value_set_failed);
+        return false;
       }
 
-      return _persistContents(response: result, message: 'Failure while trying to update content.', contents: contents);
+      if (state.isTerm) {
+        state.files![state.fileIndex].termContents = contents;
+      } else {
+        state.files![state.fileIndex].definitionContents = contents;
+      }
+
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.setContent throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to update content.', error: e);
+      Talker().error("FoldersAndFiles.setContent throws an error", e);
+      NotificationService.showError(context: rootContext!, message: l10n.content_value_set_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.setContent call ended');
+      Talker().info("FoldersAndFiles.setContent call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> addContentValue(String value, int contentIndex) async {
-    try {
-      Talker().info('FoldersAndFiles.addContentValue is called...');
+  Future<bool> addContentValue(String value, int contentIndex) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
+    try {
+      Talker().info("FoldersAndFiles.addContentValue is called...");
+
+      if (state.files == null) {
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
@@ -471,28 +672,45 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       // Update
       contents[contentIndex].value.add(value);
 
-      // Send request
-      Response<dynamic> result;
+      ApiCallResult<dynamic> result;
       if (state.isTerm) {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, termContents: contents);
+        result = await _updateLeaf(id: tempFile.id, termContents: contents, successMessage: l10n.content_value_add_success);
       } else {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, definitionContents: contents);
+        result = await _updateLeaf(id: tempFile.id, definitionContents: contents, successMessage: l10n.content_value_add_success);
+      }
+      if (result.isFailure) {
+        NotificationService.showError(context: rootContext!, message: l10n.content_value_add_failed);
+        return false;
       }
 
-      return _persistContents(response: result, message: 'Failure while trying to add new content.', contents: contents);
+      if (state.isTerm) {
+        state.files![state.fileIndex].termContents = contents;
+      } else {
+        state.files![state.fileIndex].definitionContents = contents;
+      }
+
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.addContentValue throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to add new content.', error: e);
+      Talker().error("FoldersAndFiles.addContentValue throws an error", e);
+      NotificationService.showError(context: rootContext!, message: l10n.content_value_add_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.addContentValue call ended');
+      Talker().info("FoldersAndFiles.addContentValue call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> removeContentValue(int contentIndex, int valueIndex) async {
-    try {
-      Talker().info('FoldersAndFiles.removeContentValue is called...');
+  Future<bool> removeContentValue(int contentIndex, int valueIndex) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
 
-      if (state.files == null) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No files found!');
+    try {
+      Talker().info("FoldersAndFiles.removeContentValue is called...");
+
+      if (state.files == null) {
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
 
       // Create temporary data
       final tempFile = state.files![state.fileIndex].copyWith();
@@ -506,37 +724,62 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       // Update
       contents[contentIndex].value.removeAt(valueIndex);
 
-      // Send request
-      Response<dynamic> result;
+      ApiCallResult<dynamic> result;
       if (state.isTerm) {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, termContents: contents);
+        result = await _updateLeaf(id: tempFile.id, termContents: contents, successMessage: l10n.content_value_remove_success);
       } else {
-        result = await ref.read(leafControllerProvider).patch(id: tempFile.id, definitionContents: contents);
+        result = await _updateLeaf(id: tempFile.id, definitionContents: contents, successMessage: l10n.content_value_remove_success);
+      }
+      if (result.isFailure) {
+        NotificationService.showError(context: rootContext!, message: l10n.content_value_remove_failed);
+        return false;
       }
 
-      return _persistContents(response: result, message: 'Failure while trying to remove content.', contents: contents);
+      if (state.isTerm) {
+        state.files![state.fileIndex].termContents = contents;
+      } else {
+        state.files![state.fileIndex].definitionContents = contents;
+      }
+
+      state = state.copyWith();
+
+      return true;
     } catch (e) {
-      Talker().error('FoldersAndFiles.removeContentValue throws an error', e);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to remove content.', error: e);
+      Talker().error("FoldersAndFiles.removeContentValue throws an error", e);
+      NotificationService.showError(context: rootContext!, message: l10n.content_value_remove_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.removeContentValue call ended');
+      Talker().info("FoldersAndFiles.removeContentValue call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> moveContent(int fromIndex, int toIndex) async {
+  Future<bool> moveContent(int fromIndex, int toIndex) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
+
     try {
-      Talker().info('FoldersAndFiles.moveContent is called...');
+      Talker().info("FoldersAndFiles.moveContent is called...");
 
-      if (toIndex < 0 || fromIndex < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Invalid index provided');
-      if (state.files == null || state.files!.isEmpty) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No cards found!');
+      if (toIndex < 0 || fromIndex < 0) {
+        Talker().warning("Invalid index provided");
+        NotificationService.showError(message: l10n.content_move_failed);
+        return false;
+      }
+      Talker().info("int fromIndex: $fromIndex, int toIndex: $toIndex");
 
-      Talker().info('int fromIndex: $fromIndex, int toIndex: $toIndex');
+      if (state.files == null || state.files!.isEmpty) {
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
 
       final file = state.files![state.fileIndex].copyWith();
 
       final contents = state.isTerm ? file.termContents : file.definitionContents;
 
-      if (toIndex > contents.length || fromIndex >= contents.length) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Invalid index provided');
+      if (toIndex > contents.length || fromIndex >= contents.length) {
+        Talker().warning("Invalid index provided");
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
 
       final fromContent = contents.removeAt(fromIndex).copyWith();
 
@@ -546,31 +789,49 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       return await setFile(file);
     } catch (e, st) {
-      Talker().error('FoldersAndFiles.moveContent throws an error', e, st);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move content.', error: e);
+      Talker().error("FoldersAndFiles.moveContent throws an error", e, st);
+      NotificationService.showError(message: l10n.content_move_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.moveContent call ended');
+      Talker().info("FoldersAndFiles.moveContent call ended");
     }
   }
 
-  Future<FoldersAndFilesStateResponse> moveContentValue(int contentIndex, int fromIndex, int toIndex) async {
+  Future<bool> moveContentValue(int contentIndex, int fromIndex, int toIndex) async {
+    AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
+
     try {
-      Talker().info('FoldersAndFiles.moveContentValue is called...');
+      Talker().info("FoldersAndFiles.moveContentValue is called...");
 
-      if (contentIndex < 0 || toIndex < 0 || fromIndex < 0) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Invalid index provided');
-      if (state.files == null || state.files!.isEmpty) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'No cards found!');
+      if (contentIndex < 0 || toIndex < 0 || fromIndex < 0) {
+        Talker().warning("Invalid index provided");
+        NotificationService.showError(message: l10n.content_move_failed);
+        return false;
+      }
+      Talker().info("int contentIndex: $contentIndex, int fromIndex: $fromIndex, int toIndex: $toIndex");
 
-      Talker().info('int contentIndex: $contentIndex, int fromIndex: $fromIndex, int toIndex: $toIndex');
+      if (state.files == null || state.files!.isEmpty) {
+        NotificationService.showError(message: l10n.files_not_found);
+        return false;
+      }
 
       final file = state.files![state.fileIndex].copyWith();
 
       final contents = state.isTerm ? file.termContents : file.definitionContents;
 
-      if (contentIndex >= contents.length) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'content not found');
+      if (contentIndex >= contents.length) {
+        Talker().warning('content not found');
+        NotificationService.showError(message: l10n.content_not_found);
+        return false;
+      }
 
       final content = contents[contentIndex];
 
-      if (toIndex > content.value.length || fromIndex >= content.value.length) return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'content value not found');
+      if (toIndex > content.value.length || fromIndex >= content.value.length) {
+        Talker().warning('content value not found');
+        NotificationService.showError(message: l10n.content_not_found);
+        return false;
+      }
 
       final fromContentValue = content.value.removeAt(fromIndex);
 
@@ -580,35 +841,42 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       return await setFile(file);
     } catch (e, st) {
-      Talker().error('FoldersAndFiles.moveContentValue throws an error', e, st);
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: 'Failure while trying to move content.', error: e);
+      Talker().error("FoldersAndFiles.moveContentValue throws an error", e, st);
+      NotificationService.showError(message: l10n.content_move_failed);
+      return false;
     } finally {
-      Talker().info('FoldersAndFiles.moveContentValue call ended');
+      Talker().info("FoldersAndFiles.moveContentValue call ended");
     }
   }
 
-  FoldersAndFilesStateResponse _persistContents({required Response response, required String message, required List<Content> contents}) => _persist(
-    response: response,
-    errorMessage: message,
-    update: () {
-      if (state.isTerm) {
-        state.files![state.fileIndex].termContents = contents;
-      } else {
-        state.files![state.fileIndex].definitionContents = contents;
-      }
-    },
-  );
+  Future<ApiCallResult<dynamic>> _updateLeaf({
+    required String id,
+    String? title,
+    String? treeNodeId,
+    List<Content>? termContents,
+    List<Content>? definitionContents,
+    String? successMessage,
+  }) async {
+    Talker().info('FoldersAndFiles._updateLeaf is called...');
 
-  FoldersAndFilesStateResponse _persist({required String errorMessage, Response? response, Function? update}) {
-    if (response == null || (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300)) {
-      update?.call();
+    final Map<String, dynamic> data = {'_id': id};
+    if (title != null) data['title'] = title;
+    if (treeNodeId != null) data['treeNodeId'] = treeNodeId;
+    if (termContents != null) data['termContents'] = termContents.map((c) => c.toJson()).toList();
+    if (definitionContents != null) data['definitionContents'] = definitionContents.map((c) => c.toJson()).toList();
 
-      state = state.copyWith();
+    Talker().info('input data: ${jsonEncode(data)}');
 
-      return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.success);
-    }
+    final result = await apiCall(() {
+      final dio = _authDio.patch("/api/leaf/", data: {"leaf": data});
 
-    return FoldersAndFilesStateResponse(status: FoldersAndFilesStateResponseStatus.failure, message: errorMessage);
+      if (successMessage != null) dio.notifyOnSuccess(successMessage);
+
+      return dio;
+    });
+
+    Talker().info('FoldersAndFiles._updateLeaf call ended');
+    return result;
   }
 }
 

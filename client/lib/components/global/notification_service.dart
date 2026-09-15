@@ -12,8 +12,10 @@ class NotificationService {
     return Overlay.maybeOf(context) ?? rootNavigatorKey.currentState?.overlay;
   }
 
-  static void showError({required BuildContext context, required String message, Duration? duration}) {
+  static void showError({BuildContext? context, required String message, Duration? duration}) {
     final theme = ThemeModeNotifier.getTheme(container.read(themeModeProvider));
+
+    context ??= rootContext!;
 
     final overlay = _resolveOverlay(context);
     if (overlay == null) return;
@@ -36,7 +38,7 @@ class NotificationService {
 
     entry = OverlayEntry(
       builder: (_) => Positioned(
-        top: MediaQuery.of(context).padding.top + 16,
+        top: MediaQuery.of(context!).padding.top + 16,
         left: 16,
         right: 16,
         child: Material(
@@ -65,8 +67,10 @@ class NotificationService {
     timer = Timer(duration ?? const Duration(seconds: 6), dismiss);
   }
 
-  static void showSuccess({required BuildContext context, required String message, Duration? duration}) {
+  static void showSuccess({BuildContext? context, required String message, Duration? duration}) {
     final theme = ThemeModeNotifier.getTheme(container.read(themeModeProvider));
+
+    context ??= rootContext!;
 
     final overlay = _resolveOverlay(context);
     if (overlay == null) return;
@@ -82,7 +86,7 @@ class NotificationService {
 
     entry = OverlayEntry(
       builder: (_) => Positioned(
-        top: MediaQuery.of(context).padding.top + 16,
+        top: MediaQuery.of(context!).padding.top + 16,
         left: 16,
         right: 16,
         child: Material(

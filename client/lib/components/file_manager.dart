@@ -1,7 +1,6 @@
 import 'package:client/api/models/leaf.dart';
 import 'package:client/api/providers/folders_and_files.dart';
 import 'package:client/components/contents/choose_content_type_dialog.dart';
-import 'package:client/components/global/notification_service.dart';
 import 'package:client/components/dialogs/upload/audio_upload_dialog.dart';
 import 'package:client/components/button.dart';
 import 'package:client/components/content_container.dart';
@@ -13,7 +12,6 @@ import 'package:client/theme/theme_radius.dart';
 import 'package:client/theme/theme_spacing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
-import 'package:talker/talker.dart';
 
 import 'header_delegate.dart';
 
@@ -29,101 +27,93 @@ class FileManager extends ConsumerStatefulWidget {
 
 class _FileManager extends ConsumerState<FileManager> {
   bool _editing = false;
+  int? _isDeleting;
   int? _isAdding;
 
   int? _movingContentIndex;
   bool _isMovingContent = false;
 
   Future<void> _onContentAdd() async {
-    FoldersAndFilesStateResponse? result;
-    try {
+    setState(() {
+      _isAdding = -1;
+    });
+
+    ContentType? type = await showDialog<ContentType?>(context: context, builder: (_) => ChooseContentTypeDialog());
+    if (type == null || !mounted) return;
+
+    await ref.read(foldersAndFilesProvider.notifier).addContent(Content(type: type, value: []));
+
+    if (mounted) {
       setState(() {
-        _isAdding = -1;
+        _isAdding = null;
       });
-
-      ContentType? type = await showDialog<ContentType?>(context: context, builder: (_) => ChooseContentTypeDialog());
-      if (type == null || !mounted) return;
-
-      result = await ref.read(foldersAndFilesProvider.notifier).addContent(Content(type: type, value: []));
-    } catch (e) {
-      Talker().error('Failure while trying to add new content.', e);
-      if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to add new content.');
-    } finally {
-      if (mounted) {
-        if (result?.status == FoldersAndFilesStateResponseStatus.failure) {
-          NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to add new content.');
-        }
-        if (result?.status == FoldersAndFilesStateResponseStatus.success) {
-          NotificationService.showSuccess(context: context, message: 'Successfully added new content.');
-        }
-        setState(() {
-          _isAdding = null;
-        });
-      }
     }
   }
 
   Future<void> _onContentValueAdd({required int index}) async {
-    FoldersAndFilesStateResponse? result;
-    try {
+    setState(() {
+      _isAdding = index;
+    });
+
+    final p = ref.watch(foldersAndFilesProvider);
+    final file = p.files![p.fileIndex];
+    List<Content> contents;
+    if (p.isTerm) {
+      contents = file.termContents;
+    } else {
+      contents = file.definitionContents;
+    }
+
+    switch (contents[index].type) {
+      case ContentType.string:
+        await ref.read(foldersAndFilesProvider.notifier).addContentValue('', index);
+        break;
+
+      case ContentType.richText:
+        await ref.read(foldersAndFilesProvider.notifier).addContentValue('', index);
+        break;
+
+      case ContentType.imageId:
+        String? newId = await showDialog<String?>(context: context, builder: (_) => ImageUploadDialog());
+        if (newId == null || !mounted) return;
+
+        await ref.read(foldersAndFilesProvider.notifier).addContentValue(newId, index);
+        break;
+      case ContentType.videoId:
+        String? newId = await showDialog<String?>(context: context, builder: (_) => VideoUploadDialog());
+        if (newId == null || !mounted) return;
+
+        await ref.read(foldersAndFilesProvider.notifier).addContentValue(newId, index);
+      case ContentType.audioId:
+        String? newId = await showDialog<String?>(context: context, builder: (_) => AudioUploadDialog());
+        if (newId == null || !mounted) return;
+
+        await ref.read(foldersAndFilesProvider.notifier).addContentValue(newId, index);
+    }
+    if (mounted) {
       setState(() {
-        _isAdding = index;
+        _isAdding = null;
       });
-
-      final p = ref.watch(foldersAndFilesProvider);
-      final file = p.files![p.fileIndex];
-      List<Content> contents;
-      if (p.isTerm) {
-        contents = file.termContents;
-      } else {
-        contents = file.definitionContents;
-      }
-
-      switch (contents[index].type) {
-        case ContentType.string:
-          result = await ref.read(foldersAndFilesProvider.notifier).addContentValue('', index);
-          break;
-
-        case ContentType.richText:
-          result = await ref.read(foldersAndFilesProvider.notifier).addContentValue('', index);
-          break;
-
-        case ContentType.imageId:
-          String? newId = await showDialog<String?>(context: context, builder: (_) => ImageUploadDialog());
-          if (newId == null || !mounted) return;
-
-          result = await ref.read(foldersAndFilesProvider.notifier).addContentValue(newId, index);
-          break;
-        case ContentType.videoId:
-          String? newId = await showDialog<String?>(context: context, builder: (_) => VideoUploadDialog());
-          if (newId == null || !mounted) return;
-
-          result = await ref.read(foldersAndFilesProvider.notifier).addContentValue(newId, index);
-        case ContentType.audioId:
-          String? newId = await showDialog<String?>(context: context, builder: (_) => AudioUploadDialog());
-          if (newId == null || !mounted) return;
-
-          result = await ref.read(foldersAndFilesProvider.notifier).addContentValue(newId, index);
-      }
-    } catch (e) {
-      Talker().error('Failure while trying to add new content.', e);
-      if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to add new content.');
-    } finally {
-      if (mounted) {
-        if (result?.status == FoldersAndFilesStateResponseStatus.failure) {
-          NotificationService.showError(context: context, message: result?.message ?? 'Failure while trying to add new content.');
-        }
-        if (result?.status == FoldersAndFilesStateResponseStatus.success) {
-          NotificationService.showSuccess(context: context, message: 'Successfully added new content.');
-        }
-        setState(() {
-          _isAdding = null;
-        });
-      }
     }
   }
 
-  Future<void> _onContentDelete(int index) async {
+  Future<bool> _contentDelete(int index) async {
+    setState(() {
+      _isDeleting = index;
+    });
+
+    final result = await ref.read(foldersAndFilesProvider.notifier).removeContent(index);
+
+    if (mounted) {
+      setState(() {
+        _isDeleting = null;
+      });
+    }
+
+    return result;
+  }
+
+  Future<void> _showContentDeleteDialog(int index) async {
     showDialog(
       context: context,
       builder: (_) {
@@ -144,7 +134,14 @@ class _FileManager extends ConsumerState<FileManager> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Button(type: ButtonType.text, color: ThemeColorName.error, onPressed: () => Navigator.pop(context), label: 'No'),
+                      Button(
+                        type: ButtonType.text,
+                        color: ThemeColorName.error,
+                        onPressed: () {
+                          if (mounted) Navigator.pop(context);
+                        },
+                        label: 'No',
+                      ),
 
                       const SizedBox(width: 8),
 
@@ -152,8 +149,8 @@ class _FileManager extends ConsumerState<FileManager> {
                         type: ButtonType.elevated,
                         color: ThemeColorName.success,
                         onPressed: () async {
-                          await _contentDelete(index);
-                          if (mounted) Navigator.pop(context);
+                          final result = await _contentDelete(index);
+                          if (mounted && result) Navigator.pop(context);
                         },
                         label: "Yes",
                       ),
@@ -166,26 +163,6 @@ class _FileManager extends ConsumerState<FileManager> {
         );
       },
     );
-  }
-
-  Future<void> _contentDelete(int index) async {
-    try {
-      FoldersAndFilesStateResponse result = await ref.read(foldersAndFilesProvider.notifier).removeContent(index);
-      if (mounted) {
-        if (result.status == FoldersAndFilesStateResponseStatus.failure) {
-          NotificationService.showError(context: context, message: result.message ?? 'Failure while trying to remove content.');
-        }
-        if (result.status == FoldersAndFilesStateResponseStatus.success) {
-          NotificationService.showSuccess(context: context, message: 'Successfully removed content.');
-        }
-        setState(() {
-          _isAdding = null;
-        });
-      }
-    } catch (e) {
-      Talker().error('Failure while trying to remove content.', e);
-      if (mounted) NotificationService.showError(context: context, message: 'Failure while trying to remove contents.');
-    }
   }
 
   @override
@@ -377,7 +354,14 @@ class _FileManager extends ConsumerState<FileManager> {
                                         isLoading: _isAdding == contentIndex,
                                         onPressed: () => _onContentValueAdd(index: contentIndex),
                                       ),
-                                      Button(type: ButtonType.text, color: ThemeColorName.error, icon: Icons.highlight_remove, iconSize: 24, onPressed: () => _onContentDelete(contentIndex)),
+                                      Button(
+                                        type: ButtonType.text,
+                                        color: ThemeColorName.error,
+                                        icon: Icons.highlight_remove,
+                                        isLoading: _isDeleting == contentIndex,
+                                        iconSize: 24,
+                                        onPressed: () => _showContentDeleteDialog(contentIndex),
+                                      ),
                                     ],
                                   ),
                                 ContentContainer(leafId: file.id, contentIndex: contentIndex, editing: _editing),

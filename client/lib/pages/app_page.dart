@@ -89,9 +89,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
     _initialize();
   }
 
-  Future<void> _initialize() async {
-    await _paginate(reset: true);
-  }
+  Future<void> _initialize() async => await _paginate(reset: true);
 
   void _resetSearch() {
     _debouncer?.cancel();
@@ -285,44 +283,27 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
   Future<void> _addNew() async {
     if (_adding) return;
 
-    FoldersAndFilesStateResponse? result;
-    try {
-      setState(() {
-        _adding = true;
-      });
+    setState(() {
+      _adding = true;
+    });
 
-      String? title = await showDialog(
-        context: context,
-        builder: (builderContext) {
-          return FolderFileCreateDialog();
-        },
-      );
-      if (title == null) return;
+    String? title = await showDialog(
+      context: context,
+      builder: (builderContext) {
+        return FolderFileCreateDialog();
+      },
+    );
+    if (title == null) return;
 
-      FoldersAndFiles p = ref.watch(foldersAndFilesProvider.notifier);
-      if (_location.last == 'root' || _filter == Filter.folder) {
-        result = await p.addFolder(title, _location.last == 'root' ? null : _location.last);
-      } else {
-        result = await p.addFile(title, _location.last);
-      }
-    } catch (e, st) {
-      Talker().error('The _addNew method in AppPage widget throws an error.', e, st);
-    } finally {
-      if (mounted) {
-        if (result?.status == FoldersAndFilesStateResponseStatus.failure) {
-          NotificationService.showError(
-            context: context,
-            message: result?.message ?? 'Failure while trying to add one ${_filter == Filter.folder ? 'folder' : 'file'}.',
-          );
-        }
-        if (result?.status == FoldersAndFilesStateResponseStatus.success) {
-          NotificationService.showSuccess(context: context, message: 'Successfully added one ${_filter == Filter.folder ? 'folder' : 'file'}.');
-        }
-        setState(() {
-          _adding = false;
-        });
-      }
+    FoldersAndFiles p = ref.watch(foldersAndFilesProvider.notifier);
+    if (_location.last == 'root' || _filter == Filter.folder) {
+      await p.addFolder(title, _location.last == 'root' ? null : _location.last);
+    } else {
+      await p.addFile(title, _location.last);
     }
+    setState(() {
+      _adding = false;
+    });
   }
 
   void _moveFolder() async {
