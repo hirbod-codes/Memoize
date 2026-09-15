@@ -962,6 +962,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No content found!'**
   String get content_not_found;
+
+  /// No description provided for @app_page_file_pagination_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to load cards'**
+  String get app_page_file_pagination_failed;
+
+  /// No description provided for @app_page_folder_pagination_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failure while trying to load categories'**
+  String get app_page_folder_pagination_failed;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

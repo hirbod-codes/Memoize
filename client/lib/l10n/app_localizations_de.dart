@@ -448,4 +448,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get content_not_found => 'No content found!';
+
+  @override
+  String get app_page_file_pagination_failed => 'Failure while trying to load cards';
+
+  @override
+  String get app_page_folder_pagination_failed => 'Failure while trying to load categories';
 }

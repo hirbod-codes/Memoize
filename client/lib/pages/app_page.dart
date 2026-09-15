@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:client/api/controllers/folder_controller.dart';
-import 'package:client/api/controllers/leaf_controller.dart';
+import 'package:client/api/api_call.dart';
+import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/api/models/folder.dart';
 import 'package:client/api/models/leaf.dart';
 import 'package:client/api/providers/folders_and_files.dart';
@@ -112,10 +112,10 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
   }
 
   Future<void> _goTo(String locationId) async {
-    final folder = await ref.read(folderControllerProvider).get(id: locationId);
+    final result = await apiCall<Folder?>(() => ref.read(authDioProvider).get('/api/treeNode/?treeNodeId=$locationId'));
     if (!mounted) return;
 
-    if (folder == null) {
+    if (result.isFailure || result.dataOrNull == null) {
       await _goToRoot();
       return;
     }
@@ -124,7 +124,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
     if (!mounted) return;
 
     setState(() {
-      _title = folder.title;
+      _title = result.dataOrNull!.title;
       _location.removeLast();
       _resetSearch();
     });
@@ -174,6 +174,8 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
   Future<void> _paginate({String? search, int limit = 10, String? parentId, bool reset = false, Filter? filter}) async {
     if (!reset && !_hasMore) return;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     try {
       filter = filter ?? _filter;
 
@@ -182,10 +184,21 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
       });
 
       if (_location.length == 1 || filter == Filter.folder) {
-        final folderController = ref.read(folderControllerProvider);
-
-        final folders = await folderController.getPaginated(limit: limit, parentId: parentId, skip: reset ? 0 : _folderSkip, search: search);
+        final skip = reset ? 0 : _folderSkip;
+        final result = await apiCall<List<Folder>>(
+          () => ref
+              .read(authDioProvider)
+              .get(
+                '/api/treeNode/list/?limit=$limit${'&skip=$skip'}${parentId != null ? '&parentId=$parentId' : ''}${search != null ? '&search=$search' : ''}',
+              ),
+        );
         if (!mounted) return;
+        if (result.isFailure || result.dataOrNull == null) {
+          NotificationService.showError(message: l10n.app_page_folder_pagination_failed);
+          return;
+        }
+
+        final folders = result.dataOrNull!;
 
         setState(() {
           _hasMore = folders.length >= limit;
@@ -199,10 +212,18 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
           }
         });
       } else if (filter == Filter.file) {
-        final fileController = ref.read(leafControllerProvider);
+        final skip = reset ? 0 : _fileSkip;
 
-        final files = await fileController.getPaginated(limit: limit, parentId: parentId!, skip: reset ? 0 : _fileSkip, search: search);
+        final result = await apiCall<List<Leaf>>(
+          () => ref.read(authDioProvider).get('/api/leaf/list/?limit=$limit&parentId=$parentId${'&skip=$skip'}${search != null ? '&search=$search' : ''}'),
+        );
         if (!mounted) return;
+        if (result.isFailure || result.dataOrNull == null) {
+          NotificationService.showError(message: l10n.app_page_file_pagination_failed);
+          return;
+        }
+
+        final files = result.dataOrNull!;
 
         setState(() {
           _hasMore = files.length >= limit;
@@ -217,7 +238,8 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
         });
       }
     } catch (e, st) {
-      Talker().error('The _paginate method in AppPage widget throws an error.', e, st);
+      Talker().error('The _paginate method in AppPage widget threw an error.', e, st);
+      NotificationService.showError(message: filter == Filter.file ? l10n.app_page_file_pagination_failed : l10n.app_page_folder_pagination_failed);
     } finally {
       if (mounted) {
         setState(() {
@@ -251,12 +273,11 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
   }
 
   Future<void> _removeFolder(Folder folder, int index) async {
-    final folderController = ref.read(folderControllerProvider);
-
     setState(() {
       _deletingFolder = index;
     });
-    await folderController.delete(id: folder.id);
+
+    await ref.read(foldersAndFilesProvider.notifier).removeFolderById(folder.id);
     if (!mounted) return;
 
     setState(() {
@@ -266,12 +287,11 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
   }
 
   Future<void> _removeFile(Leaf file, int index) async {
-    final fileController = ref.read(leafControllerProvider);
-
     setState(() {
       _deletingFile = index;
     });
-    await fileController.delete(id: file.id);
+
+    await ref.read(foldersAndFilesProvider.notifier).removeFileById(file.id);
     if (!mounted) return;
 
     setState(() {

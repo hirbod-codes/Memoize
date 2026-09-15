@@ -151,5 +151,7 @@
   "content_value_remove_success": "Successfully removed content.",
   "content_value_remove_failed": "Failure while trying to remove content.",
   "content_move_failed": "Failure while trying to move content.",
-  "content_not_found": "No content found!"
+  "content_not_found": "No content found!",
+  "app_page_file_pagination_failed": "Failure while trying to load cards",
+  "app_page_folder_pagination_failed": "Failure while trying to load categories"
 }

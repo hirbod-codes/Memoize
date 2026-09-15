@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:client/api/api_response.dart';
 import 'package:client/api/error_codes.dart';
 import 'package:client/api/root_navigator_key.dart';
@@ -81,7 +83,11 @@ Future<ApiCallResult<T>> apiCall<T>(Future<Response> Function() request) async {
     }
 
     final parsed = ApiResponse.tryParse(response.data);
-    if (parsed is ApiSuccess) return ApiCallSuccess<T>(parsed.data as T?);
+    if (parsed is ApiSuccess) {
+      var result = ApiCallSuccess<T>(parsed.data as T?);
+      Talker().debug('api call data: ', jsonEncode(result.dataOrNull));
+      return result;
+    }
 
     final message = _extractMessage(parsed, response.data);
     _showError(message);
