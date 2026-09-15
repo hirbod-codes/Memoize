@@ -1,4 +1,14 @@
 {
+    "cSpell.ignorePaths": [
+        "client/lib/l10n/",
+        "!client/lib/l10n/app_en.arb",
+        "package-lock.json",
+        "node_modules",
+        "vscode-extension",
+        ".git/objects",
+        ".vscode",
+        ".vscode-insiders"
+    ],
     "cSpell.words": [
         "audiotrack",
         "chewie",
