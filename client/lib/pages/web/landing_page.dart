@@ -90,13 +90,7 @@ class _HeroSection extends StatelessWidget {
                 style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              Text(
-                // l10n.landing_page_hero_secondary,
-                'Upload text, images, audio, or video — organize it however makes '
-                'sense to you — and review it whenever you have a few minutes.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium,
-              ),
+              Text(l10n.landing_page_hero_secondary, textAlign: TextAlign.center, style: theme.textTheme.titleMedium),
               const SizedBox(height: 32),
               Wrap(
                 spacing: 12,
@@ -105,11 +99,11 @@ class _HeroSection extends StatelessWidget {
                 children: [
                   FilledButton(
                     onPressed: () => context.go('/login'),
-                    child: const Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), child: Text('Get started free')),
+                    child: Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), child: Text(l10n.landing_page_get_started_free)),
                   ),
                   OutlinedButton(
                     onPressed: () => context.go('/pricing'),
-                    child: const Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), child: Text('See pricing')),
+                    child: Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), child: Text(l10n.landing_page_see_pricing)),
                   ),
                 ],
               ),
@@ -157,7 +151,7 @@ class _HowItWorksSection extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 1100),
           child: Column(
             children: [
-              Text('How it works', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+              Text(l10n.landing_page_how_it_works, style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 40),
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -351,7 +345,7 @@ class _FinalCtaSection extends StatelessWidget {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () => context.go('/login'),
-              child: Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Text(l10n.landing_page_final_cta_button)),
+              child: Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Text(l10n.landing_page_get_started_free)),
             ),
           ],
         ),

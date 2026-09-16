@@ -1,5 +1,6 @@
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/api/action_controller.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -82,6 +83,8 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
     final actionState = ref.watch(authActionControllerProvider);
     final isLoading = actionState.isLoading;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
       child: _step == _Step.enterEmail
@@ -93,7 +96,7 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
                 children: [
                   Text('Reset your password', style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  Text('Enter your email and we\'ll send you a 6-digit code.', style: Theme.of(context).textTheme.bodyMedium),
+                  Text(l10n.forgot_password_email_sheet_heading, style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _emailController,
@@ -102,15 +105,15 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
                     autofillHints: const [AutofillHints.email],
                     decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) return 'Email is required';
-                      if (!value.contains('@')) return 'Enter a valid email';
+                      if (value == null || value.trim().isEmpty) return l10n.email_required;
+                      if (!value.contains('@')) return l10n.enter_valid_email;
                       return null;
                     },
                   ),
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: isLoading ? null : _sendCode,
-                    child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Send code'),
+                    child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(l10n.sendCode),
                   ),
                 ],
               ),
@@ -121,22 +124,22 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Enter code & new password', style: Theme.of(context).textTheme.titleLarge),
+                  Text(l10n.enter_code_new_password, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
                   Text('Code sent to ${_emailController.text.trim()}', style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(height: 20),
                   OtpCodeInput(key: _otpKey, enabled: !isLoading, onChanged: (value) => setState(() => _code = value)),
                   Center(
-                    child: TextButton(onPressed: isLoading ? null : _resend, child: const Text('Resend code')),
+                    child: TextButton(onPressed: isLoading ? null : _resend, child: Text(l10n.sendCode)),
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _newPasswordController,
                     enabled: !isLoading,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'New password', border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: l10n.new_password, border: OutlineInputBorder()),
                     validator: (value) {
-                      if (value == null || value.length < 8) return 'At least 8 characters';
+                      if (value == null || value.length < 8) return l10n.at_least_eight_characters;
                       return null;
                     },
                   ),
@@ -145,16 +148,16 @@ class _ForgotPasswordEmailContentState extends ConsumerState<_ForgotPasswordEmai
                     controller: _confirmPasswordController,
                     enabled: !isLoading,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Confirm password', border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: l10n.confirmPassword, border: OutlineInputBorder()),
                     validator: (value) {
-                      if (value != _newPasswordController.text) return 'Passwords do not match';
+                      if (value != _newPasswordController.text) return l10n.passwords_not_match;
                       return null;
                     },
                   ),
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: isLoading || _code.length != 6 ? null : _submit,
-                    child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Reset password'),
+                    child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(l10n.reset_password),
                   ),
                 ],
               ),

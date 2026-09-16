@@ -12,7 +12,7 @@ import 'package:client/pages/on_boarding_page.dart';
 import 'package:client/pages/plan/pricing_page.dart';
 import 'package:client/pages/settings/settings_page.dart';
 import 'package:client/pages/web/landing_page.dart';
-import 'package:client/public_shell.dart';
+import 'package:client/private_gate.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -85,35 +85,35 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (kIsWeb)
         GoRoute(
           path: '/',
-          builder: (context, state) => const PublicShell(child: LandingPage()),
+          builder: (context, state) => const AppShell(child: LandingPage()),
         ),
       if (!kIsWeb) GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingPage()),
       GoRoute(
         path: '/login',
         builder: (context, state) {
           final from = state.uri.queryParameters['from'];
-          return AuthPage(onAuthenticated: (_) => context.go((from != null && from.isNotEmpty) ? from : '/app'));
+          return AppShell(child: AuthPage(onAuthenticated: (_) => context.go((from != null && from.isNotEmpty) ? from : '/app')));
         },
       ),
       GoRoute(
         path: '/pricing',
-        builder: (context, state) => PublicShell(child: PricingPage(onSelectPlan: (plan) => context.go('/login?plan=${plan.id}'))),
+        builder: (context, state) => const AppShell(child: PricingPage()),
       ),
       GoRoute(
         path: '/about',
-        builder: (context, state) => const PublicShell(child: AboutPage()),
+        builder: (context, state) => const AppShell(child: AboutPage()),
       ),
       GoRoute(
         path: '/contact',
-        builder: (context, state) => const PublicShell(child: ContactPage()),
+        builder: (context, state) => const AppShell(child: ContactPage()),
       ),
       GoRoute(
         path: '/app',
-        builder: (context, state) => const AppShell(child: AppPage()),
+        builder: (context, state) => const PrivateWidget(child: AppShell(child: AppPage())),
       ),
       GoRoute(
         path: '/settings',
-        builder: (context, state) => const AppShell(child: SettingsPage()),
+        builder: (context, state) => const PrivateWidget(child: AppShell(child: SettingsPage())),
       ),
     ],
   );

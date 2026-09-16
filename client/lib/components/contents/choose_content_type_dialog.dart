@@ -1,5 +1,6 @@
 import 'package:client/api/models/leaf.dart';
 import 'package:client/components/button.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,8 @@ class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Dialog(
       insetPadding: const EdgeInsets.all(20),
       child: ConstrainedBox(
@@ -31,13 +34,13 @@ class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 10,
             children: [
-              const Text("Choose new content", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(l10n.choose_new_account, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
               const SizedBox(height: 16),
 
               DropdownButtonFormField<ContentType>(
                 initialValue: selected,
-                decoration: const InputDecoration(labelText: 'Option', border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: l10n.option, border: OutlineInputBorder()),
                 items: ContentType.values.map((m) {
                   return DropdownMenuItem(value: m, child: Text(Content.stringifyContentType(m).replaceAll('Id', '')));
                 }).toList(),
@@ -51,11 +54,11 @@ class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                  TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
 
                   const SizedBox(width: 8),
 
-                  Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: _done, label: "Choose"),
+                  Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: _done, label: l10n.choose),
                 ],
               ),
             ],

@@ -5,10 +5,12 @@ import 'package:client/api/models/image.dart' show ImageInfo;
 import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
 import 'package:client/components/global/notification_service.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart' hide ImageInfo;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 class ImageContainer extends ConsumerStatefulWidget {
   final String imageId;
@@ -54,10 +56,13 @@ class _ImagesState extends ConsumerState<ImageContainer> {
         .catchError(_handleError);
   }
 
-  FutureOr<Null> _handleError(dynamic e) {
+  FutureOr<Null> _handleError(dynamic e, dynamic st) {
+    Talker().error('caught error while trying to fetch audio', e, st);
     if (!mounted) return null;
 
-    NotificationService.showError(context: context, message: 'Failed to fetch audio data.');
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    NotificationService.showError(context: context, message: l10n.image_fetch_failed);
 
     setState(() {
       _loading = false;
@@ -75,8 +80,14 @@ class _ImagesState extends ConsumerState<ImageContainer> {
       );
     }
 
-    if (_image == null) return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Image not found.')]);
-    if (_token == null) return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Unauthenticated.')]);
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    if (_image == null) {
+      return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text(l10n.image_not_found)]);
+    }
+    if (_token == null) {
+      return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text(l10n.unauthenticated)]);
+    }
 
     return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md), color: Theme.of(context).colorScheme.surfaceContainerHighest),

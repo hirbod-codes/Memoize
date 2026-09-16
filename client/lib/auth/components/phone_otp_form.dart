@@ -1,4 +1,5 @@
 import 'package:client/auth/auth_controller.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -61,32 +62,30 @@ class _PhoneOtpFormState extends ConsumerState<PhoneOtpForm> {
     final actionState = ref.watch(authActionControllerProvider);
     final isLoading = actionState.isLoading;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            "We'll text you a code — no password needed. "
-            "New number? We'll set up your account automatically.",
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          Text(l10n.phone_otp_form_heading, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 16),
           TextFormField(
             controller: _phoneController,
             enabled: !isLoading,
             keyboardType: TextInputType.phone,
             autofillHints: const [AutofillHints.telephoneNumber],
-            decoration: const InputDecoration(labelText: 'Phone number', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: l10n.phoneNumber, border: OutlineInputBorder()),
             validator: (value) {
-              if (value == null || value.trim().isEmpty) return 'Phone number is required';
+              if (value == null || value.trim().isEmpty) return l10n.change_phone_sheet_phone_number_required;
               return null;
             },
           ),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: isLoading ? null : _continue,
-            child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Continue'),
+            child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(l10n.$continue),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -104,6 +105,8 @@ class _OtpSheetContentState extends ConsumerState<_OtpSheetContent> {
     final actionState = ref.watch(authActionControllerProvider);
     final isLoading = actionState.isLoading;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
       child: Column(
@@ -118,13 +121,13 @@ class _OtpSheetContentState extends ConsumerState<_OtpSheetContent> {
           const SizedBox(height: 24),
           FilledButton(
             onPressed: isLoading || _code.length != 6 ? null : _submit,
-            child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Verify'),
+            child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(l10n.verify),
           ),
           const SizedBox(height: 12),
           Center(
             child: TextButton(
               onPressed: _cooldown == Duration.zero && !isLoading ? _resend : null,
-              child: Text(_cooldown == Duration.zero ? 'Resend code' : 'Resend code in ${_cooldown.inSeconds}s'),
+              child: Text(_cooldown == Duration.zero ? l10n.resendCode : l10n.resendCodeIn(_cooldown.inSeconds)),
             ),
           ),
         ],

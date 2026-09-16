@@ -6,11 +6,13 @@ import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
 import 'package:client/components/contents/players/video_player_screen.dart';
 import 'package:client/components/global/notification_service.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 class VideoContainer extends ConsumerStatefulWidget {
   final String videoId;
@@ -57,15 +59,18 @@ class _VideosState extends ConsumerState<VideoContainer> {
         _url = '${AppConfig.apiUrl}/api/video/file${signedToken == null ? '' : '/$signedToken'}/${_video!.id}/index.m3u8';
         _loading = false;
       });
-    } catch (e) {
-      _handleError(e);
+    } catch (e, st) {
+      _handleError(e, st);
     }
   }
 
-  FutureOr<Null> _handleError(dynamic e) {
+  FutureOr<Null> _handleError(dynamic e, dynamic st) {
+    Talker().error('caught error while trying to fetch video', e, st);
     if (!mounted) return null;
 
-    NotificationService.showError(context: context, message: 'Failed to fetch audio data.');
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    NotificationService.showError(context: context, message: l10n.video_fetch_failed);
 
     setState(() {
       _loading = false;
@@ -83,15 +88,20 @@ class _VideosState extends ConsumerState<VideoContainer> {
       );
     }
 
-    if (_video == null || _url == null) return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Video not found.')]);
-    if (_token == null) return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Unauthenticated.')]);
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    if (_video == null || _url == null) {
+      return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text(l10n.video_not_found)]);
+    }
+    if (_token == null) {
+      return Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text(l10n.unauthenticated)]);
+    }
 
     return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.md), color: Theme.of(context).colorScheme.surfaceContainerHighest),
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        // child: VideoPlayerScreen(videoId: _video!.id, url: _url!, headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -102,7 +112,13 @@ class _VideosState extends ConsumerState<VideoContainer> {
               height: 450,
               child: AspectRatio(
                 aspectRatio: 9 / 16,
-                child: VideoPlayerScreen(videoId: _video!.id, url: _url!, headers: {'Authorization': 'Bearer ${_token!}'}, accessToken: _token!, title: _video!.title),
+                child: VideoPlayerScreen(
+                  videoId: _video!.id,
+                  url: _url!,
+                  headers: {'Authorization': 'Bearer ${_token!}'},
+                  accessToken: _token!,
+                  title: _video!.title,
+                ),
               ),
             ),
           ],

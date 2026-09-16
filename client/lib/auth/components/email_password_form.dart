@@ -1,4 +1,5 @@
 import 'package:client/auth/auth_controller.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -88,6 +89,8 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
     final actionState = ref.watch(authActionControllerProvider);
     final isLoading = actionState.isLoading;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Form(
       key: _formKey,
       child: Column(
@@ -98,10 +101,10 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
             enabled: !isLoading,
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
-            decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: l10n.email, border: OutlineInputBorder()),
             validator: (value) {
-              if (value == null || value.trim().isEmpty) return 'Email is required';
-              if (!value.contains('@')) return 'Enter a valid email';
+              if (value == null || value.trim().isEmpty) return l10n.email_required;
+              if (!value.contains('@')) return l10n.enter_valid_email;
               return null;
             },
           ),
@@ -111,10 +114,10 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
             enabled: !isLoading,
             obscureText: true,
             autofillHints: [_isSignUp ? AutofillHints.newPassword : AutofillHints.password],
-            decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: l10n.password, border: OutlineInputBorder()),
             validator: (value) {
-              if (value == null || value.isEmpty) return 'Password is required';
-              if (_isSignUp && value.length < 8) return 'At least 8 characters';
+              if (value == null || value.isEmpty) return l10n.password_required;
+              if (_isSignUp && value.length < 8) return l10n.at_least_eight_characters;
               return null;
             },
           ),
@@ -124,9 +127,9 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
               controller: _confirmPasswordController,
               enabled: !isLoading,
               obscureText: true,
-              decoration: const InputDecoration(labelText: 'Confirm password', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: l10n.confirmPassword, border: OutlineInputBorder()),
               validator: (value) {
-                if (value != _passwordController.text) return 'Passwords do not match';
+                if (value != _passwordController.text) return l10n.passwords_not_match;
                 return null;
               },
             ),
@@ -134,19 +137,21 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
           if (!_isSignUp) ...[
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton(onPressed: isLoading ? null : () => showForgotPasswordEmailSheet(context), child: const Text('Forgot password?')),
+              child: TextButton(onPressed: isLoading ? null : () => showForgotPasswordEmailSheet(context), child: Text(l10n.forgotPassword)),
             ),
           ],
           const SizedBox(height: 16),
           FilledButton(
             onPressed: isLoading ? null : _submit,
-            child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(_isSignUp ? 'Sign up' : 'Log in'),
+            child: isLoading
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : Text(_isSignUp ? l10n.signUp : l10n.login),
           ),
           const SizedBox(height: 8),
           Center(
             child: TextButton(
               onPressed: isLoading ? null : () => widget.onModeChanged(_isSignUp ? AuthMode.login : AuthMode.signUp),
-              child: Text(_isSignUp ? 'Already have an account? Log in' : "Don't have an account? Sign up"),
+              child: Text(_isSignUp ? l10n.login_heading : l10n.signup_heading),
             ),
           ),
         ],

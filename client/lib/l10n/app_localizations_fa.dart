@@ -66,13 +66,18 @@ class AppLocalizationsFa extends AppLocalizations {
   String get phone => 'تلفن';
 
   @override
+  String get sendCode => 'ارسال کد';
+
+  @override
   String get resendCode => 'ارسال مجدد کد';
 
   @override
-  String get search => 'جستجو';
+  String resendCodeIn(int seconds) {
+    return 'ارسال مجدد کد تا $seconds ثانیه دیگر';
+  }
 
   @override
-  String get sendCode => 'ارسال کد';
+  String get search => 'جستجو';
 
   @override
   String get settings => 'تنظیمات';
@@ -117,10 +122,79 @@ class AppLocalizationsFa extends AppLocalizations {
   String get verify_your_new_number => 'شماره جدید خود را تأیید کنید';
 
   @override
+  String get enter_code_new_password => 'کد و رمز عبور جدید را وارد کنید';
+
+  @override
+  String get new_password => 'رمز عبور جدید';
+
+  @override
+  String get at_least_eight_characters => 'حداقل ۸ کاراکتر';
+
+  @override
+  String get passwords_not_match => 'رمزهای عبور مطابقت ندارند';
+
+  @override
+  String get reset_password => 'بازنشانی رمز عبور';
+
+  @override
+  String get password_required => 'رمز عبور الزامی است';
+
+  @override
+  String get signup_heading => 'حساب کاربری ندارید؟ ثبت‌نام کنید';
+
+  @override
+  String get login_heading => 'قبلاً حساب کاربری دارید؟ وارد شوید';
+
+  @override
+  String get unauthenticated => 'Unauthenticated.';
+
+  @override
+  String get video_fetch_failed => 'Failed to fetch video data.';
+
+  @override
+  String get video_not_found => 'Video not found.';
+
+  @override
+  String get image_fetch_failed => 'Failed to fetch image data.';
+
+  @override
+  String get image_not_found => 'Image not found.';
+
+  @override
+  String get audio_fetch_failed => 'Failed to fetch audio data.';
+
+  @override
+  String get audio_not_found => 'Audio not found.';
+
+  @override
+  String get choose_new_account => 'Choose new account';
+
+  @override
+  String get tts_failed_to_play_pronunciation => 'Failed to play pronunciation';
+
+  @override
+  String get tts_hear_pronunciation => 'Hear pronunciation';
+
+  @override
+  String get text_editor_placeholder => 'Start writing your notes...';
+
+  @override
+  String get option => 'Option';
+
+  @override
+  String get choose => 'Choose';
+
+  @override
   String get auth_page_checking_sign_in_methods_failed => 'بررسی روش‌های ورود در دسترس ممکن نبود.';
 
   @override
   String get auth_page_sign_in_unavailable => 'ورود موقتاً در دسترس نیست. لطفاً کمی بعد دوباره تلاش کنید.';
+
+  @override
+  String get forgot_password_email_sheet_heading => 'ایمیل خود را وارد کنید تا یک کد ۶ رقمی برایتان ارسال کنیم.';
+
+  @override
+  String get phone_otp_form_heading => 'یک کد برایتان پیامک می‌کنیم — نیازی به رمز عبور نیست. شماره جدید است؟ حساب شما را به‌صورت خودکار ایجاد می‌کنیم.';
 
   @override
   String get change_phone_sheet => 'تغییر شماره تلفن';
@@ -263,6 +337,15 @@ class AppLocalizationsFa extends AppLocalizations {
   String get title_pricing => 'قیمت‌گذاری';
 
   @override
+  String get landing_page_get_started_free => 'رایگان شروع کنید';
+
+  @override
+  String get landing_page_see_pricing => 'قیمت ها';
+
+  @override
+  String get landing_page_how_it_works => 'چگونه کار می‌کند';
+
+  @override
   String get landing_page_memorize_anything => 'هر چیزی را به خاطر بسپارید';
 
   @override
@@ -316,9 +399,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get landing_page_final_cta => 'آماده‌اید بیشتر به خاطر بسپارید؟';
 
   @override
-  String get landing_page_final_cta_button => 'رایگان شروع کنید';
-
-  @override
   String get pricing_page_could_not_load => 'در حال حاضر بارگذاری قیمت‌گذاری ممکن نیست.';
 
   @override
@@ -338,6 +418,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get pricing_page_contents_per_card_side => 'محتوا به ازای هر طرف کارت';
+
+  @override
+  String get pricing_page_get_started => 'شروع کنید';
 
   @override
   String get avatar_upload_success => 'تصویر آواتار با موفقیت آپلود شد';

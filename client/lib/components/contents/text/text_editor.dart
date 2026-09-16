@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:client/components/button.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
@@ -104,6 +105,8 @@ class _TextEditorState extends ConsumerState<TextEditor> {
 
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+    
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -140,7 +143,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
                 controller: _controller,
                 focusNode: _editorFocusNode,
                 scrollController: _editorScrollController,
-                config: QuillEditorConfig(placeholder: !widget.editing ? null : 'Start writing your notes...', minHeight: 60, requestKeyboardFocusOnCheckListChanged: true),
+                config: QuillEditorConfig(placeholder: !widget.editing ? null :l10n.text_editor_placeholder, minHeight: 60, requestKeyboardFocusOnCheckListChanged: true),
               ),
             ),
           ),

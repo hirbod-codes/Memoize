@@ -1,3 +1,5 @@
+import 'package:client/components/global/notification_service.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
@@ -60,7 +62,8 @@ class _TTSButton extends ConsumerState<TTSButton> {
       await _player.play();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to play pronunciation: $e')));
+        AppLocalizations l10n = AppLocalizations.of(context)!;
+        NotificationService.showError(message: l10n.tts_failed_to_play_pronunciation);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -75,9 +78,13 @@ class _TTSButton extends ConsumerState<TTSButton> {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return IconButton(
-      icon: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Icon(_isPlaying ? Icons.volume_up : Icons.volume_up_outlined),
-      tooltip: 'Hear pronunciation',
+      icon: _isLoading
+          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+          : Icon(_isPlaying ? Icons.volume_up : Icons.volume_up_outlined),
+      tooltip: l10n.tts_hear_pronunciation,
       onPressed: _isLoading ? null : _playPronunciation,
     );
   }

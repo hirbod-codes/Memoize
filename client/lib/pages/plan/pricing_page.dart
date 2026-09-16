@@ -188,7 +188,7 @@ class _PlanCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: onSelect == null ? null : () => onSelect!(plan), child: const Text("Get started")),
+            FilledButton(onPressed: onSelect == null ? null : () => onSelect!(plan), child: Text(l10n.pricing_page_get_started)),
           ],
         ),
       ),

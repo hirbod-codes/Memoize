@@ -66,13 +66,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get phone => 'Telefon';
 
   @override
+  String get sendCode => 'Code senden';
+
+  @override
   String get resendCode => 'Code erneut senden';
 
   @override
-  String get search => 'Suchen';
+  String resendCodeIn(int seconds) {
+    return 'Code in ${seconds}s erneut senden';
+  }
 
   @override
-  String get sendCode => 'Code senden';
+  String get search => 'Suchen';
 
   @override
   String get settings => 'Einstellungen';
@@ -117,10 +122,80 @@ class AppLocalizationsDe extends AppLocalizations {
   String get verify_your_new_number => 'Neue Telefonnummer bestätigen';
 
   @override
+  String get enter_code_new_password => 'Code und neues Passwort eingeben';
+
+  @override
+  String get new_password => 'Neues Passwort';
+
+  @override
+  String get at_least_eight_characters => 'Mindestens 8 Zeichen';
+
+  @override
+  String get passwords_not_match => 'Die Passwörter stimmen nicht überein';
+
+  @override
+  String get reset_password => 'Passwort zurücksetzen';
+
+  @override
+  String get password_required => 'Passwort ist erforderlich';
+
+  @override
+  String get signup_heading => 'Noch kein Konto? Registrieren';
+
+  @override
+  String get login_heading => 'Bereits ein Konto? Anmelden';
+
+  @override
+  String get unauthenticated => 'Unauthenticated.';
+
+  @override
+  String get video_fetch_failed => 'Failed to fetch video data.';
+
+  @override
+  String get video_not_found => 'Video not found.';
+
+  @override
+  String get image_fetch_failed => 'Failed to fetch image data.';
+
+  @override
+  String get image_not_found => 'Image not found.';
+
+  @override
+  String get audio_fetch_failed => 'Failed to fetch audio data.';
+
+  @override
+  String get audio_not_found => 'Audio not found.';
+
+  @override
+  String get choose_new_account => 'Choose new account';
+
+  @override
+  String get tts_failed_to_play_pronunciation => 'Failed to play pronunciation';
+
+  @override
+  String get tts_hear_pronunciation => 'Hear pronunciation';
+
+  @override
+  String get text_editor_placeholder => 'Start writing your notes...';
+
+  @override
+  String get option => 'Option';
+
+  @override
+  String get choose => 'Choose';
+
+  @override
   String get auth_page_checking_sign_in_methods_failed => 'Verfügbare Anmeldemethoden konnten nicht geprüft werden.';
 
   @override
   String get auth_page_sign_in_unavailable => 'Die Anmeldung ist vorübergehend nicht verfügbar. Bitte versuchen Sie es in Kürze erneut.';
+
+  @override
+  String get forgot_password_email_sheet_heading => 'Geben Sie Ihre E-Mail-Adresse ein, und wir senden Ihnen einen 6-stelligen Code.';
+
+  @override
+  String get phone_otp_form_heading =>
+      'Wir senden Ihnen einen Code per SMS - ein Passwort ist nicht erforderlich. Neue Nummer? Wir richten Ihr Konto automatisch ein.';
 
   @override
   String get change_phone_sheet => 'Telefonnummer ändern';
@@ -263,6 +338,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get title_pricing => 'Preise';
 
   @override
+  String get landing_page_get_started_free => 'Kostenlos starten';
+
+  @override
+  String get landing_page_see_pricing => 'Preise ansehen';
+
+  @override
+  String get landing_page_how_it_works => 'So funktioniert es';
+
+  @override
   String get landing_page_memorize_anything => 'ALLES MERKEN';
 
   @override
@@ -316,9 +400,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get landing_page_final_cta => 'Bereit, sich mehr zu merken?';
 
   @override
-  String get landing_page_final_cta_button => 'Kostenlos loslegen';
-
-  @override
   String get pricing_page_could_not_load => 'Die Preise konnten derzeit nicht geladen werden.';
 
   @override
@@ -338,6 +419,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get pricing_page_contents_per_card_side => 'Inhalte pro Kartenseite';
+
+  @override
+  String get pricing_page_get_started => 'Starten';
 
   @override
   String get avatar_upload_success => 'Avatarbild erfolgreich hochgeladen';

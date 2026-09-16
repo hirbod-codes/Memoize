@@ -82,33 +82,36 @@ class OtpCodeInputState extends State<OtpCodeInput> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(widget.length, (index) {
-        return SizedBox(
-          width: 44,
-          child: KeyboardListener(
-            focusNode: FocusNode(skipTraversal: true),
-            onKeyEvent: (event) {
-              if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
-                _handleBackspace(index);
-              }
-            },
-            child: TextField(
-              controller: _controllers[index],
-              focusNode: _focusNodes[index],
-              enabled: widget.enabled,
-              textAlign: TextAlign.center,
-              keyboardType: TextInputType.number,
-              maxLength: index == 0 ? widget.length : 1, // box 0 also accepts a full paste
-              style: Theme.of(context).textTheme.headlineSmall,
-              decoration: const InputDecoration(counterText: ''),
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              onChanged: (value) => _handleChange(index, value),
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(widget.length, (index) {
+          return SizedBox(
+            width: 44,
+            child: KeyboardListener(
+              focusNode: FocusNode(skipTraversal: true),
+              onKeyEvent: (event) {
+                if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
+                  _handleBackspace(index);
+                }
+              },
+              child: TextField(
+                controller: _controllers[index],
+                focusNode: _focusNodes[index],
+                enabled: widget.enabled,
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.number,
+                maxLength: index == 0 ? widget.length : 1, // box 0 also accepts a full paste
+                style: Theme.of(context).textTheme.headlineSmall,
+                decoration: const InputDecoration(counterText: ''),
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onChanged: (value) => _handleChange(index, value),
+              ),
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 }

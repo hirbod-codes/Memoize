@@ -66,13 +66,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phone => 'Phone';
 
   @override
+  String get sendCode => 'Send code';
+
+  @override
   String get resendCode => 'Resend code';
 
   @override
-  String get search => 'Search';
+  String resendCodeIn(int seconds) {
+    return 'Resend code in ${seconds}s';
+  }
 
   @override
-  String get sendCode => 'Send code';
+  String get search => 'Search';
 
   @override
   String get settings => 'Settings';
@@ -117,10 +122,79 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verify_your_new_number => 'Verify your new number';
 
   @override
+  String get enter_code_new_password => 'Enter code & new password';
+
+  @override
+  String get new_password => 'New password';
+
+  @override
+  String get at_least_eight_characters => 'At least 8 characters';
+
+  @override
+  String get passwords_not_match => 'Passwords do not match';
+
+  @override
+  String get reset_password => 'Reset password';
+
+  @override
+  String get password_required => 'Password is required';
+
+  @override
+  String get signup_heading => 'Don\'t have an account? Sign up';
+
+  @override
+  String get login_heading => 'Already have an account? Log in';
+
+  @override
+  String get unauthenticated => 'Unauthenticated.';
+
+  @override
+  String get video_fetch_failed => 'Failed to fetch video data.';
+
+  @override
+  String get video_not_found => 'Video not found.';
+
+  @override
+  String get image_fetch_failed => 'Failed to fetch image data.';
+
+  @override
+  String get image_not_found => 'Image not found.';
+
+  @override
+  String get audio_fetch_failed => 'Failed to fetch audio data.';
+
+  @override
+  String get audio_not_found => 'Audio not found.';
+
+  @override
+  String get choose_new_account => 'Choose new account';
+
+  @override
+  String get tts_failed_to_play_pronunciation => 'Failed to play pronunciation';
+
+  @override
+  String get tts_hear_pronunciation => 'Hear pronunciation';
+
+  @override
+  String get text_editor_placeholder => 'Start writing your notes...';
+
+  @override
+  String get option => 'Option';
+
+  @override
+  String get choose => 'Choose';
+
+  @override
   String get auth_page_checking_sign_in_methods_failed => 'Couldn\'t check available sign-in methods.';
 
   @override
   String get auth_page_sign_in_unavailable => 'Sign-in is temporarily unavailable. Please try again shortly.';
+
+  @override
+  String get forgot_password_email_sheet_heading => 'Enter your email and we\'ll send you a 6-digit code.';
+
+  @override
+  String get phone_otp_form_heading => 'We\'ll text you a code — no password needed. New number? We\'ll set up your account automatically.';
 
   @override
   String get change_phone_sheet => 'Change phone number';
@@ -263,6 +337,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get title_pricing => 'Pricing';
 
   @override
+  String get landing_page_get_started_free => 'Get started free';
+
+  @override
+  String get landing_page_see_pricing => 'See pricing';
+
+  @override
+  String get landing_page_how_it_works => 'How it works';
+
+  @override
   String get landing_page_memorize_anything => 'MEMORIZE ANYTHING';
 
   @override
@@ -315,9 +398,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get landing_page_final_cta => 'Ready to remember more?';
 
   @override
-  String get landing_page_final_cta_button => 'Get started free';
-
-  @override
   String get pricing_page_could_not_load => 'Couldn\'t load pricing right now.';
 
   @override
@@ -337,6 +417,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pricing_page_contents_per_card_side => 'contents per card side';
+
+  @override
+  String get pricing_page_get_started => 'Get started';
 
   @override
   String get avatar_upload_success => 'Avatar image successfully uploaded';

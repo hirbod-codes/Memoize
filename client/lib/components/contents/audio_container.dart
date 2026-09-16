@@ -7,6 +7,7 @@ import 'package:client/auth/token_storage.dart';
 import 'package:client/components/contents/players/audio/audio_player_provider.dart';
 import 'package:client/components/contents/players/audio/audio_player_screen.dart';
 import 'package:client/components/global/notification_service.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/foundation.dart';
@@ -84,16 +85,18 @@ class _AudioContainerState extends ConsumerState<AudioContainer> {
       );
     }
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     if (_audio == null) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Audio not found.')]),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text(l10n.audio_not_found)]),
       );
     }
     if (_token == null) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text('Unauthenticated.')]),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [Text(l10n.unauthenticated)]),
       );
     }
 

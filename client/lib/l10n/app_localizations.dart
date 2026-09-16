@@ -207,23 +207,29 @@ abstract class AppLocalizations {
   /// **'Phone'**
   String get phone;
 
+  /// No description provided for @sendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get sendCode;
+
   /// No description provided for @resendCode.
   ///
   /// In en, this message translates to:
   /// **'Resend code'**
   String get resendCode;
 
+  /// No description provided for @resendCodeIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code in {seconds}s'**
+  String resendCodeIn(int seconds);
+
   /// No description provided for @search.
   ///
   /// In en, this message translates to:
   /// **'Search'**
   String get search;
-
-  /// No description provided for @sendCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Send code'**
-  String get sendCode;
 
   /// No description provided for @settings.
   ///
@@ -309,6 +315,132 @@ abstract class AppLocalizations {
   /// **'Verify your new number'**
   String get verify_your_new_number;
 
+  /// No description provided for @enter_code_new_password.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter code & new password'**
+  String get enter_code_new_password;
+
+  /// No description provided for @new_password.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get new_password;
+
+  /// No description provided for @at_least_eight_characters.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters'**
+  String get at_least_eight_characters;
+
+  /// No description provided for @passwords_not_match.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwords_not_match;
+
+  /// No description provided for @reset_password.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset password'**
+  String get reset_password;
+
+  /// No description provided for @password_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Password is required'**
+  String get password_required;
+
+  /// No description provided for @signup_heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? Sign up'**
+  String get signup_heading;
+
+  /// No description provided for @login_heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? Log in'**
+  String get login_heading;
+
+  /// No description provided for @unauthenticated.
+  ///
+  /// In en, this message translates to:
+  /// **'Unauthenticated.'**
+  String get unauthenticated;
+
+  /// No description provided for @video_fetch_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to fetch video data.'**
+  String get video_fetch_failed;
+
+  /// No description provided for @video_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Video not found.'**
+  String get video_not_found;
+
+  /// No description provided for @image_fetch_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to fetch image data.'**
+  String get image_fetch_failed;
+
+  /// No description provided for @image_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Image not found.'**
+  String get image_not_found;
+
+  /// No description provided for @audio_fetch_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to fetch audio data.'**
+  String get audio_fetch_failed;
+
+  /// No description provided for @audio_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio not found.'**
+  String get audio_not_found;
+
+  /// No description provided for @choose_new_account.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose new account'**
+  String get choose_new_account;
+
+  /// No description provided for @tts_failed_to_play_pronunciation.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to play pronunciation'**
+  String get tts_failed_to_play_pronunciation;
+
+  /// No description provided for @tts_hear_pronunciation.
+  ///
+  /// In en, this message translates to:
+  /// **'Hear pronunciation'**
+  String get tts_hear_pronunciation;
+
+  /// No description provided for @text_editor_placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Start writing your notes...'**
+  String get text_editor_placeholder;
+
+  /// No description provided for @option.
+  ///
+  /// In en, this message translates to:
+  /// **'Option'**
+  String get option;
+
+  /// No description provided for @choose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get choose;
+
   /// No description provided for @auth_page_checking_sign_in_methods_failed.
   ///
   /// In en, this message translates to:
@@ -320,6 +452,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign-in is temporarily unavailable. Please try again shortly.'**
   String get auth_page_sign_in_unavailable;
+
+  /// No description provided for @forgot_password_email_sheet_heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email and we\'ll send you a 6-digit code.'**
+  String get forgot_password_email_sheet_heading;
+
+  /// No description provided for @phone_otp_form_heading.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll text you a code — no password needed. New number? We\'ll set up your account automatically.'**
+  String get phone_otp_form_heading;
 
   /// No description provided for @change_phone_sheet.
   ///
@@ -597,6 +741,24 @@ abstract class AppLocalizations {
   /// **'Pricing'**
   String get title_pricing;
 
+  /// No description provided for @landing_page_get_started_free.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started free'**
+  String get landing_page_get_started_free;
+
+  /// No description provided for @landing_page_see_pricing.
+  ///
+  /// In en, this message translates to:
+  /// **'See pricing'**
+  String get landing_page_see_pricing;
+
+  /// No description provided for @landing_page_how_it_works.
+  ///
+  /// In en, this message translates to:
+  /// **'How it works'**
+  String get landing_page_how_it_works;
+
   /// No description provided for @landing_page_memorize_anything.
   ///
   /// In en, this message translates to:
@@ -693,12 +855,6 @@ abstract class AppLocalizations {
   /// **'Ready to remember more?'**
   String get landing_page_final_cta;
 
-  /// No description provided for @landing_page_final_cta_button.
-  ///
-  /// In en, this message translates to:
-  /// **'Get started free'**
-  String get landing_page_final_cta_button;
-
   /// No description provided for @pricing_page_could_not_load.
   ///
   /// In en, this message translates to:
@@ -740,6 +896,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'contents per card side'**
   String get pricing_page_contents_per_card_side;
+
+  /// No description provided for @pricing_page_get_started.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get pricing_page_get_started;
 
   /// No description provided for @avatar_upload_success.
   ///
