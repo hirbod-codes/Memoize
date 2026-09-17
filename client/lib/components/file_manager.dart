@@ -6,6 +6,7 @@ import 'package:client/components/button.dart';
 import 'package:client/components/content_container.dart';
 import 'package:client/components/dialogs/upload/image_upload_dialog.dart';
 import 'package:client/components/dialogs/upload/video_upload_dialog.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
@@ -34,19 +35,21 @@ class _FileManager extends ConsumerState<FileManager> {
   bool _isMovingContent = false;
 
   Future<void> _onContentAdd() async {
-    setState(() {
-      _isAdding = -1;
-    });
-
-    ContentType? type = await showDialog<ContentType?>(context: context, builder: (_) => ChooseContentTypeDialog());
-    if (type == null || !mounted) return;
-
-    await ref.read(foldersAndFilesProvider.notifier).addContent(Content(type: type, value: []));
-
-    if (mounted) {
+    try {
       setState(() {
-        _isAdding = null;
+        _isAdding = -1;
       });
+
+      ContentType? type = await showDialog<ContentType?>(context: context, builder: (_) => ChooseContentTypeDialog());
+      if (type == null || !mounted) return;
+
+      await ref.read(foldersAndFilesProvider.notifier).addContent(Content(type: type, value: []));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAdding = null;
+        });
+      }
     }
   }
 
@@ -116,7 +119,9 @@ class _FileManager extends ConsumerState<FileManager> {
   Future<void> _showContentDeleteDialog(int index) async {
     showDialog(
       context: context,
-      builder: (_) {
+      builder: (context) {
+        AppLocalizations l10n = AppLocalizations.of(context)!;
+
         return Dialog(
           insetPadding: const EdgeInsets.all(20),
           child: ConstrainedBox(
@@ -127,7 +132,7 @@ class _FileManager extends ConsumerState<FileManager> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Are you sure?\nthis action is irreversible!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(l10n.file_manager_content_delete_dialog_heading, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
                   const SizedBox(height: 16),
 
@@ -140,7 +145,7 @@ class _FileManager extends ConsumerState<FileManager> {
                         onPressed: () {
                           if (mounted) Navigator.pop(context);
                         },
-                        label: 'No',
+                        label: l10n.no,
                       ),
 
                       const SizedBox(width: 8),
@@ -152,7 +157,7 @@ class _FileManager extends ConsumerState<FileManager> {
                           final result = await _contentDelete(index);
                           if (mounted && result) Navigator.pop(context);
                         },
-                        label: "Yes",
+                        label: l10n.yes,
                       ),
                     ],
                   ),
@@ -172,6 +177,8 @@ class _FileManager extends ConsumerState<FileManager> {
     final p = ref.watch(foldersAndFilesProvider);
     final file = p.files![p.fileIndex];
     final contents = p.isTerm ? file.termContents : file.definitionContents;
+
+    AppLocalizations l10n = AppLocalizations.of(context)!;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -220,7 +227,7 @@ class _FileManager extends ConsumerState<FileManager> {
                                 type: ButtonType.text,
                                 color: ThemeColorName.primary,
                                 icon: Icons.flip,
-                                label: 'Flip',
+                                label: l10n.flip,
                                 onPressed: () {
                                   ref.read(foldersAndFilesProvider.notifier).flip();
                                 },
@@ -255,7 +262,7 @@ class _FileManager extends ConsumerState<FileManager> {
                               onPressed: () {
                                 _onContentAdd();
                               },
-                              label: "Add Content",
+                              label: l10n.add_content,
                             ),
                         ],
                       ),

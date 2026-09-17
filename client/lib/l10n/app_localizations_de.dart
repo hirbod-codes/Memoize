@@ -146,43 +146,43 @@ class AppLocalizationsDe extends AppLocalizations {
   String get login_heading => 'Bereits ein Konto? Anmelden';
 
   @override
-  String get unauthenticated => 'Unauthenticated.';
+  String get unauthenticated => 'Nicht authentifiziert.';
 
   @override
-  String get video_fetch_failed => 'Failed to fetch video data.';
+  String get video_fetch_failed => 'Videodaten konnten nicht abgerufen werden.';
 
   @override
-  String get video_not_found => 'Video not found.';
+  String get video_not_found => 'Video nicht gefunden.';
 
   @override
-  String get image_fetch_failed => 'Failed to fetch image data.';
+  String get image_fetch_failed => 'Bilddaten konnten nicht abgerufen werden.';
 
   @override
-  String get image_not_found => 'Image not found.';
+  String get image_not_found => 'Bild nicht gefunden.';
 
   @override
-  String get audio_fetch_failed => 'Failed to fetch audio data.';
+  String get audio_fetch_failed => 'Audiodaten konnten nicht abgerufen werden.';
 
   @override
-  String get audio_not_found => 'Audio not found.';
+  String get audio_not_found => 'Audio nicht gefunden.';
 
   @override
-  String get choose_new_account => 'Choose new account';
+  String get choose_new_account => 'Neues Konto auswählen';
 
   @override
-  String get tts_failed_to_play_pronunciation => 'Failed to play pronunciation';
+  String get tts_failed_to_play_pronunciation => 'Aussprache konnte nicht abgespielt werden';
 
   @override
-  String get tts_hear_pronunciation => 'Hear pronunciation';
+  String get tts_hear_pronunciation => 'Aussprache anhören';
 
   @override
-  String get text_editor_placeholder => 'Start writing your notes...';
+  String get text_editor_placeholder => 'Beginnen Sie mit dem Schreiben Ihrer Notizen...';
 
   @override
   String get option => 'Option';
 
   @override
-  String get choose => 'Choose';
+  String get choose => 'Auswählen';
 
   @override
   String get auth_page_checking_sign_in_methods_failed => 'Verfügbare Anmeldemethoden konnten nicht geprüft werden.';
@@ -336,6 +336,24 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get title_pricing => 'Preise';
+
+  @override
+  String get no => 'Nein';
+
+  @override
+  String get yes => 'Ja';
+
+  @override
+  String get flip => 'Umdrehen';
+
+  @override
+  String get title => 'Umdrehen';
+
+  @override
+  String get add_content => 'Inhalt hinzufügen';
+
+  @override
+  String get file_manager_content_delete_dialog_heading => 'Are you sure?\nthis action is irreversible!';
 
   @override
   String get landing_page_get_started_free => 'Kostenlos starten';

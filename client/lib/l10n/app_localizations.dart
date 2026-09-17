@@ -741,6 +741,42 @@ abstract class AppLocalizations {
   /// **'Pricing'**
   String get title_pricing;
 
+  /// No description provided for @no.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get no;
+
+  /// No description provided for @yes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get yes;
+
+  /// No description provided for @flip.
+  ///
+  /// In en, this message translates to:
+  /// **'Flip'**
+  String get flip;
+
+  /// No description provided for @title.
+  ///
+  /// In en, this message translates to:
+  /// **'Flip'**
+  String get title;
+
+  /// No description provided for @add_content.
+  ///
+  /// In en, this message translates to:
+  /// **'Add content'**
+  String get add_content;
+
+  /// No description provided for @file_manager_content_delete_dialog_heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure?\nthis action is irreversible!'**
+  String get file_manager_content_delete_dialog_heading;
+
   /// No description provided for @landing_page_get_started_free.
   ///
   /// In en, this message translates to:

@@ -30,11 +30,6 @@ class AppShell extends ConsumerWidget {
     final theme = Theme.of(context);
     final iTheme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
-    final maxWidth = context.size?.width ?? 0;
-    final spacing = getSpacing(maxWidth);
-
-    final content = Container(width: double.infinity, height: double.infinity, padding: EdgeInsetsGeometry.all(spacing.padding), child: child);
-
     bool unauthenticated = ref.read(authControllerProvider).status == AuthStatus.unauthenticated;
     if (unauthenticated) {
       AppLocalizations l10n = AppLocalizations.of(context)!;
@@ -47,7 +42,7 @@ class AppShell extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  Text('Memoize', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(l10n.appTitle, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                   const Spacer(),
                   const LocaleSwitcher(),
                   const SizedBox(width: 4),
@@ -74,70 +69,43 @@ class AppShell extends ConsumerWidget {
                 ],
               ),
             ),
-            Expanded(child: SingleChildScrollView(child: child)),
+            Expanded(child: child),
           ],
         ),
       );
     } else {
-      final showNav = navDestinations.length >= 2;
-      final placement = NavBar.placementFor(maxWidth);
-      final navOnSide = showNav && placement != NavBarPlacement.bottom;
-      final navOnBottom = showNav && placement == NavBarPlacement.bottom;
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final maxWidth = constraints.maxWidth;
+          final spacing = getSpacing(maxWidth);
 
-      final body = navOnSide
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                NavBar(placement: placement),
-                const VerticalDivider(width: 1),
-                Expanded(child: content),
-              ],
-            )
-          : content;
+          final showNav = navDestinations.length >= 2;
+          final placement = NavBar.placementFor(maxWidth);
+          final navOnSide = showNav && placement != NavBarPlacement.bottom;
+          final navOnBottom = showNav && placement == NavBarPlacement.bottom;
 
-      return Scaffold(
-        backgroundColor: iTheme.surface,
-        appBar: TopBar(title: title),
-        body: Expanded(child: SingleChildScrollView(child: body)),
-        bottomNavigationBar: (navOnBottom ? const NavBar(placement: NavBarPlacement.bottom) : null),
+          final content = Container(width: double.infinity, height: double.infinity, padding: EdgeInsetsGeometry.all(spacing.padding), child: child);
+
+          final body = navOnSide
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    NavBar(placement: placement),
+                    const VerticalDivider(width: 1),
+                    Expanded(child: content),
+                  ],
+                )
+              : content;
+
+          return Scaffold(
+            backgroundColor: iTheme.surface,
+            appBar: TopBar(title: title),
+            body: body,
+            // SingleChildScrollView(child: body),
+            bottomNavigationBar: (navOnBottom ? const NavBar(placement: NavBarPlacement.bottom) : null),
+          );
+        },
       );
     }
-
-    // return LayoutBuilder(
-    //   builder: (context, constraints) {
-    //     final maxWidth = constraints.maxWidth;
-    //     final spacing = getSpacing(maxWidth);
-
-    //     final showNav = navDestinations.length >= 2;
-    //     final placement = NavBar.placementFor(maxWidth);
-    //     final navOnSide = showNav && placement != NavBarPlacement.bottom;
-    //     final navOnBottom = showNav && placement == NavBarPlacement.bottom;
-
-    //     final content = Container(width: double.infinity, height: double.infinity, padding: EdgeInsetsGeometry.all(spacing.padding), child: child);
-
-    //     bool unauthenticated = ref.read(authControllerProvider).status == AuthStatus.unauthenticated;
-
-    //     final body = unauthenticated
-    //         ? content
-    //         : (navOnSide
-    //               ? Row(
-    //                   crossAxisAlignment: CrossAxisAlignment.stretch,
-    //                   children: [
-    //                     NavBar(placement: placement),
-    //                     const VerticalDivider(width: 1),
-    //                     Expanded(child: content),
-    //                   ],
-    //                 )
-    //               : content);
-
-    //     return Scaffold(
-    //       backgroundColor: theme.surface,
-    //       appBar: TopBar(title: title),
-    //       body: Expanded(child: SingleChildScrollView(child: body)),
-    //       // SingleChildScrollView(child: body),
-    //       bottomNavigationBar: unauthenticated ? null : (navOnBottom ? const NavBar(placement: NavBarPlacement.bottom) : null),
-    //     );
-    //   },
-    // );
   }
 }

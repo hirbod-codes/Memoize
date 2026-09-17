@@ -127,7 +127,7 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
                 phoneNumber: phoneNumber,
                 temporaryAvatar: true,
                 language: 'fa',
-                calendar: 'Persian',
+                calendar: 'persian',
                 timezone: 'utc',
             }))
             log.debug({ creationResult: created });
@@ -256,7 +256,7 @@ router.post('/email/verify', unAuth, async (req: Request, res: Response) => {
             temporaryAvatar: true,
             password: redisPassword,
             language: 'fa',
-            calendar: 'Persian',
+            calendar: 'persian',
             timezone: 'utc',
         }))
         log.debug({ created })

@@ -53,9 +53,9 @@ export { ffmpeg };
 import { leafRoutes } from './routes/leaf';
 import { treeNodeRoutes } from './routes/treeNode';
 import { audioRoutes } from './routes/audio/audio';
-import { imageRoutes } from './routes/image';
+import { imageRoutes } from './routes/image/image';
 import { videoRoutes } from './routes/video/video';
-import { userRoutes } from './routes/user';
+import { userRoutes } from './routes/user/user';
 // import { ttsRoutes } from './routes/tts';
 
 import { S3Client } from "@aws-sdk/client-s3";

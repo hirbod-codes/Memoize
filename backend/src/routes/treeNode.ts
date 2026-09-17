@@ -55,7 +55,7 @@ router.post('/', async (req, res) => {
             return res.status(500).send()
         }
 
-        res.status(201).json({ id: insertTreeNodeResult.insertedId.toString() })
+        res.status(201).json({ status: 'success', data: { id: insertTreeNodeResult.insertedId.toString() } })
         console.log('------------end------------')
     } catch (err) {
         console.error(err);
@@ -87,7 +87,7 @@ router.get('/', async (req, res) => {
             return
         }
 
-        res.status(200).json(treeNode)
+        res.status(200).json({ status: 'success', data: treeNode })
         console.log('------------end------------')
     } catch (err) {
         console.error(err);
@@ -113,11 +113,11 @@ router.get('/children', async (req, res) => {
 
         console.log("fetching...");
         const treeNodeRepository = new TreeNodeRepository()
-        const treeNode = await treeNodeRepository.getByParentIdForUser(parentTreeNodeId, req.user!.userId)
-        if (!treeNode)
+        const treeNodes = await treeNodeRepository.getByParentIdForUser(parentTreeNodeId, req.user!.userId)
+        if (!treeNodes)
             return res.status(404).send()
 
-        res.status(200).json(treeNode)
+        res.status(200).json({ status: 'success', data: treeNodes })
         console.log('------------end------------')
     } catch (err) {
         console.error(err);
@@ -131,13 +131,13 @@ router.get('/root', async (req, res) => {
 
         console.log("fetching...");
         const treeNodeRepository = new TreeNodeRepository()
-        const treeNode = await treeNodeRepository.getRootsForUser(req.user!.userId)
-        if (!treeNode) {
+        const treeNodes = await treeNodeRepository.getRootsForUser(req.user!.userId)
+        if (!treeNodes) {
             res.status(404).send()
             return
         }
 
-        res.status(200).json(treeNode)
+        res.status(200).json({ status: 'success', data: treeNodes })
         console.log('------------end------------')
     } catch (err) {
         console.error(err);
@@ -192,16 +192,16 @@ router.get('/list', async (req, res) => {
 
         console.log('Fetching...')
         const treeNodeRepository = new TreeNodeRepository()
-        let result
+        let treeNodes
         if (search?.trim())
-            result = await treeNodeRepository.getManyForUserByParentId(ids, userId, parentId)
+            treeNodes = await treeNodeRepository.getManyForUserByParentId(ids, userId, parentId)
         else
             if (parentId)
-                result = await treeNodeRepository.getChildrenForUserPaginated(userId, parentId, limit, skip, search)
+                treeNodes = await treeNodeRepository.getChildrenForUserPaginated(userId, parentId, limit, skip, search)
             else
-                result = await treeNodeRepository.getRootsForUserPaginated(userId, limit, skip, search)
+                treeNodes = await treeNodeRepository.getRootsForUserPaginated(userId, limit, skip, search)
 
-        res.status(200).json(result)
+        res.status(200).json({ status: 'success', data: treeNodes })
 
         console.log('------------end------------')
 
@@ -256,7 +256,7 @@ router.patch('/', async (req, res) => {
             }
         }
 
-        res.status(200).json({ id: treeNode._id!.toString() })
+        res.status(200).json({ status: 'success', data: { id: treeNode._id!.toString() } })
         console.log('------------end------------')
     } catch (err) {
         console.error(err);
@@ -293,7 +293,7 @@ router.delete('/', async (req, res) => {
             return res.status(500).send()
         }
 
-        res.status(200).send()
+        res.status(204).json({ status: 'success' })
         console.log('------------end------------')
     } catch (err) {
         console.error(err);

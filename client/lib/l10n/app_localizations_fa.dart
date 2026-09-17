@@ -146,43 +146,43 @@ class AppLocalizationsFa extends AppLocalizations {
   String get login_heading => 'قبلاً حساب کاربری دارید؟ وارد شوید';
 
   @override
-  String get unauthenticated => 'Unauthenticated.';
+  String get unauthenticated => 'احراز هویت نشده‌اید.';
 
   @override
-  String get video_fetch_failed => 'Failed to fetch video data.';
+  String get video_fetch_failed => 'دریافت اطلاعات ویدیو ناموفق بود.';
 
   @override
-  String get video_not_found => 'Video not found.';
+  String get video_not_found => 'ویدیو پیدا نشد.';
 
   @override
-  String get image_fetch_failed => 'Failed to fetch image data.';
+  String get image_fetch_failed => 'دریافت اطلاعات تصویر ناموفق بود.';
 
   @override
-  String get image_not_found => 'Image not found.';
+  String get image_not_found => 'تصویر پیدا نشد.';
 
   @override
-  String get audio_fetch_failed => 'Failed to fetch audio data.';
+  String get audio_fetch_failed => 'دریافت اطلاعات صوت ناموفق بود.';
 
   @override
-  String get audio_not_found => 'Audio not found.';
+  String get audio_not_found => 'فایل صوتی پیدا نشد.';
 
   @override
-  String get choose_new_account => 'Choose new account';
+  String get choose_new_account => 'انتخاب حساب جدید';
 
   @override
-  String get tts_failed_to_play_pronunciation => 'Failed to play pronunciation';
+  String get tts_failed_to_play_pronunciation => 'پخش تلفظ ناموفق بود';
 
   @override
-  String get tts_hear_pronunciation => 'Hear pronunciation';
+  String get tts_hear_pronunciation => 'شنیدن تلفظ';
 
   @override
-  String get text_editor_placeholder => 'Start writing your notes...';
+  String get text_editor_placeholder => 'نوشتن یادداشت‌های خود را شروع کنید...';
 
   @override
-  String get option => 'Option';
+  String get option => 'گزینه';
 
   @override
-  String get choose => 'Choose';
+  String get choose => 'انتخاب کنید';
 
   @override
   String get auth_page_checking_sign_in_methods_failed => 'بررسی روش‌های ورود در دسترس ممکن نبود.';
@@ -335,6 +335,24 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get title_pricing => 'قیمت‌گذاری';
+
+  @override
+  String get no => 'خیر';
+
+  @override
+  String get yes => 'بله';
+
+  @override
+  String get flip => 'برگرداندن';
+
+  @override
+  String get title => 'برگرداندن';
+
+  @override
+  String get add_content => 'افزودن محتوا';
+
+  @override
+  String get file_manager_content_delete_dialog_heading => 'Are you sure?\nthis action is irreversible!';
 
   @override
   String get landing_page_get_started_free => 'رایگان شروع کنید';

@@ -58,7 +58,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [_HeroSection(), _HowItWorksSection(), _ContentTypesSection(), _UseCasesSection(), _FinalCtaSection(), AppFooter()]);
+    return ListView(children: [_HeroSection(), _HowItWorksSection(), _ContentTypesSection(), _UseCasesSection(), _FinalCtaSection(), AppFooter()]);
   }
 }
 

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:client/components/button.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:client/api/models/leaf.dart';
@@ -66,6 +67,8 @@ class _ContentState extends ConsumerState<ContentContainer> {
     final file = p.files![p.fileIndex];
     final contents = p.isTerm ? file.termContents : file.definitionContents;
     final content = contents[widget.contentIndex];
+
+    AppLocalizations l10n = AppLocalizations.of(context)!;
 
     Widget removeIcon(String value, int index) {
       return _isRemoving.contains(index)
@@ -234,7 +237,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           padding: const EdgeInsets.all(8.0),
                           child: TextField(
                             controller: stringControllers[contentValueIndex],
-                            decoration: InputDecoration(labelText: 'Title'),
+                            decoration: InputDecoration(labelText: l10n.title),
                           ),
                         ),
                       ),

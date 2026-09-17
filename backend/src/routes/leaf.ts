@@ -68,7 +68,7 @@ router.post('/', async (req, res) => {
 
         await db.commitTransaction()
 
-        res.status(201).json({ id: insertLeafResult.insertedId.toString() })
+        res.status(201).json({ status: 'success', data: { id: insertLeafResult.insertedId.toString() } })
         console.log('------------end------------')
     } catch (err) {
         console.error(err)
@@ -104,13 +104,13 @@ router.get('/', async (req, res) => {
             let leafs: Leaf[] = await leafRepository.getManyForUserByParentTreeNodeId(parentTreeNodeId!, req.user!.userId)
             if (!leafs)
                 return res.status(404).send()
-            res.status(200).json(leafs)
+            res.status(200).json({ status: 'success', data: leafs })
         } else {
             console.log("Fetching leaf...");
             let leaf: Leaf = await leafRepository.getForUser(leafId!, req.user!.userId)
             if (!leaf)
                 return res.status(404).send()
-            res.status(200).json(leaf)
+            res.status(200).json({ status: 'success', data: leaf })
         }
 
         res.status(500).send()
@@ -164,13 +164,13 @@ router.get('/list', async (req, res) => {
 
         console.log('Fetching...')
         const leafRepository = new LeafRepository()
-        let result
+        let leafs
         if (ids.length > 0)
-            result = await leafRepository.getManyForUserByParentTreeNodeIdLimitedByIds(ids, parentId, userId)
+            leafs = await leafRepository.getManyForUserByParentTreeNodeIdLimitedByIds(ids, parentId, userId)
         else
-            result = await leafRepository.getForUserPaginated(req.user!.userId, parentId, limit, skip, search)
+            leafs = await leafRepository.getForUserPaginated(req.user!.userId, parentId, limit, skip, search)
 
-        res.status(200).json(result)
+        res.status(200).json({ status: 'success', data: leafs })
 
         console.log('------------end------------')
 
@@ -222,7 +222,7 @@ router.patch('/', async (req, res) => {
                 return res.status(500).send()
             }
         }
-        res.status(200).send()
+        res.status(200).json({ status: 'success' })
         console.log('------------end------------')
     } catch (err) {
         console.error(err);
@@ -262,7 +262,7 @@ router.delete('/', async (req, res) => {
             return res.status(500).send()
         }
 
-        res.status(200).send()
+        res.status(204).json({ status: 'success' })
         console.log('------------end------------')
     } catch (err) {
         console.error(err);

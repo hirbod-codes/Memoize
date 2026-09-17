@@ -337,6 +337,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get title_pricing => 'Pricing';
 
   @override
+  String get no => 'No';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get flip => 'Flip';
+
+  @override
+  String get title => 'Flip';
+
+  @override
+  String get add_content => 'Add content';
+
+  @override
+  String get file_manager_content_delete_dialog_heading => 'Are you sure?\nthis action is irreversible!';
+
+  @override
   String get landing_page_get_started_free => 'Get started free';
 
   @override

@@ -6,7 +6,7 @@ export const collectionName = 'user'
 export const schemaVersion = 'v1.0.0'
 
 export const languageSchema = string().oneOf(['en', 'fa', 'de'])
-export const calendarSchema = string().oneOf(['Persian', 'Gregorian'])
+export const calendarSchema = string().oneOf(['persian', 'gregorian'])
 export const timezoneSchema = string()
 
 const update = {
@@ -25,9 +25,9 @@ const update = {
     password: string().optional(),
     refreshToken: string().optional(),
 
-    language: string().oneOf(['en', 'fa', 'de']).optional(),
-    calendar: string().oneOf(['Persian', 'Gregorian']).optional(),
-    timezone: string().optional(),
+    language: languageSchema.optional(),
+    calendar: calendarSchema.optional(),
+    timezone: timezoneSchema.optional(),
 }
 export const userUpdateSchema = object().shape(update).required()
 

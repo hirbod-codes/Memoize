@@ -47,7 +47,7 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.video']), authoriz
         log.debug({ titleTaken: existing });
         if (existing) {
             log.info({ title }, 'Rejected video upload: title already exists');
-            return res.status(400).json({ message: 'Video title must be unique.' });
+            return res.status(400).json({ status: 'error', message: 'Video title must be unique.' });
         }
         log.info('Checked title uniqueness')
 
@@ -58,7 +58,7 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.video']), authoriz
         log.debug({ insertResult: videoInsertResult });
         if (!videoInsertResult.acknowledged || !videoInsertResult.insertedId) {
             log.error({ insertResult: videoInsertResult }, 'Video info creation failed');
-            return res.status(500).json({ ok: false, message: 'Video info creation failed' });
+            return res.status(500).json({ status: 'error', message: 'Video info creation failed' });
         }
         log.info('Inserted temporary video record')
 
@@ -208,12 +208,12 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.video']), authoriz
             }
         } catch (err) {
             if (err instanceof UploadTooLargeError) {
-                return res.status(403).json({ error: err.message });
+                return res.status(403).json({ status: 'error', message: err.message });
             } else if (err instanceof InvalidMediaError) {
-                return res.status(400).json({ error: err.message });
+                return res.status(400).json({ status: 'error', message: err.message });
             } else {
                 log.error({ err }, 'Video upload failed');
-                return res.status(500).json({ error: 'Upload failed' });
+                return res.status(500).json({ status: 'error', message: 'Upload failed' });
             }
         } finally {
             await cleanup();
@@ -223,7 +223,7 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.video']), authoriz
             }
         }
 
-        return res.status(201).json({ id: videoId });
+        return res.status(201).json({ status: 'success', data: { id: videoId } });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -259,7 +259,7 @@ router.get('/', auth, async (req, res) => {
 
 
         log.info('fetched videos');
-        res.status(200).json({ items, page, pageSize, total, totalPages, hasMore: page < totalPages });
+        res.status(200).json({ status: 'success', data: { items, page, pageSize, total, totalPages, hasMore: page < totalPages } });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -293,12 +293,12 @@ router.get('/info/', auth, async (req, res) => {
         log.debug({ result })
         if (!result) {
             log.info('Video not found');
-            return res.status(404).send()
+            return res.status(404).json({ status: 'error' })
         }
 
         log.info('fetched video info');
         log.debug({ videoId: result._id?.toString() }, 'Video found');
-        res.status(200).json(result)
+        res.status(200).json({ status: 'success', data: result })
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -325,7 +325,7 @@ router.get('/singed_token', auth, async (req, res) => {
         log.debug({ video });
         if (!video) {
             log.info('Video not found');
-            return res.status(404).json({ message: 'Video not found' });
+            return res.status(404).json({ status: 'error', message: 'Video not found' });
         }
         log.info('Video ownership confirmed');
 
@@ -333,7 +333,7 @@ router.get('/singed_token', auth, async (req, res) => {
         log.debug({ token });
         log.info('Issued signed stream token');
 
-        return res.status(200).json({ token });
+        return res.status(200).json({ status: 'success', data: token });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }
@@ -426,7 +426,7 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
         const stream = result.Body as any;
         if (stream === undefined || stream === null) {
             log.warn({ key: video.thumbnailKey }, 'Thumbnail object has no body');
-            return res.status(404).send();
+            return res.status(404).json({ status: 'error' });
         }
 
         res.setHeader("Content-Type", result.ContentType || "application/octet-stream");
@@ -461,7 +461,7 @@ router.delete('/:videoId', auth, async (req, res) => {
         log.debug({ video });
         if (!video) {
             log.info('Video not found');
-            res.status(404).json({ message: 'Video not found' });
+            res.status(404).json({ status: 'error', message: 'Video not found' });
             return
         }
         log.info('fetched video');
@@ -471,7 +471,7 @@ router.delete('/:videoId', auth, async (req, res) => {
         log.debug({ updateResult });
         if (!updateResult.acknowledged || updateResult.matchedCount) {
             log.error({ updateResult }, 'Failed to mark video temporary before delete');
-            return res.status(500).send()
+            return res.status(500).json({ status: 'error' })
         }
         log.info('Marked video temporary in DB before delete')
 
@@ -507,7 +507,7 @@ router.delete('/:videoId', auth, async (req, res) => {
         log.info('Deleted video record in DB')
 
         log.info('Video deleted successfully');
-        res.status(200).send();
+        res.status(204).json({ status: 'success' });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }

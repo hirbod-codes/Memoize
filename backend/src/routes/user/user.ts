@@ -1,43 +1,43 @@
 import express from 'express';
-import { string, ValidationError } from 'yup';
-import { generalRateLimiter } from '../middlewares/rateLimiting';
-import { UserRepository } from '../DB/repositories/UserRepository';
-import { auth } from '../middlewares/auth';
+import { generalRateLimiter } from '../../middlewares/rateLimiting';
+import { UserRepository } from '../../DB/repositories/UserRepository';
+import { auth } from '../../middlewares/auth';
 import { Upload } from '@aws-sdk/lib-storage';
-import { BUCKET_NAME } from '../configs';
+import { BUCKET_NAME } from '../../configs';
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { s3 } from '..';
-import { getLogger, runWithLogger } from '../observability/requestLoggerContext';
-import { handleError, validate } from '../lib';
-import { fetchAvatarSchema, preferencesSchema, uploadAvatarSchema } from './user/schemas';
+import { s3 } from '../..';
+import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
+import { handleError, validate } from '../../lib';
+import { fetchAvatarSchema, preferencesSchema, uploadAvatarSchema } from './schemas';
 
 const router = express.Router();
 
 router.use(auth, generalRateLimiter)
 
 router.get('/info', async (req, res) => {
-    try {
-        console.log('/api/user')
+    const log = getLogger().child({ module: 'user', route: 'POST /api/user/info' });
 
-        console.log('Fetching...')
+    try {
+        log.info('user info request received')
+
         const userRepository = new UserRepository()
-        const result = await userRepository.get(req.user!.userId)
-        if (result === false) {
-            res.status(401).send()
-            return
+
+        const result = await runWithLogger(log, () => userRepository.get(req.user!.userId))
+        log.debug(result)
+        if (!result) {
+            log.info('User not found')
+            return res.status(401).send()
         }
+        log.info('User found')
 
         res.status(200).json({ status: 'success', data: result })
-
-        console.log('------------end------------')
     } catch (err) {
-        console.error(err)
-        res.status(500).send()
+        runWithLogger(log, () => handleError(res, err))
     }
 })
 
 router.post('/preferences', async (req, res) => {
-    const log = getLogger().child({ module: 'user', route: 'POST /api/user/refresh' });
+    const log = getLogger().child({ module: 'user', route: 'POST /api/user/preferences' });
 
     try {
         log.info('update user preferences request received')
@@ -58,7 +58,7 @@ router.post('/preferences', async (req, res) => {
         }
 
         return res.status(204).json({ status: 'success' })
-    } catch (err: any) {
+    } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }
 })
@@ -127,7 +127,7 @@ router.get('/avatar', async (req, res) => {
     const log = getLogger().child({ module: 'user', route: 'GET /api/user/avatar' });
 
     try {
-        log.info('user avatar download request received')
+        log.info('user avatar delete request received')
 
         let { download: downloadStr } = await runWithLogger(log, () => validate(fetchAvatarSchema, req.query ?? {}))
         const download = downloadStr === 'true'
@@ -176,37 +176,45 @@ router.get('/avatar', async (req, res) => {
 })
 
 router.delete('/avatar', async (req, res) => {
+    const log = getLogger().child({ module: 'user', route: 'DELETE /api/user/avatar' });
+
     try {
-        console.log('/api/user/avatar')
+        log.info('user avatar delete request received')
 
         const userId = req.user!.userId
 
         const userRepository = new UserRepository()
 
-        console.log("Fetch user info...");
-        const user = await userRepository.get(userId)
-        if (!user)
+        const user = await runWithLogger(log, () => userRepository.get(userId))
+        log.debug({ user })
+        if (!user) {
+            log.info('user not found')
             return res.status(404).json({ message: 'User not found' });
-        if (!user.avatarKey || user.temporaryAvatar)
+        }
+        if (!user.avatarKey || user.temporaryAvatar) {
+            log.info('user avatar not found')
             return res.status(404).json({ message: 'Avatar not found' });
-        console.log({ user })
+        }
 
+        log.info('deleting user avatar...')
         await s3.send(new DeleteObjectCommand({
             Bucket: BUCKET_NAME,
             Key: user.avatarKey,
         }));
+        log.info('deleted user avatar')
 
         console.log("Deleting image in DB...");
-        const rr = await userRepository.unsafeUpdate(userId, { avatarKey: undefined, temporaryAvatar: false })
-        if (rr !== true)
+        const result = await userRepository.unsafeUpdate(userId, { avatarKey: undefined, temporaryAvatar: false })
+        log.debug({ result })
+        if (result !== true) {
+            log.warn('failed to delete user avatar from MongoDB')
             return res.status(500).send()
+        }
+        console.log("Deleted image in DB");
 
-        res.status(200).send();
+        return res.status(200).send();
     } catch (err) {
-        console.error(err)
-        res.status(500).send()
-    } finally {
-        console.log('------------end------------')
+        runWithLogger(log, () => handleError(res, err))
     }
 })
 

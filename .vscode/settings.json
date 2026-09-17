@@ -40,6 +40,7 @@
         "smembers",
         "springify",
         "srem",
+        "STEB",
         "tombstoned",
         "topbar",
         "videocam",

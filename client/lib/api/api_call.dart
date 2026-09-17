@@ -74,18 +74,24 @@ class ApiCallFailure<T> extends ApiCallResult<T> {
 /// you adopt apiCall broadly, consider stripping the toast call out of
 /// GlobalErrorInterceptor (keep it for logging only) so a single
 /// failure can't show two toasts.
-Future<ApiCallResult<T>> apiCall<T>(Future<Response> Function() request) async {
+Future<ApiCallResult<T>> apiCall<T>(Future<Response> Function() request, {T Function(dynamic data)? fromJson}) async {
   try {
     final response = await request();
 
+    Talker().debug('api call data: ', response.data);
     if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300 && (response.data == null || response.data == '')) {
       return ApiCallSuccess<T>(null);
     }
 
     final parsed = ApiResponse.tryParse(response.data);
+    Talker().debug('api call data: ', parsed);
     if (parsed is ApiSuccess) {
-      var result = ApiCallSuccess<T>(parsed.data as T?);
-      Talker().debug('api call data: ', jsonEncode(result.dataOrNull));
+      ApiCallSuccess<T> result;
+      if (fromJson != null && parsed.data != null) {
+        result = ApiCallSuccess<T>(fromJson(parsed.data));
+      } else {
+        result = ApiCallSuccess<T>(parsed.data as T?);
+      }
       return result;
     }
 
@@ -103,6 +109,8 @@ Future<ApiCallResult<T>> apiCall<T>(Future<Response> Function() request) async {
     return ApiCallFailure<T>(message);
   }
 }
+
+class A {}
 
 String _extractMessage(ApiResponse? parsed, dynamic rawBody) {
   switch (parsed) {

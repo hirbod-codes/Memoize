@@ -1,5 +1,4 @@
-import express, { Request, Response } from 'express';
-import { number, string, ValidationError } from 'yup';
+import express, { } from 'express';
 import { auth, authenticateToken } from '../../middlewares/auth';
 import { audioUploadTmpDir, BUCKET_NAME, ttsApiKey } from '../../configs';
 import AudioRepository from '../../DB/repositories/AudioRepository';
@@ -8,19 +7,20 @@ import { generateStreamToken, verifyStreamToken } from '../../lib/signed_urls';
 import { UserRepository } from '../../DB/repositories/UserRepository';
 import { httpsStreamRequest } from '../../utils';
 import { s3 } from '../..';
+import { pipeline } from 'stream/promises';
+import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
+import { listQuerySchema, infoQuerySchema, signedTokenQuerySchema, ttsQuerySchema, fileParamsSchema, webFileParamsSchema, coverArtParamsSchema, deleteParamsSchema, postSchema } from './schemas';
+import { handleError, validate } from '../../lib';
 import { authorizeFeature, authorizeQuota } from '../../middlewares/authorization';
-import { basename, join } from 'path';
-import { mkdir, rm, stat, unlink } from 'fs/promises';
 import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../../lib/file_management';
 import { extractCoverArt, generateWebCompatibleCopy, isWebCompatible, probeFile } from '../../ffmpeg';
 import { InvalidMediaError } from '../../errors/InvalidMediaError';
-import { UploadTooLargeError } from '../../errors/UploadTooLargeError';
-import { createReadStream, createWriteStream } from 'fs';
-import { Readable } from 'stream';
-import { pipeline } from 'stream/promises';
+import { join, basename } from 'path';
 import { UsageField } from '../../DB/models/Usage';
-import { getLogger } from '../../observability/requestLoggerContext';
-import { DEFAULT_PAGE_SIZE, MAX_PAGE, MAX_PAGE_SIZE } from '../schemas';
+import { UploadTooLargeError } from '../../errors/UploadTooLargeError';
+import { mkdir, unlink, rm, stat } from 'fs/promises';
+import { createWriteStream, createReadStream } from 'fs';
+import { streamAudioFile } from './lib';
 
 const router = express.Router();
 
@@ -30,57 +30,52 @@ const ALLOWED_AUDIO_CODECS = new Set([
 ]);
 
 router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authorizeQuota(new Map([['valuePerContentCount.audio', 1]])), async (req, res) => {
-    let reqLog = getLogger().child({ module: 'audio', route: 'POST /audio' });
-    try {
-        reqLog.debug({ query: req.query }, 'Audio upload request received');
+    let log = getLogger().child({ module: 'audio', route: 'POST /api/audio/' });
 
-        // ------------------------------------------------------------------------- Validating...
-        let fileName: string | undefined, title: string | undefined
-        try {
-            title = await string().required().label('Title').validate(req.query.title?.toString())
-            fileName = await string().required().label('File name').validate(req.query.fileName?.toString())
-        } catch (err) {
-            if (err instanceof ValidationError) {
-                reqLog.warn({ errors: err.errors }, 'Rejected audio upload: invalid metadata');
-                return res.status(400).json({ errors: err.errors })
-            }
-            reqLog.warn({ err }, 'Rejected audio upload: invalid metadata');
-            return res.status(400).json({ message: 'Invalid Audio info.' });
-        }
-        reqLog.debug({ title, fileName }, 'Validated upload metadata');
+    try {
+        log.info('audio upload request received');
+
+        log.debug({ query: req.query });
+        const { fileName, title } = await runWithLogger(log, () => validate(postSchema, req.query))
+        log.info('input validated');
+        log.debug({ fileName, title });
 
         const userId = req.user!.userId
-        reqLog = reqLog.child({ userId });
+        log = log.child({ userId });
 
         const audioRepository = new AudioRepository()
 
         // ------------------------------------------------------------------------- Checking weather title already exists...
-        const audio = await audioRepository.getForUserByTitle(title, userId);
-        reqLog.debug({ titleTaken: !!audio }, 'Checked title uniqueness');
+        const audio = await runWithLogger(log, () => audioRepository.getForUserByTitle(title, userId));
+        log.debug({ audio });
+        log.info('Checked title uniqueness');
         if (audio) {
-            reqLog.info({ title }, 'Rejected audio upload: title already exists');
-            return res.status(400).json({ message: 'Audio title must be unique.' });
+            log.info('Rejected audio upload: title already exists');
+            return res.status(400).json({ status: 'error', message: 'Audio title must be unique.' });
         }
 
         // ------------------------------------------------------------------------- Inserting audio...
-        const audioInsertResult = await audioRepository.insert({ title, userId, temporary: true })
-        reqLog.debug({ insertResult: audioInsertResult }, 'Inserted temporary audio record');
+        const audioInsertResult = await runWithLogger(log, () => audioRepository.insert({ title, userId, temporary: true }))
+        log.debug({ audioInsertResult });
         if (!audioInsertResult.acknowledged || !audioInsertResult.insertedId) {
-            reqLog.error({ insertResult: audioInsertResult }, 'Audio info creation failed');
-            return res.status(500).json({ ok: false, message: 'Audio info creation failed' })
+            log.error({ audioInsertResult }, 'temporary audio info creation failed');
+            return res.status(500).json({ status: 'error', message: 'Audio info creation failed' })
         }
+        log.info('Inserted temporary audio info record');
+
         const audioId = audioInsertResult.insertedId.toString()
-        reqLog = reqLog.child({ audioId });
-        reqLog.info('Created temporary audio record');
+        log.debug({ audioId })
 
         // ------------------------------------------------------------------------- Make the temporary directory
         const jobDir = join(audioUploadTmpDir, audioId)
         await mkdir(jobDir, { recursive: true });
-        reqLog.debug({ jobDir }, 'Created job scratch directory');
+        log.debug({ jobDir });
+        log.info('Created job scratch directory');
 
         const cleanupPaths: string[] = [];
         const cleanup = async () => {
-            reqLog.debug({ cleanupPaths, jobDir }, 'Cleaning up temp files');
+            log.debug({ cleanupPaths, jobDir });
+            log.info('Cleaning up temp files');
             await Promise.all(cleanupPaths.map((p) => unlink(p).catch(() => { })));
             await rm(jobDir, { recursive: true, force: true }).catch(() => { });
         };
@@ -88,56 +83,68 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authoriz
         let rollbackPromises: undefined | Promise<any> = undefined
         try {
             const maxTotalStorageBytes = req.user!.privileges!.maxStorageBytes;
-            reqLog.debug({ maxTotalStorageBytes }, 'Resolved plan storage limit');
+            log.debug({ maxTotalStorageBytes }, 'Resolved plan storage limit');
 
             // ------------------------------------------------------------------------- Store upload stream on disk
-            const { path: inputPath, size: inputSize } = await receiveUpload(req, maxTotalStorageBytes, jobDir);
-            cleanupPaths.push(inputPath);
-            reqLog.info({ inputSize, inputPath }, 'Upload received and stored to disk');
+            const { path: inputPath, size: inputSize } = await runWithLogger(log, () => receiveUpload(req, maxTotalStorageBytes, jobDir))
+            cleanupPaths.push(inputPath)
+            log.debug({ inputSize, inputPath })
+            log.info('Upload received and stored to disk')
 
             // ------------------------------------------------------------------------- Probe received file, get info and Validate it
-            const info = await probeFile(inputPath);
-            const audioStream = info.streams.find((s) => s.codec_type === 'audio');
-            reqLog.debug({ audioCodec: audioStream?.codec_name }, 'Probed uploaded file');
+            const info = await runWithLogger(log, () => probeFile(inputPath))
+            const audioStream = info.streams.find((s) => s.codec_type === 'audio')
+            log.debug({ audioCodec: audioStream?.codec_name })
+            log.info('Probed uploaded file')
             if (!audioStream || !ALLOWED_AUDIO_CODECS.has(audioStream.codec_name)) {
-                reqLog.warn({ codec: audioStream?.codec_name }, 'Rejected audio upload: unsupported codec');
-                throw new InvalidMediaError('Unsupported or unrecognized audio format');
+                log.warn({ codec: audioStream?.codec_name }, 'Rejected audio upload: unsupported codec')
+                throw new InvalidMediaError('Unsupported or unrecognized audio format')
             }
 
             // ------------------------------------------------------------------------- Set bucket keys
-            const isUploadWebCompatible = isWebCompatible(undefined, audioStream)
-            const audioFileBucketKey = `audio/${userId}/${audioId}`;
-            const webCompatibleAudioFileBucketKey = isUploadWebCompatible ? undefined : `audio/${userId}/web/${audioId}`;
-            const coverArtBucketKey = `audio/cover_art/${userId}/${audioId}`;
-            reqLog.debug({ isUploadWebCompatible, audioFileBucketKey, webCompatibleAudioFileBucketKey, coverArtBucketKey }, 'Computed bucket keys');
+            const isUploadWebCompatible = runWithLogger(log, () => isWebCompatible(undefined, audioStream))
+            const audioFileBucketKey = `audio/${userId}/${audioId}`
+            const webCompatibleAudioFileBucketKey = isUploadWebCompatible ? undefined : `audio/${userId}/web/${audioId}`
+            const coverArtBucketKey = `audio/cover_art/${userId}/${audioId}`
+            log.debug({ isUploadWebCompatible, audioFileBucketKey, webCompatibleAudioFileBucketKey, coverArtBucketKey })
+            log.info('Computed bucket keys')
 
             // ------------------------------------------------------------------------- Set file paths
-            const webCopyPath = isUploadWebCompatible ? undefined : join(jobDir, `${audioId}-web.m4a`);
+            const webCopyPath = isUploadWebCompatible ? undefined : join(jobDir, `${audioId}-web.m4a`)
             if (webCopyPath)
                 cleanupPaths.push(webCopyPath);
 
             const coverArtPath = join(jobDir, `${audioId}-thumb.jpg`);
             cleanupPaths.push(coverArtPath);
-
-            reqLog.debug({ webCopyPath, coverArtPath }, 'Resolved output paths');
+            log.debug({ webCopyPath, coverArtPath });
+            log.info('Resolved output paths');
 
             // ------------------------------------------------------------------------- Wait for web compatible file and cover art to be generated and content type to be collected
             const promises = await Promise.all([
-                detectContentType(inputPath).then((ct) => {
-                    reqLog.debug({ contentType: ct }, 'Detected content type');
-                    return ct;
-                }),
-                extractCoverArt(inputPath, info.streams, jobDir, basename(coverArtPath).split('.')[0]).then((r) => {
-                    reqLog.debug({ found: !!r }, 'Cover art extraction attempted');
-                    return r;
-                }),
-                ...(isUploadWebCompatible ? [] : [generateWebCompatibleCopy(inputPath, jobDir, basename(webCopyPath!).split('.')[0], undefined, audioStream)
-                    .then((result) => pipeline(result.outputStream, createWriteStream(webCopyPath!)))
-                    .then(() => reqLog.debug('Web-compatible copy written to disk'))]),
+                runWithLogger(log, () => detectContentType(inputPath)
+                    .then((ct) => {
+                        log.debug({ contentType: ct }, 'Detected content type');
+                        return ct;
+                    })),
+                runWithLogger(log, () => extractCoverArt(inputPath, info.streams, jobDir, basename(coverArtPath).split('.')[0])
+                    .then((r) => {
+                        log.debug({ found: !!r }, 'Cover art extraction attempted');
+                        return r;
+                    })),
+                ...(
+                    isUploadWebCompatible
+                        ? []
+                        : [
+                            runWithLogger(log, () => generateWebCompatibleCopy(inputPath, jobDir, basename(webCopyPath!).split('.')[0], undefined, audioStream)
+                                .then((result) => pipeline(result.outputStream, createWriteStream(webCopyPath!)))
+                                .then(() => log.debug('Web-compatible copy written to disk')))
+                        ]
+                ),
             ]);
             const contentType = promises[0]
             const coverArtResult = promises[1]
-            reqLog.info({ isUploadWebCompatible, hasCoverArt: !!coverArtResult }, 'Generated derived files');
+            log.debug({ isUploadWebCompatible, coverArtResult });
+            log.info('Generated web compatible file and cover art');
 
             // ------------------------------------------------------------------------- Validate generated file sizes
             const [coverArtStat, webCopyStat] = await Promise.all([
@@ -145,516 +152,392 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authoriz
                 ...(isUploadWebCompatible ? [] : [stat(webCopyPath!)]),
             ]);
             const totalStorageBytes = inputSize + (webCopyStat ? webCopyStat.size : 0) + coverArtStat.size;
-            reqLog.debug({ inputSize, webCopySize: webCopyStat?.size ?? 0, coverArtSize: coverArtStat.size, totalStorageBytes }, 'Computed total storage footprint');
+            log.debug({ inputSize, webCopySize: webCopyStat?.size ?? 0, coverArtSize: coverArtStat.size, totalStorageBytes }, 'Computed total storage footprint');
             const quota = new Map<UsageField, number>([['storageBytesCount', totalStorageBytes]])
-            if (await authorizeQuota(quota, req) !== true) {
-                reqLog.info({ totalStorageBytes }, 'Rejected audio upload: exceeds plan storage limit');
+            if (await runWithLogger(log, () => authorizeQuota(quota, req)) !== true) {
+                log.info({ totalStorageBytes }, 'Rejected audio upload: exceeds plan storage limit');
                 throw new UploadTooLargeError('Generated files exceed plan storage limit');
             }
-            reqLog.debug('Storage quota authorized');
+            log.info('Storage quota authorized');
 
             try {
                 // ------------------------------------------------------------------------- Upload files to the S3 compatible object storage
-                reqLog.debug('Uploading files to object storage');
+                log.info('Uploading files to object storage');
                 await Promise.all([
-                    uploadToS3(createReadStream(inputPath), audioFileBucketKey, contentType.mimeType),
-                    ...(isUploadWebCompatible ? [] : [uploadToS3(createReadStream(webCopyPath!), webCompatibleAudioFileBucketKey!, 'audio/mp4')]),
-                    ...(coverArtResult ? [uploadToS3(createReadStream(coverArtResult.path), coverArtBucketKey, coverArtResult.mimeType)] : [])
+                    runWithLogger(log, () => uploadToS3(createReadStream(inputPath), audioFileBucketKey, contentType.mimeType)),
+                    ...(isUploadWebCompatible ? [] : [runWithLogger(log, () => uploadToS3(createReadStream(webCopyPath!), webCompatibleAudioFileBucketKey!, 'audio/mp4'))]),
+                    ...(coverArtResult ? [runWithLogger(log, () => uploadToS3(createReadStream(coverArtResult.path), coverArtBucketKey, coverArtResult.mimeType))] : [])
                 ]);
-                reqLog.info({ audioFileBucketKey, webCompatibleAudioFileBucketKey, hasCoverArt: !!coverArtResult, totalStorageBytes }, 'Uploaded files to object storage');
+                log.debug({ audioFileBucketKey, webCompatibleAudioFileBucketKey, hasCoverArt: !!coverArtResult, totalStorageBytes });
+                log.info('Uploaded files to object storage');
 
                 // ------------------------------------------------------------------------- Update audio info in DB, Make it permanent and set content type
                 const updateResult = await audioRepository.unsafeUpdate(audioId, userId, { contentType: contentType, temporary: false, bucketKey: audioFileBucketKey, webBucketKey: webCompatibleAudioFileBucketKey, coverArtKey: coverArtBucketKey, coverArtFileName: basename(coverArtPath) });
-                reqLog.debug({ updateResult }, 'Updated audio record');
-                if (!updateResult.acknowledged || updateResult.matchedCount !== 1)
+                log.debug({ updateResult });
+                if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
+                    log.info('updating audio record failed');
                     throw new Error('failed to upload audio')
+                }
+                log.info('Updated audio record');
 
                 // Work is durably done — clear reservations so the response-based rollback middleware becomes a no-op for this request no matter what happens to the connection from here on.
                 // The connection might drop at this exact moment, which fires the res.on('close') and causes rollbackQuotaOnFailure middleware to rollback although content is properly uploaded and stored(a false alarm).
                 req.quotaReservations = []
-                reqLog.info({ totalStorageBytes }, 'Audio upload finalized');
+                log.info({ totalStorageBytes }, 'Audio upload finalized');
             } catch (error) {
-                reqLog.error({ err: error }, 'Post-upload finalization failed, rolling back stored artifacts');
+                log.error({ err: error }, 'Post-upload finalization failed, rolling back stored artifacts');
                 rollbackPromises = Promise.allSettled([
-                    deleteFromS3(audioFileBucketKey).catch((_) => { }),
-                    ...(webCompatibleAudioFileBucketKey ? [deleteFromS3(webCompatibleAudioFileBucketKey).catch((_) => { })] : []),
-                    ...(coverArtResult ? [deleteFromS3(coverArtBucketKey).catch((_) => { })] : []),
-                    audioRepository.delete(audioId).catch((_) => { })
+                    runWithLogger(log, () => deleteFromS3(audioFileBucketKey).catch((_) => { })),
+                    ...(webCompatibleAudioFileBucketKey ? [runWithLogger(log, () => deleteFromS3(webCompatibleAudioFileBucketKey).catch((_) => { }))] : []),
+                    ...(coverArtResult ? [runWithLogger(log, () => deleteFromS3(coverArtBucketKey).catch((_) => { }))] : []),
+                    runWithLogger(log, () => audioRepository.delete(audioId).catch((_) => { })),
                 ])
 
                 throw error
             }
         } catch (err) {
             if (err instanceof UploadTooLargeError) {
-                res.status(403).json({ error: err.message });
+                res.status(403).json({ status: 'error', error: err.message });
             } else if (err instanceof InvalidMediaError) {
-                res.status(400).json({ error: err.message });
+                res.status(400).json({ status: 'error', error: err.message });
             } else {
-                reqLog.error({ err }, 'Audio upload failed');
-                res.status(500).json({ error: 'Upload failed' });
+                log.error({ err }, 'Audio upload failed');
+                res.status(500).json({ status: 'error', error: 'Upload failed' });
             }
         } finally {
             await cleanup();
             if (rollbackPromises !== undefined) {
                 await rollbackPromises;
-                reqLog.debug('Rollback of stored artifacts completed');
+                log.info('Rollback of stored artifacts completed');
             }
         }
 
-        res.status(201).json({ id: audioId });
+        res.status(201).json({ status: 'success', data: audioId });
     } catch (err) {
-        reqLog.error({ err }, 'Unhandled error in audio upload route');
-        return res.status(500).json({ message: 'Error uploading audio file' });
+        runWithLogger(log, () => handleError(res, err))
     }
 })
 
 router.get('/', auth, async (req, res) => {
-    let reqLog = getLogger().child({ module: 'audio', route: 'GET /audio' });
+    let log = getLogger().child({ module: 'audio', route: 'GET /api/audio/' });
 
     try {
-        reqLog.debug({ query: req.query }, 'Audio list request received');
+        log.info('Audio list request received');
 
-        let page: number, pageSize: number;
-        try {
-            page = await number().integer().min(1).max(MAX_PAGE).default(1).label('Page').validate(req.query.page?.toString());
-            pageSize = await number().integer().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE).label('Page size').validate(req.query.pageSize?.toString());
-        } catch (err) {
-            if (err instanceof ValidationError) {
-                reqLog.warn({ errors: err.errors }, 'Rejected audio list request: invalid parameters');
-                return res.status(400).json({ errors: err.errors });
-            }
-            reqLog.warn({ err }, 'Rejected audio list request: invalid parameters');
-            return res.status(400).json({ message: 'Invalid parameters' });
-        }
+        log.debug({ query: req.query });
+        const { page, pageSize } = await runWithLogger(log, () => validate(listQuerySchema, req.query));
+        log.info('Input validated');
+        log.debug({ page, pageSize });
 
         const userId = req.user!.userId;
-        reqLog = reqLog.child({ userId, page, pageSize });
+        log = log.child({ userId, page, pageSize });
 
         const audioRepository = new AudioRepository();
 
         const skip = (page - 1) * pageSize;
         const [items, total] = await Promise.all([
-            audioRepository.getPageForUser(userId, skip, pageSize),
-            audioRepository.countForUser(userId),
+            runWithLogger(log, () => audioRepository.getPageForUser(userId, skip, pageSize)),
+            runWithLogger(log, () => audioRepository.countForUser(userId)),
         ]);
-        const totalPages = Math.max(1, Math.ceil(total / pageSize));
-        reqLog.info({ count: items.length, total, totalPages }, 'Listed audios');
+        log.debug({ count: items.length, total });
+        log.info('Fetched audio page');
 
-        res.status(200).json({
-            items,
-            page,
-            pageSize,
-            total,
-            totalPages,
-            hasMore: page < totalPages,
-        });
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        log.info({ totalPages }, 'Listed audios');
+
+        res.status(200).json({ status: 'success', data: { items, page, pageSize, total, totalPages, hasMore: page < totalPages, } });
     } catch (err) {
-        reqLog.error({ err }, 'Failed to list audios');
-        res.status(500).json({ message: 'Error listing audios' });
+        runWithLogger(log, () => handleError(res, err));
     }
 });
 
 router.get('/info/', auth, async (req, res) => {
-    let reqLog = getLogger().child({ module: 'audio', route: 'GET /audio/info' });
+    let log = getLogger().child({ module: 'audio', route: 'GET /api/audio/info/' });
+
     try {
-        reqLog.debug({ query: req.query }, 'Audio info request received');
+        log.info('Audio info request received');
 
-        let audioId: string | undefined = undefined
-        let title: string | undefined = undefined
-        try {
-            audioId = await string().objectIdString().optional().label('Audio id').validate(req.query.audioId?.toString())
-            title = await string().optional().label('Title').validate(req.query.title?.toString())
+        log.debug({ query: req.query });
+        const { audioId, title } = await runWithLogger(log, () => validate(infoQuerySchema, req.query));
+        log.info('Input validated');
+        log.debug({ audioId, title });
 
-            if (audioId === undefined && title === undefined) {
-                reqLog.warn('Rejected audio info request: missing id and title');
-                return res.status(400).json({ message: 'Invalid parameters' });
-            }
-        } catch (err) {
-            reqLog.warn({ err }, 'Rejected audio info request: invalid parameters');
-            return res.status(400).json({ message: 'Invalid parameters' });
-        }
-        reqLog.debug({ title, audioId }, 'Validated metadata');
+        const userId = req.user!.userId;
+        log = log.child({ userId, audioId, title });
 
-        const userId = req.user!.userId
-        reqLog = reqLog.child({ userId, audioId, title });
-        reqLog.debug('Validated lookup parameters');
+        const audioRepository = new AudioRepository();
 
-        const audioRepository = new AudioRepository()
-
-        let result
-        if (audioId)
-            result = await audioRepository.getForUser(audioId, userId)
-        else
-            result = await audioRepository.getForUserByTitle(title!, userId)
+        const result = audioId
+            ? await runWithLogger(log, () => audioRepository.getForUser(audioId, userId))
+            : await runWithLogger(log, () => audioRepository.getForUserByTitle(title!, userId));
+        log.debug({ result });
+        log.info('Looked up audio info');
 
         if (!result) {
-            reqLog.info('Audio not found');
-            return res.status(404).send()
-        } else {
-            reqLog.debug({ audioId: result._id?.toString() }, 'Audio found');
+            log.info('Audio not found');
+            return res.status(404).json({ status: 'error', message: 'Audio not found' });
         }
 
-        res.status(200).json(result)
+        res.status(200).json({ status: 'success', data: result });
     } catch (err) {
-        reqLog.error({ err }, 'Failed to get audio info');
-        res.status(500).json({ message: 'Error getting audio' });
+        runWithLogger(log, () => handleError(res, err));
     }
 });
 
 router.get('/singed_token', auth, async (req, res) => {
-    let reqLog = getLogger().child({ module: 'audio', route: 'GET /audio/singed_token' });
+    let log = getLogger().child({ module: 'audio', route: 'GET /api/audio/singed_token' });
+
     try {
-        reqLog.debug({ query: req.query }, 'Signed token request received');
+        log.info('Signed token request received');
 
-        let audioId: string | undefined = undefined
-        try {
-            audioId = await string().objectIdString().required().label('Audio id').validate(req.query.audioId?.toString())
-        } catch (err) {
-            if (err instanceof ValidationError) {
-                reqLog.warn({ errors: err.errors }, 'Rejected signed token request: invalid parameters');
-                return res.status(400).json({ errors: err.errors })
-            }
-            reqLog.warn({ err }, 'Rejected signed token request: invalid parameters');
-            return res.status(400).json({ errors: ['Invalid parameters'] });
-        }
+        log.debug({ query: req.query });
+        const { audioId } = await runWithLogger(log, () => validate(signedTokenQuerySchema, req.query));
+        log.info('Input validated');
+        log.debug({ audioId });
 
-        const userId = req.user!.userId
-        reqLog = reqLog.child({ userId, audioId });
+        const userId = req.user!.userId;
+        log = log.child({ userId, audioId });
 
-        const audioRepository = new AudioRepository()
+        const audioRepository = new AudioRepository();
 
-        const audio = await audioRepository.getForUser(audioId, userId)
+        const audio = await runWithLogger(log, () => audioRepository.getForUser(audioId, userId));
+        log.debug({ audio });
+        log.info('Checked audio ownership');
         if (!audio) {
-            reqLog.info('Audio not found');
-            return res.status(404).json({ message: 'Audio not found' });
+            log.info('Rejected signed token request: audio not found');
+            return res.status(404).json({ status: 'error', message: 'Audio not found' });
         }
-        reqLog.debug('Audio ownership confirmed');
 
         const token = generateStreamToken(audioId, userId);
-        reqLog.info('Issued signed stream token');
+        log.info('Issued signed stream token');
 
-        return res.status(200).json({ token });
+        res.status(200).json({ status: 'success', data: token });
     } catch (err) {
-        reqLog.error({ err }, 'Failed to issue signed token');
-        res.status(500).json({ message: 'Error getting audio file' });
+        runWithLogger(log, () => handleError(res, err));
     }
 });
 
 router.get('/tts', async (req, res) => {
-    let reqLog = getLogger().child({ module: 'audio', route: 'GET /tts' });
+    let log = getLogger().child({ module: 'audio', route: 'GET /api/audio/tts' });
+
     try {
-        reqLog.debug({ textLength: req.query.text?.toString().length, hasToken: !!req.query.token }, 'TTS request received');
+        log.info('TTS request received');
 
-        let text: string | undefined = undefined, userTtsApiKey: string | undefined = undefined, authToken: string | undefined = undefined
-        try {
-            text = await string().max(500).required().label('Text').validate(req.query.text?.toString())
-            authToken = await string().max(500).required().label('Text').validate(req.query.authToken?.toString())
-            userTtsApiKey = await string().max(500).optional().label('Token').validate(req.query.token?.toString())
-        } catch (err) {
-            if (err instanceof ValidationError) {
-                reqLog.warn({ errors: err.errors }, 'Rejected TTS request: invalid parameters');
-                return res.status(400).json({ errors: err.errors })
-            }
-            reqLog.warn({ err }, 'Rejected TTS request: invalid parameters');
-            return res.status(400).json({ errors: ['Invalid parameters'] });
-        }
-        // Deliberately not logging `text` (user content) or userTtsApiKey/authToken
-        // (secrets) beyond presence/length above.
+        // Deliberately not logging raw query: contains user content (`text`) and secrets (`token`/`authToken`).
+        const { text, authToken, userTtsApiKey: userTtsApiKeyInput } = await runWithLogger(log, () => validate(ttsQuerySchema, req.query));
+        log.info('Input validated');
+        log.debug({ textLength: text.length, hasUserApiKey: !!userTtsApiKeyInput });
 
-        const result = authenticateToken(authToken)
+        const result = authenticateToken(authToken);
         if (result === false) {
-            reqLog.warn('Rejected TTS request: invalid auth token');
-            return res.status(401).send();
+            log.warn('Rejected TTS request: invalid auth token');
+            return res.status(401).json({ status: 'error', message: 'Unauthorized' });
         }
 
         const userId = (result as any).userId;
-        reqLog = reqLog.child({ userId });
+        log = log.child({ userId });
 
+        let userTtsApiKey = userTtsApiKeyInput;
         if (!userTtsApiKey) {
-            const ur = new UserRepository()
-            const user = await ur.get(userId);
+            const ur = new UserRepository();
+            const user = await runWithLogger(log, () => ur.get(userId));
+            log.debug({ user });
             if (!user) {
-                reqLog.warn('Rejected TTS request: user not found for authenticated token');
-                return res.status(401).send();
+                log.warn('Rejected TTS request: user not found for authenticated token');
+                return res.status(401).json({ status: 'error', message: 'Unauthorized' });
             }
 
             if (user.role !== 'admin' && user?.planTitle === 'free') {
-                reqLog.info({ plan: user.planTitle }, 'Rejected TTS request: plan does not include TTS');
-                return res.status(403).send();
+                log.info({ plan: user.planTitle }, 'Rejected TTS request: plan does not include TTS');
+                return res.status(403).json({ status: 'error', message: 'Your plan does not include text-to-speech' });
             }
 
-            if (ttsApiKey) {
-                userTtsApiKey = ttsApiKey;
-                reqLog.debug('Using server-side TTS API key');
-            } else {
-                reqLog.warn('Rejected TTS request: no server-side TTS API key configured');
-                return res.status(400).json({ errors: ['this feature currently is unavailable.'] });
+            if (!ttsApiKey) {
+                log.warn('Rejected TTS request: no server-side TTS API key configured');
+                return res.status(400).json({ status: 'error', message: 'This feature is currently unavailable' });
             }
+            userTtsApiKey = ttsApiKey;
+            log.debug('Using server-side TTS API key');
         } else {
-            reqLog.debug('Using user-supplied TTS API key');
+            log.debug('Using user-supplied TTS API key');
         }
 
-        reqLog.info('Requesting TTS audio from upstream provider');
-        const stream = await httpsStreamRequest({ hostname: 'api.gapgpt.app', path: '/v1/audio/speech', method: 'POST', headers: { 'Authorization': `Bearer ${userTtsApiKey}`, 'Content-Type': 'application/json' } }, JSON.stringify({
-            model: 'gemini-2.5-flash-preview-tts',
-            input: text,
-            voice: 'achernar',
-            response_format: 'mp3'
-        }))
+        log.info('Requesting TTS audio from upstream provider');
+        const stream = await runWithLogger(log, () => httpsStreamRequest(
+            { hostname: 'api.gapgpt.app', path: '/v1/audio/speech', method: 'POST', headers: { 'Authorization': `Bearer ${userTtsApiKey}`, 'Content-Type': 'application/json' } },
+            JSON.stringify({ model: 'gemini-2.5-flash-preview-tts', input: text, voice: 'achernar', response_format: 'mp3' })
+        ));
 
         stream.on('error', (e) => {
-            reqLog.error({ err: e }, 'TTS upstream stream error');
-            return res.status(500).send()
-        })
+            log.error({ err: e }, 'TTS upstream stream error');
+            if (!res.headersSent) return runWithLogger(log, () => handleError(res, e));
+            res.destroy();
+        });
 
-        stream.pipe(res)
+        log.info('Streaming TTS audio to client');
+        stream.pipe(res);
     } catch (err) {
-        reqLog.error({ err }, 'Failed to get TTS audio');
-        res.status(500).json({ message: 'Error getting audio file' });
+        runWithLogger(log, () => handleError(res, err));
     }
-})
+});
 
 // there are separate routes for downloading audio because web's media player doesn't support using authorization headers, therefor it uses signed urls instead.
 // For non web applications
 router.get('/file/:audioId', auth, async (req, res) => {
-    let reqLog = getLogger().child({ module: 'audio', route: 'GET /audio/file/:audioId' });
+    let log = getLogger().child({ module: 'audio', route: 'GET /api/audio/file/:audioId' });
+
     try {
-        reqLog.debug({ params: req.params, query: req.query, range: req.headers.range }, 'Audio file request received');
+        log.info('Audio file request received');
 
-        let audioId: string | undefined = undefined, download: boolean = false
-        try {
-            audioId = await string().objectIdString().required().label('Audio id').validate(req.params.audioId?.toString())
-            let temp = await string().optional().label('Download').validate(req.query.download?.toString())
-            download = temp === 'true';
-        } catch (err) {
-            if (err instanceof ValidationError) {
-                reqLog.warn({ errors: err.errors }, 'Rejected audio file request: invalid parameters');
-                return res.status(400).json({ errors: err.errors })
-            }
-            reqLog.warn({ err }, 'Rejected audio file request: invalid parameters');
-            return res.status(400).json({ message: 'Invalid parameters' });
-        }
-        reqLog.debug({ audioId, download }, 'Validated metadata');
+        log.debug({ params: req.params, query: req.query, range: req.headers.range });
+        const { audioId, download: temp } = await runWithLogger(log, () => validate(fileParamsSchema, { ...req.params, ...req.query }));
+        let download: boolean = temp === 'true'
+        log.info('Input validated');
+        log.debug({ audioId, download });
 
-        reqLog = reqLog.child({ userId: req.user!.userId, audioId, download });
+        log = log.child({ userId: req.user!.userId, audioId, download });
 
-        await streamAudioFile(audioId, req.user!.userId, req, res, false, download, reqLog)
+        await streamAudioFile(audioId, req.user!.userId, req, res, false, download, log);
     } catch (err) {
-        reqLog.error({ err }, 'Failed to stream audio file');
-        res.status(500).json({ message: 'Error getting audio file' });
+        runWithLogger(log, () => handleError(res, err));
     }
 });
 
 // For web applications
 router.get('/file/:audioId/:token', async (req, res) => {
-    let reqLog = getLogger().child({ module: 'audio', route: 'GET /audio/file/:audioId/:token' });
-    try {
-        reqLog.debug({ params: { audioId: req.params.audioId }, query: req.query, range: req.headers.range }, 'Web audio file request received');
+    let log = getLogger().child({ module: 'audio', route: 'GET /api/audio/file/:audioId/:token' });
 
-        let audioId: string | undefined = undefined, token: string | undefined = undefined, download: boolean = false
-        try {
-            token = await string().required().label('Token').validate(req.params.token?.toString())
-            audioId = await string().objectIdString().required().label('Audio id').validate(req.params.audioId?.toString())
-            let temp = await string().optional().label('Download').validate(req.query.download?.toString())
-            download = temp === 'true';
-        } catch (err) {
-            if (err instanceof ValidationError) {
-                reqLog.warn({ errors: err.errors }, 'Rejected web audio file request: invalid parameters');
-                return res.status(400).json({ errors: err.errors })
-            }
-            reqLog.warn({ err }, 'Rejected web audio file request: invalid parameters');
-            return res.status(400).json({ errors: ['Invalid parameters'] });
-        }
-        reqLog = reqLog.child({ audioId, download });
+    try {
+        log.info('Web audio file request received');
+
+        log.debug({ params: { audioId: req.params.audioId }, query: req.query, range: req.headers.range });
+        const { audioId, token, download: temp } = await runWithLogger(log, () => validate(webFileParamsSchema, { ...req.params, ...req.query }));
+        let download: boolean = temp === 'true'
+        log.info('Input validated');
+        log.debug({ audioId, download });
+
+        log = log.child({ audioId, download });
 
         const { valid, userId } = verifyStreamToken(token, audioId);
-        reqLog.debug({ valid }, 'Verified stream token');
+        log.debug({ valid });
+        log.info('Verified stream token');
         if (valid !== true || !userId) {
-            reqLog.warn('Rejected web audio file request: invalid or expired token');
-            return res.status(401).send();
+            log.warn('Rejected web audio file request: invalid or expired token');
+            return res.status(401).json({ status: 'error', message: 'Unauthorized' });
         }
-        reqLog = reqLog.child({ userId });
+        log = log.child({ userId });
 
-        await streamAudioFile(audioId, userId, req, res, true, download, reqLog)
+        await streamAudioFile(audioId, userId, req, res, true, download, log);
     } catch (err) {
-        reqLog.error({ err }, 'Failed to stream web audio file');
-        res.status(500).json({ message: 'Error getting audio file' });
+        runWithLogger(log, () => handleError(res, err));
     }
 });
 
-async function streamAudioFile(audioId: string, userId: string, req: Request, res: Response, isWeb: boolean, download: boolean, reqLog = getLogger().child({ module: 'audio' })) {
-    const audioRepository = new AudioRepository()
-
-    const audio = await audioRepository.getForUser(audioId, userId!)
-    if (!audio || !audio.contentType || (isWeb && !audio.webBucketKey) || (!isWeb && !audio.bucketKey)) {
-        reqLog.info({ hasAudio: !!audio, isWeb }, 'Audio not found or missing expected bucket key');
-        return res.status(404).json({ message: 'Audio not found' });
-    }
-
-    const range = req.headers.range;
-    const key = isWeb ? audio.webBucketKey : audio.bucketKey;
-    reqLog.debug({ key, range, download }, 'Fetching object from storage');
-
-    const result = await s3.send(new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: key,
-        Range: range,
-        ResponseContentDisposition: download ? `attachment; filename="${audio._id!.toString()}.${audio.contentType.extension}"` : undefined,
-    }));
-    reqLog.debug({ key, range, contentLength: result.ContentLength, contentRange: result.ContentRange }, 'Fetched object from storage');
-
-    if (result.Body === undefined || result.Body === null) {
-        reqLog.warn({ key }, 'Storage object has no body');
-        return res.status(404).send();
-    }
-
-    const body = result.Body as Readable;
-    body.on('error', (err) => {
-        reqLog.error({ err, key }, 'S3 stream error while serving audio file');
-        if (!res.headersSent) res.status(500).end();
-        else res.destroy();
-    });
-
-    res.status(range ? 206 : 200);
-    res.setHeader('Content-Type', isWeb ? 'audio/m4a' : (audio.contentType?.mimeType ?? 'audio/m4a'));
-    res.setHeader('Accept-Ranges', 'bytes');
-    if (result.ContentRange) res.setHeader('Content-Range', result.ContentRange);
-    if (result.ContentLength) res.setHeader('Content-Length', result.ContentLength);
-
-    reqLog.info({ key, range, download, statusCode: range ? 206 : 200 }, 'Streaming audio file to client');
-    body.pipe(res)
-}
-
 router.get('/coverArt/:audioId', auth, async (req, res) => {
-    let reqLog = getLogger().child({ module: 'audio', route: 'GET /audio/coverArt/:audioId' });
+    let log = getLogger().child({ module: 'audio', route: 'GET /api/audio/coverArt/:audioId' });
+
     try {
-        reqLog.debug({ params: req.params, query: req.query }, 'Cover art request received');
+        log.info('Cover art request received');
 
-        let audioId: string | undefined = undefined, download: boolean = false
-        try {
-            audioId = await string().objectIdString().required().label('Audio id').validate(req.params.audioId?.toString())
-            let temp = await string().optional().label('Download').validate(req.query.download?.toString())
-            download = temp === 'true';
-        } catch (err) {
-            if (err instanceof ValidationError) {
-                reqLog.warn({ errors: err.errors }, 'Rejected cover art request: invalid parameters');
-                return res.status(400).json({ errors: err.errors })
-            }
-            reqLog.warn({ err }, 'Rejected cover art request: invalid parameters');
-            return res.status(400).json({ message: 'Invalid parameters' });
-        }
-        reqLog = reqLog.child({ userId: req.user!.userId, audioId, download });
+        log.debug({ params: req.params, query: req.query });
+        const { audioId, download: temp } = await runWithLogger(log, () => validate(coverArtParamsSchema, { ...req.params, ...req.query }));
+        let download: boolean = temp === 'true'
+        log.info('Input validated');
+        log.debug({ audioId, download });
 
-        const userId = req.user!.userId
+        log = log.child({ userId: req.user!.userId, audioId, download });
 
-        const audioRepository = new AudioRepository()
+        const userId = req.user!.userId;
 
-        const audio = await audioRepository.getForUser(audioId, userId)
+        const audioRepository = new AudioRepository();
+
+        const audio = await runWithLogger(log, () => audioRepository.getForUser(audioId, userId));
+        log.debug({ audio });
+        log.info('Checked audio ownership');
         if (!audio || !audio.coverArtKey || !audio.coverArtFileName) {
-            reqLog.info({ hasAudio: !!audio }, 'Audio not found or has no cover art');
-            res.status(404).json({ message: 'Audio not found' });
-            return
+            log.info('Rejected cover art request: audio not found or has no cover art');
+            return res.status(404).json({ status: 'error', message: 'Audio not found' });
         }
-        reqLog.debug({ audio }, 'Audio found');
 
-        reqLog.debug({ coverArtKey: audio.coverArtKey }, 'Fetching cover art from storage');
-        const result = await s3.send(new GetObjectCommand({
+        const result = await runWithLogger(log, () => s3.send(new GetObjectCommand({
             Bucket: BUCKET_NAME,
             Key: audio.coverArtKey,
             ResponseContentDisposition: download ? `attachment; filename="${audio.coverArtFileName}"` : undefined,
-        }));
-        reqLog.debug({ key: audio.coverArtKey, contentLength: result.ContentLength, contentType: result.ContentType }, 'Fetched cover art from storage');
+        })));
+        log.debug({ contentLength: result.ContentLength, contentType: result.ContentType });
+        log.info('Fetched cover art from storage');
 
         const stream = result.Body as any;
         if (stream === undefined || stream === null) {
-            reqLog.warn({ key: audio.coverArtKey }, 'Cover art object has no body');
-            return res.status(404).send();
+            log.warn('Cover art object has no body');
+            return res.status(404).json({ status: 'error', message: 'Audio not found' });
         }
 
-        const contentLength = result.ContentLength;
-
-        res.setHeader("Accept-Ranges", "bytes");
-        res.setHeader("Content-Type", result.ContentType || "application/octet-stream");
-
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Content-Type', result.ContentType || 'application/octet-stream');
         res.status(200);
-        res.setHeader("Content-Length", contentLength ?? "");
+        res.setHeader('Content-Length', result.ContentLength ?? '');
 
-        reqLog.info({ key: audio.coverArtKey, download }, 'Streaming cover art to client');
-        (stream as any).pipe(res);
+        log.info('Streaming cover art to client');
+        stream.pipe(res);
     } catch (err) {
-        reqLog.error({ err }, 'Failed to get cover art');
-        res.status(500).json({ message: 'Error getting audio file' });
+        runWithLogger(log, () => handleError(res, err));
     }
 });
 
 router.delete('/:audioId', auth, async (req, res) => {
-    let reqLog = getLogger().child({ module: 'audio', route: 'DELETE /audio/:audioId' });
+    let log = getLogger().child({ module: 'audio', route: 'DELETE /api/audio/:audioId' });
+
     try {
-        reqLog.debug({ params: req.params }, 'Audio delete request received');
+        log.info('Audio delete request received');
 
-        let audioId: string | undefined = undefined
-        try {
-            audioId = await string().objectIdString().required().label('Audio id').validate(req.params.audioId?.toString())
-        } catch (err) {
-            if (err instanceof ValidationError) {
-                reqLog.warn({ errors: err.errors }, 'Rejected audio delete request: invalid parameters');
-                return res.status(400).json({ errors: err.errors })
-            }
-            reqLog.warn({ err }, 'Rejected audio delete request: invalid parameters');
-            return res.status(400).json({ message: 'Invalid Tree node' });
-        }
-        reqLog.debug({ audioId }, 'Validated metadata');
+        log.debug({ params: req.params });
+        const { audioId } = await runWithLogger(log, () => validate(deleteParamsSchema, req.params));
+        log.info('Input validated');
+        log.debug({ audioId });
 
-        const userId = req.user!.userId
-        reqLog = reqLog.child({ userId, audioId });
+        const userId = req.user!.userId;
+        log = log.child({ userId, audioId });
 
-        const audioRepository = new AudioRepository()
+        const audioRepository = new AudioRepository();
 
-        const audio = await audioRepository.getForUser(audioId, userId)
+        const audio = await runWithLogger(log, () => audioRepository.getForUser(audioId, userId));
+        log.debug({ audio });
+        log.info('Checked audio ownership');
         if (!audio) {
-            reqLog.info('Audio not found');
-            res.status(404).json({ message: 'Audio not found' });
-            return
+            log.info('Rejected audio delete request: audio not found');
+            return res.status(404).json({ status: 'error', message: 'Audio not found' });
         }
-        reqLog.debug({ audio, bucketKey: audio.bucketKey, coverArtKey: audio.coverArtKey }, 'Audio found, starting delete');
 
-        const r = await audioRepository.unsafeUpdate(audioId, userId, { temporary: true })
-        reqLog.debug({ updateResult: r }, 'Marked audio temporary in DB before delete');
+        const r = await runWithLogger(log, () => audioRepository.unsafeUpdate(audioId, userId, { temporary: true }));
+        log.debug({ updateResult: r });
         if (!r.acknowledged || r.matchedCount) {
-            reqLog.error({ updateResult: r }, 'Failed to mark audio temporary before delete');
-            return res.status(500).send()
+            log.error({ updateResult: r }, 'Failed to mark audio temporary before delete');
+            return res.status(500).json({ status: 'error', message: 'Error deleting audio' });
         }
+        log.info('Marked audio temporary before delete');
 
-        await s3.send(
-            new DeleteObjectCommand({
-                Bucket: BUCKET_NAME,
-                Key: audio.bucketKey
-            })
-        );
-        reqLog.debug({ key: audio.bucketKey }, 'Deleted audio file from storage');
+        await runWithLogger(log, () => s3.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: audio.bucketKey })));
+        log.debug({ key: audio.bucketKey });
+        log.info('Deleted audio file from storage');
 
         if (audio?.coverArtKey) {
-            await s3.send(
-                new DeleteObjectCommand({
-                    Bucket: BUCKET_NAME,
-                    Key: audio.coverArtKey
-                })
-            );
-            reqLog.debug({ key: audio.coverArtKey }, 'Deleted cover art from storage');
+            await runWithLogger(log, () => s3.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: audio.coverArtKey })));
+            log.debug({ key: audio.coverArtKey });
+            log.info('Deleted cover art from storage');
         }
 
-        const rr = await audioRepository.delete(audioId)
-        reqLog.debug({ deleteResult: rr }, 'Deleted audio record from DB');
+        const rr = await runWithLogger(log, () => audioRepository.delete(audioId));
+        log.debug({ deleteResult: rr });
         if (!rr.acknowledged) {
-            reqLog.error({ deleteResult: rr }, 'Failed to delete audio record from DB');
-            return res.status(500).send()
+            log.error({ deleteResult: rr }, 'Failed to delete audio record from DB');
+            return res.status(500).json({ status: 'error', message: 'Error deleting audio' });
         }
+        log.info('Audio deleted');
 
-        reqLog.info('Audio deleted');
-        res.status(200).send();
+        res.status(204).json({ status: 'success' });
     } catch (err) {
-        reqLog.error({ err }, 'Failed to delete audio');
-        res.status(500).json({ message: 'Error deleting audio' });
+        runWithLogger(log, () => handleError(res, err));
     }
 });
 

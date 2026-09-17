@@ -2,6 +2,7 @@ import 'package:client/account/account_controller.dart';
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
 import 'package:client/components/button.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
@@ -18,8 +19,10 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
     final isAuthenticated = ref.watch(authControllerProvider).status == AuthStatus.authenticated;
     final avatarBytes = ref.watch(avatarBytesProvider);
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return AppBar(
-      title: title,
+      title: title ?? Text(l10n.appTitle),
       centerTitle: false,
       actions: [
         Button(

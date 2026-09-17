@@ -15,7 +15,7 @@ export async function streamVideoFile(videoId: string, userId: string, req: Requ
     log.debug({ video })
     if (!video || (isWeb && !video.webBucketKey) || (!isWeb && !video.bucketKey)) {
         log.info('Video not found or missing expected bucket key');
-        return res.status(404).json({ message: 'Video not found' });
+        return res.status(404).json({ status: 'error', message: 'Video not found' });
     }
 
     const range = req.headers.range;
@@ -33,7 +33,7 @@ export async function streamVideoFile(videoId: string, userId: string, req: Requ
 
     if (result.Body === undefined || result.Body === null) {
         log.warn('Storage object has no body');
-        return res.status(404).send();
+        return res.status(404).json({ status: 'error' });
     }
 
     const body = result.Body as Readable;

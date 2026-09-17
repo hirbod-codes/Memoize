@@ -81,9 +81,14 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
     super.dispose();
   }
 
+  bool _initialized = false;
+
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initialized) return;
+    _initialized = true;
 
     // Runs once when the widget is inserted
     _initialize();
@@ -112,7 +117,10 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
   }
 
   Future<void> _goTo(String locationId) async {
-    final result = await apiCall<Folder?>(() => ref.read(authDioProvider).get('/api/treeNode/?treeNodeId=$locationId'));
+    final result = await apiCall<Folder?>(
+      () => ref.read(authDioProvider).get('/api/treeNode/?treeNodeId=$locationId'),
+      fromJson: (data) => Folder.fromJson(data),
+    );
     if (!mounted) return;
 
     if (result.isFailure || result.dataOrNull == null) {
@@ -191,6 +199,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
               .get(
                 '/api/treeNode/list/?limit=$limit${'&skip=$skip'}${parentId != null ? '&parentId=$parentId' : ''}${search != null ? '&search=$search' : ''}',
               ),
+          fromJson: (data) => List.from(data).map((e) => Folder.fromJson(e)).toList(),
         );
         if (!mounted) return;
         if (result.isFailure || result.dataOrNull == null) {
@@ -216,6 +225,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
 
         final result = await apiCall<List<Leaf>>(
           () => ref.read(authDioProvider).get('/api/leaf/list/?limit=$limit&parentId=$parentId${'&skip=$skip'}${search != null ? '&search=$search' : ''}'),
+          fromJson: (data) => List.from(data).map((e) => Leaf.fromJson(e)).toList(),
         );
         if (!mounted) return;
         if (result.isFailure || result.dataOrNull == null) {
@@ -307,23 +317,28 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
       _adding = true;
     });
 
-    String? title = await showDialog(
-      context: context,
-      builder: (builderContext) {
-        return FolderFileCreateDialog();
-      },
-    );
-    if (title == null) return;
+    try {
+      String? title = await showDialog(
+        context: context,
+        builder: (builderContext) {
+          return FolderFileCreateDialog();
+        },
+      );
+      if (title == null) return;
 
-    FoldersAndFiles p = ref.watch(foldersAndFilesProvider.notifier);
-    if (_location.last == 'root' || _filter == Filter.folder) {
-      await p.addFolder(title, _location.last == 'root' ? null : _location.last);
-    } else {
-      await p.addFile(title, _location.last);
+      FoldersAndFiles p = ref.watch(foldersAndFilesProvider.notifier);
+      if (_location.last == 'root' || _filter == Filter.folder) {
+        await p.addFolder(title, _location.last == 'root' ? null : _location.last);
+      } else {
+        await p.addFile(title, _location.last);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _adding = false;
+        });
+      }
     }
-    setState(() {
-      _adding = false;
-    });
   }
 
   void _moveFolder() async {
