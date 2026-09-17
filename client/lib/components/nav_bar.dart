@@ -1,3 +1,4 @@
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -37,13 +38,14 @@ class NavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final selectedIndex = _selectedIndex(context);
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     if (placement == NavBarPlacement.bottom) {
       return NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: (i) => context.go(navDestinations[i].path),
         destinations: [
-          for (final d in navDestinations)
-            NavigationDestination(icon: Icon(d.icon), selectedIcon: Icon(d.selectedIcon ?? d.icon), label: d.label),
+          for (final d in navDestinations) NavigationDestination(icon: Icon(d.icon), selectedIcon: Icon(d.selectedIcon ?? d.icon), label: d.label(l10n)),
         ],
       );
     }
@@ -58,7 +60,7 @@ class NavBar extends StatelessWidget {
       labelType: extended ? NavigationRailLabelType.none : NavigationRailLabelType.selected,
       destinations: [
         for (final d in navDestinations)
-          NavigationRailDestination(icon: Icon(d.icon), selectedIcon: Icon(d.selectedIcon ?? d.icon), label: Text(d.label)),
+          NavigationRailDestination(icon: Icon(d.icon), selectedIcon: Icon(d.selectedIcon ?? d.icon), label: Text(d.label(l10n))),
       ],
     );
   }

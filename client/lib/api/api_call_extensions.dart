@@ -34,7 +34,7 @@ extension ApiCallNotify on Future<Response> {
     final response = await this;
     final context = rootContext;
     if (context != null) {
-      NotificationService.showSuccess(context: context, message: message, duration: duration);
+      NotificationService.showSuccess(message: message, duration: duration);
     }
     return response;
   }

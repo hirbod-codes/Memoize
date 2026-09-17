@@ -37,10 +37,12 @@ class _ChangeEmailContentState extends ConsumerState<_ChangeEmailContent> {
     final sendState = ref.read(authActionControllerProvider);
     if (sendState.hasError || !mounted) return;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     final verified = await showOtpSheet(
       context: context,
       destination: newEmail,
-      title: 'Verify your new email',
+      title: l10n.verify_your_new_email,
       onVerify: (code) => account.verifyEmailChange(newEmail: newEmail, code: code),
       onResend: () => account.requestEmailChange(newEmail: newEmail),
     );

@@ -112,6 +112,31 @@
       }
     }
   },
+  "choose_your_language": "Wählen Sie Ihre Sprache",
+  "required": "Erforderlich",
+  "go_home": "Zur Startseite",
+  "verify_your_email": "Bestätigen Sie Ihre E-Mail-Adresse",
+  "verify_your_new_email": "Bestätigen Sie Ihre neue E-Mail-Adresse",
+  "welcome_to_memoize": "Willkommen bei Memoize",
+  "login_success": "Sie sind angemeldet!",
+  "code_sent_to_code": "Der Code wurde an Ihr Telefon gesendet.",
+  "password_updated": "Passwort erfolgreich aktualisiert.",
+  "account_created": "Alles bereit! Ihr Konto wurde erstellt.",
+  "code_sent_to_email": "Der Bestätigungscode wurde an Ihre E-Mail-Adresse gesendet.",
+  "request_timeout": "Die Anfrage hat zu lange gedauert. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+  "request_connection_error": "Der Server konnte nicht erreicht werden. Überprüfen Sie Ihre Verbindung.",
+  "request_cancelled": "Anfrage abgebrochen.",
+  "error_code_invalid_credentials": "E-Mail-Adresse oder Passwort ist falsch.",
+  "error_code_email_already_registered": "Mit dieser E-Mail-Adresse existiert bereits ein Konto.",
+  "error_code_otp_failed": "Leider konnte der Bestätigungscode nicht gesendet werden.",
+  "error_code_invalid_otp": "Der Code ist falsch oder abgelaufen.",
+  "error_code_invalid_code": "Der Code ist falsch oder abgelaufen.",
+  "error_code_otp_expired": "Der Code ist abgelaufen. Fordern Sie einen neuen an.",
+  "error_code_otp_rate_limited": "Zu viele Versuche. Bitte warten Sie, bevor Sie es erneut versuchen.",
+  "error_code_account_not_found": "Kein Konto mit dieser E-Mail-Adresse oder Telefonnummer gefunden.",
+  "error_code_quota_exceeded": "Sie haben das Limit Ihres Tarifs für diese Funktion erreicht.",
+  "error_code_feature_not_available": "Diese Funktion erfordert einen erweiterten Tarif.",
+  "error_code_unauthorized": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
   "timeZone": "Zeitzone",
   "calendar": "Kalender",
   "card": "Karte",
@@ -125,7 +150,7 @@
   "no": "Nein",
   "yes": "Ja",
   "flip": "Umdrehen",
-  "title": "Umdrehen",
+  "title": "Titel",
   "add_content": "Inhalt hinzufügen",
   "landing_page_get_started_free": "Kostenlos starten",
   "landing_page_see_pricing": "Preise ansehen",
@@ -163,6 +188,15 @@
   "upload_audio": "Audio hochladen",
   "audio_not_selected": "Keine Audiodatei ausgewählt",
   "choose_audio": "Audio auswählen",
+  "home": "Startseite",
+  "otp_sheet_heading": "Geben Sie den an {destination} gesendeten 6-stelligen Code ein",
+  "@otp_sheet_heading": {
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
   "no_image_selected": "Kein Bild ausgewählt",
   "folder_add_success": "Neuer Ordner erfolgreich hinzugefügt.",
   "folder_add_failed": "Beim Hinzufügen des neuen Ordners ist ein Fehler aufgetreten.",

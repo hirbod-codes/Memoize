@@ -115,7 +115,7 @@ class _OtpSheetContentState extends ConsumerState<_OtpSheetContent> {
         children: [
           Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Text('Enter the 6-digit code sent to ${widget.destination}', style: Theme.of(context).textTheme.bodyMedium),
+          Text(l10n.otp_sheet_heading(widget.destination), style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 24),
           OtpCodeInput(key: _otpKey, enabled: !isLoading, onChanged: (value) => setState(() => _code = value), onCompleted: (_) => _submit()),
           const SizedBox(height: 24),

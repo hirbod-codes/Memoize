@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:client/account/account_controller.dart';
 import 'package:client/account/user_info_storage.dart';
+import 'package:client/api/root_navigator_key.dart';
 import 'package:client/auth/auth_api.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/api/api_call_extensions.dart';
@@ -11,6 +12,7 @@ import 'package:client/auth/token_storage.dart';
 import 'package:client/auth/responses/login_response.dart';
 import 'package:client/auth/responses/refresh_response.dart';
 import 'package:client/auth/models/auth_models.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/calendars/calendar_controller.dart';
 import 'package:client/localization/locale_controller.dart';
 import 'package:client/localization/timezone/timezone_controller.dart';
@@ -138,7 +140,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   Future<AuthTokens> loginWithEmail({required String email, required String password}) async {
     final response = await _authDio
         .post('/api/auth/login', data: {'identifier': email, 'password': password, 'client': _client})
-        .notifyOnSuccess('Welcome back!');
+        .notifyOnSuccess(rootContext == null ? 'Welcome back!' : AppLocalizations.of(rootContext!)?.welcomeBack ?? 'Welcome back!');
 
     final loginResponse = LoginResponse.fromJson(response.data['data']);
 
@@ -166,14 +168,20 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   Future<void> signUpWithEmail({required String email, required String password}) async {
     await _authDio
         .post('/api/auth/email/register', data: {'email': email, 'password': password, 'client': _client})
-        .notifyOnSuccess('Verification code sent to your email.');
+        .notifyOnSuccess(
+          rootContext == null
+              ? 'Verification code sent to your email.'
+              : AppLocalizations.of(rootContext!)?.code_sent_to_email ?? 'Verification code sent to your email.',
+        );
   }
 
   @override
   Future<AuthTokens> verifyEmailSignUp({required String email, required String code}) async {
     final response = await _authDio
         .post('/api/auth/email/verify', data: {'email': email, 'code': code, 'client': _client})
-        .notifyOnSuccess("You're all set! Account created.");
+        .notifyOnSuccess(
+          rootContext == null ? "You're all set! Account created." : AppLocalizations.of(rootContext!)?.account_created ?? "You're all set! Account created.",
+        );
     final result = LoginResponse.fromJson(response.data['data']);
     return _completeAuthentication(result.accessToken, result.refreshToken);
   }
@@ -187,21 +195,25 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   Future<void> completeEmailPasswordReset({required String email, required String code, required String newPassword}) async {
     final response = await _authDio
         .post('/api/auth/email/password-reset/verify', data: {'email': email, 'code': code, 'password': newPassword, 'client': _client})
-        .notifyOnSuccess('Password updated successfully.');
+        .notifyOnSuccess(
+          rootContext == null ? 'Password updated successfully.' : AppLocalizations.of(rootContext!)?.password_updated ?? 'Password updated successfully.',
+        );
     final result = LoginResponse.fromJson(response.data['data']);
     await _completeAuthentication(result.accessToken, result.refreshToken);
   }
 
   @override
   Future<void> sendPhoneOtp({required String phone}) async {
-    await _authDio.post('/api/auth/otp/request', data: {'phoneNumber': phone, 'locale': 'fa', 'client': _client}).notifyOnSuccess('Code sent to your phone.');
+    await _authDio
+        .post('/api/auth/otp/request', data: {'phoneNumber': phone, 'locale': 'fa', 'client': _client})
+        .notifyOnSuccess(rootContext == null ? 'Code sent to your phone.' : AppLocalizations.of(rootContext!)?.code_sent_to_code ?? 'Code sent to your phone.');
   }
 
   @override
   Future<AuthTokens> verifyPhoneOtp({required String phone, required String code}) async {
     final response = await _authDio
         .post('/api/auth/otp/verify', data: {'phoneNumber': phone, 'code': code, 'client': _client})
-        .notifyOnSuccess("You're logged in!");
+        .notifyOnSuccess(rootContext == null ? "You're logged in!" : AppLocalizations.of(rootContext!)?.login_success ?? "You're logged in!");
     final result = LoginResponse.fromJson(response.data['data']);
     return _completeAuthentication(result.accessToken, result.refreshToken);
   }

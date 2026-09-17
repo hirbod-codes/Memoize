@@ -65,6 +65,7 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
     final sendState = ref.read(authActionControllerProvider);
     if (sendState.hasError || !mounted) return;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
     // Step 2: same OTP sheet used for phone — the user must verify the
     // code before the account is usable, so we only continue once this
     // returns true with tokens in hand.
@@ -72,7 +73,7 @@ class _EmailPasswordFormState extends ConsumerState<EmailPasswordForm> {
     final verified = await showOtpSheet(
       context: context,
       destination: email,
-      title: 'Verify your email',
+      title: l10n.verify_your_email,
       onVerify: (code) async {
         tokens = await api.verifyEmailSignUp(email: email, code: code);
       },

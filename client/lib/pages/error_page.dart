@@ -31,8 +31,8 @@ class ErrorPage extends StatelessWidget {
                 spacing: 12,
                 alignment: WrapAlignment.center,
                 children: [
-                  if (onRetry != null) OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
-                  if (showHomeButton) FilledButton(onPressed: () => context.go('/'), child: const Text('Go home')),
+                  if (onRetry != null) OutlinedButton(onPressed: onRetry, child: Text(l10n.tryAgain)),
+                  if (showHomeButton) FilledButton(onPressed: () => context.go('/'), child: Text(l10n.go_home)),
                 ],
               ),
             ],

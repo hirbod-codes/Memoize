@@ -307,6 +307,81 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get choose_your_language => 'زبان خود را انتخاب کنید';
+
+  @override
+  String get required => 'الزامی';
+
+  @override
+  String get go_home => 'بازگشت به خانه';
+
+  @override
+  String get verify_your_email => 'ایمیل خود را تأیید کنید';
+
+  @override
+  String get verify_your_new_email => 'ایمیل جدید خود را تأیید کنید';
+
+  @override
+  String get welcome_to_memoize => 'به Memoize خوش آمدید';
+
+  @override
+  String get login_success => 'با موفقیت وارد شدید!';
+
+  @override
+  String get code_sent_to_code => 'کد به تلفن شما ارسال شد.';
+
+  @override
+  String get password_updated => 'رمز عبور با موفقیت به‌روزرسانی شد.';
+
+  @override
+  String get account_created => 'همه‌چیز آماده است! حساب شما ایجاد شد.';
+
+  @override
+  String get code_sent_to_email => 'کد تأیید به ایمیل شما ارسال شد.';
+
+  @override
+  String get request_timeout => 'زمان درخواست به پایان رسید. اتصال خود را بررسی کنید و دوباره تلاش کنید.';
+
+  @override
+  String get request_connection_error => 'امکان اتصال به سرور وجود ندارد. اتصال خود را بررسی کنید.';
+
+  @override
+  String get request_cancelled => 'درخواست لغو شد.';
+
+  @override
+  String get error_code_invalid_credentials => 'ایمیل یا رمز عبور نادرست است.';
+
+  @override
+  String get error_code_email_already_registered => 'حسابی با این ایمیل از قبل وجود دارد.';
+
+  @override
+  String get error_code_otp_failed => 'متأسفانه ارسال کد تأیید ناموفق بود.';
+
+  @override
+  String get error_code_invalid_otp => 'این کد نادرست یا منقضی شده است.';
+
+  @override
+  String get error_code_invalid_code => 'این کد نادرست یا منقضی شده است.';
+
+  @override
+  String get error_code_otp_expired => 'این کد منقضی شده است. یک کد جدید درخواست کنید.';
+
+  @override
+  String get error_code_otp_rate_limited => 'تعداد تلاش‌ها بیش از حد مجاز است. لطفاً قبل از تلاش دوباره کمی صبر کنید.';
+
+  @override
+  String get error_code_account_not_found => 'حسابی با این ایمیل یا شماره تلفن پیدا نشد.';
+
+  @override
+  String get error_code_quota_exceeded => 'به محدودیت طرح خود برای این مورد رسیده‌اید.';
+
+  @override
+  String get error_code_feature_not_available => 'این قابلیت به یک طرح ارتقایافته نیاز دارد.';
+
+  @override
+  String get error_code_unauthorized => 'نشست شما منقضی شده است. لطفاً دوباره وارد شوید.';
+
+  @override
   String get timeZone => 'منطقه زمانی';
 
   @override
@@ -463,6 +538,14 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get choose_audio => 'انتخاب صدا';
+
+  @override
+  String get home => 'خانه';
+
+  @override
+  String otp_sheet_heading(String destination) {
+    return 'کد ۶ رقمی ارسال‌شده به $destination را وارد کنید';
+  }
 
   @override
   String get no_image_selected => 'تصویری انتخاب نشده است';

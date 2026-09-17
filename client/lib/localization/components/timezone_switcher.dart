@@ -1,3 +1,4 @@
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/timezone/timezone_controller.dart';
 import 'package:client/localization/timezone/timezone_service.dart';
 import 'package:flutter/material.dart';
@@ -10,11 +11,13 @@ class TimezoneSwitcher extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(timezoneControllerProvider);
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return DropdownMenu<String>(
       initialSelection: current,
       enableFilter: true,
       requestFocusOnTap: true,
-      label: const Text('Time zone'),
+      label: Text(l10n.timeZone),
       onSelected: (zone) {
         if (zone != null) ref.read(timezoneControllerProvider.notifier).setZone(zone);
       },

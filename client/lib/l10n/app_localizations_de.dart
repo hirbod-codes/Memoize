@@ -308,6 +308,81 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get choose_your_language => 'Wählen Sie Ihre Sprache';
+
+  @override
+  String get required => 'Erforderlich';
+
+  @override
+  String get go_home => 'Zur Startseite';
+
+  @override
+  String get verify_your_email => 'Bestätigen Sie Ihre E-Mail-Adresse';
+
+  @override
+  String get verify_your_new_email => 'Bestätigen Sie Ihre neue E-Mail-Adresse';
+
+  @override
+  String get welcome_to_memoize => 'Willkommen bei Memoize';
+
+  @override
+  String get login_success => 'Sie sind angemeldet!';
+
+  @override
+  String get code_sent_to_code => 'Der Code wurde an Ihr Telefon gesendet.';
+
+  @override
+  String get password_updated => 'Passwort erfolgreich aktualisiert.';
+
+  @override
+  String get account_created => 'Alles bereit! Ihr Konto wurde erstellt.';
+
+  @override
+  String get code_sent_to_email => 'Der Bestätigungscode wurde an Ihre E-Mail-Adresse gesendet.';
+
+  @override
+  String get request_timeout => 'Die Anfrage hat zu lange gedauert. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.';
+
+  @override
+  String get request_connection_error => 'Der Server konnte nicht erreicht werden. Überprüfen Sie Ihre Verbindung.';
+
+  @override
+  String get request_cancelled => 'Anfrage abgebrochen.';
+
+  @override
+  String get error_code_invalid_credentials => 'E-Mail-Adresse oder Passwort ist falsch.';
+
+  @override
+  String get error_code_email_already_registered => 'Mit dieser E-Mail-Adresse existiert bereits ein Konto.';
+
+  @override
+  String get error_code_otp_failed => 'Leider konnte der Bestätigungscode nicht gesendet werden.';
+
+  @override
+  String get error_code_invalid_otp => 'Der Code ist falsch oder abgelaufen.';
+
+  @override
+  String get error_code_invalid_code => 'Der Code ist falsch oder abgelaufen.';
+
+  @override
+  String get error_code_otp_expired => 'Der Code ist abgelaufen. Fordern Sie einen neuen an.';
+
+  @override
+  String get error_code_otp_rate_limited => 'Zu viele Versuche. Bitte warten Sie, bevor Sie es erneut versuchen.';
+
+  @override
+  String get error_code_account_not_found => 'Kein Konto mit dieser E-Mail-Adresse oder Telefonnummer gefunden.';
+
+  @override
+  String get error_code_quota_exceeded => 'Sie haben das Limit Ihres Tarifs für diese Funktion erreicht.';
+
+  @override
+  String get error_code_feature_not_available => 'Diese Funktion erfordert einen erweiterten Tarif.';
+
+  @override
+  String get error_code_unauthorized => 'Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.';
+
+  @override
   String get timeZone => 'Zeitzone';
 
   @override
@@ -464,6 +539,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get choose_audio => 'Audio auswählen';
+
+  @override
+  String get home => 'Startseite';
+
+  @override
+  String otp_sheet_heading(String destination) {
+    return 'Geben Sie den an $destination gesendeten 6-stelligen Code ein';
+  }
 
   @override
   String get no_image_selected => 'Kein Bild ausgewählt';

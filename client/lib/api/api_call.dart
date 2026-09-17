@@ -2,6 +2,7 @@ import 'package:client/api/api_response.dart';
 import 'package:client/api/error_codes.dart';
 import 'package:client/api/root_navigator_key.dart';
 import 'package:client/components/global/notification_service.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:talker/talker.dart';
 
@@ -102,7 +103,7 @@ Future<ApiCallResult<T>> apiCall<T>(Future<Response> Function() request, {T Func
     return ApiCallFailure<T>(message);
   } catch (e, st) {
     Talker().error('apiCall: unexpected error', e, st);
-    const message = 'Something went wrong.';
+    String message = rootContext == null ? 'Something went wrong.' : AppLocalizations.of(rootContext!)!.uncaughtError;
     _showError(message);
     return ApiCallFailure<T>(message);
   }
@@ -130,6 +131,6 @@ String _extractMessage(ApiResponse? parsed, dynamic rawBody) {
 void _showError(String message) {
   final context = rootContext;
   if (context != null) {
-    NotificationService.showError(context: context, message: message);
+    NotificationService.showError(message: message);
   }
 }

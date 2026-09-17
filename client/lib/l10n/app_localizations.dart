@@ -681,6 +681,156 @@ abstract class AppLocalizations {
   /// **'We couldn\'t find \"{path}\".'**
   String errors_page_path_not_found(String path);
 
+  /// No description provided for @choose_your_language.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your language'**
+  String get choose_your_language;
+
+  /// No description provided for @required.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get required;
+
+  /// No description provided for @go_home.
+  ///
+  /// In en, this message translates to:
+  /// **'Go home'**
+  String get go_home;
+
+  /// No description provided for @verify_your_email.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email'**
+  String get verify_your_email;
+
+  /// No description provided for @verify_your_new_email.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your new email'**
+  String get verify_your_new_email;
+
+  /// No description provided for @welcome_to_memoize.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Memoize'**
+  String get welcome_to_memoize;
+
+  /// No description provided for @login_success.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re logged in!'**
+  String get login_success;
+
+  /// No description provided for @code_sent_to_code.
+  ///
+  /// In en, this message translates to:
+  /// **'Code sent to your phone.'**
+  String get code_sent_to_code;
+
+  /// No description provided for @password_updated.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated successfully.'**
+  String get password_updated;
+
+  /// No description provided for @account_created.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all set! Account created.'**
+  String get account_created;
+
+  /// No description provided for @code_sent_to_email.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification code sent to your email.'**
+  String get code_sent_to_email;
+
+  /// No description provided for @request_timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The request timed out. Check your connection and try again.'**
+  String get request_timeout;
+
+  /// No description provided for @request_connection_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach the server. Check your connection.'**
+  String get request_connection_error;
+
+  /// No description provided for @request_cancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Request cancelled.'**
+  String get request_cancelled;
+
+  /// No description provided for @error_code_invalid_credentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect email or password.'**
+  String get error_code_invalid_credentials;
+
+  /// No description provided for @error_code_email_already_registered.
+  ///
+  /// In en, this message translates to:
+  /// **'An account with this email already exists.'**
+  String get error_code_email_already_registered;
+
+  /// No description provided for @error_code_otp_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'unfortunately, we failed to send verification code.'**
+  String get error_code_otp_failed;
+
+  /// No description provided for @error_code_invalid_otp.
+  ///
+  /// In en, this message translates to:
+  /// **'That code is incorrect or expired.'**
+  String get error_code_invalid_otp;
+
+  /// No description provided for @error_code_invalid_code.
+  ///
+  /// In en, this message translates to:
+  /// **'That code is incorrect or expired.'**
+  String get error_code_invalid_code;
+
+  /// No description provided for @error_code_otp_expired.
+  ///
+  /// In en, this message translates to:
+  /// **'That code has expired. Request a new one.'**
+  String get error_code_otp_expired;
+
+  /// No description provided for @error_code_otp_rate_limited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Please wait before trying again.'**
+  String get error_code_otp_rate_limited;
+
+  /// No description provided for @error_code_account_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'No account found with that email or phone number.'**
+  String get error_code_account_not_found;
+
+  /// No description provided for @error_code_quota_exceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reached your plan\'s limit for this.'**
+  String get error_code_quota_exceeded;
+
+  /// No description provided for @error_code_feature_not_available.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature requires an upgraded plan.'**
+  String get error_code_feature_not_available;
+
+  /// No description provided for @error_code_unauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please log in again.'**
+  String get error_code_unauthorized;
+
   /// No description provided for @timeZone.
   ///
   /// In en, this message translates to:
@@ -986,6 +1136,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose audio'**
   String get choose_audio;
+
+  /// No description provided for @home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get home;
+
+  /// No description provided for @otp_sheet_heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code sent to {destination}'**
+  String otp_sheet_heading(String destination);
 
   /// No description provided for @no_image_selected.
   ///

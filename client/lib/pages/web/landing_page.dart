@@ -33,11 +33,13 @@ class _LandingPageState extends ConsumerState<LandingPage> {
     final alreadyChosen = await hasChosenLocale();
     if (alreadyChosen || !mounted) return;
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Choose your language'),
+        title: Text(l10n.choose_your_language),
         content: const LocaleSwitcher(),
         actions: [
           FilledButton(
@@ -49,7 +51,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
               await ref.read(localeControllerProvider.notifier).setLocale(locale);
               if (dialogContext.mounted) Navigator.of(dialogContext).pop();
             },
-            child: const Text('Continue'),
+            child: Text(l10n.$continue),
           ),
         ],
       ),

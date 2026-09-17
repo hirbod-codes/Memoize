@@ -112,6 +112,31 @@
       }
     }
   },
+  "choose_your_language": "Choose your language",
+  "required": "Required",
+  "go_home": "Go home",
+  "verify_your_email": "Verify your email",
+  "verify_your_new_email": "Verify your new email",
+  "welcome_to_memoize": "Welcome to Memoize",
+  "login_success": "You're logged in!",
+  "code_sent_to_code": "Code sent to your phone.",
+  "password_updated": "Password updated successfully.",
+  "account_created": "You're all set! Account created.",
+  "code_sent_to_email": "Verification code sent to your email.",
+  "request_timeout": "The request timed out. Check your connection and try again.",
+  "request_connection_error": "Could not reach the server. Check your connection.",
+  "request_cancelled": "Request cancelled.",
+  "error_code_invalid_credentials": "Incorrect email or password.",
+  "error_code_email_already_registered": "An account with this email already exists.",
+  "error_code_otp_failed": "unfortunately, we failed to send verification code.",
+  "error_code_invalid_otp": "That code is incorrect or expired.",
+  "error_code_invalid_code": "That code is incorrect or expired.",
+  "error_code_otp_expired": "That code has expired. Request a new one.",
+  "error_code_otp_rate_limited": "Too many attempts. Please wait before trying again.",
+  "error_code_account_not_found": "No account found with that email or phone number.",
+  "error_code_quota_exceeded": "You've reached your plan's limit for this.",
+  "error_code_feature_not_available": "This feature requires an upgraded plan.",
+  "error_code_unauthorized": "Your session has expired. Please log in again.",
   "timeZone": "Time zone",
   "calendar": "Calendar",
   "card": "Card",
@@ -125,7 +150,7 @@
   "no": "No",
   "yes": "Yes",
   "flip": "Flip",
-  "title": "Flip",
+  "title": "Title",
   "add_content": "Add content",
   "file_manager_content_delete_dialog_heading": "Are you sure?\nthis action is irreversible!",
   "landing_page_get_started_free": "Get started free",
@@ -163,6 +188,15 @@
   "upload_audio": "Upload audio",
   "audio_not_selected": "No audio selected",
   "choose_audio": "Choose audio",
+  "home": "Home",
+  "otp_sheet_heading": "Enter the 6-digit code sent to {destination}",
+  "@otp_sheet_heading": {
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
   "no_image_selected": "No image selected",
   "folder_add_success": "Successfully added new folder.",
   "folder_add_failed": "Failure while trying to add new folder.",

@@ -23,7 +23,14 @@ class AppFooter extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(width: 100, height: 20, child: Text('© ${DateTime.now().year} Memoize', style: theme.textTheme.bodySmall)),
+          SizedBox(
+            width: 100,
+            height: 20,
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text('© ${DateTime.now().year} Memoize', style: theme.textTheme.bodySmall),
+            ),
+          ),
           SizedBox(width: 70, height: 70, child: const FooterBadge()),
           SizedBox(width: 100, height: 20),
         ],

@@ -67,7 +67,7 @@ class _AudioContainerState extends ConsumerState<AudioContainer> {
   FutureOr<Null> _handleError(dynamic e) {
     if (!mounted) return null;
 
-    NotificationService.showError(context: context, message: 'Failed to fetch audio data.');
+    NotificationService.showError(message: AppLocalizations.of(context)!.audio_fetch_failed);
 
     setState(() {
       _loading = false;

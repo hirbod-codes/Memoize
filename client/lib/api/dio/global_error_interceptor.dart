@@ -2,6 +2,7 @@ import 'package:client/api/api_response.dart';
 import 'package:client/api/error_codes.dart';
 import 'package:client/api/root_navigator_key.dart';
 import 'package:client/components/global/notification_service.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:talker/talker.dart';
 
@@ -38,7 +39,7 @@ class GlobalErrorInterceptor extends Interceptor {
         final message = _messageFor(err);
         final context = rootContext;
         if (context != null) {
-          NotificationService.showError(context: context, message: message);
+          NotificationService.showError(message: message);
         }
       }
 
@@ -46,7 +47,11 @@ class GlobalErrorInterceptor extends Interceptor {
     } else {
       final context = rootContext;
       if (context != null && !_isSilent) {
-        NotificationService.showError(context: context, message: 'Something went wrong. Please try again.');
+        NotificationService.showError(
+          message: rootContext == null
+              ? 'Something went wrong. Please try again.'
+              : AppLocalizations.of(rootContext!)?.uncaughtError ?? 'Something went wrong. Please try again.',
+        );
       }
     }
   }
@@ -75,13 +80,19 @@ class GlobalErrorInterceptor extends Interceptor {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return 'The request timed out. Check your connection and try again.';
+        return rootContext == null
+            ? 'The request timed out. Check your connection and try again.'
+            : AppLocalizations.of(rootContext!)?.request_timeout ?? 'The request timed out. Check your connection and try again.';
       case DioExceptionType.connectionError:
-        return 'Could not reach the server. Check your connection.';
+        return rootContext == null
+            ? 'Could not reach the server. Check your connection.'
+            : AppLocalizations.of(rootContext!)?.request_connection_error ?? 'Could not reach the server. Check your connection.';
       case DioExceptionType.cancel:
-        return 'Request cancelled.';
+        return rootContext == null ? 'Request cancelled.' : AppLocalizations.of(rootContext!)?.request_cancelled ?? 'Request cancelled.';
       default:
-        return 'Something went wrong. Please try again.';
+        return rootContext == null
+            ? 'Something went wrong. Please try again.'
+            : AppLocalizations.of(rootContext!)?.uncaughtError ?? 'Something went wrong. Please try again.';
     }
   }
 }

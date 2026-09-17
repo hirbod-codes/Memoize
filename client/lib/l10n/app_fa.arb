@@ -112,6 +112,31 @@
       }
     }
   },
+  "choose_your_language": "زبان خود را انتخاب کنید",
+  "required": "الزامی",
+  "go_home": "بازگشت به خانه",
+  "verify_your_email": "ایمیل خود را تأیید کنید",
+  "verify_your_new_email": "ایمیل جدید خود را تأیید کنید",
+  "welcome_to_memoize": "به Memoize خوش آمدید",
+  "login_success": "با موفقیت وارد شدید!",
+  "code_sent_to_code": "کد به تلفن شما ارسال شد.",
+  "password_updated": "رمز عبور با موفقیت به‌روزرسانی شد.",
+  "account_created": "همه‌چیز آماده است! حساب شما ایجاد شد.",
+  "code_sent_to_email": "کد تأیید به ایمیل شما ارسال شد.",
+  "request_timeout": "زمان درخواست به پایان رسید. اتصال خود را بررسی کنید و دوباره تلاش کنید.",
+  "request_connection_error": "امکان اتصال به سرور وجود ندارد. اتصال خود را بررسی کنید.",
+  "request_cancelled": "درخواست لغو شد.",
+  "error_code_invalid_credentials": "ایمیل یا رمز عبور نادرست است.",
+  "error_code_email_already_registered": "حسابی با این ایمیل از قبل وجود دارد.",
+  "error_code_otp_failed": "متأسفانه ارسال کد تأیید ناموفق بود.",
+  "error_code_invalid_otp": "این کد نادرست یا منقضی شده است.",
+  "error_code_invalid_code": "این کد نادرست یا منقضی شده است.",
+  "error_code_otp_expired": "این کد منقضی شده است. یک کد جدید درخواست کنید.",
+  "error_code_otp_rate_limited": "تعداد تلاش‌ها بیش از حد مجاز است. لطفاً قبل از تلاش دوباره کمی صبر کنید.",
+  "error_code_account_not_found": "حسابی با این ایمیل یا شماره تلفن پیدا نشد.",
+  "error_code_quota_exceeded": "به محدودیت طرح خود برای این مورد رسیده‌اید.",
+  "error_code_feature_not_available": "این قابلیت به یک طرح ارتقایافته نیاز دارد.",
+  "error_code_unauthorized": "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.",
   "timeZone": "منطقه زمانی",
   "calendar": "تقویم",
   "card": "کارت",
@@ -125,7 +150,7 @@
   "no": "خیر",
   "yes": "بله",
   "flip": "برگرداندن",
-  "title": "برگرداندن",
+  "title": "عنوان",
   "add_content": "افزودن محتوا",
   "landing_page_get_started_free": "رایگان شروع کنید",
   "landing_page_see_pricing": "قیمت ها",
@@ -163,6 +188,15 @@
   "upload_audio": "آپلود صدا",
   "audio_not_selected": "هیچ فایل صوتی انتخاب نشده است",
   "choose_audio": "انتخاب صدا",
+  "home": "خانه",
+  "otp_sheet_heading": "کد ۶ رقمی ارسال‌شده به {destination} را وارد کنید",
+  "@otp_sheet_heading": {
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
   "no_image_selected": "تصویری انتخاب نشده است",
   "folder_add_success": "پوشه جدید با موفقیت اضافه شد.",
   "folder_add_failed": "افزودن پوشه جدید با مشکل مواجه شد.",

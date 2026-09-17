@@ -64,7 +64,7 @@ class _ChangePasswordContentState extends ConsumerState<_ChangePasswordContent> 
               obscureText: true,
               autofillHints: const [AutofillHints.password],
               decoration: InputDecoration(labelText: l10n.change_password_sheet_current_password, border: OutlineInputBorder()),
-              validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
+              validator: (v) => (v == null || v.isEmpty) ? l10n.required : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -73,7 +73,7 @@ class _ChangePasswordContentState extends ConsumerState<_ChangePasswordContent> 
               obscureText: true,
               autofillHints: const [AutofillHints.newPassword],
               decoration: InputDecoration(labelText: l10n.change_password_sheet_new_password, border: OutlineInputBorder()),
-              validator: (v) => (v == null || v.length < 8) ? "At least 8 characters" : null,
+              validator: (v) => (v == null || v.length < 8) ? l10n.at_least_eight_characters : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -81,7 +81,7 @@ class _ChangePasswordContentState extends ConsumerState<_ChangePasswordContent> 
               enabled: !isLoading,
               obscureText: true,
               decoration: InputDecoration(labelText: l10n.change_password_sheet_confirm_new_password, border: OutlineInputBorder()),
-              validator: (v) => v != _newController.text ? "Passwords do not match" : null,
+              validator: (v) => v != _newController.text ? l10n.passwords_not_match : null,
             ),
             const SizedBox(height: 24),
             FilledButton(

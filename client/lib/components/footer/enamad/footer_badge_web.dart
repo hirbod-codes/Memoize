@@ -7,8 +7,8 @@ const _viewType = 'memoize-footer-badge';
 bool _registered = false;
 
 // PLACEHOLDERS — replace with whatever you were actually given.
-const _linkUrl = 'https://REPLACE_WITH_LINK_URL';
-const _imageUrl = 'https://REPLACE_WITH_IMAGE_URL';
+// const _linkUrl = 'https://REPLACE_WITH_LINK_URL';
+// const _imageUrl = 'https://REPLACE_WITH_IMAGE_URL';
 // const _altText = 'REPLACE_WITH_ALT_TEXT';
 
 /// Embeds the badge as real DOM elements, built directly rather than
@@ -26,14 +26,14 @@ Widget buildFooterBadgeWidget() {
   if (!_registered) {
     _registered = true;
     ui_web.platformViewRegistry.registerViewFactory(_viewType, (int viewId) {
-      final anchor = html.AnchorElement(href: _linkUrl)
+      final anchor = html.AnchorElement()
         ..referrerPolicy = 'origin'
         ..href = 'https://trustseal.enamad.ir/?id=7649114&Code=73PTlAXHjPhgtZVV7hxJPlvoz0D1AWKq'
         ..target = '_blank'
         ..rel = 'noopener noreferrer'
         ..style.display = 'inline-block';
 
-      final img = html.ImageElement(src: _imageUrl)
+      final img = html.ImageElement()
         ..referrerPolicy = 'origin'
         ..src = 'https://trustseal.enamad.ir/logo.aspx?id=7649114&Code=73PTlAXHjPhgtZVV7hxJPlvoz0D1AWKq'
         ..attributes['code'] = '73PTlAXHjPhgtZVV7hxJPlvoz0D1AWKq'

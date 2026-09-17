@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:client/api/root_navigator_key.dart';
 import 'package:client/components/global/notification_service.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker/talker.dart';
@@ -36,7 +37,7 @@ class ActionController extends AsyncNotifier<void> {
 
       final context = rootContext;
       if (context != null) {
-        NotificationService.showError(context: context, message: 'Something went wrong!');
+        NotificationService.showError(message: rootContext == null ? 'Something went wrong.' : AppLocalizations.of(rootContext!)!.uncaughtError);
       }
     }
   }

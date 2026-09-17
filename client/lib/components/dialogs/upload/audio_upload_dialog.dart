@@ -133,7 +133,7 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
 
               TextField(
                 controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration: InputDecoration(labelText: l10n.title),
                 onChanged: (_) => setState(() {}),
               ),
 
@@ -152,7 +152,7 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
                         children: [
                           _picking
                               ? SizedBox(height: 40, width: 40, child: CircularProgressIndicator(strokeWidth: 2))
-                              :  Center(child: Text(l10n.audio_not_selected)),
+                              : Center(child: Text(l10n.audio_not_selected)),
                         ],
                       )
                     : Column(

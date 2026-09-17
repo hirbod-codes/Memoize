@@ -73,7 +73,7 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Upload Image", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(l10n.upload_image, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
               const SizedBox(height: 16),
 
@@ -94,7 +94,7 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: _image == null
-                    ?  Center(child: Text(l10n.image_not_selected))
+                    ? Center(child: Text(l10n.image_not_selected))
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: kIsWeb ? Image.network(_image!.path, fit: BoxFit.fitWidth) : Image.file(_image!, fit: BoxFit.fitWidth),

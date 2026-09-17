@@ -307,6 +307,81 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get choose_your_language => 'Choose your language';
+
+  @override
+  String get required => 'Required';
+
+  @override
+  String get go_home => 'Go home';
+
+  @override
+  String get verify_your_email => 'Verify your email';
+
+  @override
+  String get verify_your_new_email => 'Verify your new email';
+
+  @override
+  String get welcome_to_memoize => 'Welcome to Memoize';
+
+  @override
+  String get login_success => 'You\'re logged in!';
+
+  @override
+  String get code_sent_to_code => 'Code sent to your phone.';
+
+  @override
+  String get password_updated => 'Password updated successfully.';
+
+  @override
+  String get account_created => 'You\'re all set! Account created.';
+
+  @override
+  String get code_sent_to_email => 'Verification code sent to your email.';
+
+  @override
+  String get request_timeout => 'The request timed out. Check your connection and try again.';
+
+  @override
+  String get request_connection_error => 'Could not reach the server. Check your connection.';
+
+  @override
+  String get request_cancelled => 'Request cancelled.';
+
+  @override
+  String get error_code_invalid_credentials => 'Incorrect email or password.';
+
+  @override
+  String get error_code_email_already_registered => 'An account with this email already exists.';
+
+  @override
+  String get error_code_otp_failed => 'unfortunately, we failed to send verification code.';
+
+  @override
+  String get error_code_invalid_otp => 'That code is incorrect or expired.';
+
+  @override
+  String get error_code_invalid_code => 'That code is incorrect or expired.';
+
+  @override
+  String get error_code_otp_expired => 'That code has expired. Request a new one.';
+
+  @override
+  String get error_code_otp_rate_limited => 'Too many attempts. Please wait before trying again.';
+
+  @override
+  String get error_code_account_not_found => 'No account found with that email or phone number.';
+
+  @override
+  String get error_code_quota_exceeded => 'You\'ve reached your plan\'s limit for this.';
+
+  @override
+  String get error_code_feature_not_available => 'This feature requires an upgraded plan.';
+
+  @override
+  String get error_code_unauthorized => 'Your session has expired. Please log in again.';
+
+  @override
   String get timeZone => 'Time zone';
 
   @override
@@ -462,6 +537,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get choose_audio => 'Choose audio';
+
+  @override
+  String get home => 'Home';
+
+  @override
+  String otp_sheet_heading(String destination) {
+    return 'Enter the 6-digit code sent to $destination';
+  }
 
   @override
   String get no_image_selected => 'No image selected';

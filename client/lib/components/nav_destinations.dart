@@ -1,8 +1,9 @@
+import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class NavDestinationItem {
   final String path;
-  final String label;
+  final String Function(AppLocalizations l10n) label;
   final IconData icon;
   final IconData? selectedIcon;
 
@@ -15,9 +16,9 @@ class NavDestinationItem {
 /// so with fewer than that AppShell hides the nav entirely rather than
 /// crash — this is exactly why it's been commented out until now: only
 /// one route existed. Uncomment/add entries below once you have more.
-const List<NavDestinationItem> navDestinations = [
+List<NavDestinationItem> navDestinations = [
   // NavDestinationItem(path: '/app', label: 'App', icon: Icons.dashboard_outlined, selectedIcon: Icons.dashboard),
-  NavDestinationItem(path: '/app', label: 'Home', icon: Icons.home_outlined, selectedIcon: Icons.home),
-  NavDestinationItem(path: '/pricing', label: 'Plan', icon: Icons.star_border, selectedIcon: Icons.star),
-  NavDestinationItem(path: '/settings', label: 'Settings', icon: Icons.settings_outlined, selectedIcon: Icons.settings),
+  NavDestinationItem(path: '/app', label: (AppLocalizations l10n) => l10n.home, icon: Icons.home_outlined, selectedIcon: Icons.home),
+  NavDestinationItem(path: '/pricing', label: (AppLocalizations l10n) => l10n.plan, icon: Icons.star_border, selectedIcon: Icons.star),
+  NavDestinationItem(path: '/settings', label: (AppLocalizations l10n) => l10n.settings, icon: Icons.settings_outlined, selectedIcon: Icons.settings),
 ];
