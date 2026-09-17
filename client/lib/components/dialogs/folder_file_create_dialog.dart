@@ -1,4 +1,5 @@
 import 'package:client/components/button.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,6 +30,8 @@ class _FolderFileCreateDialogState extends ConsumerState<FolderFileCreateDialog>
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Dialog(
       insetPadding: const EdgeInsets.all(20),
       child: ConstrainedBox(
@@ -40,7 +43,7 @@ class _FolderFileCreateDialogState extends ConsumerState<FolderFileCreateDialog>
             children: [
               TextField(
                 controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration: InputDecoration(labelText: l10n.title),
                 onChanged: (_) => setState(() {}),
               ),
 
@@ -50,11 +53,11 @@ class _FolderFileCreateDialogState extends ConsumerState<FolderFileCreateDialog>
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                  TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
 
                   const SizedBox(width: 8),
 
-                  Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: isButtonDisabled() ? null : _upload, label: "Upload"),
+                  Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: isButtonDisabled() ? null : _upload, label: l10n.upload),
                 ],
               ),
             ],

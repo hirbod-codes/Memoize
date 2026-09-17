@@ -445,7 +445,25 @@ class AppLocalizationsDe extends AppLocalizations {
   String get avatar_upload_success => 'Avatarbild erfolgreich hochgeladen';
 
   @override
+  String get upload_video => 'Video hochladen';
+
+  @override
+  String get video_not_selected => 'Kein Video ausgewählt';
+
+  @override
   String get upload_image => 'Bild hochladen';
+
+  @override
+  String get image_not_selected => 'Kein Bild ausgewählt';
+
+  @override
+  String get upload_audio => 'Audio hochladen';
+
+  @override
+  String get audio_not_selected => 'Keine Audiodatei ausgewählt';
+
+  @override
+  String get choose_audio => 'Audio auswählen';
 
   @override
   String get no_image_selected => 'Kein Bild ausgewählt';

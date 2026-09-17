@@ -945,11 +945,47 @@ abstract class AppLocalizations {
   /// **'Avatar image successfully uploaded'**
   String get avatar_upload_success;
 
+  /// No description provided for @upload_video.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload video'**
+  String get upload_video;
+
+  /// No description provided for @video_not_selected.
+  ///
+  /// In en, this message translates to:
+  /// **'No video selected'**
+  String get video_not_selected;
+
   /// No description provided for @upload_image.
   ///
   /// In en, this message translates to:
-  /// **'Upload Image'**
+  /// **'Upload image'**
   String get upload_image;
+
+  /// No description provided for @image_not_selected.
+  ///
+  /// In en, this message translates to:
+  /// **'No image selected'**
+  String get image_not_selected;
+
+  /// No description provided for @upload_audio.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload audio'**
+  String get upload_audio;
+
+  /// No description provided for @audio_not_selected.
+  ///
+  /// In en, this message translates to:
+  /// **'No audio selected'**
+  String get audio_not_selected;
+
+  /// No description provided for @choose_audio.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose audio'**
+  String get choose_audio;
 
   /// No description provided for @no_image_selected.
   ///

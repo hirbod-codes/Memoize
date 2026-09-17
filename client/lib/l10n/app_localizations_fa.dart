@@ -444,7 +444,25 @@ class AppLocalizationsFa extends AppLocalizations {
   String get avatar_upload_success => 'تصویر آواتار با موفقیت آپلود شد';
 
   @override
+  String get upload_video => 'آپلود ویدیو';
+
+  @override
+  String get video_not_selected => 'هیچ ویدیویی انتخاب نشده است';
+
+  @override
   String get upload_image => 'آپلود تصویر';
+
+  @override
+  String get image_not_selected => 'هیچ تصویری انتخاب نشده است';
+
+  @override
+  String get upload_audio => 'آپلود صدا';
+
+  @override
+  String get audio_not_selected => 'هیچ فایل صوتی انتخاب نشده است';
+
+  @override
+  String get choose_audio => 'انتخاب صدا';
 
   @override
   String get no_image_selected => 'تصویری انتخاب نشده است';

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:client/api/controllers/image_controller.dart';
 import 'package:client/components/button.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -61,6 +62,8 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
   Widget build(BuildContext context) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Dialog(
       insetPadding: const EdgeInsets.all(20),
       child: ConstrainedBox(
@@ -76,7 +79,7 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
 
               TextField(
                 controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration: InputDecoration(labelText: l10n.title),
                 onChanged: (_) => setState(() {}),
               ),
 
@@ -91,10 +94,10 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: _image == null
-                    ? const Center(child: Text("No image selected"))
+                    ?  Center(child: Text(l10n.image_not_selected))
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child:  kIsWeb ? Image.network(_image!.path, fit: BoxFit.fitWidth) :Image.file(_image!, fit: BoxFit.fitWidth),
+                        child: kIsWeb ? Image.network(_image!.path, fit: BoxFit.fitWidth) : Image.file(_image!, fit: BoxFit.fitWidth),
                       ),
               ),
 
@@ -104,9 +107,9 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  TextButton.icon(onPressed: () => _pickImage(ImageSource.gallery), icon: const Icon(Icons.photo), label: const Text("Gallery")),
+                  TextButton.icon(onPressed: () => _pickImage(ImageSource.gallery), icon: const Icon(Icons.photo), label: Text(l10n.gallery)),
 
-                  TextButton.icon(onPressed: () => _pickImage(ImageSource.camera), icon: const Icon(Icons.camera_alt), label: const Text("Camera")),
+                  TextButton.icon(onPressed: () => _pickImage(ImageSource.camera), icon: const Icon(Icons.camera_alt), label: Text(l10n.camera)),
                 ],
               ),
 
@@ -116,7 +119,7 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: _loading ? null : () => Navigator.pop(context), child: const Text("Cancel")),
+                  TextButton(onPressed: _loading ? null : () => Navigator.pop(context), child: Text(l10n.cancel)),
 
                   const SizedBox(width: 8),
 
@@ -125,7 +128,7 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
                     color: ThemeColorName.secondary,
                     onPressed: isButtonDisabled() ? null : _upload,
                     isLoading: _loading,
-                    label: "Upload",
+                    label: l10n.upload,
                   ),
                 ],
               ),

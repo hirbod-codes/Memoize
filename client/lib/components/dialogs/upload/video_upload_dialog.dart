@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:client/api/controllers/video_controller.dart' hide VideoController;
 import 'package:client/components/button.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -153,6 +154,8 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Dialog(
       insetPadding: const EdgeInsets.all(20),
       child: ConstrainedBox(
@@ -170,13 +173,13 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
                 const SizedBox(height: 12),
               ],
 
-              const Text("Upload Video", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+               Text(l10n.upload_video, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
               const SizedBox(height: 16),
 
               TextField(
                 controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration:  InputDecoration(labelText: l10n.title),
                 onChanged: (_) => setState(() {}),
               ),
 
@@ -193,7 +196,7 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
                 child: _controller == null
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [_picking ? SizedBox(height: 40, width: 40, child: CircularProgressIndicator(strokeWidth: 2)) : const Center(child: Text('No video selected'))],
+                        children: [_picking ? SizedBox(height: 40, width: 40, child: CircularProgressIndicator(strokeWidth: 2)) : Center(child: Text(l10n.video_not_selected))],
                       )
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(12),
@@ -207,9 +210,9 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  TextButton.icon(onPressed: _loading ? null : () => _pickVideo(ImageSource.gallery), icon: const Icon(Icons.video_library), label: const Text("Gallery")),
+                  TextButton.icon(onPressed: _loading ? null : () => _pickVideo(ImageSource.gallery), icon: const Icon(Icons.video_library), label:  Text(l10n.gallery)),
 
-                  TextButton.icon(onPressed: _loading ? null : () => _pickVideo(ImageSource.camera), icon: const Icon(Icons.videocam), label: const Text("Camera")),
+                  TextButton.icon(onPressed: _loading ? null : () => _pickVideo(ImageSource.camera), icon: const Icon(Icons.videocam), label:  Text(l10n.cancel)),
                 ],
               ),
 
@@ -219,14 +222,14 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: _loading ? null : () => Navigator.pop(context), child: const Text("Cancel")),
+                  TextButton(onPressed: _loading ? null : () => Navigator.pop(context), child: Text(l10n.cancel)),
 
                   const SizedBox(width: 8),
 
                   ValueListenableBuilder<bool>(
                     valueListenable: _titleHasText,
                     builder: (context, hasText, _) {
-                      return Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: isButtonDisabled() ? null : _upload, isLoading: _loading, label: "Upload");
+                      return Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: isButtonDisabled() ? null : _upload, isLoading: _loading, label: l10n.upload);
                     },
                   ),
                 ],

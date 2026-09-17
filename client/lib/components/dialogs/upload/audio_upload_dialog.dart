@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:client/api/controllers/audio_controller.dart';
 import 'package:client/components/button.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -97,7 +98,9 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
     try {
       Response<dynamic> res;
       if (kIsWeb) {
-        res = await ref.read(audioControllerProvider).postForWeb(title: titleController.text.trim(), bytes: _audioBytes!, fileName: _fileName ?? titleController.text.trim());
+        res = await ref
+            .read(audioControllerProvider)
+            .postForWeb(title: titleController.text.trim(), bytes: _audioBytes!, fileName: _fileName ?? titleController.text.trim());
       } else {
         res = await ref.read(audioControllerProvider).post(title: titleController.text.trim(), file: _audioFile!, fileName: _fileName);
       }
@@ -113,6 +116,8 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
+    AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Dialog(
       insetPadding: const EdgeInsets.all(20),
       child: ConstrainedBox(
@@ -144,7 +149,11 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
                 child: _audioFile == null && _audioBytes == null
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [_picking ? SizedBox(height: 40, width: 40, child: CircularProgressIndicator(strokeWidth: 2)) : const Center(child: Text('No audio selected'))],
+                        children: [
+                          _picking
+                              ? SizedBox(height: 40, width: 40, child: CircularProgressIndicator(strokeWidth: 2))
+                              :  Center(child: Text(l10n.audio_not_selected)),
+                        ],
                       )
                     : Column(
                         children: [
@@ -163,18 +172,24 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
 
               const SizedBox(height: 16),
 
-              TextButton.icon(onPressed: _pickAudio, icon: const Icon(Icons.library_music), label: const Text('Choose Audio')),
+              TextButton.icon(onPressed: _pickAudio, icon: const Icon(Icons.library_music), label: Text(l10n.choose_audio)),
 
               const SizedBox(height: 16),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: _loading ? null : () => Navigator.pop(context), child: const Text('Cancel')),
+                  TextButton(onPressed: _loading ? null : () => Navigator.pop(context), child: Text(l10n.cancel)),
 
                   const SizedBox(width: 8),
 
-                  Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: isButtonDisabled() ? null : _upload, isLoading: _loading, label: "Upload"),
+                  Button(
+                    type: ButtonType.elevated,
+                    color: ThemeColorName.secondary,
+                    onPressed: isButtonDisabled() ? null : _upload,
+                    isLoading: _loading,
+                    label: l10n.upload,
+                  ),
                 ],
               ),
             ],

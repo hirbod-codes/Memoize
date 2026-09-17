@@ -9,7 +9,7 @@ bool _registered = false;
 // PLACEHOLDERS — replace with whatever you were actually given.
 const _linkUrl = 'https://REPLACE_WITH_LINK_URL';
 const _imageUrl = 'https://REPLACE_WITH_IMAGE_URL';
-const _altText = 'REPLACE_WITH_ALT_TEXT';
+// const _altText = 'REPLACE_WITH_ALT_TEXT';
 
 /// Embeds the badge as real DOM elements, built directly rather than
 /// via setInnerHtml + a NodeValidator.

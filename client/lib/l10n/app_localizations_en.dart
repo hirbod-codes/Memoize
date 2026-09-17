@@ -443,7 +443,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get avatar_upload_success => 'Avatar image successfully uploaded';
 
   @override
-  String get upload_image => 'Upload Image';
+  String get upload_video => 'Upload video';
+
+  @override
+  String get video_not_selected => 'No video selected';
+
+  @override
+  String get upload_image => 'Upload image';
+
+  @override
+  String get image_not_selected => 'No image selected';
+
+  @override
+  String get upload_audio => 'Upload audio';
+
+  @override
+  String get audio_not_selected => 'No audio selected';
+
+  @override
+  String get choose_audio => 'Choose audio';
 
   @override
   String get no_image_selected => 'No image selected';
