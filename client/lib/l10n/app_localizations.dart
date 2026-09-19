@@ -723,11 +723,23 @@ abstract class AppLocalizations {
   /// **'You\'re logged in!'**
   String get login_success;
 
-  /// No description provided for @code_sent_to_code.
+  /// No description provided for @code_sent_to_phone.
   ///
   /// In en, this message translates to:
   /// **'Code sent to your phone.'**
-  String get code_sent_to_code;
+  String get code_sent_to_phone;
+
+  /// No description provided for @email_updated.
+  ///
+  /// In en, this message translates to:
+  /// **'Email updated.'**
+  String get email_updated;
+
+  /// No description provided for @phone_number_updated.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number updated.'**
+  String get phone_number_updated;
 
   /// No description provided for @password_updated.
   ///
@@ -912,7 +924,7 @@ abstract class AppLocalizations {
   /// No description provided for @title.
   ///
   /// In en, this message translates to:
-  /// **'Flip'**
+  /// **'Title'**
   String get title;
 
   /// No description provided for @add_content.

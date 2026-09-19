@@ -4,6 +4,7 @@ import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
 import { collectionName, Usage, UsageCreate, UsageField, UsageUpdate } from '../models/Usage';
+import { Redis } from '../redis';
 
 class UsageRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -12,6 +13,8 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
 
     private session: ClientSession | undefined = undefined
     private static collection: Collection<Usage> | undefined = undefined
+
+    private static USAGE_DATA_CACHE_TTL_SECONDS: number = 1_800;
 
     seed(count?: number): Promise<void> {
         throw new Error('Method not implemented.');
@@ -56,11 +59,18 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
     }
 
     async getByUserId(userId: string): Promise<Usage | undefined> {
+        const redis = await Redis.getClient()
+
+        const userJson = await redis.get(`${collectionName}:userId:${userId}`)
+        if (userJson)
+            return JSON.parse(userJson)
+
         let usage = (await UsageRepository.collection!.find({ userId }, { session: this.session }).toArray())[0]
 
         if (!usage) {
             const result = await this.insert({
-                userId, cardsPerCategoryCount: 0,
+                userId,
+                cardsPerCategoryCount: 0,
                 categoriesCount: 0,
                 nestedCategoriesCount: 0,
                 contentsPerCardSideCount: 0,
@@ -76,13 +86,22 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
 
             if (!result.acknowledged)
                 return undefined
+
+            usage = (await UsageRepository.collection!.find({ userId }, { session: this.session }).toArray())[0]
         }
 
-        return (await UsageRepository.collection!.find({ userId }, { session: this.session }).toArray())[0]
+        await redis.set(`${collectionName}:userId:${userId}`, JSON.stringify(usage), 'EX', UsageRepository.USAGE_DATA_CACHE_TTL_SECONDS)
+
+        return usage
     }
 
     async unsafeUpdateForUser(usageId: string, userId: string, updates: UsageUpdate) {
-        return await UsageRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(usageId), userId }, { $set: { ...updates, updatedAt: Date.now() } }, { session: this.session })
+        const usage = await UsageRepository.collection!.findOneAndUpdate({ _id: ObjectId.createFromHexString(usageId), userId }, { $set: { ...updates, updatedAt: Date.now() } }, { session: this.session })
+
+        const redis = await Redis.getClient()
+        await redis.set(`${collectionName}:userId:${userId}`, JSON.stringify(usage), 'EX', UsageRepository.USAGE_DATA_CACHE_TTL_SECONDS)
+
+        return usage
     }
 
     /**
@@ -92,11 +111,21 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
         if (!Number.isInteger(amount))
             throw new Error('NON_INTEGER_INCREMENT')
 
-        return await UsageRepository.collection!.findOneAndUpdate({ userId, [usageField]: { $lte: quotaLimit - amount } }, { $inc: { [usageField]: amount }, $set: { updatedAt: Date.now() } }, { session: this.session })
+        const usage = await UsageRepository.collection!.findOneAndUpdate({ userId, [usageField]: { $lte: quotaLimit - amount } }, { $inc: { [usageField]: amount }, $set: { updatedAt: Date.now() } }, { session: this.session })
+
+        const redis = await Redis.getClient()
+        await redis.set(`${collectionName}:userId:${userId}`, JSON.stringify(usage), 'EX', UsageRepository.USAGE_DATA_CACHE_TTL_SECONDS)
+
+        return usage
     }
 
-    async decrementQuota(userId: string, usageField: UsageField, amount: number): Promise<UpdateResult> {
-        return await UsageRepository.collection!.updateOne({ userId, [usageField]: { $gte: amount } }, { $inc: { [usageField]: -amount }, $set: { updatedAt: Date.now() } }, { session: this.session });
+    async decrementQuota(userId: string, usageField: UsageField, amount: number): Promise<WithId<Usage> | null> {
+        const usage = await UsageRepository.collection!.findOneAndUpdate({ userId, [usageField]: { $gte: amount } }, { $inc: { [usageField]: -amount }, $set: { updatedAt: Date.now() } }, { session: this.session });
+
+        const redis = await Redis.getClient()
+        await redis.set(`${collectionName}:userId:${userId}`, JSON.stringify(usage), 'EX', UsageRepository.USAGE_DATA_CACHE_TTL_SECONDS)
+
+        return usage
     }
 
     /**
@@ -114,7 +143,12 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
             update[usageField] = amount
         }
 
-        return await UsageRepository.collection!.findOneAndUpdate({ userId, ...filter }, { $inc: { ...update }, $set: { updatedAt: Date.now() } }, { session: this.session })
+        const usage = await UsageRepository.collection!.findOneAndUpdate({ userId, ...filter }, { $inc: { ...update }, $set: { updatedAt: Date.now() } }, { session: this.session })
+
+        const redis = await Redis.getClient()
+        await redis.set(`${collectionName}:userId:${userId}`, JSON.stringify(usage), 'EX', UsageRepository.USAGE_DATA_CACHE_TTL_SECONDS)
+
+        return usage
     }
 
     async decrementQuotas(userId: string, usageFields: Map<UsageField, number>): Promise<UpdateResult> {
@@ -129,11 +163,20 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
             update[usageField] = -amount
         }
 
-        return await UsageRepository.collection!.updateOne({ userId, ...filter }, { $inc: { ...update }, $set: { updatedAt: Date.now() } }, { session: this.session });
+        const usage = await UsageRepository.collection!.updateOne({ userId, ...filter }, { $inc: { ...update }, $set: { updatedAt: Date.now() } }, { session: this.session });
+
+        const redis = await Redis.getClient()
+        await redis.set(`${collectionName}:userId:${userId}`, JSON.stringify(usage), 'EX', UsageRepository.USAGE_DATA_CACHE_TTL_SECONDS)
+
+        return usage
     }
 
-    async delete(id: string): Promise<DeleteResult> {
-        return await UsageRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id) }, { session: this.session })
+    async delete(id: string) {
+        const result = await UsageRepository.collection!.findOneAndDelete({ _id: ObjectId.createFromHexString(id) }, { session: this.session })
+        if (result) {
+            const redis = await Redis.getClient()
+            await redis.del(`${collectionName}:userId:${result.userId}`)
+        }
     }
 }
 

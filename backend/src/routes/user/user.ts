@@ -9,10 +9,11 @@ import { s3 } from '../..';
 import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
 import { handleError, validate } from '../../lib';
 import { fetchAvatarSchema, preferencesSchema, uploadAvatarSchema } from './schemas';
+import UsageRepository from '../../DB/repositories/UsageRepository';
 
 const router = express.Router();
 
-router.use(auth, generalRateLimiter)
+router.use(auth)
 
 router.get('/info', async (req, res) => {
     const log = getLogger().child({ module: 'user', route: 'POST /api/user/info' });
@@ -23,11 +24,12 @@ router.get('/info', async (req, res) => {
         const userRepository = new UserRepository()
 
         const result = await runWithLogger(log, () => userRepository.get(req.user!.userId))
-        log.debug(result)
         if (!result) {
             log.info('User not found')
             return res.status(401).send()
         }
+        delete result?.password
+        log.debug({ result })
         log.info('User found')
 
         res.status(200).json({ status: 'success', data: result })
@@ -213,6 +215,28 @@ router.delete('/avatar', async (req, res) => {
         console.log("Deleted image in DB");
 
         return res.status(200).send();
+    } catch (err) {
+        runWithLogger(log, () => handleError(res, err))
+    }
+})
+
+router.get('/usage', async (req, res) => {
+    const log = getLogger().child({ module: 'user', route: 'GET /api/user/usage' });
+
+    try {
+        log.info('user usage request received')
+
+        const usageRepository = new UsageRepository()
+
+        const result = await runWithLogger(log, () => usageRepository.getByUserId(req.user!.userId))
+        log.debug({ result })
+        if (!result) {
+            log.info('User not found')
+            return res.status(401).send()
+        }
+        log.info('User found')
+
+        res.status(200).json({ status: 'success', data: result })
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }

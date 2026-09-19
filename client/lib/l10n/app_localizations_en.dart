@@ -328,7 +328,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get login_success => 'You\'re logged in!';
 
   @override
-  String get code_sent_to_code => 'Code sent to your phone.';
+  String get code_sent_to_phone => 'Code sent to your phone.';
+
+  @override
+  String get email_updated => 'Email updated.';
+
+  @override
+  String get phone_number_updated => 'Phone number updated.';
 
   @override
   String get password_updated => 'Password updated successfully.';
@@ -421,7 +427,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get flip => 'Flip';
 
   @override
-  String get title => 'Flip';
+  String get title => 'Title';
 
   @override
   String get add_content => 'Add content';

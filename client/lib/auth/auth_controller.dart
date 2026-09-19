@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:client/account/account_controller.dart';
 import 'package:client/account/user_info_storage.dart';
+import 'package:client/account/user_usage_storage.dart';
 import 'package:client/api/root_navigator_key.dart';
 import 'package:client/auth/auth_api.dart';
 import 'package:client/api/dio/dio_providers.dart';
@@ -102,10 +103,16 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   }
 
   Future<void> _onAuthenticated() async {
-    final account = ref.read(accountControllerProvider);
+    final account = ref.read(accountControllerProvider.notifier);
     final userInfo = await account.getUserInfo();
+    final userUsage = await account.getUserUsage();
+
+    if (userInfo == null || userUsage == null) {
+      return;
+    }
 
     await UserInfoStorage.save(userInfo);
+    await UserUsageStorage.save(userUsage);
 
     if (userInfo.avatarKey != null) {
       final bytes = await account.fetchAvatar();
@@ -206,7 +213,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   Future<void> sendPhoneOtp({required String phone}) async {
     await _authDio
         .post('/api/auth/otp/request', data: {'phoneNumber': phone, 'locale': 'fa', 'client': _client})
-        .notifyOnSuccess(rootContext == null ? 'Code sent to your phone.' : AppLocalizations.of(rootContext!)?.code_sent_to_code ?? 'Code sent to your phone.');
+        .notifyOnSuccess(rootContext == null ? 'Code sent to your phone.' : AppLocalizations.of(rootContext!)?.code_sent_to_phone ?? 'Code sent to your phone.');
   }
 
   @override

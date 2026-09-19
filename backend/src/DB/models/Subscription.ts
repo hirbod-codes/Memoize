@@ -5,12 +5,12 @@ export const collectionName = 'subscription'
 
 export const schemaVersion = 'v1.0.0'
 
-const statusSchema = string().oneOf(['active', 'canceled', 'trialing', 'paymentNotVerified', 'paymentNotCompleted', 'inDebtToUser'])
+const statusSchema = string().oneOf(['active', 'canceled', 'trial', 'paymentNotVerified', 'paymentNotCompleted', 'inDebtToUser'])
 const processorSubscriptionIdSchema = string().when('status', { is: 'paymentNotVerified', then(s) { return s.optional() }, otherwise(s) { return s.required() } })
 
-export type PaymentMethod = "zarinpal" | "paypal" | "bitcoin"
+export type PaymentMethod = "zarinpal" | "paypal" | "bitcoin" | "zibal"
 
-export const paymentMethodSchema = string().oneOf<PaymentMethod>(['zarinpal', 'paypal', 'bitcoin'])
+export const paymentMethodSchema = string().oneOf<PaymentMethod>(['zarinpal', 'zibal', 'paypal', 'bitcoin'])
 
 const create = {
     userId: string().required(),

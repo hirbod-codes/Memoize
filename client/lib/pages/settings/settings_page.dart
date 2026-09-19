@@ -20,6 +20,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' hide context;
 import 'package:talker/talker.dart';
@@ -50,7 +51,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         Talker().error('caught error in settings page initial load', error, stackTrace);
         return _RetryState(onRetry: () => ref.invalidate(userInfoProvider));
       },
-      data: (userInfo) => SettingsContent(userInfo: userInfo),
+      data: (userInfo) {
+        if (userInfo == null) {
+          context.go('/auth?from=/settings');
+          return SizedBox.shrink();
+        } else {
+          return SettingsContent(userInfo: userInfo);
+        }
+      },
     );
   }
 }

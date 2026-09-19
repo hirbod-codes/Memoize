@@ -1,9 +1,12 @@
 import 'dart:typed_data';
 
-import 'package:client/account/account_api.dart';
 import 'package:client/account/models/user_info.dart';
+import 'package:client/account/models/user_usage.dart';
+import 'package:client/api/api_call.dart';
 import 'package:client/api/api_call_extensions.dart';
 import 'package:client/api/dio/dio_providers.dart';
+import 'package:client/api/root_navigator_key.dart';
+import 'package:client/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,15 +14,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Loading/error bookkeeping for whichever action is in flight is
 /// handled the same way it is on the auth page: by wrapping each call
 /// in authActionControllerProvider.run() at the call site.
-class AccountController implements AccountApi {
-  final Dio _authDio;
-
-  AccountController(this._authDio);
+class AccountController extends Notifier {
+  late final Dio _authDio;
 
   @override
-  Future<UserInfo> getUserInfo() async {
-    final response = await _authDio.get('/api/user/info');
-    return UserInfo.fromJson(response.unwrapData<Map<String, dynamic>>());
+  void build() {
+    _authDio = ref.read(authDioProvider);
+  }
+
+  Future<UserInfo?> getUserInfo() async {
+    final response = await apiCall<UserInfo>(() => _authDio.get('/api/user/info'), fromJson: (data) => UserInfo.fromJson(data));
+    return response.dataOrNull;
+  }
+
+  Future<UserUsage?> getUserUsage() async {
+    final response = await apiCall<UserUsage>(() => _authDio.get('/api/user/usage'), fromJson: (data) => UserUsage.fromJson(data));
+    return response.dataOrNull;
   }
 
   /// Endpoint guessed — no avatar route was given anywhere. Returns
@@ -28,49 +38,63 @@ class AccountController implements AccountApi {
   /// failed getUserInfo() call should.
   Future<Uint8List?> fetchAvatar() async {
     try {
-      final response = await _authDio.get('/api/user/avatar', options: Options(responseType: ResponseType.bytes));
-      return Uint8List.fromList(response.data as List<int>);
+      final response = await apiCall<List<int>>(() => _authDio.get('/api/user/avatar', options: Options(responseType: ResponseType.bytes)));
+      if (response.dataOrNull == null) return null;
+
+      return Uint8List.fromList(response.dataOrNull!);
     } on DioException {
       return null;
     }
   }
 
-  @override
   Future<void> changePassword({required String currentPassword, required String newPassword}) async {
-    await _authDio
-        .post('/api/auth/email/change-password', data: {'currentPassword': currentPassword, 'newPassword': newPassword})
-        .notifyOnSuccess('Password updated.');
+    await apiCall(
+      () => _authDio
+          .post('/api/auth/email/change-password', data: {'currentPassword': currentPassword, 'newPassword': newPassword})
+          .notifyOnSuccess(rootContext == null ? 'Password updated.' : (AppLocalizations.of(rootContext!)?.password_updated ?? 'Password updated.')),
+    );
   }
 
-  @override
   Future<void> requestEmailChange({required String newEmail}) async {
-    await _authDio.post('/api/auth/email/change', data: {'newEmail': newEmail}).notifyOnSuccess('Verification code sent to your new email.');
+    await apiCall(
+      () => _authDio
+          .post('/api/auth/email/change', data: {'newEmail': newEmail})
+          .notifyOnSuccess(
+            rootContext == null
+                ? 'Verification code sent to your new email.'
+                : (AppLocalizations.of(rootContext!)?.code_sent_to_email ?? 'Verification code sent to your new email.'),
+          ),
+    );
   }
 
-  @override
   Future<void> verifyEmailChange({required String newEmail, required String code}) async {
-    await _authDio.post('/api/auth/email/change/verify', data: {'newEmail': newEmail, 'code': code}).notifyOnSuccess('Email updated.');
+    await apiCall(
+      () => _authDio
+          .post('/api/auth/email/change/verify', data: {'newEmail': newEmail, 'code': code})
+          .notifyOnSuccess(rootContext == null ? 'Email updated.' : (AppLocalizations.of(rootContext!)?.email_updated ?? 'Email updated.')),
+    );
   }
 
-  @override
   Future<void> requestPhoneChange({required String newPhone}) async {
-    await _authDio.post('/api/auth/otp/change/request', data: {'phoneNumber': newPhone}).notifyOnSuccess('Code sent to your new number.');
+    await apiCall(
+      () => _authDio
+          .post('/api/auth/otp/change/request', data: {'phoneNumber': newPhone})
+          .notifyOnSuccess(
+            rootContext == null ? 'Code sent to your new number.' : (AppLocalizations.of(rootContext!)?.code_sent_to_phone ?? 'Code sent to your new number.'),
+          ),
+    );
   }
 
-  @override
   Future<void> verifyPhoneChange({required String newPhone, required String code}) async {
-    await _authDio.post('/api/auth/otp/change/verify', data: {'phoneNumber': newPhone, 'code': code}).notifyOnSuccess('Phone number updated.');
+    await apiCall(
+      () => _authDio
+          .post('/api/auth/otp/change/verify', data: {'phoneNumber': newPhone, 'code': code})
+          .notifyOnSuccess(
+            rootContext == null ? 'Phone number updated.' : (AppLocalizations.of(rootContext!)?.phone_number_updated ?? 'Phone number updated.'),
+          ),
+    );
   }
 }
-
-final accountControllerProvider = Provider<AccountController>((ref) {
-  return AccountController(ref.watch(authDioProvider));
-});
-
-final userInfoProvider = FutureProvider.autoDispose<UserInfo>((ref) async {
-  final account = ref.watch(accountControllerProvider);
-  return account.getUserInfo();
-});
 
 /// Written once by AuthController._onAuthenticated() during startup —
 /// nothing else should call getUserInfo()/fetchAvatar() again just to
@@ -83,3 +107,10 @@ class AvatarBytesNotifier extends Notifier<Uint8List?> {
 }
 
 final avatarBytesProvider = NotifierProvider<AvatarBytesNotifier, Uint8List?>(AvatarBytesNotifier.new);
+
+final accountControllerProvider = NotifierProvider<AccountController, void>(AccountController.new);
+
+final userInfoProvider = FutureProvider.autoDispose<UserInfo?>((ref) async {
+  final account = ref.watch(accountControllerProvider.notifier);
+  return await account.getUserInfo();
+});

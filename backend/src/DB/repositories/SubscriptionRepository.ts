@@ -82,7 +82,7 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
         if (subscription)
             return JSON.parse(subscription)
 
-        const result = (await SubscriptionRepository.collection!.find({ userId, status: { $in: ['active', 'trialing'] } }, { session: this.session }).toArray())[0]
+        const result = (await SubscriptionRepository.collection!.find({ userId, status: { $in: ['active', 'trial'] } }, { session: this.session }).toArray())[0]
         if (result)
             await redis.set(`${collectionName}:active:${userId}`, JSON.stringify(result))
 
@@ -110,7 +110,7 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
 
         await redis.del(`${collectionName}:active:${userId}`)
 
-        return await SubscriptionRepository.collection!.updateMany({ userId, status: { $in: ['active', 'trialing'] } }, { $set: { status: 'canceled', updatedAt: Date.now() } }, { session: this.session })
+        return await SubscriptionRepository.collection!.updateMany({ userId, status: { $in: ['active', 'trial'] } }, { $set: { status: 'canceled', updatedAt: Date.now() } }, { session: this.session })
     }
 
     async unsafeUpdate(subscriptionId: string, userId: string, updates: SubscriptionUpdate) {

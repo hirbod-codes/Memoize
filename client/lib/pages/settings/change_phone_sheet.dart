@@ -30,7 +30,7 @@ class _ChangePhoneContentState extends ConsumerState<_ChangePhoneContent> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final newPhone = _phoneController.text.trim();
-    final account = ref.read(accountControllerProvider);
+    final account = ref.read(accountControllerProvider.notifier);
     final controller = ref.read(authActionControllerProvider.notifier);
 
     await controller.run(() => account.requestPhoneChange(newPhone: newPhone));

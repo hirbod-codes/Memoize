@@ -7,7 +7,7 @@
 
 // const router = express.Router();
 
-// router.use(auth, generalRateLimiter)
+// router.use(auth)
 
 // router.post("/", async (req, res) => {
 //     console.log('/api/tts');

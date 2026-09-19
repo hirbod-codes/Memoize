@@ -328,7 +328,13 @@ class AppLocalizationsFa extends AppLocalizations {
   String get login_success => 'با موفقیت وارد شدید!';
 
   @override
-  String get code_sent_to_code => 'کد به تلفن شما ارسال شد.';
+  String get code_sent_to_phone => 'کد به تلفن شما ارسال شد.';
+
+  @override
+  String get email_updated => 'ایمیل به‌روزرسانی شد.';
+
+  @override
+  String get phone_number_updated => 'شماره تلفن به‌روزرسانی شد.';
 
   @override
   String get password_updated => 'رمز عبور با موفقیت به‌روزرسانی شد.';
@@ -421,7 +427,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get flip => 'برگرداندن';
 
   @override
-  String get title => 'برگرداندن';
+  String get title => 'عنوان';
 
   @override
   String get add_content => 'افزودن محتوا';

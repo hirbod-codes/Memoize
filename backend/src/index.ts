@@ -99,6 +99,7 @@ export const smtpService = SmtpFactory.instantiate()
 
 export const payments = {
     zarinpal: PaymentFactory.instantiate('zarinpal'),
+    zibal: PaymentFactory.instantiate('zibal'),
     paypal: undefined!,
     bitcoin: undefined!,
 };

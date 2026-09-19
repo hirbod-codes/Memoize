@@ -153,7 +153,6 @@ export const runCronjobs = async () => {
         const log = getLogger().child({ module: 'cronjob', job: 'clean dangling subscriptions' });
 
         try {
-
             log.info('deleting dangling subscriptions...');
 
             const subscriptionRepository = new SubscriptionRepository()
@@ -201,9 +200,9 @@ export const runCronjobs = async () => {
                 const { refId, cardNumber, cardNumberHash } = result
 
                 log.info('remove user\'s valid subscriptions')
-                const deleteResult = await runWithLogger(log, () => subscriptionRepository.deleteByStatusForUser(userId, ['active', 'trialing']))
+                const deleteResult = await runWithLogger(log, () => subscriptionRepository.deleteByStatusForUser(userId, ['active', 'trial']))
                 if (!deleteResult.acknowledged) {
-                    log.info('job failed to delete active subscriptions of user, since the transaction is not reverseable anymore, the subscription is marked as in debt')
+                    log.warn('job failed to delete active subscriptions of user, since the transaction is not reversable anymore, the subscription is marked as in debt')
                     await markAsInDebt(subscription)
 
                     return false
@@ -213,7 +212,7 @@ export const runCronjobs = async () => {
                 const updateResult = await runWithLogger(log, () => subscriptionRepository.unsafeUpdate(subscription._id!.toString(), userId, { status: 'active', verifiedAt: Date.now(), refId, cardNumber, cardNumberHash }))
                 log.debug({ updateResult })
                 if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
-                    log.info('job failed to activate user\' subscription, since the transaction is not reverseable anymore, the subscription is marked as in debt')
+                    log.info('job failed to activate user\' subscription, since the transaction is not reversable anymore, the subscription is marked as in debt')
                     log.info('failed to activate user\'s subscription')
                     // rollback payment
                     await markAsInDebt(subscription)

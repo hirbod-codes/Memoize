@@ -90,8 +90,15 @@ export const payments = {
     zarinpal: {
         url: getStringEnv('ZARINPAL_URL', 'The ZARINPAL_URL environment variable is not provided', s => s.optional()),
         merchantId: getStringEnv('ZARINPAL_MERCHANT_ID', 'The ZARINPAL_MERCHANT_ID environment variable is not provided', s => s.optional()),
+    },
+    zibal: {
+        url: getStringEnv('ZIBAL_URL', 'The ZIBAL_URL environment variable is not provided', s => s.optional()),
+        merchantId: getStringEnv('ZIBAL_MERCHANT_ID', 'The ZIBAL_MERCHANT_ID environment variable is not provided', s => s.optional()),
     }
 }
 
 if (supportedPayments.includes('zarinpal') && (!payments.zarinpal.url || !payments.zarinpal.merchantId))
+    throw new Error('one of the required ZARINPAL_URL ZARINPAL_MERCHANT_ID is not provided')
+
+if (supportedPayments.includes('zibal') && (!payments.zibal.url || !payments.zibal.merchantId))
     throw new Error('one of the required ZARINPAL_URL ZARINPAL_MERCHANT_ID is not provided')

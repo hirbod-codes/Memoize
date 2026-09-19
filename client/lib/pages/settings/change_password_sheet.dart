@@ -32,7 +32,7 @@ class _ChangePasswordContentState extends ConsumerState<_ChangePasswordContent> 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final account = ref.read(accountControllerProvider);
+    final account = ref.read(accountControllerProvider.notifier);
     final controller = ref.read(authActionControllerProvider.notifier);
 
     await controller.run(() => account.changePassword(currentPassword: _currentController.text, newPassword: _newController.text));

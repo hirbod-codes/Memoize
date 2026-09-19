@@ -30,7 +30,7 @@ class _ChangeEmailContentState extends ConsumerState<_ChangeEmailContent> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final newEmail = _emailController.text.trim();
-    final account = ref.read(accountControllerProvider);
+    final account = ref.read(accountControllerProvider.notifier);
     final controller = ref.read(authActionControllerProvider.notifier);
 
     await controller.run(() => account.requestEmailChange(newEmail: newEmail));
