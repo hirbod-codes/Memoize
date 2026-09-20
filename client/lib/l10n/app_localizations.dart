@@ -1382,6 +1382,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failure while trying to load categories'**
   String get app_page_folder_pagination_failed;
+
+  /// No description provided for @checkout_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout'**
+  String get checkout_title;
+
+  /// No description provided for @checkout_payment_method.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get checkout_payment_method;
+
+  /// No description provided for @checkout_duration_month.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get checkout_duration_month;
+
+  /// No description provided for @checkout_duration_year.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get checkout_duration_year;
+
+  /// No description provided for @checkout_total.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get checkout_total;
+
+  /// No description provided for @checkout_pay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay'**
+  String get checkout_pay;
+
+  /// No description provided for @checkout_cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get checkout_cancel;
+
+  /// No description provided for @checkout_retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get checkout_retry;
+
+  /// No description provided for @checkout_no_methods.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment methods available.'**
+  String get checkout_no_methods;
+
+  /// No description provided for @checkout_load_methods_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load payment methods.'**
+  String get checkout_load_methods_failed;
+
+  /// No description provided for @checkout_select_method.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a payment method.'**
+  String get checkout_select_method;
+
+  /// No description provided for @checkout_pay_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment failed.'**
+  String get checkout_pay_failed;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -235,5 +235,17 @@
   "content_move_failed": "Failure while trying to move content.",
   "content_not_found": "No content found!",
   "app_page_file_pagination_failed": "Failure while trying to load cards",
-  "app_page_folder_pagination_failed": "Failure while trying to load categories"
+  "app_page_folder_pagination_failed": "Failure while trying to load categories",
+  "checkout_title": "Checkout",
+  "checkout_payment_method": "Payment method",
+  "checkout_duration_month": "Month",
+  "checkout_duration_year": "Year",
+  "checkout_total": "Total",
+  "checkout_pay": "Pay",
+  "checkout_cancel": "Cancel",
+  "checkout_retry": "Retry",
+  "checkout_no_methods": "No payment methods available.",
+  "checkout_load_methods_failed": "Failed to load payment methods.",
+  "checkout_select_method": "Select a payment method.",
+  "checkout_pay_failed": "Payment failed."
 }

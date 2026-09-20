@@ -1,3 +1,4 @@
+import "package:client/components/checkout/checkout_dialog.dart";
 import "package:client/l10n/app_localizations.dart";
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
@@ -188,7 +189,14 @@ class _PlanCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: onSelect == null ? null : () => onSelect!(plan), child: Text(l10n.pricing_page_get_started)),
+            if (!price.isFree)
+              FilledButton(
+                onPressed: () async {
+                  onSelect?.call(plan);
+                  await showCheckoutDialog(context, plan: plan);
+                },
+                child: Text(l10n.pricing_page_get_started),
+              ),
           ],
         ),
       ),

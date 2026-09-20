@@ -73,7 +73,7 @@ import { planGate } from './middlewares/planGate';
 import { OtpFactory } from './services/OTP/OtpFactory';
 import { authRoutes } from './routes/auth/auth';
 import { planRoutes } from './routes/plan/plan';
-import { PaymentFactory } from './services/Payments/zarinpal/factory';
+import { PaymentFactory } from './services/Payments/factory';
 import { SmtpFactory } from './services/SMTP/SmtpFactory';
 import { subscriptionRoutes } from './routes/subscription/subscription';
 

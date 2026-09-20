@@ -9,8 +9,10 @@ const statusSchema = string().oneOf(['active', 'canceled', 'trial', 'paymentNotV
 const processorSubscriptionIdSchema = string().when('status', { is: 'paymentNotVerified', then(s) { return s.optional() }, otherwise(s) { return s.required() } })
 
 export type PaymentMethod = "zarinpal" | "paypal" | "bitcoin" | "zibal"
+export type SubscriptionDuration = "month" | "year"
 
 export const paymentMethodSchema = string().oneOf<PaymentMethod>(['zarinpal', 'zibal', 'paypal', 'bitcoin'])
+export const subscriptionDurationSchema = string().oneOf<SubscriptionDuration>(['month', 'year'])
 
 const create = {
     userId: string().required(),
@@ -18,6 +20,8 @@ const create = {
     planTitle: string().required().label('Plan title'),
 
     status: statusSchema.required(),
+
+    duration: subscriptionDurationSchema.required(),
 
     currentPeriodEnd: number().required(),
 
@@ -29,11 +33,12 @@ const create = {
 }
 export const subscriptionCreateSchema = object().shape(create).required()
 
-
 const update = {
     schemaVersion: string().optional().min(6).max(20),
 
     status: statusSchema.optional(),
+
+    duration: subscriptionDurationSchema.optional(),
 
     currentPeriodEnd: number().optional(),
 
@@ -60,6 +65,8 @@ export const subscriptionSchema = object().shape({
     planTitle: string().required().label('Plan title'),
 
     status: statusSchema.required(),
+
+    duration: subscriptionDurationSchema.required(),
 
     currentPeriodEnd: number().required(),
 

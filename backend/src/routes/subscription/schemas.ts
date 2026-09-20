@@ -1,18 +1,18 @@
 import { number, string } from "yup";
 import { object } from "yup";
-import { paymentMethodSchema } from "../../DB/models/Subscription";
+import { paymentMethodSchema, subscriptionDurationSchema } from "../../DB/models/Subscription";
 
 export const postSchema = object().required().shape({
     planTitle: string().required().label('Plan Title'),
     paymentMethod: paymentMethodSchema.required().strict(),
+    duration: subscriptionDurationSchema.required(),
 })
 
 export const zibalVerifySchema = object().required().shape({
     subscriptionId: string().objectIdString().required().label('Subscription id'),
     success: string().required().label('Success'),
+    status: string().label('Status'),
     trackId: string().label('Track id'),
-    cardNumber: string().label('Card number'),
-    hashedCardNumber: string().label('Hashed card number'),
 })
 
 export const zarinpalVerifySchema = object().required().shape({

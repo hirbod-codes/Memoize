@@ -235,5 +235,17 @@
   "content_move_failed": "Beim Verschieben des Inhalts ist ein Fehler aufgetreten.",
   "content_not_found": "Kein Inhalt gefunden!",
   "app_page_file_pagination_failed": "Beim Laden der Karten ist ein Fehler aufgetreten",
-  "app_page_folder_pagination_failed": "Beim Laden der Kategorien ist ein Fehler aufgetreten"
+  "app_page_folder_pagination_failed": "Beim Laden der Kategorien ist ein Fehler aufgetreten",
+  "checkout_title": "Kasse",
+  "checkout_payment_method": "Zahlungsmethode",
+  "checkout_duration_month": "Monat",
+  "checkout_duration_year": "Jahr",
+  "checkout_total": "Gesamtbetrag",
+  "checkout_pay": "Bezahlen",
+  "checkout_cancel": "Abbrechen",
+  "checkout_retry": "Erneut versuchen",
+  "checkout_no_methods": "Keine Zahlungsmethoden verfügbar.",
+  "checkout_load_methods_failed": "Zahlungsmethoden konnten nicht geladen werden.",
+  "checkout_select_method": "Wählen Sie eine Zahlungsmethode aus.",
+  "checkout_pay_failed": "Zahlung fehlgeschlagen."
 }

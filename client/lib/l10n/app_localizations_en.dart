@@ -662,4 +662,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get app_page_folder_pagination_failed => 'Failure while trying to load categories';
+
+  @override
+  String get checkout_title => 'Checkout';
+
+  @override
+  String get checkout_payment_method => 'Payment method';
+
+  @override
+  String get checkout_duration_month => 'Month';
+
+  @override
+  String get checkout_duration_year => 'Year';
+
+  @override
+  String get checkout_total => 'Total';
+
+  @override
+  String get checkout_pay => 'Pay';
+
+  @override
+  String get checkout_cancel => 'Cancel';
+
+  @override
+  String get checkout_retry => 'Retry';
+
+  @override
+  String get checkout_no_methods => 'No payment methods available.';
+
+  @override
+  String get checkout_load_methods_failed => 'Failed to load payment methods.';
+
+  @override
+  String get checkout_select_method => 'Select a payment method.';
+
+  @override
+  String get checkout_pay_failed => 'Payment failed.';
 }

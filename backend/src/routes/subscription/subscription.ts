@@ -2,7 +2,7 @@ import { Response, Router } from "express";
 import { auth, unAuth } from "../../middlewares/auth";
 import PlanRepository from "../../DB/repositories/PlanRepository";
 import { getLogger, runWithLogger } from "../../observability/requestLoggerContext";
-import { A_MONTH_IN_MILLISECONDS, handleError, validate } from "../../lib";
+import { A_MONTH_IN_MILLISECONDS, A_YEAR_IN_MILLISECONDS, handleError, validate } from "../../lib";
 import { Redis } from "../../DB/redis";
 import { postSchema, zarinpalVerifyCheckSchema, zarinpalVerifySchema, zibalVerifySchema } from "./schemas";
 import SubscriptionRepository from "../../DB/repositories/SubscriptionRepository";
@@ -11,6 +11,7 @@ import { appUrl } from "../../configs";
 import { payments } from "../..";
 import { UserRepository } from "../../DB/repositories/UserRepository";
 import { randomUUID } from "node:crypto";
+import { resolveCurrencyFromPaymentMethod } from "./lib";
 
 const router = Router();
 
@@ -30,7 +31,7 @@ const ZIBAL_PAYMENT_VERIFY_CALLBACK_URL = (subscriptionId: string) => `https://$
 const ZIBAL_PAYMENT_VERIFY_CHECK = `${ZIBAL_PAYMENT_VERIFY}/check`                                                // /zibal/verify/check
 const ZIBAL_PAYMENT_VERIFY_CHECK_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZIBAL_PAYMENT_VERIFY_CHECK}`                 // /zibal/verify/check
 
-router.get(`/supported_payment_methods`, unAuth, async (req, res) => {
+router.get(`/supported_payment_methods`, auth, async (req, res) => {
     const log = getLogger().child({ module: 'subscription', route: `GET ${PAYMENT_CHECKPOINT_BASE}/supported_payment_methods` });
 
     try {
@@ -52,7 +53,7 @@ router.get(`/supported_payment_methods`, unAuth, async (req, res) => {
     }
 })
 
-router.get(`/calculate_upgrade_price`, unAuth, async (req, res) => {
+router.get(`/calculate_upgrade_price`, auth, async (req, res) => {
     const log = getLogger().child({ module: 'subscription', route: `GET ${PAYMENT_CHECKPOINT_BASE}/calculate_upgrade_price` });
 
     try {
@@ -178,8 +179,8 @@ router.post('/upgrade', auth, async (req, res) => {
         log.info('subscription upgrade request received');
 
         log.debug({ body: req.body });
-        const { planTitle, paymentMethod } = await runWithLogger(log, () => validate(postSchema, req.body))
-        log.debug({ planTitle });
+        const { planTitle, paymentMethod, duration } = await runWithLogger(log, () => validate(postSchema, req.body))
+        log.debug({ planTitle, paymentMethod, duration });
         log.info('input validated');
 
         if (planTitle === 'free') {
@@ -207,9 +208,14 @@ router.post('/upgrade', auth, async (req, res) => {
             return res.status(400).json({ status: 'error', error_code: 'USER_HAS_NO_ACTIVE_PLAN' })
         }
 
-        // ------------------------------------------------------------------------- check if the active subscription has same title exist
+        // ------------------------------------------------------------------------- check if the active subscription with same title exist, if it's expired or if the currency doesn't match
         const activeSubscription = subscriptions[0]
         log.debug({ activeSubscription })
+        if (activeSubscription.currentPeriodEnd <= Date.now()) {
+            log.info('active plan is expired')
+            return res.status(400).json({ status: 'error', error_code: 'ACTIVE_PLAN_EXPIRED' })
+        }
+
         const user = await runWithLogger(log, () => userRepository.get(userId))
         log.debug({ user })
         if (!user) {
@@ -219,6 +225,14 @@ router.post('/upgrade', auth, async (req, res) => {
         if (activeSubscription.planTitle === user.planTitle) {
             log.info('plan is already active')
             return res.status(400).json({ status: 'error', error_code: 'PLAN_ALREADY_ACTIVE' })
+        }
+        if (activeSubscription.price.currency !== resolveCurrencyFromPaymentMethod(paymentMethod)) {
+            log.info('active plan is in another currency')
+            return res.status(400).json({ status: 'error', error_code: 'ACTIVE_PLAN_CURRENCY_MISMATCH' })
+        }
+        if (activeSubscription.duration !== duration) {
+            log.info('active plan uses another duration')
+            return res.status(400).json({ status: 'error', error_code: 'ACTIVE_PLAN_DURATION_MISMATCH' })
         }
 
         // ------------------------------------------------------------------------- fetching business plans
@@ -260,14 +274,15 @@ router.post('/upgrade', auth, async (req, res) => {
         }
         const planRawPrice = plan.price[currency]
         let amount: number = planRawPrice
+        if (activeSubscription.duration !== 'month') amount *= 12
         const payment: IPay = payments[paymentMethod]!
 
         // ------------------------------------------------------------------------- calculating price
         log.info('calculating price')
         if (activeSubscription.price.currency === currency) {
             const nowTS = Date.now()
-            const unusedPlanFraction = (nowTS - activeSubscription.currentPeriodEnd) / A_MONTH_IN_MILLISECONDS
-            amount = planRawPrice - (unusedPlanFraction * activeSubscription.price.amount)
+            const unusedPlanFraction = (activeSubscription.currentPeriodEnd - nowTS) / (activeSubscription.duration == 'month' ? A_MONTH_IN_MILLISECONDS : A_YEAR_IN_MILLISECONDS)
+            amount = amount - (unusedPlanFraction * activeSubscription.price.amount)
             log.info({
                 calculatedPrice: amount,
                 planRawPrice,
@@ -294,7 +309,7 @@ router.post('/upgrade', auth, async (req, res) => {
         // ------------------------------------------------------------------------- creating temporary subscription with status 'paymentNotCompleted'
         log.info("creating temporary subscription with status 'paymentNotCompleted'")
         const currentPeriodEnd = Date.now() + A_MONTH_IN_MILLISECONDS
-        const subscriptionCreate: SubscriptionCreate = { userId, currentPeriodEnd, planTitle, paymentMethod, status: 'paymentNotCompleted', price: { currency, amount } }
+        const subscriptionCreate: SubscriptionCreate = { userId, currentPeriodEnd, planTitle, paymentMethod, status: 'paymentNotCompleted', price: { currency, amount }, duration }
 
         log.info({ ...subscriptionCreate, ...({ expirationDate: new Date(currentPeriodEnd).toUTCString() }) }, "storing user's subscription")
         const insertResult = await runWithLogger(log, () => subscriptionRepository.insert(subscriptionCreate))
@@ -332,8 +347,8 @@ router.post('/', auth, async (req, res) => {
 
         // ------------------------------------------------------------------------- validation
         log.debug({ body: req.body });
-        const { planTitle, paymentMethod } = await runWithLogger(log, () => validate(postSchema, req.body))
-        log.debug({ planTitle, paymentMethod });
+        const { planTitle, paymentMethod, duration } = await runWithLogger(log, () => validate(postSchema, req.body))
+        log.debug({ planTitle, paymentMethod, duration });
         log.info('input validated');
 
         if (planTitle === 'free') {
@@ -400,6 +415,7 @@ router.post('/', auth, async (req, res) => {
         }
         const planRawPrice = plan.price[currency]
         let amount: number = planRawPrice
+        if (duration !== 'month') amount *= 12
         const payment: IPay = payments[paymentMethod]!
         log.debug({ planRawPrice, amount })
 
@@ -411,7 +427,7 @@ router.post('/', auth, async (req, res) => {
         // ------------------------------------------------------------------------- creating temporary subscription with status 'paymentNotCompleted'
         log.info("creating temporary subscription with status 'paymentNotCompleted'")
         const currentPeriodEnd = Date.now() + A_MONTH_IN_MILLISECONDS
-        const subscriptionCreate: SubscriptionCreate = { userId, currentPeriodEnd, planTitle, paymentMethod, status: 'paymentNotCompleted', price: { currency, amount } }
+        const subscriptionCreate: SubscriptionCreate = { userId, currentPeriodEnd, planTitle, paymentMethod, status: 'paymentNotCompleted', price: { currency, amount }, duration }
         log.debug({ ...subscriptionCreate, ...({ expirationDate: new Date(currentPeriodEnd).toUTCString() }) })
 
         log.info("storing user's subscription")
@@ -433,7 +449,7 @@ router.post('/', auth, async (req, res) => {
         log.info('requesting payment')
         const result = await runWithLogger(log, () => payment.request(amount, callback(newSubscription._id!.toString())))
         log.debug({ result })
-        if (result == false) {
+        if (result === false) {
             log.error('system failed to request a payment')
             return res.status(500).json({ status: 'error', message: 'INTERNAL_ERROR' })
         }
@@ -599,9 +615,9 @@ router.post(`${ZIBAL_PAYMENT_VERIFY}/:subscriptionId`, unAuth, async (req, res) 
     try {
         log.info('subscription verification request received');
 
-        log.debug({ params: req.params, body: req.body });
-        const { success, trackId, subscriptionId } = await runWithLogger(log, () => validate(zibalVerifySchema, { ...req.body, ...req.params }))
-        log.debug({ success, trackId });
+        log.debug({ params: req.params, query: req.query });
+        const { success, trackId, status, subscriptionId } = await runWithLogger(log, () => validate(zibalVerifySchema, { ...req.query, ...req.params }))
+        log.debug({ success, trackId, status, subscriptionId });
         log.info('input validated');
 
         if (success !== '1') {
@@ -670,7 +686,7 @@ router.post(`${ZIBAL_PAYMENT_VERIFY}/:subscriptionId`, unAuth, async (req, res) 
 
         // ------------------------------------------------------------------------- verifying payment
         log.info('verifying payment')
-        const result = await runWithLogger(log, () => payment.verify({ trackId, amount }))
+        const result = await runWithLogger(log, () => payment.verify({ trackId }))
         log.debug({ result })
         if (result == false) {
             log.error('system failed to verify a payment, user payment will be rolled back by the payment provider automatically')
@@ -742,6 +758,30 @@ router.get(`/${ZIBAL_PAYMENT_VERIFY_CHECK}`, unAuth, async (req, res) => {
 
         log.info('payment uuid found')
         return res.status(200).json({ status: 'success' })
+    } catch (error) {
+        runWithLogger(log, () => handleError(res, error))
+    }
+})
+
+router.get(`/cancel`, auth, async (req, res) => {
+    const log = getLogger().child({ module: 'subscription', route: `GET ${ZIBAL_PAYMENT_VERIFY_CHECK_PATH}` });
+
+    try {
+        log.info('subscription verification request received');
+
+        const sr = new SubscriptionRepository()
+
+        // ------------------------------------------------------------------------- updating subscription status to 'active'
+        log.info("updating subscription status to 'active'")
+        const deleteResult = await runWithLogger(log, () => sr.deleteByStatusForUser(req.user!.userId, ['active', 'trial']))
+        log.debug({ updateResult: deleteResult })
+        if (!deleteResult.acknowledged) {
+            log.info("failed to cancel user's subscription")
+            return res.status(500).json({ status: 'error' })
+        }
+
+        log.info("successfully canceled user's subscription")
+        return res.status(204).json({ status: 'success' })
     } catch (error) {
         runWithLogger(log, () => handleError(res, error))
     }

@@ -13,7 +13,14 @@ class Price {
 
   const Price({required this.irr, required this.irt, required this.usd, required this.eur, required this.btc, required this.eth});
 
-  factory Price.fromJson(Map<String, dynamic> json) => Price(irr: json['IRR'] as int, irt: json['IRT'] as int, usd: json['USD'] as int, eur: json['EUR'] as int, btc: json['BTC'] as int, eth: json['ETH'] as int);
+  factory Price.fromJson(Map<String, dynamic> json) => Price(
+    irr: json['IRR'] as int,
+    irt: json['IRT'] as int,
+    usd: json['USD'] as int,
+    eur: json['EUR'] as int,
+    btc: json['BTC'] as int,
+    eth: json['ETH'] as int,
+  );
 
   /// True only if every currency is priced at zero — used to show a
   /// "Free" badge instead of "$0.00" on a free tier.
@@ -35,6 +42,21 @@ class Price {
         return eth;
     }
   }
+
+  // bool containsPaymentMethod(String paymentMethod) {
+  //   switch (paymentMethod) {
+  //     case 'zarinpal':
+  //       return irr != null || irt != null;
+  //     case 'zibal':
+  //       return irr != null || irt != null;
+  //     case 'paypal':
+  //       return usd != null || eur != null;
+  //     case 'bitcoin':
+  //       return btc != null;
+  //     default:
+  //       throw Exception('UNSUPPORTED_PAYMENT_METHOD');
+  //   }
+  // }
 }
 
 enum Currency { usd, eur, irt, irr, btc, eth }
@@ -68,7 +90,13 @@ class ContentTypeFlags {
 
   const ContentTypeFlags({required this.string, required this.richText, required this.image, required this.audio, required this.video});
 
-  factory ContentTypeFlags.fromJson(Map<String, dynamic> json) => ContentTypeFlags(string: json['string'] as bool, richText: json['richText'] as bool, image: json['image'] as bool, audio: json['audio'] as bool, video: json['video'] as bool);
+  factory ContentTypeFlags.fromJson(Map<String, dynamic> json) => ContentTypeFlags(
+    string: json['string'] as bool,
+    richText: json['richText'] as bool,
+    image: json['image'] as bool,
+    audio: json['audio'] as bool,
+    video: json['video'] as bool,
+  );
 }
 
 /// Mirrors `privilegesSchema`.
@@ -87,21 +115,42 @@ class Privileges {
   /// comparison view wants it.
   final Map<String, int> maxValuePerContent;
 
-  const Privileges({required this.maxCategories, required this.maxNestedCategories, required this.maxCardsPerCategory, required this.maxContentsPerCardSide, required this.maxStorageBytes, required this.allowedContentTypes, required this.maxValuePerContent});
+  const Privileges({
+    required this.maxCategories,
+    required this.maxNestedCategories,
+    required this.maxCardsPerCategory,
+    required this.maxContentsPerCardSide,
+    required this.maxStorageBytes,
+    required this.allowedContentTypes,
+    required this.maxValuePerContent,
+  });
 
-  factory Privileges.fromJson(Map<String, dynamic> json) => Privileges(maxCategories: json['maxCategories'] as int, maxNestedCategories: json['maxNestedCategories'] as int, maxCardsPerCategory: json['maxCardsPerCategory'] as int, maxContentsPerCardSide: json['maxContentsPerCardSide'] as int, maxStorageBytes: json['maxStorageBytes'] as int, allowedContentTypes: ContentTypeFlags.fromJson(json['allowedContentTypes'] as Map<String, dynamic>), maxValuePerContent: Map<String, int>.from(json['maxValuePerContent'] as Map));
+  factory Privileges.fromJson(Map<String, dynamic> json) => Privileges(
+    maxCategories: json['maxCategories'] as int,
+    maxNestedCategories: json['maxNestedCategories'] as int,
+    maxCardsPerCategory: json['maxCardsPerCategory'] as int,
+    maxContentsPerCardSide: json['maxContentsPerCardSide'] as int,
+    maxStorageBytes: json['maxStorageBytes'] as int,
+    allowedContentTypes: ContentTypeFlags.fromJson(json['allowedContentTypes'] as Map<String, dynamic>),
+    maxValuePerContent: Map<String, int>.from(json['maxValuePerContent'] as Map),
+  );
 }
 
 /// Mirrors `planSchema`. `id`/`createdAt`/`updatedAt` are optional
 /// since a public pricing endpoint may reasonably choose to omit
 /// internal bookkeeping fields it doesn't need to expose.
 class Plan {
-  final String? id;
+  final String id;
   final String title;
   final Price price;
   final Privileges privileges;
 
-  const Plan({this.id, required this.title, required this.price, required this.privileges});
+  const Plan({required this.id, required this.title, required this.price, required this.privileges});
 
-  factory Plan.fromJson(Map<String, dynamic> json) => Plan(id: json['_id'] as String?, title: json['title'] as String, price: Price.fromJson(json['price'] as Map<String, dynamic>), privileges: Privileges.fromJson(json['privileges'] as Map<String, dynamic>));
+  factory Plan.fromJson(Map<String, dynamic> json) => Plan(
+    id: json['_id'] as String,
+    title: json['title'] as String,
+    price: Price.fromJson(json['price'] as Map<String, dynamic>),
+    privileges: Privileges.fromJson(json['privileges'] as Map<String, dynamic>),
+  );
 }

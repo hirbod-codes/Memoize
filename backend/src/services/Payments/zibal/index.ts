@@ -13,65 +13,64 @@ export class Zibal implements IPay {
     }
 
     async request(amount: number, callbackUrl: string) {
-        const log = getLogger().child({ step: 'request' });
+        const log = getLogger().child({ step: 'request payment' });
 
         try {
             const result = await httpsRequest(
-                { host: `${this.baseEndpoint.replace('https://', '')}`, path: 'v1/request/lazy', method: 'post', headers: { 'content-type': 'application/json', accept: 'application/json' } },
+                { host: `${this.baseEndpoint.replace('https://', '')}`, path: '/request/lazy', method: 'post', headers: { 'content-type': 'application/json', accept: 'application/json' } },
                 JSON.stringify({
-                    // merchant_id: this.merchantId,
-                    merchant_id: 'zibal',
+                    // merchant: this.merchantId,
+                    merchant: 'zibal',
                     amount,
-                    callback_url: callbackUrl,
+                    callbackUrl: callbackUrl,
                     description: 'Plan payment',
                     feeMode: 0
                 })
             )
             if (!result.response.statusCode || result.response.statusCode < 200 || result.response.statusCode >= 300) {
-                log.error({ statusCode: result.response.statusCode }, 'sending request to zibal `v1/request` endpoint failed')
+                log.error({ statusCode: result.response.statusCode, data: result.data }, 'sending request to zibal `/request/lazy` endpoint failed')
                 return false
             }
 
             const data = JSON.parse(result.data) as {
-                data: {
-                    trackId: string,
-                    result: number,
-                    message: string
-                }
+                trackId: string,
+                result: number,
+                message: string
             }
             log.debug({ data })
 
-            const { data: { result: resultCode, trackId } } = data
+            const { result: resultCode, trackId } = data
 
             if (resultCode !== 100) {
-                log.error({ resultCode }, 'request from zibal `v1/request` endpoint, responded with errors')
+                log.error({ resultCode }, 'request from zibal `/request/lazy` endpoint, responded with errors')
                 return false
             }
 
+            log.info('response from zibal `/request/lazy` received successfully')
             return { redirectUrl: `${this.baseEndpoint}/start/${trackId}` }
-        } catch (error) {
-            log.error({ error }, 'requesting payment failed with error')
+        } catch (err) {
+            log.error({ err }, 'requesting payment failed with error')
             return false
         }
     }
 
     async verify(params: any) {
-        const log = getLogger().child({ step: 'verify' });
+        const log = getLogger().child({ step: 'verify payment' });
 
         try {
-            const { trackId, amount } = await runWithLogger(log, () => validate(verifySchema, params))
+            const { trackId } = await runWithLogger(log, () => validate(verifySchema, params))
+            log.debug({ trackId })
 
             const zibalResult = await httpsRequest(
-                { host: `${this.baseEndpoint.replace('https://', '')}`, path: 'verify', method: 'post', headers: { 'content-type': 'application/json', accept: 'application/json' } },
+                { host: `${this.baseEndpoint.replace('https://', '')}`, path: '/verify', method: 'post', headers: { 'content-type': 'application/json', accept: 'application/json' } },
                 JSON.stringify({
-                    // merchant_id: this.merchantId,
-                    merchant_id: 'zibal',
-                    amount,
+                    // merchant: this.merchantId,
+                    merchant: 'zibal',
                     trackId
                 })
             )
             if (!zibalResult.response.statusCode || zibalResult.response.statusCode < 200 || zibalResult.response.statusCode >= 300) {
-                log.error({ statusCode: zibalResult.response.statusCode }, 'sending request to zibal `verify` endpoint failed')
+                log.error({ statusCode: zibalResult.response.statusCode, data: zibalResult.data }, 'sending request to zibal `verify` endpoint failed')
                 return false
             }
 
@@ -89,9 +88,10 @@ export class Zibal implements IPay {
                 return false
             }
 
+            log.info('response from zibal `verify` received successfully')
             return { refId: refNumber }
-        } catch (error) {
-            log.error({ error }, 'verifying payment failed with error')
+        } catch (err) {
+            log.error({ err }, 'verifying payment failed with error')
             return false
         }
     }
@@ -105,13 +105,13 @@ export class Zibal implements IPay {
             const result = await httpsRequest(
                 { host: `${this.baseEndpoint.replace('https://', '')}`, path: 'pg/v4/payment/reverse.json', method: 'post', headers: { 'content-type': 'application/json', accept: 'application/json' } },
                 JSON.stringify({
-                    // merchant_id: this.merchantId,
-                    merchant_id: 'zibal',
+                    // merchant: this.merchantId,
+                    merchant: 'zibal',
                     trackId
                 })
             )
             if (!result.response.statusCode || result.response.statusCode < 200 || result.response.statusCode >= 300) {
-                log.error({ statusCode: result.response.statusCode }, 'sending request to zibal `pg/v4/payment/reverse.json` endpoint failed')
+                log.error({ statusCode: result.response.statusCode, data: result.data }, 'sending request to zibal `pg/v4/payment/reverse.json` endpoint failed')
                 return false
             }
 
@@ -132,8 +132,8 @@ export class Zibal implements IPay {
             }
 
             return true
-        } catch (error) {
-            log.error({ error }, 'reversing payment failed with error')
+        } catch (err) {
+            log.error({ err }, 'reversing payment failed with error')
             return false
         }
     }

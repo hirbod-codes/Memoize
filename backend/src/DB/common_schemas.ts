@@ -80,6 +80,8 @@ export const priceSchema = object().shape({
     currency: currencySchema.required(),
     amount: number().integer().min(0).required(),
 })
+export type Currency = InferType<typeof currencySchema>
+export type Price = InferType<typeof priceSchema>
 
 export function uniqueArrayTest(list: any) {
     if (!list) return true

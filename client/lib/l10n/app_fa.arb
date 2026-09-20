@@ -235,5 +235,17 @@
   "content_move_failed": "انتقال محتوا با مشکل مواجه شد.",
   "content_not_found": "هیچ محتوایی پیدا نشد!",
   "app_page_file_pagination_failed": "بارگذاری کارت‌ها با مشکل مواجه شد",
-  "app_page_folder_pagination_failed": "بارگذاری دسته‌بندی‌ها با مشکل مواجه شد"
+  "app_page_folder_pagination_failed": "بارگذاری دسته‌بندی‌ها با مشکل مواجه شد",
+  "checkout_title": "پرداخت",
+  "checkout_payment_method": "روش پرداخت",
+  "checkout_duration_month": "ماه",
+  "checkout_duration_year": "سال",
+  "checkout_total": "مبلغ کل",
+  "checkout_pay": "پرداخت",
+  "checkout_cancel": "لغو",
+  "checkout_retry": "تلاش مجدد",
+  "checkout_no_methods": "روش پرداختی در دسترس نیست.",
+  "checkout_load_methods_failed": "بارگیری روش‌های پرداخت ناموفق بود.",
+  "checkout_select_method": "یک روش پرداخت انتخاب کنید.",
+  "checkout_pay_failed": "پرداخت ناموفق بود."
 }

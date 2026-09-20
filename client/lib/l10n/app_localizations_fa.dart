@@ -663,4 +663,40 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get app_page_folder_pagination_failed => 'بارگذاری دسته‌بندی‌ها با مشکل مواجه شد';
+
+  @override
+  String get checkout_title => 'پرداخت';
+
+  @override
+  String get checkout_payment_method => 'روش پرداخت';
+
+  @override
+  String get checkout_duration_month => 'ماه';
+
+  @override
+  String get checkout_duration_year => 'سال';
+
+  @override
+  String get checkout_total => 'مبلغ کل';
+
+  @override
+  String get checkout_pay => 'پرداخت';
+
+  @override
+  String get checkout_cancel => 'لغو';
+
+  @override
+  String get checkout_retry => 'تلاش مجدد';
+
+  @override
+  String get checkout_no_methods => 'روش پرداختی در دسترس نیست.';
+
+  @override
+  String get checkout_load_methods_failed => 'بارگیری روش‌های پرداخت ناموفق بود.';
+
+  @override
+  String get checkout_select_method => 'یک روش پرداخت انتخاب کنید.';
+
+  @override
+  String get checkout_pay_failed => 'پرداخت ناموفق بود.';
 }

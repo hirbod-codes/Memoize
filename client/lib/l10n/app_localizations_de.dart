@@ -664,4 +664,40 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get app_page_folder_pagination_failed => 'Beim Laden der Kategorien ist ein Fehler aufgetreten';
+
+  @override
+  String get checkout_title => 'Kasse';
+
+  @override
+  String get checkout_payment_method => 'Zahlungsmethode';
+
+  @override
+  String get checkout_duration_month => 'Monat';
+
+  @override
+  String get checkout_duration_year => 'Jahr';
+
+  @override
+  String get checkout_total => 'Gesamtbetrag';
+
+  @override
+  String get checkout_pay => 'Bezahlen';
+
+  @override
+  String get checkout_cancel => 'Abbrechen';
+
+  @override
+  String get checkout_retry => 'Erneut versuchen';
+
+  @override
+  String get checkout_no_methods => 'Keine Zahlungsmethoden verfügbar.';
+
+  @override
+  String get checkout_load_methods_failed => 'Zahlungsmethoden konnten nicht geladen werden.';
+
+  @override
+  String get checkout_select_method => 'Wählen Sie eine Zahlungsmethode aus.';
+
+  @override
+  String get checkout_pay_failed => 'Zahlung fehlgeschlagen.';
 }
