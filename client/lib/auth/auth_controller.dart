@@ -108,6 +108,8 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     final userUsage = await account.getUserUsage();
 
     if (userInfo == null || userUsage == null) {
+      await UserInfoStorage.clear();
+      await UserUsageStorage.clear();
       return;
     }
 
@@ -213,7 +215,9 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   Future<void> sendPhoneOtp({required String phone}) async {
     await _authDio
         .post('/api/auth/otp/request', data: {'phoneNumber': phone, 'locale': 'fa', 'client': _client})
-        .notifyOnSuccess(rootContext == null ? 'Code sent to your phone.' : AppLocalizations.of(rootContext!)?.code_sent_to_phone ?? 'Code sent to your phone.');
+        .notifyOnSuccess(
+          rootContext == null ? 'Code sent to your phone.' : AppLocalizations.of(rootContext!)?.code_sent_to_phone ?? 'Code sent to your phone.',
+        );
   }
 
   @override

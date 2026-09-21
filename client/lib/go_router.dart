@@ -9,6 +9,7 @@ import 'package:client/pages/app_page.dart';
 import 'package:client/pages/auth/auth_page.dart';
 import 'package:client/pages/contact_page.dart';
 import 'package:client/pages/on_boarding_page.dart';
+import 'package:client/pages/payment_result_page.dart';
 import 'package:client/pages/plan/pricing_page.dart';
 import 'package:client/pages/settings/settings_page.dart';
 import 'package:client/pages/web/landing_page.dart';
@@ -99,6 +100,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/pricing',
         builder: (context, state) => const AppShell(child: PricingPage()),
       ),
+      if (kIsWeb)
+        GoRoute(
+          path: '/payment/result',
+          builder: (context, state) {
+            final status = state.uri.queryParameters['status'] ?? 'error';
+            final data = state.uri.queryParameters['data'] ?? '';
+            return PaymentResultPage(status: status, data: data);
+          },
+        ),
       GoRoute(
         path: '/about',
         builder: (context, state) => const AppShell(child: AboutPage()),

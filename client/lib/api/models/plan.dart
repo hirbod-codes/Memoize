@@ -22,8 +22,6 @@ class Price {
     eth: json['ETH'] as int,
   );
 
-  /// True only if every currency is priced at zero — used to show a
-  /// "Free" badge instead of "$0.00" on a free tier.
   bool get isFree => irr == 0 && irt == 0 && usd == 0 && eur == 0 && btc == 0 && eth == 0;
 
   int forCurrency(Currency currency) {
@@ -43,20 +41,7 @@ class Price {
     }
   }
 
-  // bool containsPaymentMethod(String paymentMethod) {
-  //   switch (paymentMethod) {
-  //     case 'zarinpal':
-  //       return irr != null || irt != null;
-  //     case 'zibal':
-  //       return irr != null || irt != null;
-  //     case 'paypal':
-  //       return usd != null || eur != null;
-  //     case 'bitcoin':
-  //       return btc != null;
-  //     default:
-  //       throw Exception('UNSUPPORTED_PAYMENT_METHOD');
-  //   }
-  // }
+  Map<String, dynamic> toJson() => {'irr': irr, 'irt': irt, 'usd': usd, 'eur': eur, 'btc': btc, 'eth': eth};
 }
 
 enum Currency { usd, eur, irt, irr, btc, eth }
@@ -97,6 +82,14 @@ class ContentTypeFlags {
     audio: json['audio'] as bool,
     video: json['video'] as bool,
   );
+
+  Map<String, dynamic> toJson() => {
+    'string': string.toString(),
+    'richText': richText.toString(),
+    'image': image.toString(),
+    'audio': audio.toString(),
+    'video': video.toString(),
+  };
 }
 
 /// Mirrors `privilegesSchema`.
@@ -134,11 +127,18 @@ class Privileges {
     allowedContentTypes: ContentTypeFlags.fromJson(json['allowedContentTypes'] as Map<String, dynamic>),
     maxValuePerContent: Map<String, int>.from(json['maxValuePerContent'] as Map),
   );
+
+  Map<String, dynamic> toJson() => {
+    'maxCategories': maxCategories,
+    'maxNestedCategories': maxNestedCategories,
+    'maxCardsPerCategory': maxCardsPerCategory,
+    'maxContentsPerCardSide': maxContentsPerCardSide,
+    'maxStorageBytes': maxStorageBytes,
+    'allowedContentTypes': allowedContentTypes.toJson(),
+    'maxValuePerContent': maxValuePerContent,
+  };
 }
 
-/// Mirrors `planSchema`. `id`/`createdAt`/`updatedAt` are optional
-/// since a public pricing endpoint may reasonably choose to omit
-/// internal bookkeeping fields it doesn't need to expose.
 class Plan {
   final String id;
   final String title;
@@ -153,4 +153,6 @@ class Plan {
     price: Price.fromJson(json['price'] as Map<String, dynamic>),
     privileges: Privileges.fromJson(json['privileges'] as Map<String, dynamic>),
   );
+
+  Map<String, dynamic> toJson() => {'_id': id, 'title': title, 'price': price.toJson(), 'privileges': privileges.toJson()};
 }

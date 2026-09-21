@@ -665,6 +665,33 @@ class AppLocalizationsFa extends AppLocalizations {
   String get app_page_folder_pagination_failed => 'بارگذاری دسته‌بندی‌ها با مشکل مواجه شد';
 
   @override
+  String get retry => 'تلاش مجدد';
+
+  @override
+  String get payment_result_checking => 'در حال بررسی پرداخت...';
+
+  @override
+  String get checking_plan => 'در حال بررسی پلن شما...';
+
+  @override
+  String get plan_check_failed => 'بررسی پلن شما ناموفق بود.';
+
+  @override
+  String get payment_result_continue => 'ادامه';
+
+  @override
+  String get payment_result_success_title => 'پرداخت موفق بود';
+
+  @override
+  String get payment_result_error_title => 'پرداخت ناموفق بود';
+
+  @override
+  String get payment_result_success_message => 'پرداخت شما با موفقیت انجام شد.';
+
+  @override
+  String get payment_result_error_message => 'پرداخت شما انجام نشد.';
+
+  @override
   String get checkout_title => 'پرداخت';
 
   @override

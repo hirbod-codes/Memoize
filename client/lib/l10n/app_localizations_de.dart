@@ -666,6 +666,33 @@ class AppLocalizationsDe extends AppLocalizations {
   String get app_page_folder_pagination_failed => 'Beim Laden der Kategorien ist ein Fehler aufgetreten';
 
   @override
+  String get retry => 'Erneut versuchen';
+
+  @override
+  String get payment_result_checking => 'Zahlung wird überprüft...';
+
+  @override
+  String get checking_plan => 'Ihr Tarif wird überprüft...';
+
+  @override
+  String get plan_check_failed => 'Die Überprüfung Ihres Tarifs ist fehlgeschlagen.';
+
+  @override
+  String get payment_result_continue => 'Weiter';
+
+  @override
+  String get payment_result_success_title => 'Zahlung erfolgreich';
+
+  @override
+  String get payment_result_error_title => 'Zahlung fehlgeschlagen';
+
+  @override
+  String get payment_result_success_message => 'Ihre Zahlung wurde erfolgreich abgeschlossen.';
+
+  @override
+  String get payment_result_error_message => 'Ihre Zahlung konnte nicht abgeschlossen werden.';
+
+  @override
   String get checkout_title => 'Kasse';
 
   @override

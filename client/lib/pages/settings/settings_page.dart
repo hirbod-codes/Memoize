@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:client/account/account_controller.dart';
 import 'package:client/account/models/user_info.dart';
+import 'package:client/account/user_info_notifier.dart';
 import 'package:client/api/api_call.dart';
 import 'package:client/api/api_call_extensions.dart';
 import 'package:client/api/dio/dio_providers.dart';
@@ -43,23 +44,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final userInfoAsync = ref.watch(userInfoProvider);
+    final state = ref.watch(userInfoProvider);
 
-    return userInfoAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) {
-        Talker().error('caught error in settings page initial load', error, stackTrace);
-        return _RetryState(onRetry: () => ref.invalidate(userInfoProvider));
-      },
-      data: (userInfo) {
-        if (userInfo == null) {
-          context.go('/auth?from=/settings');
-          return SizedBox.shrink();
-        } else {
-          return SettingsContent(userInfo: userInfo);
-        }
-      },
-    );
+    if (state.isLoading && state.info == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state.error != null && state.info == null) {
+      return _RetryState(onRetry: () => ref.read(userInfoProvider.notifier).refresh());
+    }
+
+    final userInfo = state.info;
+    if (userInfo == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/auth?from=/settings'));
+      return const SizedBox.shrink();
+    }
+
+    return SettingsContent(userInfo: userInfo);
   }
 }
 

@@ -1,32 +1,32 @@
 import 'dart:convert';
 
-import 'package:client/account/models/user_info.dart';
+import 'package:client/api/models/plan.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Local cache of the last-fetched UserInfo. Two uses: lets the app
+/// Local cache of the last-fetched Plan. Two uses: lets the app
 /// show something (name, plan, avatar key) instantly on next launch
 /// before the network round-trip in _onAuthenticated() completes, and
 /// gives other parts of the app a synchronous read instead of needing
 /// to await userInfoProvider every time.
-class UserInfoStorage {
+class AllPlansStorage {
   static const _preferencesKey = 'userInfo';
 
-  static Future<void> save(UserInfo? info) async {
-    if (info == null) {
+  static Future<void> save(Plan? plan) async {
+    if (plan == null) {
       await clear();
       return;
     }
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_preferencesKey, jsonEncode(info.toJson()));
+    await preferences.setString(_preferencesKey, jsonEncode(plan.toJson()));
   }
 
-  static Future<UserInfo?> load() async {
+  static Future<Plan?> load() async {
     final preferences = await SharedPreferences.getInstance();
     final raw = preferences.getString(_preferencesKey);
     if (raw == null) return null;
 
     try {
-      return UserInfo.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      return Plan.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
       return null; // corrupted or outdated cache shape — treat as absent
     }

@@ -603,7 +603,7 @@ router.get(`/${ZARINPAL_PAYMENT_VERIFY_CHECK}`, unAuth, async (req, res) => {
         }
 
         log.info('payment uuid found')
-        return res.status(200).json({ status: 'success' })
+        return res.status(204).json({ status: 'success' })
     } catch (error) {
         runWithLogger(log, () => handleError(res, error))
     }
@@ -755,9 +755,9 @@ router.get(`/${ZIBAL_PAYMENT_VERIFY_CHECK}`, unAuth, async (req, res) => {
             log.info('payment uuid not found')
             return res.status(400).json({ status: 'error', error_code: 'UUID_NOT_FOUND' })
         }
-
+        
         log.info('payment uuid found')
-        return res.status(200).json({ status: 'success' })
+        return res.status(204).json({ status: 'success' })
     } catch (error) {
         runWithLogger(log, () => handleError(res, error))
     }

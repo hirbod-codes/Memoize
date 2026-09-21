@@ -1383,6 +1383,60 @@ abstract class AppLocalizations {
   /// **'Failure while trying to load categories'**
   String get app_page_folder_pagination_failed;
 
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @payment_result_checking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking payment...'**
+  String get payment_result_checking;
+
+  /// No description provided for @checking_plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking your plan...'**
+  String get checking_plan;
+
+  /// No description provided for @plan_check_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to check your plan.'**
+  String get plan_check_failed;
+
+  /// No description provided for @payment_result_continue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get payment_result_continue;
+
+  /// No description provided for @payment_result_success_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Successful'**
+  String get payment_result_success_title;
+
+  /// No description provided for @payment_result_error_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Failed'**
+  String get payment_result_error_title;
+
+  /// No description provided for @payment_result_success_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment was completed successfully.'**
+  String get payment_result_success_message;
+
+  /// No description provided for @payment_result_error_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment could not be completed.'**
+  String get payment_result_error_message;
+
   /// No description provided for @checkout_title.
   ///
   /// In en, this message translates to:

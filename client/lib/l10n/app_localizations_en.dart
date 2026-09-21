@@ -664,6 +664,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get app_page_folder_pagination_failed => 'Failure while trying to load categories';
 
   @override
+  String get retry => 'Retry';
+
+  @override
+  String get payment_result_checking => 'Checking payment...';
+
+  @override
+  String get checking_plan => 'Checking your plan...';
+
+  @override
+  String get plan_check_failed => 'Failed to check your plan.';
+
+  @override
+  String get payment_result_continue => 'Continue';
+
+  @override
+  String get payment_result_success_title => 'Payment Successful';
+
+  @override
+  String get payment_result_error_title => 'Payment Failed';
+
+  @override
+  String get payment_result_success_message => 'Your payment was completed successfully.';
+
+  @override
+  String get payment_result_error_message => 'Your payment could not be completed.';
+
+  @override
   String get checkout_title => 'Checkout';
 
   @override

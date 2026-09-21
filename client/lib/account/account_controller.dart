@@ -109,8 +109,3 @@ class AvatarBytesNotifier extends Notifier<Uint8List?> {
 final avatarBytesProvider = NotifierProvider<AvatarBytesNotifier, Uint8List?>(AvatarBytesNotifier.new);
 
 final accountControllerProvider = NotifierProvider<AccountController, void>(AccountController.new);
-
-final userInfoProvider = FutureProvider.autoDispose<UserInfo?>((ref) async {
-  final account = ref.watch(accountControllerProvider.notifier);
-  return await account.getUserInfo();
-});
