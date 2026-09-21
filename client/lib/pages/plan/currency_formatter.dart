@@ -1,4 +1,5 @@
-import 'package:client/api/models/plan.dart';
+import 'package:client/plan/models/currency_label.dart';
+import 'package:client/plan/models/plan.dart';
 import 'package:intl/intl.dart';
 
 /// Formats a raw integer price for display, using the digit set and

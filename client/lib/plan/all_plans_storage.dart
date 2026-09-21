@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:client/api/models/plan.dart';
+import 'package:client/plan/models/plan.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Local cache of the last-fetched Plan. Two uses: lets the app
@@ -11,22 +11,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AllPlansStorage {
   static const _preferencesKey = 'userInfo';
 
-  static Future<void> save(Plan? plan) async {
-    if (plan == null) {
+  static Future<void> save(List<Plan>? plans) async {
+    if (plans == null) {
       await clear();
       return;
     }
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_preferencesKey, jsonEncode(plan.toJson()));
+    await preferences.setString(_preferencesKey, jsonEncode(plans.map((e) => e.toJson())));
   }
 
-  static Future<Plan?> load() async {
+  static Future<List<Plan>?> load() async {
     final preferences = await SharedPreferences.getInstance();
     final raw = preferences.getString(_preferencesKey);
     if (raw == null) return null;
 
     try {
-      return Plan.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      return (jsonDecode(raw) as List<Map<String, dynamic>>).map((e) => Plan.fromJson(e)).toList();
     } catch (_) {
       return null; // corrupted or outdated cache shape — treat as absent
     }

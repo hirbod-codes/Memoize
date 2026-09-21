@@ -3,8 +3,9 @@ import "package:client/l10n/app_localizations.dart";
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
-import "package:client/api/models/plan.dart";
+import "package:client/plan/models/plan.dart";
 import "package:talker/talker.dart";
+import "../../plan/models/currency_label.dart";
 import "currency_formatter.dart";
 import "plans_provider.dart";
 
@@ -18,13 +19,24 @@ import "plans_provider.dart";
 /// checkout if the user"s already authenticated. Left as a callback
 /// since that routing decision depends on your app"s flow, not
 /// something this page should assume.
-class PricingPage extends ConsumerWidget {
+class PricingPage extends ConsumerStatefulWidget {
   final ValueChanged<Plan>? onSelectPlan;
 
   const PricingPage({super.key, this.onSelectPlan});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PricingPage> createState() => _PricingPageState();
+}
+
+class _PricingPageState extends ConsumerState<PricingPage> {
+  @override
+  void initState() {
+    super.initState();
+    ref.invalidate(plansProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final plansAsync = ref.watch(plansProvider);
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
@@ -62,7 +74,7 @@ class PricingPage extends ConsumerWidget {
             sortedPlans = plans;
           }
 
-          return _PricingContent(plans: sortedPlans, onSelectPlan: onSelectPlan);
+          return _PricingContent(plans: sortedPlans, onSelectPlan: widget.onSelectPlan);
         },
       ),
     );

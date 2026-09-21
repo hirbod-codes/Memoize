@@ -727,4 +727,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get checkout_pay_failed => 'Zahlung fehlgeschlagen.';
+
+  @override
+  String get limit_reached => 'Sie haben das Limit Ihres aktuellen Tarifs erreicht. Führen Sie ein Upgrade durch, um fortzufahren.';
+
+  @override
+  String get upgrade_required => 'Upgrade erforderlich';
+
+  @override
+  String get notNow => 'Nicht jetzt';
+
+  @override
+  String get upgrade => 'Upgrade';
 }

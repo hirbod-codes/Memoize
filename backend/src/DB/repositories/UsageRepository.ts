@@ -178,6 +178,16 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
             await redis.del(`${collectionName}:userId:${result.userId}`)
         }
     }
+
+    async deleteByUserId(id: string) {
+        const result = await UsageRepository.collection!.findOneAndDelete({ userId: id }, { session: this.session })
+        if (result) {
+            const redis = await Redis.getClient()
+            await redis.del(`${collectionName}:userId:${result.userId}`)
+        }
+
+        return result !== null && result !== undefined
+    }
 }
 
 export default UsageRepository;

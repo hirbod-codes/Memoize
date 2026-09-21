@@ -256,5 +256,9 @@
   "checkout_no_methods": "روش پرداختی در دسترس نیست.",
   "checkout_load_methods_failed": "بارگیری روش‌های پرداخت ناموفق بود.",
   "checkout_select_method": "یک روش پرداخت انتخاب کنید.",
-  "checkout_pay_failed": "پرداخت ناموفق بود."
+  "checkout_pay_failed": "پرداخت ناموفق بود.",
+  "limit_reached": "به محدودیت طرح فعلی خود رسیده‌اید. برای ادامه، طرح خود را ارتقا دهید.",
+  "upgrade_required": "ارتقا لازم است",
+  "notNow": "فعلاً نه",
+  "upgrade": "ارتقا"
 }

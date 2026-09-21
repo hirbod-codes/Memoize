@@ -12,20 +12,20 @@
 
 import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
-import 'package:client/api/models/plan.dart';
+import 'package:client/plan/models/plan.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'all_plans_storage.dart';
 
 class AllPlansState {
-  final Plan? info;
+  final List<Plan>? plans;
   final bool isLoading;
   final String? error;
 
-  const AllPlansState({this.info, this.isLoading = false, this.error});
+  const AllPlansState({this.plans, this.isLoading = false, this.error});
 
-  AllPlansState copyWith({Plan? info, bool clearInfo = false, bool? isLoading, String? error, bool clearError = false}) {
+  AllPlansState copyWith({List<Plan>? info, bool clearInfo = false, bool? isLoading, String? error, bool clearError = false}) {
     return AllPlansState(
-      info: clearInfo ? null : (info ?? this.info),
+      plans: clearInfo ? null : (info ?? this.plans),
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
     );
@@ -63,10 +63,10 @@ class AllPlansNotifier extends Notifier<AllPlansState> {
     }
   }
 
-  Future<Plan?> _fetchFromServer() async {
+  Future<List<Plan>?> _fetchFromServer() async {
     final dio = await ref.read(dioProvider);
     final result = await apiCall(() => dio.get('/api/plan'));
-    return result.dataOrNull;
+    return result.dataOrNull?['plans'];
   }
 
   /// Call on logout.
@@ -76,4 +76,4 @@ class AllPlansNotifier extends Notifier<AllPlansState> {
   }
 }
 
-final userInfoProvider = NotifierProvider<AllPlansNotifier, AllPlansState>(AllPlansNotifier.new);
+final allPlansProvider = NotifierProvider<AllPlansNotifier, AllPlansState>(AllPlansNotifier.new);

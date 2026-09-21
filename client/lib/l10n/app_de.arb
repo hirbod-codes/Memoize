@@ -256,5 +256,9 @@
   "checkout_no_methods": "Keine Zahlungsmethoden verfügbar.",
   "checkout_load_methods_failed": "Zahlungsmethoden konnten nicht geladen werden.",
   "checkout_select_method": "Wählen Sie eine Zahlungsmethode aus.",
-  "checkout_pay_failed": "Zahlung fehlgeschlagen."
+  "checkout_pay_failed": "Zahlung fehlgeschlagen.",
+  "limit_reached": "Sie haben das Limit Ihres aktuellen Tarifs erreicht. Führen Sie ein Upgrade durch, um fortzufahren.",
+  "upgrade_required": "Upgrade erforderlich",
+  "notNow": "Nicht jetzt",
+  "upgrade": "Upgrade"
 }

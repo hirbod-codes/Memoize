@@ -726,4 +726,16 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get checkout_pay_failed => 'پرداخت ناموفق بود.';
+
+  @override
+  String get limit_reached => 'به محدودیت طرح فعلی خود رسیده‌اید. برای ادامه، طرح خود را ارتقا دهید.';
+
+  @override
+  String get upgrade_required => 'ارتقا لازم است';
+
+  @override
+  String get notNow => 'فعلاً نه';
+
+  @override
+  String get upgrade => 'ارتقا';
 }

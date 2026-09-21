@@ -59,9 +59,9 @@ export function authorizeQuota(usages: Map<UsageField, number>, req?: Request): 
                 if (result !== true) {
                     log.debug({ result })
                     log.info('Request is unauthorized')
-                    return res.status(403).json({
+                    return res.status(402).json({
+                        status: 'error',
                         error_code: 'QUOTA_EXCEEDED',
-                        message: `You've reached your plan's limit for this action.`,
                     });
                 }
 
@@ -146,9 +146,9 @@ export function authorizeFeature(featureFields: FeatureField[], req?: Request): 
                 if (result !== true) {
                     log.debug({ result })
                     log.info('Request is unauthorized')
-                    return res.status(403).json({
+                    return res.status(402).json({
+                        status: 'error',
                         error_code: 'QUOTA_EXCEEDED',
-                        message: `You've reached your plan's limit for this action.`,
                     });
                 }
 

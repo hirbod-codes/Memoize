@@ -12,6 +12,7 @@ import { payments } from "../..";
 import { UserRepository } from "../../DB/repositories/UserRepository";
 import { randomUUID } from "node:crypto";
 import { resolveCurrencyFromPaymentMethod } from "./lib";
+import UsageRepository from "../../DB/repositories/UsageRepository";
 
 const router = Router();
 
@@ -755,7 +756,7 @@ router.get(`/${ZIBAL_PAYMENT_VERIFY_CHECK}`, unAuth, async (req, res) => {
             log.info('payment uuid not found')
             return res.status(400).json({ status: 'error', error_code: 'UUID_NOT_FOUND' })
         }
-        
+
         log.info('payment uuid found')
         return res.status(204).json({ status: 'success' })
     } catch (error) {
@@ -769,13 +770,33 @@ router.get(`/cancel`, auth, async (req, res) => {
     try {
         log.info('subscription verification request received');
 
+        const ur = new UserRepository()
+        const uu = new UsageRepository()
         const sr = new SubscriptionRepository()
+
+        // ------------------------------------------------------------------------- updating user planTitle to 'free'
+        log.info("updating user planTitle to 'free'")
+        const updateUserResult = await runWithLogger(log, () => ur.unsafeUpdate(req.user!.userId, { planTitle: 'free' }))
+        log.debug({ updateUserResult: updateUserResult })
+        if (!updateUserResult) {
+            log.info("failed to cancel user's subscription")
+            return res.status(500).json({ status: 'error' })
+        }
 
         // ------------------------------------------------------------------------- updating subscription status to 'active'
         log.info("updating subscription status to 'active'")
         const deleteResult = await runWithLogger(log, () => sr.deleteByStatusForUser(req.user!.userId, ['active', 'trial']))
         log.debug({ updateResult: deleteResult })
         if (!deleteResult.acknowledged) {
+            log.info("failed to cancel user's subscription")
+            return res.status(500).json({ status: 'error' })
+        }
+
+        // ------------------------------------------------------------------------- deleting user usage
+        log.info("deleting user usage")
+        const deleteUserUsageResult = await runWithLogger(log, () => uu.deleteByUserId(req.user!.userId))
+        log.debug({ deleteUserUsageResult: deleteUserUsageResult })
+        if (!deleteUserUsageResult) {
             log.info("failed to cancel user's subscription")
             return res.status(500).json({ status: 'error' })
         }

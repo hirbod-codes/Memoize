@@ -1,7 +1,7 @@
 import 'package:client/api/api_call_extensions.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:client/api/models/plan.dart';
+import 'package:client/plan/models/plan.dart';
 
 /// Public, unauthenticated — uses the plain dioProvider, matching the
 /// same pattern as supportedAuthMethodsProvider. autoDispose so pricing

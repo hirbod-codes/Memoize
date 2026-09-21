@@ -1,6 +1,7 @@
 import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
-import 'package:client/api/models/plan.dart'; // for Currency and Plan
+import 'package:client/plan/models/currency_label.dart';
+import 'package:client/plan/models/plan.dart'; // for Currency and Plan
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/pages/plan/currency_formatter.dart';

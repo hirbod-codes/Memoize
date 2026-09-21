@@ -256,5 +256,9 @@
   "checkout_no_methods": "No payment methods available.",
   "checkout_load_methods_failed": "Failed to load payment methods.",
   "checkout_select_method": "Select a payment method.",
-  "checkout_pay_failed": "Payment failed."
+  "checkout_pay_failed": "Payment failed.",
+  "limit_reached": "You've reached a limit on your current plan. Upgrade to keep going.",
+  "upgrade_required": "Upgrade required",
+  "notNow": "Not now",
+  "upgrade": "Upgrade"
 }

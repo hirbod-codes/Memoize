@@ -1508,6 +1508,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Payment failed.'**
   String get checkout_pay_failed;
+
+  /// No description provided for @limit_reached.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reached a limit on your current plan. Upgrade to keep going.'**
+  String get limit_reached;
+
+  /// No description provided for @upgrade_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade required'**
+  String get upgrade_required;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
+  /// No description provided for @upgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade'**
+  String get upgrade;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

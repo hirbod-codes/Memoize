@@ -28,5 +28,5 @@ export const planGate = async (req: Request, res: Response, next: NextFunction) 
 
     log.info('Rejected: plan state is invalid or expired');
 
-    return res.status(403).json({ error_code: 'PLAN_STATE_INVALID', message: `You have exceed your plan limitations.`, })
+    return res.status(402).json({ error_code: 'PLAN_STATE_INVALID', message: `You have exceed your plan limitations.`, })
 }

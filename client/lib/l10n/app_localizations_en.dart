@@ -725,4 +725,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checkout_pay_failed => 'Payment failed.';
+
+  @override
+  String get limit_reached => 'You\'ve reached a limit on your current plan. Upgrade to keep going.';
+
+  @override
+  String get upgrade_required => 'Upgrade required';
+
+  @override
+  String get notNow => 'Not now';
+
+  @override
+  String get upgrade => 'Upgrade';
 }
