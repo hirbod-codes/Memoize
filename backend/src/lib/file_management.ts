@@ -1,7 +1,7 @@
 import { Upload } from "@aws-sdk/lib-storage";
 import { fileTypeFromFile } from "file-type";
 import { s3 } from "..";
-import { BUCKET_NAME } from "../configs";
+import { BUCKET_NAME, MAX_UPLOAD_SIZE } from "../configs";
 import { Readable } from "stream";
 import Busboy from 'busboy';
 import { stat, unlink } from "fs/promises";
@@ -62,6 +62,8 @@ export function toPlainHeaders(headers: Request['headers'] | globalThis.Headers)
 }
 
 export function receiveUpload(req: Request, fileSizeLimit: number, destDir: string): Promise<{ path: string; size: number; originalFilename: string }> {
+    fileSizeLimit = Math.max(fileSizeLimit, MAX_UPLOAD_SIZE)
+
     return new Promise((resolve, reject) => {
         const bb = Busboy({ headers: toPlainHeaders(req.headers), limits: { files: 1, fileSize: fileSizeLimit } });
 

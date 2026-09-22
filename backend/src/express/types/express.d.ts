@@ -10,7 +10,6 @@ declare global {
                 userId: string
                 userData: User
                 privileges?: Privileges
-                usages?: Usage
                 jwtPayload?: JwtPayload
             }
             quotaReservations?: {

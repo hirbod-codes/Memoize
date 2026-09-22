@@ -104,3 +104,5 @@ if (supportedPayments.includes('zarinpal') && (!payments.zarinpal.url || !paymen
 
 if (supportedPayments.includes('zibal') && (!payments.zibal.url || !payments.zibal.merchantId))
     throw new Error('one of the required ZIBAL_URL ZIBAL_MERCHANT_ID is not provided')
+
+export const MAX_UPLOAD_SIZE = getIntegerEnv('MAX_UPLOAD_SIZE', 'The MAX_UPLOAD_SIZE environment variable is not provided', s => s.optional()) ?? 50_000_000_000;

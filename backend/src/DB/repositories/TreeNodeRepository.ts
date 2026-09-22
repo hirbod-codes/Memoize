@@ -37,6 +37,9 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
         if (indexes.find(i => i.name === 'userId') === undefined)
             await db.createIndex(collectionName, { userId: 1 }, { name: 'userId' })
 
+        if (indexes.find(i => i.name === 'hierarchyLevel') === undefined)
+            await db.createIndex(collectionName, { hierarchyLevel: 1 }, { name: 'hierarchyLevel' })
+
         if (indexes.find(i => i.name === 'createdAt') === undefined)
             await db.createIndex(collectionName, { createdAt: -1 }, { name: 'createdAt' })
 
@@ -51,7 +54,13 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
     }
 
     async insert(treeNode: TreeNodeCreate): Promise<InsertOneResult> {
-        return await TreeNodeRepository.collection!.insertOne({ ...treeNode, schemaVersion, updatedAt: Date.now(), createdAt: Date.now() }, { session: this.session })
+        if (!treeNode.parentId)
+            return await TreeNodeRepository.collection!.insertOne({ ...treeNode, hierarchy: ['root'], hierarchyLevel: 1, schemaVersion, updatedAt: Date.now(), createdAt: Date.now() }, { session: this.session });
+
+        const hierarchy = (await this.get(treeNode.parentId!)).hierarchy
+        hierarchy.push(treeNode.parentId!)
+
+        return await TreeNodeRepository.collection!.insertOne({ ...treeNode, hierarchy, hierarchyLevel: hierarchy.length, schemaVersion, updatedAt: Date.now(), createdAt: Date.now() }, { session: this.session });
     }
 
     async get(id: string): Promise<TreeNode> {
@@ -105,14 +114,34 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
         return await TreeNodeRepository.collection!.find(filter, { session: this.session }).sort({ _id: -1 }).skip(skip).limit(limit).toArray()
     }
 
+    async countCategoriesPerNestedLevelForUser(userId: string, level: number) {
+        return await TreeNodeRepository.collection!.countDocuments({ userId, hierarchy: { $size: level } }, { session: this.session })
+    }
+
+    async countMaxNestedLevelsForUser(userId: string) {
+        return (await TreeNodeRepository.collection!.findOne({ userId }, { sort: [['hierarchyLevel', -1]], session: this.session }))?.hierarchyLevel
+    }
+
     async replace(treeNodeArg: TreeNodeUpdate) {
         const { _id, ...treeNode } = treeNodeArg
-        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(_id!.toString()) }, { ...treeNode, updatedAt: Date.now() })
+
+        let hierarchy
+        if (treeNode.parentId) {
+            hierarchy = (await this.get(treeNode.parentId)).hierarchy
+            hierarchy.push(treeNode.parentId!);
+        }
+        return await TreeNodeRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(_id!.toString()) }, { $set: { ...treeNode, ...(hierarchy ? { hierarchy, hierarchyLevel: hierarchy.length } : {}), updatedAt: Date.now() } })
     }
 
     async replaceForUser(treeNodeArg: TreeNodeUpdate, userId: string) {
         const { _id, ...treeNode } = treeNodeArg
-        return await TreeNodeRepository.collection!.updateOne({ userId, _id: ObjectId.createFromHexString(_id!.toString()) }, { $set: { ...treeNode, updatedAt: Date.now() } })
+
+        let hierarchy
+        if (treeNode.parentId) {
+            hierarchy = (await this.get(treeNode.parentId)).hierarchy
+            hierarchy.push(treeNode.parentId!);
+        }
+        return await TreeNodeRepository.collection!.updateOne({ userId, _id: ObjectId.createFromHexString(_id!.toString()) }, { $set: { ...treeNode, ...(hierarchy ? { hierarchy, hierarchyLevel: hierarchy.length } : {}), updatedAt: Date.now() } })
     }
 
     async delete(id: string): Promise<DeleteResult> {

@@ -101,6 +101,18 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
         return await LeafRepository.collection!.find(filter, { session: this.session }).sort({ _id: -1 }).skip(skip).limit(limit).toArray()
     }
 
+    async countCardsPerCategoryForUser(userId: string, treeNodeId: string) {
+        return await LeafRepository.collection!.countDocuments({ userId, treeNodeId })
+    }
+
+    async countContentsPerCardSideForUser(userId: string, leafId: string, isTerm: boolean) {
+        const leaf = await this.getForUser(leafId, userId)
+        if (!leaf)
+            return undefined
+
+        return leaf[isTerm ? 'termContents' : 'definitionContents'].length
+    }
+
     async update(leafArg: LeafUpdate) {
         const { _id, ...leaf } = leafArg
         return await LeafRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(_id!.toString()) }, { $set: { ...leaf, updatedAt: Date.now() } })

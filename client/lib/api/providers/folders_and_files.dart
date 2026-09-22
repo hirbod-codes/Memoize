@@ -69,7 +69,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       if (parentId != null) data["parentId"] = parentId;
 
       // Send request
-      final result = await apiCall(() => _authDio.post("/api/treeNode/", data: {"treeNode": data}).notifyOnSuccess(l10n.folder_add_success));
+      final result = await apiCall(() => _authDio.post("/api/treeNode/", data: data).notifyOnSuccess(l10n.folder_add_success));
       if (result.isFailure || result.dataOrNull == null) {
         log.warning("addFolder rejected: request failed or returned no data (isFailure=${result.isFailure})");
         NotificationService.showError(context: rootContext!, message: l10n.folder_add_failed);
@@ -283,7 +283,7 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       final Map<String, dynamic> data = {"title": title, "treeNodeId": treeNodeId, "termContents": [], "definitionContents": []};
 
       // Send request
-      final result = await apiCall(() => _authDio.post("/api/leaf/", data: {"leaf": data}).notifyOnSuccess(l10n.file_add_success));
+      final result = await apiCall(() => _authDio.post("/api/leaf/", data: data).notifyOnSuccess(l10n.file_add_success));
       if (result.isFailure || result.dataOrNull == null) {
         log.warning("addFile rejected: request failed or returned no data (isFailure=${result.isFailure})");
         NotificationService.showError(context: rootContext!, message: l10n.file_add_failed);

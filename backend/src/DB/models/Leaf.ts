@@ -12,8 +12,6 @@ const contentsSchema = array().of(contentSchema.required())
 const post = {
     treeNodeId: string().objectIdString().required().label('Tree node id'),
     title: string().required().label('Title'),
-    termContents: contentsSchema.required().min(0).label('Term contents'),
-    definitionContents: contentsSchema.required().min(0).label('Definition contents'),
 }
 
 const update = {

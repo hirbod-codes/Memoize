@@ -10,6 +10,7 @@ import 'package:client/components/dialogs/folder_file_create_dialog.dart';
 import 'package:client/components/file_manager.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/l10n/app_localizations.dart';
+import 'package:client/plan/compnents/plan_locked_widgets.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_spacing.dart';

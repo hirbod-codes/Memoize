@@ -8,27 +8,28 @@ import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
 import { MongoDB } from '../DB/mongodb';
 import { MEILI_LEAF } from '../DB/meilisearch';
 import { meili } from '..';
+import { validate } from '../lib';
+import { getLogger, runWithLogger } from '../observability/requestLoggerContext';
 
 const router = express.Router();
 
 router.use(auth)
 
 router.post('/', async (req, res) => {
+    let log = getLogger().child({ module: 'video', route: 'POST /api/leaf' });
+
+
     let db: MongoDB | undefined = undefined
     try {
-        console.log('/api/leaf', 'POST')
+        log.info('Video upload request received');
 
-        console.log('Validation...')
-        let leaf: LeafPost
-        try {
-            leaf = await leafPostSchema.required().validate(req.body.leaf, { stripUnknown: true })
-        } catch (err) {
-            console.error(err)
-            if (err instanceof ValidationError)
-                return res.status(400).json({ errors: err.errors })
-            return res.status(400).json({ message: 'Invalid Tree node' });
-        }
-        console.log({ leaf })
+        log.debug({ body: req.body });
+        const leaf = await runWithLogger(log, () => validate(leafPostSchema, req.body))
+        log.info('input validated');
+        log.debug({ leaf });
+
+        const userId = req.user!.userId;
+        log.debug({ userId });
 
         db = MongoDB.getDbInstance()
         const session = await db.startTransaction()
@@ -39,17 +40,20 @@ router.post('/', async (req, res) => {
         const treeNodeRepository = new TreeNodeRepository()
         treeNodeRepository.setTransactionSession(session)
 
-        console.log("Authorize...")
-        const userId = req.user!.userId
         const treeNode = await treeNodeRepository.getForUser(leaf.treeNodeId, userId)
-        if (!treeNode)
-            return res.status(403).send()
+        if (!treeNode) {
+            log.info("category doesn't belong to user")
+            return res.status(403).json({ status: 'error', error_code: 'INVALID_TREENODE_ID' })
+        }
+        log.info("category belongs to user")
 
-        console.log("Inserting new leaf...")
-        const insertLeafResult = await leafRepository.insert({ ...leaf, userId })
-        console.log("Insert result", insertLeafResult)
-        if (!insertLeafResult.acknowledged)
-            return res.status(500).send()
+        log.info("inserting new leaf")
+        const insertLeafResult = await leafRepository.insert({ ...leaf, definitionContents: [], termContents: [], userId })
+        log.debug({ insertLeafResult })
+        if (!insertLeafResult.acknowledged) {
+            log.warn("failed to create a leaf record in db")
+            return res.status(500).json({ status: 'error', status_code: 'INTERNAL_ERROR' })
+        }
 
         const index = meili.index(MEILI_LEAF)
         const task = await index.addDocuments([{
@@ -100,13 +104,13 @@ router.get('/', async (req, res) => {
         const leafRepository = new LeafRepository()
 
         if (parentTreeNodeId) {
-            console.log("Fetching leafs...");
+            console.log("fetching leafs...");
             let leafs: Leaf[] = await leafRepository.getManyForUserByParentTreeNodeId(parentTreeNodeId!, req.user!.userId)
             if (!leafs)
                 return res.status(404).send()
             res.status(200).json({ status: 'success', data: leafs })
         } else {
-            console.log("Fetching leaf...");
+            console.log("fetching leaf...");
             let leaf: Leaf = await leafRepository.getForUser(leafId!, req.user!.userId)
             if (!leaf)
                 return res.status(404).send()
@@ -208,7 +212,7 @@ router.patch('/', async (req, res) => {
             return res.status(403).send()
 
         if (leaf.title) {
-            console.log("Updating title in meilisearch...");
+            console.log("updating title in meilisearch...");
 
             const index = meili.index(MEILI_LEAF)
             const task = await index.updateDocuments([{
@@ -248,7 +252,7 @@ router.delete('/', async (req, res) => {
         }
         console.log({ id });
 
-        console.log("Deleting leaf...");
+        console.log("deleting leaf...");
         const leafRepository = new LeafRepository()
         const leaf = await leafRepository.delete(id)
         if (!leaf.acknowledged || leaf.deletedCount === 0)

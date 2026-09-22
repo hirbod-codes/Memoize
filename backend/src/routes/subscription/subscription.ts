@@ -310,7 +310,7 @@ router.post('/upgrade', auth, async (req, res) => {
         // ------------------------------------------------------------------------- creating temporary subscription with status 'paymentNotCompleted'
         log.info("creating temporary subscription with status 'paymentNotCompleted'")
         const currentPeriodEnd = Date.now() + A_MONTH_IN_MILLISECONDS
-        const subscriptionCreate: SubscriptionCreate = { userId, currentPeriodEnd, planTitle, paymentMethod, status: 'paymentNotCompleted', price: { currency, amount }, duration }
+        const subscriptionCreate: SubscriptionCreate = { userId, currentPeriodEnd, planTitle, paymentMethod, status: 'paymentNotCompleted', price: { currency, amount }, duration, privileges: plan.privileges }
 
         log.info({ ...subscriptionCreate, ...({ expirationDate: new Date(currentPeriodEnd).toUTCString() }) }, "storing user's subscription")
         const insertResult = await runWithLogger(log, () => subscriptionRepository.insert(subscriptionCreate))
@@ -428,7 +428,7 @@ router.post('/', auth, async (req, res) => {
         // ------------------------------------------------------------------------- creating temporary subscription with status 'paymentNotCompleted'
         log.info("creating temporary subscription with status 'paymentNotCompleted'")
         const currentPeriodEnd = Date.now() + A_MONTH_IN_MILLISECONDS
-        const subscriptionCreate: SubscriptionCreate = { userId, currentPeriodEnd, planTitle, paymentMethod, status: 'paymentNotCompleted', price: { currency, amount }, duration }
+        const subscriptionCreate: SubscriptionCreate = { userId, currentPeriodEnd, planTitle, paymentMethod, status: 'paymentNotCompleted', price: { currency, amount }, duration, privileges: plan.privileges }
         log.debug({ ...subscriptionCreate, ...({ expirationDate: new Date(currentPeriodEnd).toUTCString() }) })
 
         log.info("storing user's subscription")

@@ -1,290 +1,318 @@
-import { Request, Response, NextFunction } from 'express';
-import UsageRepository from '../DB/repositories/UsageRepository';
-import PlanRepository from '../DB/repositories/PlanRepository';
-import { FeatureField, Privileges } from '../DB/models/Plan';
-import { Usage, UsageField, resolveQuotaField } from '../DB/models/Usage';
+import { Request, Response } from 'express';
 import { getLogger, runWithLogger } from '../observability/requestLoggerContext';
+import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
+import LeafRepository from '../DB/repositories/LeafRepository';
+import { Privileges } from '../DB/models/Plan';
+import UsageRepository from '../DB/repositories/UsageRepository';
+import { Usage } from '../DB/models/Usage';
 
-export function authorizeQuota(usages: Map<UsageField, number>): (req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>
-export function authorizeQuota(usages: Map<UsageField, number>, req: Request): Promise<boolean>
-export function authorizeQuota(usages: Map<UsageField, number>, req?: Request): Promise<boolean> | ((req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>) {
-    const log = getLogger().child({ module: 'authorization', middleware: 'authorizeQuota' });
-
-    log.debug({ usages })
-
-    async function temp(req: Request): Promise<boolean> {
-        try {
-            log.debug({ reqUser: req.user })
-            if (!req.user || !req.user.userData || !req.user.userId) {
-                log.info('Denied: no authenticated user on request');
-                return false;
-            }
-
-            const privileges = await runWithLogger(log, () => getPrivileges(req))
-            log.debug({ privileges })
-            if (!privileges) {
-                log.warn({ userId: req.user.userId }, 'Denied: could not resolve plan privileges');
-                return false
-            }
-
-            const usagesWithLimits = runWithLogger(log, () => collectLimitsForQuotas(usages, privileges))
-            log.debug({ usagesWithLimits })
-
-            const reserved = await runWithLogger(log, () => (new UsageRepository()).tryIncrementQuotas(req.user!.userId, usagesWithLimits))
-            log.debug({ reserved })
-            if (!reserved) {
-                log.info('Denied: quota exceeded');
-                return false;
-            }
-
-            // Stash rollback info in case the handler fails downstream
-            req.quotaReservations = req.quotaReservations ?? []
-            req.quotaReservations.push({ userId: req.user.userId, usages });
-            log.info('Reserved quota for potential rollback');
-
-            log.info('request is authorized');
-            return true
-        } catch (error) {
-            log.error({ err: error }, 'authorizeQuota (direct-call form) threw synchronously');
-            return new Promise<boolean>((resolve, reject) => { resolve(false) })
-        }
-    }
-
-    if (req)
-        return temp(req)
-    else
-        return async (req: Request, res: Response, next: NextFunction) => {
-            try {
-                const result = await temp(req)
-                if (result !== true) {
-                    log.debug({ result })
-                    log.info('Request is unauthorized')
-                    return res.status(402).json({
-                        status: 'error',
-                        error_code: 'QUOTA_EXCEEDED',
-                    });
-                }
-
-                log.info('Request is authorized')
-                next();
-            } catch (error) {
-                next(error)
-            }
-        };
-}
-
-function collectLimitsForQuotas(quotas: Map<UsageField, number>, privileges: Privileges): Map<UsageField, { amount: number; limit: number; }> {
-    const log = getLogger().child({ step: 'collectLimitsForQuotas' });
-
-    log.debug({ quotas, privileges })
-
-    const newQuotas: Map<UsageField, { amount: number, limit: number }> = new Map()
-
-    for (const [field, amount] of quotas.entries()) {
-        const limit = resolveQuotaField(field).includes('.')
-            ? (privileges as any)[field.split('.')[0]][field.split('.')[0]]
-            : privileges[field as keyof Privileges];
-
-        if (limit === null || limit === undefined)
-            throw new Error(`UNDEFINED_PRIVILEGE_QUOTA_LIMIT: ${field}`)
-
-        newQuotas.set(field, { amount, limit })
-    }
-
-    log.debug({ newQuotas })
-    log.info('Limitations collected')
-    return newQuotas
-}
-
-export function authorizeFeature(featureFields: FeatureField[]): (req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>
-export function authorizeFeature(featureFields: FeatureField[], req: Request): Promise<boolean>
-export function authorizeFeature(featureFields: FeatureField[], req?: Request): Promise<boolean> | ((req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>) {
-    const log = getLogger().child({ module: 'authorization', middleware: 'authorizeFeature' });
-
-    log.debug({ featureFields })
-
-    async function temp(req: Request): Promise<boolean> {
-        try {
-            log.debug({ reqUser: req.user })
-            if (!req.user || !req.user.userData || !req.user.userId) {
-                log.info('Denied: no authenticated user on request');
-                return false
-            }
-
-            const privileges = await runWithLogger(log, () => getPrivileges(req))
-            log.debug({ privileges })
-            if (!privileges) {
-                log.warn({ userId: req.user.userId }, 'Denied: could not resolve plan privileges');
-                return false
-            }
-
-            for (const featureField of featureFields) {
-                const isAllowed = featureField.includes('.')
-                    ? (privileges as any)[featureField.split('.')[0]][featureField.split('.')[0]]
-                    : privileges[featureField as keyof Privileges];
-
-                if (!isAllowed) {
-                    log.info({ featureField }, 'Denied: feature not allowed on plan');
-                    return false
-                }
-            }
-
-            log.info('Request is authorized')
-            return true
-        } catch (err) {
-            log.error({ error: err }, 'authorizeFeature (direct-call form) threw');
-            return new Promise<boolean>((resolve, reject) => { resolve(false) })
-        }
-    }
-
-    if (req)
-        return temp(req)
-    else
-        return async (req: Request, res: Response, next: NextFunction) => {
-            try {
-                const result = await temp(req)
-                if (result !== true) {
-                    log.debug({ result })
-                    log.info('Request is unauthorized')
-                    return res.status(402).json({
-                        status: 'error',
-                        error_code: 'QUOTA_EXCEEDED',
-                    });
-                }
-
-                log.info('Request is authorized')
-                next();
-            } catch (error) {
-                next(error)
-            }
-        };
-}
-
-export async function getUsage(req: Request): Promise<Usage | undefined> {
-    const log = getLogger().child({ module: 'authorization', fn: 'getUsage' });
-    try {
-        if (!req.user || !req.user.userData)
-            return undefined
-
-        if (!req.user.usages) {
-            const usages = await (new UsageRepository()).getByUserId(req.user!.userId);
-            if (!usages) {
-                log.warn({ userId: req.user.userId }, 'No usage record found for user');
-                return undefined
-            }
-
-            req.user.usages = usages
-        }
-
-        return req.user.usages
-    } catch (error) {
-        log.error({ err: error }, 'Failed to resolve usage');
-        return undefined
-    }
-}
-
-export async function getPrivileges(req: Request): Promise<Privileges | undefined> {
-    const log = getLogger().child({ step: 'getPrivileges' });
+export async function authorizeStorageQuota(req: Request, bytes: number, usage?: Usage, res?: Response) {
+    const log = getLogger().child({ step: 'authorizeStorageQuota' });
 
     try {
-        log.debug({ reqUser: req.user })
-        if (!req.user || !req.user.userData) {
-            log.info('Unauthenticated request')
-            return undefined
+        log.debug({ reqUser: req.user, bytes })
+
+        if (!req.user || !req.user.userData || !req.user.userId) {
+            log.info('Denied: no authenticated user on request');
+            return res?.status(401).json({ status: 'error', error_code: 'UNAUTHENTICATED' }) ?? false;
         }
 
         if (!req.user.privileges) {
-            const userPlan = await runWithLogger(log, () => (new PlanRepository()).getByTitle(req.user!.userData.planTitle))
-            log.debug({ userPlan })
-            if (!userPlan) {
-                log.error("No plan found matching user's planTitle");
-                return undefined
-            }
-
-            req.user.privileges = userPlan.privileges
+            log.info('Denied: user has no active subscription');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
         }
 
-        log.info("Matching plan for user's planTitle has been found");
-        return req.user.privileges
-    } catch (error) {
-        log.error({ err: error }, 'Failed to resolve privileges');
-        return undefined
+        const maxTotalStorageBytes = req.user!.privileges!.storageBytes;
+        log.debug({ maxTotalStorageBytes }, 'Resolved plan storage limit');
+
+        const usageRepository = new UsageRepository()
+
+        const usageUpdateResult = await runWithLogger(log, () => usageRepository.tryIncrementStorageQuota(req.user!.userId, bytes, maxTotalStorageBytes))
+        log.debug({ usageUpdateResult })
+        if (!usageUpdateResult) {
+            log.info({ bytes }, 'Rejected video upload: exceeds plan storage limit')
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        log.info('Storage quota authorized')
+        return true
+    } catch (err) {
+        log.error({ err }, 'caught error in authorizeStorageQuota function')
+        return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
     }
 }
 
-export async function rollbackQuota(usages: Map<UsageField, number>, req: Request): Promise<boolean> {
-    const log = getLogger().child({ step: 'rollbackQuota' });
+export async function rollbackStorageQuota(req: Request, bytes: number) {
+    const log = getLogger().child({ step: 'authorizeStorageQuota' });
 
-    log.debug({ usages: Object.fromEntries(usages) })
+    try {
+        log.debug({ reqUser: req.user, bytes })
 
-    const privileges = await runWithLogger(log, () => getPrivileges(req))
-    log.debug({ privileges })
-    if (!privileges) {
-        log.warn({ userId: req.user?.userId }, 'Could not roll back quota: privileges unresolved');
+        if (!req.user || !req.user.userData || !req.user.userId) {
+            log.info('Denied: no authenticated user on request');
+            return false
+        }
+
+        if (!req.user.privileges) {
+            log.info('Denied: user has no active subscription');
+            return false
+        }
+
+        const usageRepository = new UsageRepository()
+
+        await runWithLogger(log, () => usageRepository.decrementStorageQuota(req.user!.userId, bytes))
+
+        return true
+    } catch (err) {
+        log.error({ err }, 'failed to decrement user usage')
         return false
     }
-
-    const reserved = await runWithLogger(log, () => (new UsageRepository()).decrementQuotas(req.user!.userId, usages))
-    log.debug({ decrementQuotasResult: reserved })
-    if (!reserved.acknowledged) {
-        log.error({ userId: req.user!.userId, usages: Object.fromEntries(usages) }, 'Quota rollback not acknowledged by DB');
-        return false
-    }
-
-    log.info('Rolled back quota');
-    return true
 }
 
 /**
- * Mount this once, globally, before your routers. Watches every response
- * and rolls back any quota reservations made during the request if the
- * final status isn't 2xx — including client-aborted connections, which
- * never get a real status code written.
+ * 
+ * @param req 
+ * @param level 
+ * @param categoriesToAdd 
+ * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
+ * @param categoriesPerNestedLevelCount 
+ * @returns 
  */
-export function rollbackQuotaOnFailure(req: Request, res: Response, next: NextFunction) {
-    let handled = false;
+export async function authorizeCategoriesPerNestedLevel(req: Request, level: number, categoriesToAdd: number, res?: Response, categoriesPerNestedLevelCount?: number): Promise<boolean | Response<any, Record<string, any>>> {
+    const log = getLogger().child({ step: 'authorizeCategoriesPerNestedLevel' });
 
-    const maybeRollback = async (aborted: boolean) => {
-        const log = getLogger().child({ step: 'rollbackQuotaOnFailure' });
+    try {
+        log.debug({ reqUser: req.user })
 
-        if (handled) {
-            log.info('rollback is already being handled, returning')
-            return;
-        }
-        handled = true;
-
-        const isFailure = aborted || res.statusCode < 200 || res.statusCode >= 300;
-        if (!isFailure) {
-            log.info('response has not failed, returning')
-            return;
+        if (!req.user || !req.user.userData || !req.user.userId) {
+            log.info('Denied: no authenticated user on request');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
         }
 
-        const reservations = req.quotaReservations;
-        if (!reservations || reservations.length === 0) {
-            log.info('there is no reserved quota to rollback, returning')
-            return;
+        if (!req.user.privileges) {
+            log.info('Denied: user has no active subscription');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
         }
 
-        log.debug({ statusCode: res.statusCode, aborted, reservationCount: reservations.length })
-        log.info('Rolling back quota reservations after failed response')
+        const tr = new TreeNodeRepository
 
-        await Promise.allSettled(
-            reservations.map((r) =>
-                runWithLogger(log, () => rollbackQuota(r.usages, req))
-                    .catch((err) => {
-                        log.error({ err, userId: r.userId, usages: r.usages }, 'Failed to rollback quota');
-                    })
-            )
-        );
-    };
+        categoriesPerNestedLevelCount = categoriesPerNestedLevelCount ?? await runWithLogger(log, () => tr.countCategoriesPerNestedLevelForUser(req.user!.userId, level))
+        log.debug({ categoriesPerNestedLevelCount })
 
-    // Normal completion — check the actual status code.
-    res.once('finish', () => { void maybeRollback(false); });
-    // Client disconnected before the response finished (e.g. an aborted
-    // upload) — res.statusCode may still be the default 200 here even
-    // though nothing was actually delivered, so treat this as a failure
-    // unconditionally when the response never completed.
-    res.once('close', () => { void maybeRollback(!res.writableEnded); });
+        if (typeof categoriesPerNestedLevelCount === 'number' && (categoriesPerNestedLevelCount + categoriesToAdd) >= req.user.privileges.categoriesPerNestedLevel) {
+            log.info('Request is unauthorized')
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
 
-    next();
+        log.info('Request is authorized')
+        return true
+    } catch (err) {
+        log.error({ err }, 'caught error in authorizeCategoriesPerNestedLevel function')
+        return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+    }
+}
+
+/**
+ * 
+ * @param req 
+ * @param nestedLevelsToAdd 
+ * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
+ * @param nestedLevelsCount 
+ * @returns 
+ */
+export async function authorizeNestedLevels(req: Request, nestedLevelsToAdd: number = 1, res?: Response, nestedLevelsCount?: number): Promise<boolean | Response<any, Record<string, any>>> {
+    const log = getLogger().child({ step: 'authorizeNestedLevels' });
+
+    try {
+        log.debug({ reqUser: req.user })
+
+        if (!req.user || !req.user.userData || !req.user.userId) {
+            log.info('Denied: no authenticated user on request');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        if (!req.user.privileges) {
+            log.info('Denied: user has no active subscription');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        const tr = new TreeNodeRepository
+
+        nestedLevelsCount = nestedLevelsCount ?? await runWithLogger(log, () => tr.countMaxNestedLevelsForUser(req.user!.userId))
+        log.debug({ nestedLevelsCount })
+
+        if (typeof nestedLevelsCount === 'number' && (nestedLevelsCount + nestedLevelsToAdd) >= req.user.privileges.nestedLevels) {
+            log.info('Request is unauthorized')
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        log.info('Request is authorized')
+        return true
+    } catch (err) {
+        log.error({ err }, 'caught error in authorizeNestedLevels function')
+        return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+    }
+}
+
+/**
+ * 
+ * @param req 
+ * @param categoryId 
+ * @param cardsToAdd 
+ * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
+ * @returns 
+ */
+export async function authorizeCardsPerCategory(req: Request, categoryId: string, cardsToAdd: number = 1, res: Response): Promise<boolean | Response<any, Record<string, any>>> {
+    const log = getLogger().child({ step: 'authorizeCardsPerCategory' });
+
+    try {
+        log.debug({ reqUser: req.user })
+
+        if (!req.user || !req.user.userData || !req.user.userId) {
+            log.info('Denied: no authenticated user on request');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false
+        }
+
+        if (!req.user.privileges) {
+            log.info('Denied: user has no active subscription');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false
+        }
+
+        const lr = new LeafRepository
+
+        const cardsPerCategory: number | undefined = await runWithLogger(log, () => lr.countCardsPerCategoryForUser(req.user!.userId, categoryId))
+        log.debug({ cardsPerCategory })
+
+        if (typeof cardsPerCategory === 'number' && (cardsPerCategory + cardsToAdd) >= req.user.privileges.cardsPerCategory) {
+            log.info('Request is unauthorized')
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        log.info('Request is authorized')
+        return true
+    } catch (err) {
+        log.error({ err }, 'caught error in authorizeCardsPerCategory function')
+        return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false
+    }
+}
+
+/**
+ * 
+ * @param req 
+ * @param leafId 
+ * @param isTerm 
+ * @param contentsToAdd 
+ * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
+ * @param contentsPerCardSideCount 
+ * @returns 
+ */
+export async function authorizeContentsPerCardSide(req: Request, leafId: string, isTerm: boolean, contentsToAdd: number = 1, res?: Response, contentsPerCardSideCount?: number): Promise<boolean | Response<any, Record<string, any>>> {
+    const log = getLogger().child({ step: 'authorizeContentsPerCardSide' });
+
+    try {
+        log.debug({ reqUser: req.user })
+
+        if (!req.user || !req.user.userData || !req.user.userId) {
+            log.info('Denied: no authenticated user on request');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        if (!req.user.privileges) {
+            log.info('Denied: user has no active subscription');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        const lr = new LeafRepository
+
+        contentsPerCardSideCount = contentsPerCardSideCount ?? await runWithLogger(log, () => lr.countContentsPerCardSideForUser(req.user!.userId, leafId, isTerm))
+        log.debug({ contentsPerCardSideCount })
+
+        if (typeof contentsPerCardSideCount === 'number' && (contentsPerCardSideCount + contentsToAdd) >= req.user.privileges.contentsPerCardSide) {
+            log.info('Request is unauthorized')
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        log.info('Request is authorized')
+        return true
+    } catch (err) {
+        log.error({ err }, 'caught error in authorizeContentsPerCardSide function')
+        return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+    }
+}
+
+/**
+ * 
+ * @param req 
+ * @param leafId 
+ * @param isTerm 
+ * @param content 
+ * @param valuePerContentCount 
+ * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
+ * @param valuesToAdd 
+ * @returns 
+ */
+export async function authorizeValuePerContent(req: Request, leafId: string, isTerm: boolean, content: keyof Privileges['valuePerContent'], valuePerContentCount: number, res?: Response, valuesToAdd: number = 1): Promise<boolean | Response<any, Record<string, any>>> {
+    const log = getLogger().child({ step: 'authorizeValuePerContent' });
+
+    try {
+
+        log.debug({ reqUser: req.user, leafId, isTerm, content, valuePerContentCount, valuesToAdd })
+
+        if (!req.user || !req.user.userData || !req.user.userId) {
+            log.info('Denied: no authenticated user on request');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        if (!req.user.privileges) {
+            log.info('Denied: user has no active subscription');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        if ((valuePerContentCount + valuesToAdd) >= req.user.privileges.valuePerContent[content]) {
+            log.info('Request is unauthorized')
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        log.info('Request is authorized')
+        return true
+    } catch (err) {
+        log.error({ err }, 'caught error in authorizeValuePerContent function')
+        return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+    }
+}
+
+/**
+ * 
+ * @param req 
+ * @param contentType 
+ * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
+ * @returns 
+ */
+export function authorizeAllowedContentTypes(req: Request, contentType: keyof Privileges['allowedContentTypes'], res?: Response): boolean | Response<any, Record<string, any>> {
+    const log = getLogger().child({ step: 'authorizeAllowedContentTypes' });
+
+    try {
+        log.debug({ reqUser: req.user, contentType })
+
+        if (!req.user || !req.user.userData || !req.user.userId) {
+            log.info('Denied: no authenticated user on request');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        if (!req.user.privileges) {
+            log.info('Denied: user has no active subscription');
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        if (req.user.privileges.allowedContentTypes[contentType]) {
+            log.info('Request is unauthorized')
+            return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+        }
+
+        log.info('Request is authorized')
+        return true
+    } catch (err) {
+        log.error({ err }, 'caught error in authorizeAllowedContentTypes function')
+        return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
+    }
 }

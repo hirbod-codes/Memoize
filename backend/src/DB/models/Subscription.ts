@@ -1,5 +1,6 @@
 import { InferType, number, object, string } from 'yup';
 import { likeObjectId, priceSchema } from '../common_schemas';
+import { privilegesSchema } from './Plan';
 
 export const collectionName = 'subscription'
 
@@ -19,6 +20,8 @@ const create = {
 
     planTitle: string().required().label('Plan title'),
 
+    privileges: privilegesSchema.required(),
+
     status: statusSchema.required(),
 
     duration: subscriptionDurationSchema.required(),
@@ -37,6 +40,8 @@ const update = {
     schemaVersion: string().optional().min(6).max(20),
 
     status: statusSchema.optional(),
+
+    privileges: privilegesSchema.optional(),
 
     duration: subscriptionDurationSchema.optional(),
 
@@ -63,6 +68,8 @@ export const subscriptionSchema = object().shape({
     userId: string().required(),
 
     planTitle: string().required().label('Plan title'),
+
+    privileges: privilegesSchema.required(),
 
     status: statusSchema.required(),
 

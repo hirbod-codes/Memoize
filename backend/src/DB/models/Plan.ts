@@ -1,6 +1,5 @@
 import { boolean, InferType, number, object, string } from 'yup';
 import { likeObjectId } from '../common_schemas';
-import { UsageField } from './Usage';
 
 export const collectionName = 'plan'
 
@@ -15,13 +14,13 @@ const priceSchema = object().shape({
     ETH: number().required().integer().min(0),
 })
 
-const privilegesSchema = object().shape({
-    maxCategories: positiveInteger.required(),
-    maxNestedCategories: positiveInteger.required(),
-    maxCardsPerCategory: positiveInteger.required(),
-    maxContentsPerCardSide: positiveInteger.required(),
-    maxStorageBytes: positiveInteger.required(),
-    maxValuePerContent: object().required().shape({
+export const privilegesSchema = object().shape({
+    categoriesPerNestedLevel: positiveInteger.required(),
+    nestedLevels: positiveInteger.required(),
+    cardsPerCategory: positiveInteger.required(),
+    contentsPerCardSide: positiveInteger.required(),
+    storageBytes: positiveInteger.required(),
+    valuePerContent: object().required().shape({
         string: positiveInteger.required(),
         richText: positiveInteger.required(),
         image: positiveInteger.required(),
@@ -78,9 +77,6 @@ export const planSchema = object().shape({
 })
 
 export type Privileges = InferType<typeof privilegesSchema>
-export type QuotaField = Exclude<keyof Privileges, 'allowedContentTypes' | 'maxValuePerContent'> | `maxValuePerContent.${keyof Privileges['maxValuePerContent'] & string}`
-export type FeatureField = `allowedContentTypes.${keyof Privileges['allowedContentTypes'] & string}`
-
 export type PlanPost = InferType<typeof planPostSchema>
 export type PlanCreate = InferType<typeof planCreateSchema>
 export type PlanUpdate = InferType<typeof planUpdateSchema>

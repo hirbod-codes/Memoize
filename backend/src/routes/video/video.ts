@@ -8,27 +8,33 @@ import { basename, join } from 'path'
 import { generateThumbnail, generateWebCompatibleCopy, probeFile } from '../../ffmpeg';
 import { generateStreamToken, verifyStreamToken } from '../../lib/signed_urls';
 import { s3 } from '../..';
-import { authorizeFeature, authorizeQuota } from '../../middlewares/authorization';
 import { mkdir, rm, stat, unlink } from 'fs/promises';
 import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../../lib/file_management';
 import { InvalidMediaError } from '../../errors/InvalidMediaError';
 import { UploadTooLargeError } from '../../errors/UploadTooLargeError';
 import { pipeline } from 'stream/promises';
-import { UsageField } from '../../DB/models/Usage';
 import { infoSchema, listSchema, postSchema, signedTokenSchema, thumbnailSchema, videoDeleteSchema, videoStreamForWebClientsSchema, videoStreamSchema } from './schemas';
 import { handleError, validate } from '../../lib';
 import { streamVideoFile } from './lib';
 import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
+import UsageRepository from '../../DB/repositories/UsageRepository';
+import { Usage } from '../../DB/models/Usage';
+import { authorizeAllowedContentTypes, authorizeStorageQuota, rollbackStorageQuota } from '../../middlewares/authorization';
 
 const router = express.Router();
 
 const ALLOWED_VIDEO_CODECS = new Set(['h264', 'hevc', 'vp9', 'av1', 'mpeg4']);
 
-router.post('/', auth, authorizeFeature(['allowedContentTypes.video']), authorizeQuota(new Map([['valuePerContentCount.video', 1]])), async (req, res) => {
+router.post('/', auth, async (req, res) => {
     let log = getLogger().child({ module: 'video', route: 'POST /api/video/' });
 
     try {
         log.info('Video upload request received');
+
+        if (authorizeAllowedContentTypes(req, 'video', res) !== true) {
+            log.info('authorization of allowed content types has failed')
+            return
+        }
 
         log.debug({ query: req.query });
         const { fileName, title } = await runWithLogger(log, () => validate(postSchema, req.query))
@@ -39,6 +45,7 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.video']), authoriz
         log.debug({ userId });
 
         const videoRepository = new VideoRepository();
+        const usageRepository = new UsageRepository();
 
         // ------------------------------------------------------------------------- Checking whether title already exists...
         log.info('Checking whether title already exists...')
@@ -95,13 +102,23 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.video']), authoriz
 
         let rollbackPromises: undefined | Promise<any> = undefined
         try {
-            const maxTotalStorageBytes = req.user!.privileges!.maxStorageBytes;
+            // ------------------------------------------------------------------------- fetch available storage bytes for user from user subscription and usage
+            log.info('fetch available storage bytes for user from user subscription and usage')
+            const maxTotalStorageBytes = req.user!.privileges!.storageBytes;
             log.debug({ maxTotalStorageBytes }, 'Resolved plan storage limit');
+
+            const usage: Usage | undefined = await runWithLogger(log, () => usageRepository.getByUserId(userId))
+            log.debug({ usage })
+            if (!usage) {
+                log.error("failed to find authenticated user's usage data")
+                return res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
+            }
+            const allowedStorageBytes = maxTotalStorageBytes - usage.storageBytesCount
+            log.debug({ availableStorageBytes: allowedStorageBytes })
 
             // ------------------------------------------------------------------------- Store upload stream on disk
             log.info('Store upload stream on disk')
-
-            const { path: inputPath, size: inputSize } = await runWithLogger(log, () => receiveUpload(req, maxTotalStorageBytes, jobDir))
+            const { path: inputPath, size: inputSize } = await runWithLogger(log, () => receiveUpload(req, allowedStorageBytes, jobDir))
             log.debug({ inputSize, inputPath })
             log.info('Upload received and stored to disk')
             cleanupPaths.push(inputPath);
@@ -147,8 +164,8 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.video']), authoriz
             ]);
             log.info('done');
 
-            // ------------------------------------------------------------------------- Validate generated file sizes
-            log.info('Validate generated file sizes')
+            // ------------------------------------------------------------------------- authorize generated file sizes
+            log.info('authorize generated file sizes')
 
             const [webCopyStat, thumbnailStat] = await Promise.all([
                 stat(webCopyPath),
@@ -160,12 +177,11 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.video']), authoriz
             log.debug({ inputSize, webCopySize: webCopyStat.size, thumbnailSize: thumbnailStat.size, totalStorageBytes });
             log.info('Computed total storage footprint')
 
-            const quota = new Map<UsageField, number>([['storageBytesCount', totalStorageBytes]])
-            if (await runWithLogger(log, () => authorizeQuota(quota, req)) !== true) {
-                log.info({ totalStorageBytes }, 'Rejected video upload: exceeds plan storage limit');
-                throw new UploadTooLargeError('Generated files exceed plan storage limit');
+            if ((await authorizeStorageQuota(req, totalStorageBytes, undefined, res)) !== true) {
+                log.info({ totalStorageBytes }, 'Rejected video upload: exceeds plan storage limit')
+                throw new UploadTooLargeError('Generated files exceed plan storage limit')
             }
-            log.debug('Storage quota authorized');
+            log.info('Storage quota authorized')
 
             try {
                 // ------------------------------------------------------------------------- Upload files to the S3 compatible object storage
@@ -189,26 +205,23 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.video']), authoriz
                     throw new Error('failed to upload video')
                 }
                 log.info('Updated video record');
-
-                // Work is durably done — clear reservations so the response-based rollback middleware becomes a no-op for this request no matter what happens to the connection from here on.
-                // The connection might drop at this exact moment, which fires the res.on('close') and causes rollbackQuotaOnFailure middleware to rollback although content is properly uploaded and stored(a false alarm).
-                req.quotaReservations = []
                 log.info('Video upload finalized')
             } catch (error) {
-                log.error({ err: error }, 'Post-upload finalization failed, rolling back stored artifacts')
+                log.error({ err: error }, 'Post-upload finalization failed, rolling back stored artifacts and decrementing user usage')
 
                 rollbackPromises = Promise.allSettled([
-                    runWithLogger(log, () => deleteFromS3(videoFileBucketKey)).catch((_) => { }),
-                    runWithLogger(log, () => deleteFromS3(webCompatibleVideoFileBucketKey)).catch((_) => { }),
-                    runWithLogger(log, () => deleteFromS3(thumbnailBucketKey)).catch((_) => { }),
-                    runWithLogger(log, () => videoRepository.delete(videoId)).catch((_) => { })
+                    runWithLogger(log, () => deleteFromS3(videoFileBucketKey)).catch((err) => { log.error({ err }, 'failed to delete video in cloud storage') }),
+                    runWithLogger(log, () => deleteFromS3(webCompatibleVideoFileBucketKey)).catch((err) => { log.error({ err }, 'failed to delete web compatible video in cloud storage') }),
+                    runWithLogger(log, () => deleteFromS3(thumbnailBucketKey)).catch((err) => { log.error({ err }, 'failed to delete thumbnail in cloud storage') }),
+                    runWithLogger(log, () => videoRepository.delete(videoId)).catch((err) => { log.error({ err }, 'failed to delete video info in db') }),
+                    runWithLogger(log, () => rollbackStorageQuota(req, totalStorageBytes)).catch((err) => { log.error({ err, userId, totalStorageBytes }, 'failed to decrement user usage') }),
                 ])
 
                 throw error
             }
         } catch (err) {
             if (err instanceof UploadTooLargeError) {
-                return res.status(403).json({ status: 'error', message: err.message });
+                return res.status(402).json({ status: 'error', message: err.message });
             } else if (err instanceof InvalidMediaError) {
                 return res.status(400).json({ status: 'error', message: err.message });
             } else {

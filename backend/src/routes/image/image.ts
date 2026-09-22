@@ -4,11 +4,11 @@ import { BUCKET_NAME, imageUploadTmpDir } from '../../configs';
 import ImageRepository from '../../DB/repositories/ImageRepository';
 import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { s3 } from '../..';
-import { authorizeFeature, authorizeQuota } from '../../middlewares/authorization';
+import { authorizeAllowedContentTypes, authorizeStorageQuota, rollbackStorageQuota } from '../../middlewares/authorization';
 import { join } from 'path';
 import { mkdir, rm, unlink } from 'fs/promises';
 import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../../lib/file_management';
-import { UsageField } from '../../DB/models/Usage';
+import { Usage } from '../../DB/models/Usage';
 import { UploadTooLargeError } from '../../errors/UploadTooLargeError';
 import { createReadStream } from 'fs';
 import { InvalidMediaError } from '../../errors/InvalidMediaError';
@@ -22,14 +22,20 @@ import {
     fileParamsSchema,
     deleteParamsSchema,
 } from './schemas';
+import UsageRepository from '../../DB/repositories/UsageRepository';
 
 const router = express.Router();
 
-router.post('/', auth, authorizeFeature(['allowedContentTypes.image']), authorizeQuota(new Map([['valuePerContentCount.image', 1]])), async (req, res) => {
+router.post('/', auth, async (req, res) => {
     let log = getLogger().child({ module: 'image', route: 'POST /api/image/' });
 
     try {
         log.info('Image upload request received');
+
+        if (authorizeAllowedContentTypes(req, 'image', res) !== true) {
+            log.info('authorization of allowed content types has failed')
+            return
+        }
 
         log.debug({ query: req.query });
         const { fileName, title } = await runWithLogger(log, () => validate(postImageSchema, req.query));
@@ -40,6 +46,7 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.image']), authoriz
         log = log.child({ userId });
 
         const imageRepository = new ImageRepository();
+        const usageRepository = new UsageRepository();
 
         // ------------------------------------------------------------------------- Checking weather title already exists...
         const image = await runWithLogger(log, () => imageRepository.getForUserByTitle(title, userId));
@@ -79,34 +86,50 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.image']), authoriz
 
         let rollbackPromises: undefined | Promise<any> = undefined;
         try {
-            const maxTotalStorageBytes = req.user!.privileges!.maxStorageBytes;
+            // ------------------------------------------------------------------------- fetch available storage bytes for user from user subscription and usage
+            log.info('fetch available storage bytes for user from user subscription and usage')
+            const maxTotalStorageBytes = req.user!.privileges!.storageBytes;
             log.debug({ maxTotalStorageBytes }, 'Resolved plan storage limit');
 
-            // ------------------------------------------------------------------------- Store upload stream on disk
-            const { path: inputPath, size: inputSize } = await runWithLogger(log, () => receiveUpload(req, maxTotalStorageBytes, jobDir));
+            const usage: Usage | undefined = await runWithLogger(log, () => usageRepository.getByUserId(userId))
+            log.debug({ usage })
+            if (!usage) {
+                log.error("failed to find authenticated user's usage data")
+                return res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
+            }
+            const allowedStorageBytes = maxTotalStorageBytes - usage.storageBytesCount
+            log.debug({ availableStorageBytes: allowedStorageBytes })
+
+            // ------------------------------------------------------------------------- store upload stream on disk
+            log.info('store upload stream on disk')
+            const { path: inputPath, size: inputSize } = await runWithLogger(log, () => receiveUpload(req, allowedStorageBytes, jobDir));
             cleanupPaths.push(inputPath);
             log.debug({ inputSize, inputPath });
             log.info('Upload received and stored to disk');
 
-            // ------------------------------------------------------------------------- Set bucket keys
+            // ------------------------------------------------------------------------- set bucket keys
+            log.info('set bucket keys')
             const imageFileBucketKey = `image/${userId}/${imageId}`;
             log.debug({ imageFileBucketKey });
             log.info('Computed bucket keys');
 
-            // ------------------------------------------------------------------------- Detect content type
+            // ------------------------------------------------------------------------- detect content type
+            log.info('detect content type')
             const contentType = await runWithLogger(log, () => detectContentType(inputPath));
             log.debug({ contentType });
             log.info('Detected content type');
 
-            // ------------------------------------------------------------------------- Validate generated file sizes
+            // ------------------------------------------------------------------------- authorize generated file sizes
+            log.info('authorize generated file sizes')
+
             const totalStorageBytes = inputSize;
             log.debug({ inputSize, totalStorageBytes }, 'Computed total storage footprint');
-            const quota = new Map<UsageField, number>([['storageBytesCount', totalStorageBytes]]);
-            if (await runWithLogger(log, () => authorizeQuota(quota, req)) !== true) {
-                log.info({ totalStorageBytes }, 'Rejected image upload: exceeds plan storage limit');
-                throw new UploadTooLargeError('Generated files exceed plan storage limit');
+
+            if ((await authorizeStorageQuota(req, totalStorageBytes, undefined, res)) !== true) {
+                log.info({ totalStorageBytes }, 'Rejected video upload: exceeds plan storage limit')
+                throw new UploadTooLargeError('Generated files exceed plan storage limit')
             }
-            log.info('Storage quota authorized');
+            log.info('Storage quota authorized')
 
             try {
                 // ------------------------------------------------------------------------- Upload files to the S3 compatible object storage
@@ -123,23 +146,20 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.image']), authoriz
                     throw new Error('failed to upload image');
                 }
                 log.info('Updated image record');
-
-                // Work is durably done — clear reservations so the response-based rollback middleware becomes a no-op for this request no matter what happens to the connection from here on.
-                // The connection might drop at this exact moment, which fires the res.on('close') and causes rollbackQuotaOnFailure middleware to rollback although content is properly uploaded and stored(a false alarm).
-                req.quotaReservations = [];
                 log.info({ totalStorageBytes }, 'Image upload finalized');
             } catch (error) {
                 log.error({ err: error }, 'Post-upload finalization failed, rolling back stored artifacts');
                 rollbackPromises = Promise.allSettled([
                     runWithLogger(log, () => deleteFromS3(imageFileBucketKey).catch((_) => { })),
                     runWithLogger(log, () => imageRepository.delete(imageId).catch((_) => { })),
+                    runWithLogger(log, () => rollbackStorageQuota(req, totalStorageBytes)).catch((err) => { log.error({ err, userId, totalStorageBytes }, 'failed to decrement user usage') }),
                 ]);
 
                 throw error;
             }
         } catch (err) {
             if (err instanceof UploadTooLargeError) {
-                res.status(403).json({ status: 'error', error: err.message });
+                res.status(402).json({ status: 'error', error: err.message });
             } else if (err instanceof InvalidMediaError) {
                 res.status(400).json({ status: 'error', error: err.message });
             } else {

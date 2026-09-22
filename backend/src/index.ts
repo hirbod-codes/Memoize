@@ -68,8 +68,7 @@ import { notFoundHandler } from './middlewares/notFoundHandler';
 import { errorHandler } from './middlewares/errorHandler';
 import { requestContextMiddleware } from './middlewares/requestContext';
 import { registerProcessErrorHandlers } from './middlewares/processErrorHandlers';
-import { rollbackQuotaOnFailure } from './middlewares/authorization';
-import { planGate } from './middlewares/planGate';
+import { subscriptionGate } from './middlewares/planGate';
 import { OtpFactory } from './services/OTP/OtpFactory';
 import { authRoutes } from './routes/auth/auth';
 import { planRoutes } from './routes/plan/plan';
@@ -200,9 +199,7 @@ export const payments = {
             res.send('test route' + (new Date()).toISOString());
         });
 
-    app.use(planGate)
-
-    app.use(rollbackQuotaOnFailure);
+    app.use(subscriptionGate)
 
     app.use('/api/auth', authRoutes);
     app.use('/api/user', userRoutes);

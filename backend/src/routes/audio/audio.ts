@@ -11,16 +11,17 @@ import { pipeline } from 'stream/promises';
 import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
 import { listQuerySchema, infoQuerySchema, signedTokenQuerySchema, ttsQuerySchema, fileParamsSchema, webFileParamsSchema, coverArtParamsSchema, deleteParamsSchema, postSchema } from './schemas';
 import { handleError, validate } from '../../lib';
-import { authorizeFeature, authorizeQuota } from '../../middlewares/authorization';
+import { authorizeAllowedContentTypes, authorizeStorageQuota, rollbackStorageQuota } from '../../middlewares/authorization';
 import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../../lib/file_management';
 import { extractCoverArt, generateWebCompatibleCopy, isWebCompatible, probeFile } from '../../ffmpeg';
 import { InvalidMediaError } from '../../errors/InvalidMediaError';
 import { join, basename } from 'path';
-import { UsageField } from '../../DB/models/Usage';
+import { Usage } from '../../DB/models/Usage';
 import { UploadTooLargeError } from '../../errors/UploadTooLargeError';
 import { mkdir, unlink, rm, stat } from 'fs/promises';
 import { createWriteStream, createReadStream } from 'fs';
 import { streamAudioFile } from './lib';
+import UsageRepository from '../../DB/repositories/UsageRepository';
 
 const router = express.Router();
 
@@ -29,11 +30,16 @@ const ALLOWED_AUDIO_CODECS = new Set([
     'pcm_s16le', 'pcm_s24le', 'pcm_f32le',
 ]);
 
-router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authorizeQuota(new Map([['valuePerContentCount.audio', 1]])), async (req, res) => {
+router.post('/', auth, async (req, res) => {
     let log = getLogger().child({ module: 'audio', route: 'POST /api/audio/' });
 
     try {
         log.info('audio upload request received');
+
+        if (authorizeAllowedContentTypes(req, 'audio', res) !== true) {
+            log.info('authorization of allowed content types has failed')
+            return
+        }
 
         log.debug({ query: req.query });
         const { fileName, title } = await runWithLogger(log, () => validate(postSchema, req.query))
@@ -43,6 +49,7 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authoriz
         const userId = req.user!.userId
         log = log.child({ userId });
 
+        const usageRepository = new UsageRepository();
         const audioRepository = new AudioRepository()
 
         // ------------------------------------------------------------------------- Checking weather title already exists...
@@ -82,11 +89,22 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authoriz
 
         let rollbackPromises: undefined | Promise<any> = undefined
         try {
-            const maxTotalStorageBytes = req.user!.privileges!.maxStorageBytes;
+            // ------------------------------------------------------------------------- fetch available storage bytes for user from user subscription and usage
+            log.info('fetch available storage bytes for user from user subscription and usage')
+            const maxTotalStorageBytes = req.user!.privileges!.storageBytes;
             log.debug({ maxTotalStorageBytes }, 'Resolved plan storage limit');
 
+            const usage: Usage | undefined = await runWithLogger(log, () => usageRepository.getByUserId(userId))
+            log.debug({ usage })
+            if (!usage) {
+                log.error("failed to find authenticated user's usage data")
+                return res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
+            }
+            const allowedStorageBytes = maxTotalStorageBytes - usage.storageBytesCount
+            log.debug({ availableStorageBytes: allowedStorageBytes })
+
             // ------------------------------------------------------------------------- Store upload stream on disk
-            const { path: inputPath, size: inputSize } = await runWithLogger(log, () => receiveUpload(req, maxTotalStorageBytes, jobDir))
+            const { path: inputPath, size: inputSize } = await runWithLogger(log, () => receiveUpload(req, allowedStorageBytes, jobDir))
             cleanupPaths.push(inputPath)
             log.debug({ inputSize, inputPath })
             log.info('Upload received and stored to disk')
@@ -152,13 +170,12 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authoriz
                 ...(isUploadWebCompatible ? [] : [stat(webCopyPath!)]),
             ]);
             const totalStorageBytes = inputSize + (webCopyStat ? webCopyStat.size : 0) + coverArtStat.size;
-            log.debug({ inputSize, webCopySize: webCopyStat?.size ?? 0, coverArtSize: coverArtStat.size, totalStorageBytes }, 'Computed total storage footprint');
-            const quota = new Map<UsageField, number>([['storageBytesCount', totalStorageBytes]])
-            if (await runWithLogger(log, () => authorizeQuota(quota, req)) !== true) {
-                log.info({ totalStorageBytes }, 'Rejected audio upload: exceeds plan storage limit');
-                throw new UploadTooLargeError('Generated files exceed plan storage limit');
+
+            if ((await authorizeStorageQuota(req, totalStorageBytes, undefined, res)) !== true) {
+                log.info({ totalStorageBytes }, 'Rejected video upload: exceeds plan storage limit')
+                throw new UploadTooLargeError('Generated files exceed plan storage limit')
             }
-            log.info('Storage quota authorized');
+            log.info('Storage quota authorized')
 
             try {
                 // ------------------------------------------------------------------------- Upload files to the S3 compatible object storage
@@ -179,25 +196,23 @@ router.post('/', auth, authorizeFeature(['allowedContentTypes.audio']), authoriz
                     throw new Error('failed to upload audio')
                 }
                 log.info('Updated audio record');
-
-                // Work is durably done — clear reservations so the response-based rollback middleware becomes a no-op for this request no matter what happens to the connection from here on.
-                // The connection might drop at this exact moment, which fires the res.on('close') and causes rollbackQuotaOnFailure middleware to rollback although content is properly uploaded and stored(a false alarm).
-                req.quotaReservations = []
                 log.info({ totalStorageBytes }, 'Audio upload finalized');
             } catch (error) {
                 log.error({ err: error }, 'Post-upload finalization failed, rolling back stored artifacts');
                 rollbackPromises = Promise.allSettled([
-                    runWithLogger(log, () => deleteFromS3(audioFileBucketKey).catch((_) => { })),
-                    ...(webCompatibleAudioFileBucketKey ? [runWithLogger(log, () => deleteFromS3(webCompatibleAudioFileBucketKey).catch((_) => { }))] : []),
-                    ...(coverArtResult ? [runWithLogger(log, () => deleteFromS3(coverArtBucketKey).catch((_) => { }))] : []),
-                    runWithLogger(log, () => audioRepository.delete(audioId).catch((_) => { })),
+                    runWithLogger(log, () => deleteFromS3(audioFileBucketKey).catch((err) => { log.error({ err }, 'deleting audio files from cloud storage failed') })),
+                    ...(webCompatibleAudioFileBucketKey ? [runWithLogger(log, () => deleteFromS3(webCompatibleAudioFileBucketKey).catch((err) => { log.error({ err }, 'deleting web compatible audio files from cloud storage failed') }))] : []),
+                    ...(coverArtResult ? [runWithLogger(log, () => deleteFromS3(coverArtBucketKey).catch((err) => { log.error({ err }, 'deleting cover art files from cloud storage failed') }))] : []),
+                    runWithLogger(log, () => audioRepository.delete(audioId).catch((err) => { log.error({ err }, 'deleting audio info from db failed') })),
+                    runWithLogger(log, () => audioRepository.delete(audioId).catch((err) => { log.error({ err }, 'deleting audio info from db failed') })),
+                    runWithLogger(log, () => rollbackStorageQuota(req, totalStorageBytes)).catch((err) => { log.error({ err, userId, totalStorageBytes }, 'failed to decrement user usage') }),
                 ])
 
                 throw error
             }
         } catch (err) {
             if (err instanceof UploadTooLargeError) {
-                res.status(403).json({ status: 'error', error: err.message });
+                res.status(402).json({ status: 'error', error: err.message });
             } else if (err instanceof InvalidMediaError) {
                 res.status(400).json({ status: 'error', error: err.message });
             } else {

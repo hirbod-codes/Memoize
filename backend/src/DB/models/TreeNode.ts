@@ -30,8 +30,11 @@ export const treeNodeSchema = object().required().shape(create).shape({
     schemaVersion: string().optional().min(6).max(20).label('Schema version'),
     _id: likeObjectId.optional().label('Id'),
 
-    userId: string().objectIdString().required().label('User id'),
     parentId: string().objectIdString().nullable().optional().label('Parent id'),
+    hierarchy: array().of(string().strict().required()).required().label('Hierarchy'),
+    hierarchyLevel: number().required().label('Hierarchy Level'), // for performance concerns
+
+    userId: string().objectIdString().required().label('User id'),
     title: string().required().label('Title'),
 
     createdAt: number().optional().label('Created at'),
