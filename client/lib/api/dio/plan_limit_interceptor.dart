@@ -1,4 +1,4 @@
-import 'package:client/plan/compnents/upgrade_dialog.dart';
+import 'package:client/plan/components/upgrade_dialog.dart';
 import 'package:client/api/root_navigator_key.dart';
 import 'package:dio/dio.dart';
 

@@ -17,7 +17,7 @@
 
 import 'package:client/account/models/user_info.dart';
 import 'package:client/account/user_info_notifier.dart';
-import 'package:client/plan/compnents/upgrade_dialog.dart';
+import 'package:client/plan/components/upgrade_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

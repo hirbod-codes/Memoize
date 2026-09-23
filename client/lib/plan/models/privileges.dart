@@ -1,13 +1,20 @@
 import 'package:client/plan/models/content_type_flags.dart';
 import 'package:client/plan/models/max_value_per_content.dart';
 
+// categoriesPerNestedLevel
+// nestedLevels
+// cardsPerCategory
+// contentsPerCardSide
+// storageBytes
+// valuePerContent
+// allowedContentTypes
 /// Mirrors `privilegesSchema`.
 class Privileges {
-  final int maxCategories;
-  final int maxNestedCategories;
-  final int maxCardsPerCategory;
-  final int maxContentsPerCardSide;
-  final int maxStorageBytes;
+  final int categoriesPerNestedLevel;
+  final int nestedLevels;
+  final int cardsPerCategory;
+  final int contentsPerCardSide;
+  final int storageBytes;
   final ContentTypeFlags allowedContentTypes;
 
   /// Per-content-type size caps (`maxValuePerContent`). Parsed but
@@ -15,35 +22,35 @@ class Privileges {
   /// page — it's an internal limit, not something a prospective user
   /// is comparing plans on. Kept here in case a future "full spec"
   /// comparison view wants it.
-  final MaxValuePerContent maxValuePerContent;
+  final MaxValuePerContent valuePerContent;
 
   const Privileges({
-    required this.maxCategories,
-    required this.maxNestedCategories,
-    required this.maxCardsPerCategory,
-    required this.maxContentsPerCardSide,
-    required this.maxStorageBytes,
+    required this.categoriesPerNestedLevel,
+    required this.nestedLevels,
+    required this.cardsPerCategory,
+    required this.contentsPerCardSide,
+    required this.storageBytes,
     required this.allowedContentTypes,
-    required this.maxValuePerContent,
+    required this.valuePerContent,
   });
 
   factory Privileges.fromJson(Map<String, dynamic> json) => Privileges(
-    maxCategories: json['maxCategories'] as int,
-    maxNestedCategories: json['maxNestedCategories'] as int,
-    maxCardsPerCategory: json['maxCardsPerCategory'] as int,
-    maxContentsPerCardSide: json['maxContentsPerCardSide'] as int,
-    maxStorageBytes: json['maxStorageBytes'] as int,
+    categoriesPerNestedLevel: json['categoriesPerNestedLevel'] as int,
+    nestedLevels: json['nestedLevels'] as int,
+    cardsPerCategory: json['cardsPerCategory'] as int,
+    contentsPerCardSide: json['contentsPerCardSide'] as int,
+    storageBytes: json['storageBytes'] as int,
     allowedContentTypes: ContentTypeFlags.fromJson(json['allowedContentTypes'] as Map<String, dynamic>),
-    maxValuePerContent: MaxValuePerContent.fromJson(json['maxValuePerContent'] as Map<String, dynamic>),
+    valuePerContent: MaxValuePerContent.fromJson(json['valuePerContent'] as Map<String, dynamic>),
   );
 
   Map<String, dynamic> toJson() => {
-    'maxCategories': maxCategories,
-    'maxNestedCategories': maxNestedCategories,
-    'maxCardsPerCategory': maxCardsPerCategory,
-    'maxContentsPerCardSide': maxContentsPerCardSide,
-    'maxStorageBytes': maxStorageBytes,
+    'categoriesPerNestedLevel': categoriesPerNestedLevel,
+    'nestedLevels': nestedLevels,
+    'cardsPerCategory': cardsPerCategory,
+    'contentsPerCardSide': contentsPerCardSide,
+    'storageBytes': storageBytes,
     'allowedContentTypes': allowedContentTypes.toJson(),
-    'maxValuePerContent': maxValuePerContent.toJson(),
+    'valuePerContent': valuePerContent.toJson(),
   };
 }

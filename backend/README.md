@@ -118,3 +118,4 @@ Ctrl + C DOES NOT work to terminate the app, run `taskkill /IM node.exe /F` on w
 13. add forgot password and email and phone number change routes and ui
 14. enable localization aware builds and deployments
 15. implement smtp
+16. add payment for storage quota

@@ -65,69 +65,69 @@ extension PlanCapabilities on UserInfo {
     final plan = _getPlan(ref);
     if (plan == null) return false;
 
-    return currentCount >= plan.privileges.maxCardsPerCategory;
+    return currentCount >= plan.privileges.cardsPerCategory;
   }
 
   bool maxCategoriesReached(WidgetRef ref, int currentCount) {
     final plan = _getPlan(ref);
     if (plan == null) return false;
 
-    return currentCount >= plan.privileges.maxCategories;
+    return currentCount >= plan.privileges.categoriesPerNestedLevel;
   }
 
   bool maxContentsPerCardSide(WidgetRef ref, int currentCount) {
     final plan = _getPlan(ref);
     if (plan == null) return false;
 
-    return currentCount >= plan.privileges.maxContentsPerCardSide;
+    return currentCount >= plan.privileges.contentsPerCardSide;
   }
 
   bool maxNestedCategoriesReached(WidgetRef ref, int currentCount) {
     final plan = _getPlan(ref);
     if (plan == null) return false;
 
-    return currentCount >= plan.privileges.maxNestedCategories;
+    return currentCount >= plan.privileges.nestedLevels;
   }
 
   bool maxStorageBytesReached(WidgetRef ref, int currentCount) {
     final plan = _getPlan(ref);
     if (plan == null) return false;
 
-    return currentCount >= plan.privileges.maxStorageBytes;
+    return currentCount >= plan.privileges.storageBytes;
   }
 
   bool maxValuePerContentStringReached(WidgetRef ref, int currentCount) {
     final plan = _getPlan(ref);
     if (plan == null) return false;
 
-    return currentCount >= plan.privileges.maxValuePerContent.string;
+    return currentCount >= plan.privileges.valuePerContent.string;
   }
 
   bool maxValuePerContentRichTextReached(WidgetRef ref, int currentCount) {
     final plan = _getPlan(ref);
     if (plan == null) return false;
 
-    return currentCount >= plan.privileges.maxValuePerContent.richText;
+    return currentCount >= plan.privileges.valuePerContent.richText;
   }
 
   bool maxValuePerContentImageReached(WidgetRef ref, int currentCount) {
     final plan = _getPlan(ref);
     if (plan == null) return false;
 
-    return currentCount >= plan.privileges.maxValuePerContent.image;
+    return currentCount >= plan.privileges.valuePerContent.image;
   }
 
   bool maxValuePerContentAudioReached(WidgetRef ref, int currentCount) {
     final plan = _getPlan(ref);
     if (plan == null) return false;
 
-    return currentCount >= plan.privileges.maxValuePerContent.audio;
+    return currentCount >= plan.privileges.valuePerContent.audio;
   }
 
   bool maxValuePerContentVideoReached(WidgetRef ref, int currentCount) {
     final plan = _getPlan(ref);
     if (plan == null) return false;
 
-    return currentCount >= plan.privileges.maxValuePerContent.video;
+    return currentCount >= plan.privileges.valuePerContent.video;
   }
 }

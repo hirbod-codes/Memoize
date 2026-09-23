@@ -260,5 +260,6 @@
   "limit_reached": "Sie haben das Limit Ihres aktuellen Tarifs erreicht. Führen Sie ein Upgrade durch, um fortzufahren.",
   "upgrade_required": "Upgrade erforderlich",
   "notNow": "Nicht jetzt",
-  "upgrade": "Upgrade"
+  "upgrade": "Upgrade",
+  "sentence": "Satz"
 }

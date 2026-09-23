@@ -5,14 +5,9 @@ export const collectionName = 'leaf'
 
 export const schemaVersion = 'v1.0.0'
 
-const contentTypesSchema = string().oneOf(['string', 'richText', 'imageId', 'videoId', 'audioId'])
-const contentSchema = object().shape({ type: contentTypesSchema.required(), value: array().of(string().nonUndefined().optional().nonNullable()).required().min(0) })
-const contentsSchema = array().of(contentSchema.required())
-
-const post = {
-    treeNodeId: string().objectIdString().required().label('Tree node id'),
-    title: string().required().label('Title'),
-}
+export const contentTypesSchema = string().oneOf(['string', 'richText', 'imageId', 'videoId', 'audioId'])
+export const contentSchema = object().shape({ type: contentTypesSchema.required(), value: array().of(string().nonUndefined().optional().nonNullable()).required().min(0) })
+export const contentsSchema = array().of(contentSchema.required())
 
 const update = {
     _id: string().objectIdString().required().label('Id'),
@@ -30,7 +25,6 @@ const leafCreate = {
     definitionContents: contentsSchema.required().min(0).label('Definition contents'),
 }
 
-export const leafPostSchema = object().required().shape(post)
 
 export const leafCreateSchema = object().required().shape(leafCreate)
 
@@ -51,11 +45,11 @@ export const leafSchema = object().required().shape(leafCreate).shape({
     updatedAt: number().optional().label('Updated at'),
 });
 
-export type ContentTypes = InferType<typeof contentTypesSchema>
+let t = contentTypesSchema.required()
+export type ContentTypes = InferType<typeof t>
 export type Content = InferType<typeof contentSchema>
 export type Contents = InferType<typeof contentsSchema>
 
-export type LeafPost = InferType<typeof leafPostSchema>
 export type LeafCreate = InferType<typeof leafCreateSchema>
 export type LeafUpdate = InferType<typeof leafUpdateSchema>
 

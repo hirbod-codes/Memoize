@@ -260,5 +260,6 @@
   "limit_reached": "You've reached a limit on your current plan. Upgrade to keep going.",
   "upgrade_required": "Upgrade required",
   "notNow": "Not now",
-  "upgrade": "Upgrade"
+  "upgrade": "Upgrade",
+  "sentence": "sentence"
 }

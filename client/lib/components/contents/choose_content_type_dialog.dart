@@ -1,6 +1,8 @@
 import 'package:client/api/models/leaf.dart';
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
+import 'package:client/plan/components/plan_locked_widgets.dart';
+import 'package:client/plan/plan_capabilities.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,7 +44,40 @@ class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
                 initialValue: selected,
                 decoration: InputDecoration(labelText: l10n.option, border: OutlineInputBorder()),
                 items: ContentType.values.map((m) {
-                  return DropdownMenuItem(value: m, child: Text(Content.stringifyContentType(m).replaceAll('Id', '')));
+                  Widget text;
+                  switch (m) {
+                    case ContentType.imageId:
+                      text = Text(l10n.image);
+                    case ContentType.audioId:
+                      text = Text(l10n.audio);
+                    case ContentType.videoId:
+                      text = Text(l10n.video);
+                    case ContentType.string:
+                      text = Text(l10n.sentence);
+                    case ContentType.richText:
+                      text = Text(l10n.richText);
+                  }
+
+                  return DropdownMenuItem(
+                    value: m,
+                    child: PlanLocked(
+                      isLocked: (ui) {
+                        switch (m) {
+                          case ContentType.imageId:
+                            return ui?.isImageContentAllowed(ref) ?? false;
+                          case ContentType.audioId:
+                            return ui?.isAudioContentAllowed(ref) ?? false;
+                          case ContentType.videoId:
+                            return ui?.isVideoContentAllowed(ref) ?? false;
+                          case ContentType.string:
+                            return ui?.isStringContentAllowed(ref) ?? false;
+                          case ContentType.richText:
+                            return ui?.isRichTextContentAllowed(ref) ?? false;
+                        }
+                      },
+                      child: text,
+                    ),
+                  );
                 }).toList(),
                 onChanged: (value) {
                   if (value != null) {

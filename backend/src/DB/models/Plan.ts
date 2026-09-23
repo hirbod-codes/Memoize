@@ -1,5 +1,6 @@
 import { boolean, InferType, number, object, string } from 'yup';
 import { likeObjectId } from '../common_schemas';
+import { ContentTypes } from './Leaf';
 
 export const collectionName = 'plan'
 
@@ -81,3 +82,7 @@ export type PlanPost = InferType<typeof planPostSchema>
 export type PlanCreate = InferType<typeof planCreateSchema>
 export type PlanUpdate = InferType<typeof planUpdateSchema>
 export type Plan = InferType<typeof planSchema>
+
+export function convertToPlanContentType(types: ContentTypes): keyof Privileges['allowedContentTypes'] {
+    return types.replace('Id', '') as any
+}

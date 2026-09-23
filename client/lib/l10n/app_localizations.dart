@@ -1532,6 +1532,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Upgrade'**
   String get upgrade;
+
+  /// No description provided for @sentence.
+  ///
+  /// In en, this message translates to:
+  /// **'sentence'**
+  String get sentence;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

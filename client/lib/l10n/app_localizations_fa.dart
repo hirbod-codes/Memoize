@@ -738,4 +738,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get upgrade => 'ارتقا';
+
+  @override
+  String get sentence => 'جمله';
 }

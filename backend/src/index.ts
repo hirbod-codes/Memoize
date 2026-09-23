@@ -50,7 +50,7 @@ ffmpeg.setFfprobePath(ffprobeBinaryPath);
 
 export { ffmpeg };
 
-import { leafRoutes } from './routes/leaf';
+import { leafRoutes } from './routes/card/leaf';
 import { treeNodeRoutes } from './routes/treeNode';
 import { audioRoutes } from './routes/audio/audio';
 import { imageRoutes } from './routes/image/image';

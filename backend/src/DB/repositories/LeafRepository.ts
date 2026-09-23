@@ -3,7 +3,7 @@ import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
-import { collectionName, Leaf, LeafCreate, LeafUpdate, schemaVersion } from '../models/Leaf';
+import { collectionName, ContentTypes, Leaf, LeafCreate, LeafUpdate, schemaVersion } from '../models/Leaf';
 
 class LeafRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -111,6 +111,40 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
             return undefined
 
         return leaf[isTerm ? 'termContents' : 'definitionContents'].length
+    }
+
+    async addContentForUser(userId: string, leafId: string, isTerm: boolean, type: ContentTypes, atIndex: number | undefined) {
+        const contentPath = isTerm ? 'termContents' : 'definitionContents';
+        return await LeafRepository.collection!.updateOne(
+            {
+                _id: ObjectId.createFromHexString(leafId.toString()),
+                userId
+            },
+            {
+                $set: { updatedAt: Date.now() },
+                $push: typeof atIndex !== 'number'
+                    ? ({ [contentPath]: { $each: [{ type, value: [] }] } })
+                    : { [contentPath]: { $each: [{ type, value: [] }], $position: atIndex + 1 } }
+            }
+        )
+    }
+
+    async addContentValueForUser(userId: string, leafId: string, isTerm: boolean, type: ContentTypes, atContentIndex: number, value: string, atContentValueIndex?: number) {
+        const valuePath = `${isTerm ? 'termContents' : 'definitionContents'}.${atContentIndex}.value`;
+        return await LeafRepository.collection!.updateOne(
+            {
+                _id: ObjectId.createFromHexString(leafId.toString()),
+                userId,
+                [`${isTerm ? 'termContents' : 'definitionContents'}.${atContentIndex}`]: { $exists: true },
+                [`${isTerm ? 'termContents' : 'definitionContents'}.${atContentIndex}.type`]: type,
+            },
+            {
+                $set: { updatedAt: Date.now() },
+                $push: typeof atContentValueIndex !== 'number'
+                    ? ({ [valuePath]: { $each: [value] } })
+                    : { [valuePath]: { $each: [value], $position: atContentValueIndex + 1 } }
+            }
+        )
     }
 
     async update(leafArg: LeafUpdate) {

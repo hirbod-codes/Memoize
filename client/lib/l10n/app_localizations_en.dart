@@ -737,4 +737,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get upgrade => 'Upgrade';
+
+  @override
+  String get sentence => 'sentence';
 }
