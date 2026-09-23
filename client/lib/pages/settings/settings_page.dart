@@ -150,10 +150,12 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
             _SectionHeader(title: l10n.avatar),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
+              spacing: 10,
               children: [
                 Button(
                   type: ButtonType.outlined,
                   label: l10n.remove,
+                  color: ThemeColorName.error,
                   isLoading: _isRemovingAvatar,
                   onPressed: () async {
                     setState(() {
