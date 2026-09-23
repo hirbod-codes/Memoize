@@ -9,6 +9,7 @@ import 'package:client/api/root_navigator_key.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 /// Plain service object, not a Notifier — it holds no state of its own.
 /// Loading/error bookkeeping for whichever action is in flight is
@@ -38,11 +39,14 @@ class AccountController extends Notifier {
   /// failed getUserInfo() call should.
   Future<Uint8List?> fetchAvatar() async {
     try {
-      final response = await apiCall<List<int>>(() => _authDio.get('/api/user/avatar', options: Options(responseType: ResponseType.bytes)));
-      if (response.dataOrNull == null) return null;
+      final response = await _authDio.get('/api/user/avatar', options: Options(responseType: ResponseType.bytes));
+      if (response.data == null) return null;
 
-      return Uint8List.fromList(response.dataOrNull!);
+      return Uint8List.fromList(response.data!);
     } on DioException {
+      return null;
+    } catch (e, st) {
+      Talker().error('caught error in fetchAvatar method of AccountController', e, st);
       return null;
     }
   }

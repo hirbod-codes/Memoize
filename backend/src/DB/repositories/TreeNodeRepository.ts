@@ -115,7 +115,7 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
     }
 
     async countCategoriesPerNestedLevelForUser(userId: string, level: number) {
-        return await TreeNodeRepository.collection!.countDocuments({ userId, hierarchy: { $size: level } }, { session: this.session })
+        return await TreeNodeRepository.collection!.countDocuments({ userId, hierarchyLevel: level }, { session: this.session })
     }
 
     async countMaxNestedLevelsForUser(userId: string) {

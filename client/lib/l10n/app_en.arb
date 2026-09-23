@@ -261,5 +261,7 @@
   "upgrade_required": "Upgrade required",
   "notNow": "Not now",
   "upgrade": "Upgrade",
-  "sentence": "sentence"
+  "sentence": "sentence",
+  "remove": "Remove",
+  "avatar_delete_success": "successfully removed user 's avatar"
 }

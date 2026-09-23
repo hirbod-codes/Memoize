@@ -434,7 +434,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get add_content => 'Inhalt hinzufügen';
 
   @override
-  String get file_manager_content_delete_dialog_heading => 'Are you sure?\nthis action is irreversible!';
+  String get file_manager_content_delete_dialog_heading => 'Sind Sie sicher?\nDiese Aktion kann nicht rückgängig gemacht werden!';
 
   @override
   String get landing_page_get_started_free => 'Kostenlos starten';
@@ -742,4 +742,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get sentence => 'Satz';
+
+  @override
+  String get remove => 'Entfernen';
+
+  @override
+  String get avatar_delete_success => 'Das Profilbild des Benutzers wurde erfolgreich entfernt.';
 }

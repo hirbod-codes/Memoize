@@ -5,6 +5,7 @@ import LeafRepository from '../DB/repositories/LeafRepository';
 import { Privileges } from '../DB/models/Plan';
 import UsageRepository from '../DB/repositories/UsageRepository';
 import { Usage } from '../DB/models/Usage';
+import { TreeNode } from '../DB/models/TreeNode';
 
 export async function authorizeStorageQuota(req: Request, bytes: number, usage?: Usage, res?: Response) {
     const log = getLogger().child({ step: 'authorizeStorageQuota' });
@@ -70,15 +71,13 @@ export async function rollbackStorageQuota(req: Request, bytes: number) {
 }
 
 /**
- * 
- * @param req 
- * @param level 
- * @param categoriesToAdd 
- * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
- * @param categoriesPerNestedLevelCount 
+ * check if adding a TreeNode is authorized according to categoriesPerNestedLevel privilege
+ * @param req
+ * @param parentId 
+ * @param res if provided, 402 response is sent in case of a failure, false is returned otherwise.
  * @returns 
  */
-export async function authorizeCategoriesPerNestedLevel(req: Request, level: number, categoriesToAdd: number, res?: Response, categoriesPerNestedLevelCount?: number): Promise<boolean | Response<any, Record<string, any>>> {
+export async function authorizeCategoriesPerNestedLevel(req: Request, parentId?: string | TreeNode, res?: Response): Promise<boolean | Response<any, Record<string, any>>> {
     const log = getLogger().child({ step: 'authorizeCategoriesPerNestedLevel' });
 
     try {
@@ -96,10 +95,25 @@ export async function authorizeCategoriesPerNestedLevel(req: Request, level: num
 
         const tr = new TreeNodeRepository
 
-        categoriesPerNestedLevelCount = categoriesPerNestedLevelCount ?? await runWithLogger(log, () => tr.countCategoriesPerNestedLevelForUser(req.user!.userId, level))
+        let level: number;
+
+        if (parentId === undefined || parentId === null) {
+            level = 1
+        } else if (typeof parentId === 'string') {
+            const parentTreeNode = await runWithLogger(log, () => tr.getForUser(parentId, req.user!.userId))
+            if (!parentTreeNode) {
+                log.info('no parent tree node found')
+                return res?.status(400).json({ status: 'error', error_code: 'INVALID_PARENT_TREENODE' }) ?? false;
+            }
+
+            level = parentTreeNode.hierarchyLevel + 1
+        } else
+            level = parentId.hierarchyLevel + 1
+
+        const categoriesPerNestedLevelCount = await runWithLogger(log, () => tr.countCategoriesPerNestedLevelForUser(req.user!.userId, level))
         log.debug({ categoriesPerNestedLevelCount })
 
-        if (typeof categoriesPerNestedLevelCount === 'number' && (categoriesPerNestedLevelCount + categoriesToAdd) >= req.user.privileges.categoriesPerNestedLevel) {
+        if (typeof categoriesPerNestedLevelCount === 'number' && (categoriesPerNestedLevelCount + 1) >= req.user.privileges.categoriesPerNestedLevel) {
             log.info('Request is unauthorized')
             return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
         }
@@ -113,14 +127,13 @@ export async function authorizeCategoriesPerNestedLevel(req: Request, level: num
 }
 
 /**
- * 
+ * check if adding a TreeNode is authorized according to nestedLevels privilege
  * @param req 
- * @param nestedLevelsToAdd 
- * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
- * @param nestedLevelsCount 
+ * @param parentId if provided, 402 response is sent in case of a failure, false is returned otherwise.
+ * @param res 
  * @returns 
  */
-export async function authorizeNestedLevels(req: Request, nestedLevelsToAdd: number = 1, res?: Response, nestedLevelsCount?: number): Promise<boolean | Response<any, Record<string, any>>> {
+export async function authorizeNestedLevels(req: Request, parentId?: string | TreeNode, res?: Response): Promise<boolean | Response<any, Record<string, any>>> {
     const log = getLogger().child({ step: 'authorizeNestedLevels' });
 
     try {
@@ -138,10 +151,27 @@ export async function authorizeNestedLevels(req: Request, nestedLevelsToAdd: num
 
         const tr = new TreeNodeRepository
 
-        nestedLevelsCount = nestedLevelsCount ?? await runWithLogger(log, () => tr.countMaxNestedLevelsForUser(req.user!.userId))
-        log.debug({ nestedLevelsCount })
+        let addingTreeNodeLevel: number;
 
-        if (typeof nestedLevelsCount === 'number' && (nestedLevelsCount + nestedLevelsToAdd) >= req.user.privileges.nestedLevels) {
+        if (parentId === undefined || parentId === null) {
+            addingTreeNodeLevel = 1
+        } else if (typeof parentId === 'string') {
+            const parentTreeNode = await runWithLogger(log, () => tr.getForUser(parentId, req.user!.userId))
+            if (!parentTreeNode) {
+                log.info('no parent tree node found')
+                return res?.status(400).json({ status: 'error', error_code: 'INVALID_PARENT_TREENODE' }) ?? false;
+            }
+
+            addingTreeNodeLevel = parentTreeNode.hierarchyLevel + 1
+        } else
+            addingTreeNodeLevel = parentId.hierarchyLevel + 1
+
+        let maxHierarchyLevel = await runWithLogger(log, () => tr.countMaxNestedLevelsForUser(req.user!.userId))
+        log.debug({ maxHierarchyLevel })
+
+        maxHierarchyLevel = Math.max(maxHierarchyLevel ?? 0, addingTreeNodeLevel)
+
+        if (maxHierarchyLevel >= req.user.privileges.nestedLevels) {
             log.info('Request is unauthorized')
             return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
         }
@@ -159,7 +189,7 @@ export async function authorizeNestedLevels(req: Request, nestedLevelsToAdd: num
  * @param req 
  * @param categoryId 
  * @param cardsToAdd 
- * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
+ * @param res if provided, 402 response is sent in case of a failure, false is returned otherwise.
  * @returns 
  */
 export async function authorizeCardsPerCategory(req: Request, categoryId: string, cardsToAdd: number = 1, res: Response): Promise<boolean | Response<any, Record<string, any>>> {
@@ -202,7 +232,7 @@ export async function authorizeCardsPerCategory(req: Request, categoryId: string
  * @param leafId 
  * @param isTerm 
  * @param contentsToAdd 
- * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
+ * @param res if provided, 402 response is sent in case of a failure, false is returned otherwise.
  * @param contentsPerCardSideCount 
  * @returns 
  */
@@ -247,7 +277,7 @@ export async function authorizeContentsPerCardSide(req: Request, leafId: string,
  * @param isTerm 
  * @param content 
  * @param valuePerContentCount 
- * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
+ * @param res if provided, 402 response is sent in case of a failure, false is returned otherwise.
  * @param valuesToAdd 
  * @returns 
  */
@@ -285,7 +315,7 @@ export async function authorizeValuePerContent(req: Request, leafId: string, isT
  * 
  * @param req 
  * @param contentType 
- * @param res if provided, 402 response is sent in case of a failure, nothing otherwise.
+ * @param res if provided, 402 response is sent in case of a failure, false is returned otherwise.
  * @returns 
  */
 export function authorizeAllowedContentTypes(req: Request, contentType: keyof Privileges['allowedContentTypes'], res?: Response): boolean | Response<any, Record<string, any>> {

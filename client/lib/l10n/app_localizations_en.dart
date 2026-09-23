@@ -740,4 +740,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sentence => 'sentence';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get avatar_delete_success => 'successfully removed user \'s avatar';
 }

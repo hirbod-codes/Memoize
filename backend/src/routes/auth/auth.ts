@@ -438,17 +438,22 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 });
 
-router.post('/logout', auth, async (req: Request, res: Response) => {
+router.post('/logout', async (req: Request, res: Response) => {
     const log = getLogger().child({ module: 'auth', route: 'POST /api/auth/logout' });
 
     try {
-        authenticateRequest(req)
-        const payload = req.user as any;
+        const payload = runWithLogger(log, () => authenticateRequest(req))
+        log.debug({ payload })
+        if (!payload) {
+            log.info('User is not authenticated');
+            return res.status(401).send();
+        }
+
         log.debug({ userId: payload?.userId }, 'Logout request received');
         const tokenId = req.body?.refreshToken ?? req.cookies?.[REFRESH_COOKIE_NAME];
 
         if (payload?.jti && payload?.exp)
-            await runWithLogger(log, () => blacklistAccessToken(payload.jti, payload.exp))
+            await runWithLogger(log, () => blacklistAccessToken(payload.jti!, payload.exp!))
 
         if (tokenId)
             await revokeSessionByTokenId(tokenId, payload.userId);

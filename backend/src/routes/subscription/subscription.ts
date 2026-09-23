@@ -32,6 +32,26 @@ const ZIBAL_PAYMENT_VERIFY_CALLBACK_URL = (subscriptionId: string) => `https://$
 const ZIBAL_PAYMENT_VERIFY_CHECK = `${ZIBAL_PAYMENT_VERIFY}/check`                                                // /zibal/verify/check
 const ZIBAL_PAYMENT_VERIFY_CHECK_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZIBAL_PAYMENT_VERIFY_CHECK}`                 // /zibal/verify/check
 
+router.get('/', auth, async (req, res) => {
+    const log = getLogger().child({ module: 'subscription', route: `GET ${PAYMENT_CHECKPOINT_BASE}` });
+
+    try {
+        log.info('subscription fetch request received');
+
+        const sr = new SubscriptionRepository()
+        const subscription = await runWithLogger(log, () => sr.getForUser(req.user!.userId))
+        if (!subscription) {
+            log.info('subscription not found')
+            return res.status(404).json({ status: 'error', error_code: 'SUBSCRIPTION_NOT_FOUND' })
+        }
+
+        log.info('sending subscription')
+        return res.status(200).json({ status: 'success', data: { subscription } })
+    } catch (error) {
+        runWithLogger(log, () => handleError(res, error))
+    }
+})
+
 router.get(`/supported_payment_methods`, auth, async (req, res) => {
     const log = getLogger().child({ module: 'subscription', route: `GET ${PAYMENT_CHECKPOINT_BASE}/supported_payment_methods` });
 

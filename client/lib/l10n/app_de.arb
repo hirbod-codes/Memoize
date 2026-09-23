@@ -261,5 +261,8 @@
   "upgrade_required": "Upgrade erforderlich",
   "notNow": "Nicht jetzt",
   "upgrade": "Upgrade",
-  "sentence": "Satz"
+  "sentence": "Satz",
+  "remove": "Entfernen",
+  "avatar_delete_success": "Das Profilbild des Benutzers wurde erfolgreich entfernt.",
+  "file_manager_content_delete_dialog_heading": "Sind Sie sicher?\nDiese Aktion kann nicht rückgängig gemacht werden!"
 }

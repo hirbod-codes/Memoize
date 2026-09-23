@@ -50,7 +50,7 @@ class _PricingPageState extends ConsumerState<PricingPage> {
           return _RetryState(message: l10n.pricing_page_could_not_load, onRetry: () => ref.invalidate(plansProvider));
         },
         data: (plans) {
-          if (plans.isEmpty) return _RetryState(message: l10n.pricing_page_no_plan_available);
+          if (plans == null || plans.isEmpty) return _RetryState(message: l10n.pricing_page_no_plan_available);
 
           List<Plan> sortedPlans = List.empty(growable: true);
           try {

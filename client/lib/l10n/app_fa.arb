@@ -261,5 +261,8 @@
   "upgrade_required": "ارتقا لازم است",
   "notNow": "فعلاً نه",
   "upgrade": "ارتقا",
-  "sentence": "جمله"
+  "sentence": "جمله",
+  "remove": "حذف",
+  "avatar_delete_success": "آواتار کاربر با موفقیت حذف شد.",
+  "file_manager_content_delete_dialog_heading": "آیا مطمئن هستید؟\nاین عمل قابل بازگشت نیست!"
 }

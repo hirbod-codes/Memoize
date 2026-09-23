@@ -433,7 +433,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get add_content => 'افزودن محتوا';
 
   @override
-  String get file_manager_content_delete_dialog_heading => 'Are you sure?\nthis action is irreversible!';
+  String get file_manager_content_delete_dialog_heading => 'آیا مطمئن هستید؟\nاین عمل قابل بازگشت نیست!';
 
   @override
   String get landing_page_get_started_free => 'رایگان شروع کنید';
@@ -741,4 +741,10 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get sentence => 'جمله';
+
+  @override
+  String get remove => 'حذف';
+
+  @override
+  String get avatar_delete_success => 'آواتار کاربر با موفقیت حذف شد.';
 }

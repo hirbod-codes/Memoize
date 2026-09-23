@@ -24,7 +24,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' hide context;
-import 'package:talker/talker.dart';
 
 /// Wrap this in AppShell at the route level, same as HomePage:
 ///   GoRoute(path: '/settings', builder: (context, state) => const AppShell(child: SettingsPage())),
@@ -56,7 +55,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     final userInfo = state.info;
     if (userInfo == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/auth?from=/settings'));
+      WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/login?from=/settings'));
       return const SizedBox.shrink();
     }
 
@@ -75,6 +74,7 @@ class SettingsContent extends ConsumerStatefulWidget {
 
 class _SettingsContent extends ConsumerState<SettingsContent> {
   bool _isUploadingAvatar = false;
+  bool _isRemovingAvatar = false;
 
   @override
   Widget build(BuildContext context) {
@@ -148,19 +148,38 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _SectionHeader(title: l10n.avatar),
-            Button(
-              type: ButtonType.outlined,
-              label: l10n.update,
-              isLoading: _isUploadingAvatar,
-              onPressed: () async {
-                setState(() {
-                  _isUploadingAvatar = true;
-                });
-                await showDialog<String?>(context: context, builder: (_) => AvatarUpdateSetting());
-                setState(() {
-                  _isUploadingAvatar = false;
-                });
-              },
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Button(
+                  type: ButtonType.outlined,
+                  label: l10n.remove,
+                  isLoading: _isRemovingAvatar,
+                  onPressed: () async {
+                    setState(() {
+                      _isRemovingAvatar = true;
+                    });
+                    await apiCall(() => ref.read(authDioProvider).delete('/api/user/avatar').notifyOnSuccess(l10n.avatar_delete_success));
+                    setState(() {
+                      _isRemovingAvatar = false;
+                    });
+                  },
+                ),
+                Button(
+                  type: ButtonType.outlined,
+                  label: l10n.update,
+                  isLoading: _isUploadingAvatar,
+                  onPressed: () async {
+                    setState(() {
+                      _isUploadingAvatar = true;
+                    });
+                    await showDialog<String?>(context: context, builder: (_) => AvatarUpdateSetting());
+                    setState(() {
+                      _isUploadingAvatar = false;
+                    });
+                  },
+                ),
+              ],
             ),
           ],
         ),

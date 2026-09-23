@@ -1538,6 +1538,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'sentence'**
   String get sentence;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @avatar_delete_success.
+  ///
+  /// In en, this message translates to:
+  /// **'successfully removed user \'s avatar'**
+  String get avatar_delete_success;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -32,7 +32,7 @@ export const treeNodeSchema = object().required().shape(create).shape({
 
     parentId: string().objectIdString().nullable().optional().label('Parent id'),
     hierarchy: array().of(string().strict().required()).required().label('Hierarchy'),
-    hierarchyLevel: number().required().label('Hierarchy Level'), // for performance concerns
+    hierarchyLevel: number().required().label('Hierarchy Level'), // 1-based, for performance concerns
 
     userId: string().objectIdString().required().label('User id'),
     title: string().required().label('Title'),

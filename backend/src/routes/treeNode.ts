@@ -5,6 +5,7 @@ import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
 import { number, string, ValidationError } from 'yup';
 import { meili } from '..';
 import { MEILI_TREE_NODE } from '../DB/meilisearch';
+import { authorizeCategoriesPerNestedLevel, authorizeNestedLevels } from '../middlewares/authorization';
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ router.post('/', async (req, res) => {
         console.log('Validation...')
         let treeNode: TreeNodePost
         try {
-            treeNode = await treeNodePostSchema.required().stripNull().stripUndefined().validate(req.body.treeNode, { stripUnknown: true })
+            treeNode = await treeNodePostSchema.required().stripNull().stripUndefined().validate(req.body, { stripUnknown: true })
             if (treeNode.parentId === null) treeNode.parentId = undefined;
         } catch (err) {
             console.error(err)
@@ -32,6 +33,10 @@ router.post('/', async (req, res) => {
         const treeNodeRepository = new TreeNodeRepository()
 
         const userId = req.user!.userId
+        if ((await authorizeNestedLevels(req, treeNode.parentId, res)) !== true || (await authorizeCategoriesPerNestedLevel(req, treeNode.parentId, res)) !== true) {
+            console.log('"user exceeded plan limit for card creation"');
+            return
+        }
 
         console.log("Inserting new treeNode...");
         const insertTreeNodeResult = await treeNodeRepository.insert({ ...treeNode, userId })

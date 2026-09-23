@@ -119,3 +119,5 @@ Ctrl + C DOES NOT work to terminate the app, run `taskkill /IM node.exe /F` on w
 14. enable localization aware builds and deployments
 15. implement smtp
 16. add payment for storage quota
+17. allow logout for invalid refresh tokens for web clients
+18. fix: authorizeNestedLevels and authorizeCategoriesPerNestedLevel functions

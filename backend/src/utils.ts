@@ -58,17 +58,14 @@ export function validateStringEnv<T extends StringSchema>(env?: string, message?
     return schema.validateSync(env) as InferType<T> | string
 }
 
-export function validateIntegerEnv(env?: number, message?: string, validateWithYup?: undefined, manuallyValidate?: (env?: number) => boolean): number
-export function validateIntegerEnv<T extends NumberSchema>(env?: number, message?: string, validateWithYup?: (schema: NumberSchema) => T, manuallyValidate?: (env?: number) => boolean): InferType<T>
-export function validateIntegerEnv<T extends NumberSchema>(env?: number, message?: string, validateWithYup?: (schema: NumberSchema) => T, manuallyValidate?: (env?: number) => boolean): InferType<T> | number {
+export function validateIntegerEnv(env?: any, message?: string, validateWithYup?: undefined, manuallyValidate?: (env?: number) => boolean): number
+export function validateIntegerEnv<T extends NumberSchema>(env?: any, message?: string, validateWithYup?: (schema: NumberSchema) => T, manuallyValidate?: (env?: number) => boolean): InferType<T>
+export function validateIntegerEnv<T extends NumberSchema>(env?: any, message?: string, validateWithYup?: (schema: NumberSchema) => T, manuallyValidate?: (env?: number) => boolean): InferType<T> | number {
     let schema: NumberSchema = number()
     if (validateWithYup)
         schema = validateWithYup(schema)
     else
         schema = schema.required()
-
-    if (!Number.isFinite(env) || !Number.isInteger(env))
-        throw new Error(message ?? 'Invalid environment variable provided')
 
     if (manuallyValidate !== undefined && manuallyValidate(env) === false)
         throw new Error(message ?? 'Invalid environment variable provided')
@@ -90,13 +87,10 @@ export function getIntegerEnv(key: string, message?: string, validate?: undefine
 export function getIntegerEnv<T extends NumberSchema>(key: string, message?: string, validate?: (schema: NumberSchema) => T, manuallyValidate?: (env?: number) => boolean): InferType<T>
 export function getIntegerEnv<T extends NumberSchema>(key: string, message?: string, validate?: (schema: NumberSchema) => T, manuallyValidate?: (env?: number) => boolean): InferType<T> | number {
     const resolvedEnv = resolveRawEnv(key)
-    const castedEnv = Number(resolvedEnv)
 
-    console.log({ key, message, resolvedEnv, castedEnv }, `${key}: ${resolvedEnv !== undefined ? (isProduction ? '<*****>' : castedEnv) : '<missing>'}`)
+    console.log({ key, message, resolvedEnv }, `${key}: ${resolvedEnv !== undefined ? (isProduction ? '<*****>' : resolvedEnv) : '<missing>'}`)
 
-    validateIntegerEnv(castedEnv, message, validate, manuallyValidate)
-
-    return castedEnv!
+    return validateIntegerEnv(resolvedEnv, message, validate, manuallyValidate)
 }
 
 export function getBooleanEnv(key: string, message?: string, validate?: undefined, manuallyValidate?: (env?: boolean) => boolean): boolean
