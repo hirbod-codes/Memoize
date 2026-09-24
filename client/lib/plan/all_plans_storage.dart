@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// gives other parts of the app a synchronous read instead of needing
 /// to await userInfoProvider every time.
 class AllPlansStorage {
-  static const _preferencesKey = 'userInfo';
+  static const _preferencesKey = 'allPlans';
 
   static Future<void> save(List<Plan>? plans) async {
     if (plans == null) {

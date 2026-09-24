@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:client/account/account_controller.dart';
+import 'package:client/account/avatar/avatar_bytes_notifier.dart';
 import 'package:client/account/models/user_info.dart';
 import 'package:client/account/user_info_notifier.dart';
 import 'package:client/api/api_call.dart';
@@ -15,6 +15,7 @@ import 'package:client/localization/components/timezone_switcher.dart';
 import 'package:client/pages/settings/change_email_sheet.dart';
 import 'package:client/pages/settings/change_password_sheet.dart';
 import 'package:client/pages/settings/change_phone_sheet.dart';
+import 'package:client/plan/components/storage_usage.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:dio/dio.dart';
@@ -115,8 +116,8 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
             onTap: () => showChangePhoneSheet(context),
           ),
         ],
-        const SizedBox(height: 24),
 
+        const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -124,8 +125,8 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
             const LocaleSwitcher(),
           ],
         ),
-        const SizedBox(height: 24),
 
+        const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -133,8 +134,8 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
             const CalendarSwitcher(),
           ],
         ),
-        const SizedBox(height: 24),
 
+        const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -142,8 +143,8 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
             const TimezoneSwitcher(),
           ],
         ),
-        const SizedBox(height: 24),
 
+        const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -185,7 +186,15 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
             ),
           ],
         ),
+
         const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _SectionHeader(title: l10n.timeZone),
+            const StorageUsage(),
+          ],
+        ),
       ],
     );
   }
@@ -312,7 +321,7 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
             .notifyOnSuccess(l10n.avatar_upload_success),
       );
 
-      if (result.isSuccess) ref.read(avatarBytesProvider.notifier).set(_imageBytes);
+      if (result.isSuccess) ref.read(avatarBytesProvider.notifier).save(_imageBytes!);
 
       if (!mounted) return;
 

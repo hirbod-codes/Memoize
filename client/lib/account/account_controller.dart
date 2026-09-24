@@ -1,15 +1,11 @@
-import 'dart:typed_data';
-
-import 'package:client/account/models/user_info.dart';
-import 'package:client/account/models/user_usage.dart';
 import 'package:client/api/api_call.dart';
 import 'package:client/api/api_call_extensions.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/api/root_navigator_key.dart';
 import 'package:client/l10n/app_localizations.dart';
+import 'package:client/subscription/models/subscription.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
 
 /// Plain service object, not a Notifier — it holds no state of its own.
 /// Loading/error bookkeeping for whichever action is in flight is
@@ -23,32 +19,9 @@ class AccountController extends Notifier {
     _authDio = ref.read(authDioProvider);
   }
 
-  Future<UserInfo?> getUserInfo() async {
-    final response = await apiCall<UserInfo>(() => _authDio.get('/api/user/info'), fromJson: (data) => UserInfo.fromJson(data));
+  Future<Subscription?> getUserSubscription() async {
+    final response = await apiCall<Subscription>(() => _authDio.get('/api/subscription'), fromJson: (data) => Subscription.fromJson(data));
     return response.dataOrNull;
-  }
-
-  Future<UserUsage?> getUserUsage() async {
-    final response = await apiCall<UserUsage>(() => _authDio.get('/api/user/usage'), fromJson: (data) => UserUsage.fromJson(data));
-    return response.dataOrNull;
-  }
-
-  /// Endpoint guessed — no avatar route was given anywhere. Returns
-  /// null on failure rather than throwing: a broken avatar shouldn't
-  /// block startup or force the user back to a login screen the way a
-  /// failed getUserInfo() call should.
-  Future<Uint8List?> fetchAvatar() async {
-    try {
-      final response = await _authDio.get('/api/user/avatar', options: Options(responseType: ResponseType.bytes));
-      if (response.data == null) return null;
-
-      return Uint8List.fromList(response.data!);
-    } on DioException {
-      return null;
-    } catch (e, st) {
-      Talker().error('caught error in fetchAvatar method of AccountController', e, st);
-      return null;
-    }
   }
 
   Future<void> changePassword({required String currentPassword, required String newPassword}) async {
@@ -99,17 +72,5 @@ class AccountController extends Notifier {
     );
   }
 }
-
-/// Written once by AuthController._onAuthenticated() during startup —
-/// nothing else should call getUserInfo()/fetchAvatar() again just to
-/// populate this; read it, don't re-fetch it.
-class AvatarBytesNotifier extends Notifier<Uint8List?> {
-  @override
-  Uint8List? build() => null;
-
-  void set(Uint8List? bytes) => state = bytes;
-}
-
-final avatarBytesProvider = NotifierProvider<AvatarBytesNotifier, Uint8List?>(AvatarBytesNotifier.new);
 
 final accountControllerProvider = NotifierProvider<AccountController, void>(AccountController.new);

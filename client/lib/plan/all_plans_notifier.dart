@@ -47,7 +47,7 @@ class AllPlansNotifier extends Notifier<AllPlansState> {
     }
   }
 
-  /// Hits the server for the latest user/plan info. Called by the
+  /// Hits the server for the latest plans. Called by the
   /// resume-gate, but any widget could call this too (e.g. pull-to-refresh
   /// on a settings screen) — all watchers update together.
   Future<bool> refresh() async {
@@ -64,7 +64,7 @@ class AllPlansNotifier extends Notifier<AllPlansState> {
   }
 
   Future<List<Plan>?> _fetchFromServer() async {
-    final dio = await ref.read(dioProvider);
+    final dio = ref.read(dioProvider);
     final result = await apiCall(() => dio.get('/api/plan'));
     return result.dataOrNull?['plans'];
   }

@@ -1,4 +1,4 @@
-import 'package:client/account/account_controller.dart';
+import 'package:client/account/avatar/avatar_bytes_notifier.dart';
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
 import 'package:client/components/button.dart';
@@ -18,6 +18,9 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAuthenticated = ref.watch(authControllerProvider).status == AuthStatus.authenticated;
     final avatarBytes = ref.watch(avatarBytesProvider);
+
+    // final avatarBytesNotifier = ref.watch(avatarBytesProvider.notifier);
+    // if (userInfoState.info?.avatarKey != avatarBytesNotifier.) ref.watch(avatarBytesProvider.notifier).refresh();
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
 

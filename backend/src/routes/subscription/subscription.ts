@@ -39,14 +39,14 @@ router.get('/', auth, async (req, res) => {
         log.info('subscription fetch request received');
 
         const sr = new SubscriptionRepository()
-        const subscription = await runWithLogger(log, () => sr.getForUser(req.user!.userId))
-        if (!subscription) {
+        const subscription = await runWithLogger(log, () => sr.getByStatusForUser(req.user!.userId, ['active', 'trial']))
+        if (!subscription || subscription.length !== 1) {
             log.info('subscription not found')
             return res.status(404).json({ status: 'error', error_code: 'SUBSCRIPTION_NOT_FOUND' })
         }
 
         log.info('sending subscription')
-        return res.status(200).json({ status: 'success', data: { subscription } })
+        return res.status(200).json({ status: 'success', data: subscription[0] })
     } catch (error) {
         runWithLogger(log, () => handleError(res, error))
     }

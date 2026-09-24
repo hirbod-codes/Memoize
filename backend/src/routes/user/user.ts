@@ -119,7 +119,7 @@ router.post('/avatar', async (req, res) => {
             return res.status(500).json({ status: 'error', error_code: 'UPLOAD_FAILED' });
         }
 
-        res.status(201).send()
+        res.status(201).json({ status: 'success' })
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }

@@ -57,6 +57,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get logout => 'خروج';
 
   @override
+  String get logout_success => 'با موفقیت از حساب کاربری خارج شدید.';
+
+  @override
   String get password => 'رمز عبور';
 
   @override

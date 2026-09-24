@@ -6,9 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class UserUsageStorage {
   static const _preferencesKey = 'userUsage';
 
-  static Future<void> save(UserUsage usage) async {
+  static Future<void> save(UserUsage? usage) async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_preferencesKey, jsonEncode(usage.toJson()));
+    await preferences.setString(_preferencesKey, usage == null ? '' : jsonEncode(usage.toJson()));
   }
 
   static Future<UserUsage?> load() async {

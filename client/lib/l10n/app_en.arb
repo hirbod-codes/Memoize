@@ -16,6 +16,7 @@
   "signUp": "Sign up",
   "login": "Log in",
   "logout": "Log out",
+  "logout_success": "You've Logged out successfully",
   "password": "Password",
   "phoneNumber": "Phone number",
   "phone": "Phone",

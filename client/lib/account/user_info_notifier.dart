@@ -10,7 +10,8 @@
 //   to *display* the user's info don't flicker to nothing while a
 //   background refresh (e.g. the resume plan-check) is in flight.
 
-import 'package:client/account/account_controller.dart';
+import 'package:client/api/api_call.dart';
+import 'package:client/api/dio/dio_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:client/account/models/user_info.dart';
 import 'user_info_storage.dart';
@@ -63,8 +64,9 @@ class UserInfoNotifier extends Notifier<UserInfoState> {
   }
 
   Future<UserInfo?> _fetchFromServer() async {
-    final userInfo = await ref.read(accountControllerProvider.notifier).getUserInfo();
-    return userInfo;
+    final authDio = ref.read(authDioProvider);
+    final response = await apiCall<UserInfo?>(() => authDio.get('/api/user/info'), fromJson: (data) => UserInfo.fromJson(data));
+    return response.dataOrNull;
   }
 
   /// Call on logout.

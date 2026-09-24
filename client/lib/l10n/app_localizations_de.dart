@@ -57,6 +57,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get logout => 'Abmelden';
 
   @override
+  String get logout_success => 'Sie wurden erfolgreich abgemeldet.';
+
+  @override
   String get password => 'Passwort';
 
   @override

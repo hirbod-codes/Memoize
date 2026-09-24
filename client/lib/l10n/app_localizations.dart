@@ -189,6 +189,12 @@ abstract class AppLocalizations {
   /// **'Log out'**
   String get logout;
 
+  /// No description provided for @logout_success.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve Logged out successfully'**
+  String get logout_success;
+
   /// No description provided for @password.
   ///
   /// In en, this message translates to:

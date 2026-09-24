@@ -16,6 +16,7 @@
   "signUp": "ثبت‌نام",
   "login": "ورود",
   "logout": "خروج",
+  "logout_success": "با موفقیت از حساب کاربری خارج شدید.",
   "password": "رمز عبور",
   "phoneNumber": "شماره تلفن",
   "phone": "تلفن",

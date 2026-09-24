@@ -16,6 +16,7 @@
   "signUp": "Registrieren",
   "login": "Anmelden",
   "logout": "Abmelden",
+  "logout_success": "Sie wurden erfolgreich abgemeldet.",
   "password": "Passwort",
   "phoneNumber": "Telefonnummer",
   "phone": "Telefon",

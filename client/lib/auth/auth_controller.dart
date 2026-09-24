@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:client/account/account_controller.dart';
-import 'package:client/account/user_info_storage.dart';
-import 'package:client/account/user_usage_storage.dart';
+import 'package:client/account/avatar/avatar_bytes_notifier.dart';
+import 'package:client/account/models/user_info.dart';
+import 'package:client/account/user_info_notifier.dart';
+import 'package:client/account/user_usage_notifier.dart';
+import 'package:client/api/api_call.dart';
 import 'package:client/api/root_navigator_key.dart';
 import 'package:client/auth/auth_api.dart';
 import 'package:client/api/dio/dio_providers.dart';
@@ -17,6 +19,7 @@ import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/calendars/calendar_controller.dart';
 import 'package:client/localization/locale_controller.dart';
 import 'package:client/localization/timezone/timezone_controller.dart';
+import 'package:client/subscription/subscription_notifier.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -103,33 +106,52 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   }
 
   Future<void> _onAuthenticated() async {
-    final account = ref.read(accountControllerProvider.notifier);
-    final userInfo = await account.getUserInfo();
-    final userUsage = await account.getUserUsage();
+    try {
+      await Future.wait([
+        ref.read(userUsageProvider.notifier).refresh().catchError((e) {
+          Talker().error('error caught in _onAuthenticated method of AuthController class', e);
+          return false;
+        }),
+        ref.read(subscriptionProvider.notifier).refresh().catchError((e) {
+          Talker().error('error caught in _onAuthenticated method of AuthController class', e);
+          return false;
+        }),
+        ref.read(userInfoProvider.notifier).refresh().catchError((e) {
+          Talker().error('error caught in _onAuthenticated method of AuthController class', e);
+          return false;
+        }),
+      ]);
 
-    if (userInfo == null || userUsage == null) {
-      await UserInfoStorage.clear();
-      await UserUsageStorage.clear();
-      return;
+      ref.listen(userInfoProvider, (previous, next) async {
+        if (next.isLoading || next.error != null || next.info == null) return;
+
+        UserInfo userInfo = next.info!;
+
+        final avatarBytesNotifier = ref.read(avatarBytesProvider.notifier);
+        if (userInfo.avatarKey != (await avatarBytesNotifier.getCachedAvatarKey())) {
+          await avatarBytesNotifier.refresh();
+        }
+
+        // Account is the source of truth once logged in — whatever's saved
+        // there overwrites whatever was already on this device.
+        await Future.wait([
+          ref
+              .read(localeControllerProvider.notifier)
+              .setLocale(userInfo.locale != null ? Locale(userInfo.locale!) : ref.read(localeControllerProvider))
+              .catchError((e) => Talker().error('error caught in _onAuthenticated method of AuthController class', e)),
+          ref
+              .read(calendarControllerProvider.notifier)
+              .setCalendarType(userInfo.calendarType != null ? userInfo.calendarType! : ref.read(calendarControllerProvider))
+              .catchError((e) => Talker().error('error caught in _onAuthenticated method of AuthController class', e)),
+          ref
+              .read(timezoneControllerProvider.notifier)
+              .setZone(userInfo.timeZone != null ? userInfo.timeZone! : ref.read(timezoneControllerProvider))
+              .catchError((e) => Talker().error('error caught in _onAuthenticated method of AuthController class', e)),
+        ]);
+      });
+    } catch (e) {
+      Talker().error('error caught in _onAuthenticated method of AuthController class', e);
     }
-
-    await UserInfoStorage.save(userInfo);
-    await UserUsageStorage.save(userUsage);
-
-    if (userInfo.avatarKey != null) {
-      final bytes = await account.fetchAvatar();
-      ref.read(avatarBytesProvider.notifier).state = bytes;
-    }
-
-    // Account is the source of truth once logged in — whatever's saved
-    // there overwrites whatever was already on this device.
-    await ref.read(localeControllerProvider.notifier).setLocale(userInfo.locale != null ? Locale(userInfo.locale!) : ref.read(localeControllerProvider));
-
-    await ref
-        .read(calendarControllerProvider.notifier)
-        .setCalendarType(userInfo.calendarType != null ? userInfo.calendarType! : ref.read(calendarControllerProvider));
-
-    await ref.read(timezoneControllerProvider.notifier).setZone(userInfo.timeZone != null ? userInfo.timeZone! : ref.read(timezoneControllerProvider));
   }
 
   Future<RefreshResponse> refresh(String? refreshToken, {bool silent = false}) async {
@@ -157,20 +179,29 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   }
 
   Future<void> logout({bool silent = false}) async {
-    state = const AuthState(AuthStatus.unauthenticated);
-
     final refreshToken = await _storage.getRefreshToken();
     final accessToken = await _storage.getAccessToken();
+
+    final result = await apiCall(() {
+      final r = _authDio.post(
+        '/api/auth/logout',
+        data: {'refreshToken': refreshToken, 'accessToken': accessToken},
+        options: Options(extra: {'silentErrors': silent}),
+      );
+
+      if (!silent && rootContext != null) r.notifyOnSuccess(AppLocalizations.of(rootContext!)!.logout_success);
+
+      return r;
+    });
+    if (result.isFailure) return;
+
+    state = const AuthState(AuthStatus.unauthenticated);
+
     await _storage.clear();
 
-    await UserInfoStorage.clear();
-    ref.read(avatarBytesProvider.notifier).set(null);
-
-    await _authDio.post(
-      '/api/auth/logout',
-      data: {'refreshToken': refreshToken, 'accessToken': accessToken},
-      options: Options(extra: {'silentErrors': silent}),
-    );
+    await ref.read(avatarBytesProvider.notifier).clear();
+    await ref.read(userInfoProvider.notifier).clear();
+    await ref.read(userUsageProvider.notifier).clear();
   }
 
   @override
