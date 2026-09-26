@@ -28,8 +28,8 @@ class SubscriptionStorage {
 
     try {
       return Subscription.fromJson(jsonDecode(raw) as Map<String, dynamic>);
-    } catch (e, st) {
-      Talker().error('caught error in load method of SubscriptionStorage class', e, st);
+    } catch (e) {
+      Talker().error('caught error in load method of SubscriptionStorage class', e);
       return null; // corrupted or outdated cache shape — treat as absent
     }
   }

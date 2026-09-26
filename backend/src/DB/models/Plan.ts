@@ -6,7 +6,7 @@ export const collectionName = 'plan'
 
 const positiveInteger = number().integer().moreThan(-1)
 
-const priceSchema = object().shape({
+export const priceSchema = object().shape({
     IRR: number().required().integer().min(0),
     IRT: number().required().integer().min(0),
     USD: number().required().integer().min(0),

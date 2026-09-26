@@ -247,8 +247,8 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
           }
         });
       }
-    } catch (e, st) {
-      Talker().error('The _paginate method in AppPage widget threw an error.', e, st);
+    } catch (e) {
+      Talker().error('The _paginate method in AppPage widget threw an error.', e);
       NotificationService.showError(message: filter == Filter.file ? l10n.app_page_file_pagination_failed : l10n.app_page_folder_pagination_failed);
     } finally {
       if (mounted) {

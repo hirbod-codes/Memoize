@@ -12,7 +12,7 @@ export const subscriptionGate = async (req: Request, res: Response, next: NextFu
         return
     }
 
-    const subscriptions = await runWithLogger(log, () => (new SubscriptionRepository()).getByStatusForUser(req.user!.userId, ['active', 'trial']))
+    const subscriptions = await runWithLogger(log, () => (new SubscriptionRepository()).getActiveByUserId(req.user!.userId))
     log.debug({ subscription: subscriptions })
     if (subscriptions.length > 1) {
         log.error({ subscriptionsLength: subscriptions.length }, 'Rejected: more than one valid subscription found');
@@ -20,9 +20,10 @@ export const subscriptionGate = async (req: Request, res: Response, next: NextFu
     }
 
     const subscription = subscriptions[0]
-    if (subscription && subscription.currentPeriodEnd >= Date.now()) {
+    if (subscription && subscription.currentPeriodEnd && subscription.currentPeriodEnd >= Date.now()) {
         log.info('subscription is valid')
         req.user.privileges = subscription.privileges
+        req.user.planTitle = subscription.planTitle
         next()
         return
     }

@@ -87,7 +87,13 @@ Future<ApiCallResult<T>> apiCall<T>(Future<Response> Function() request, {T Func
     if (parsed is ApiSuccess) {
       ApiCallSuccess<T> result;
       if (fromJson != null && parsed.data != null) {
-        result = ApiCallSuccess<T>(fromJson(parsed.data));
+        try {
+          result = ApiCallSuccess<T>(fromJson(parsed.data));
+        } catch (e) {
+          Talker().error('apiCall, failed parse data, error caught in apiCall method', e);
+          String message = rootContext == null ? 'Something went wrong.' : AppLocalizations.of(rootContext!)!.uncaughtError;
+          return ApiCallFailure(message);
+        }
       } else {
         result = ApiCallSuccess<T>(parsed.data as T?);
       }
@@ -101,8 +107,8 @@ Future<ApiCallResult<T>> apiCall<T>(Future<Response> Function() request, {T Func
     final message = _extractMessage(ApiResponse.tryParse(e.response?.data), e.response?.data);
     _showError(message);
     return ApiCallFailure<T>(message);
-  } catch (e, st) {
-    Talker().error('apiCall: unexpected error', e, st);
+  } catch (e) {
+    Talker().error('apiCall: unexpected error', e);
     String message = rootContext == null ? 'Something went wrong.' : AppLocalizations.of(rootContext!)!.uncaughtError;
     _showError(message);
     return ApiCallFailure<T>(message);

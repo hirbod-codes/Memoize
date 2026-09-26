@@ -13,8 +13,6 @@ const update = {
     schemaVersion: string().optional().min(6).max(20),
     role: string().optional(),
 
-    planTitle: string().optional(),
-
     username: string().optional(),
     phoneNumber: string().optional().matches(/^09[0-9]{9}$/),
     email: string().optional().email(),
@@ -35,8 +33,6 @@ export const userSchema = object().required().stripUnknown().strict(true).shape(
     schemaVersion: string().optional().min(6).max(20),
     _id: likeObjectId.optional(),
     role: string().required(),
-
-    planTitle: string().required(),
 
     authMethod: string().oneOf(['email', 'phone']).required(),
     username: string().optional(),

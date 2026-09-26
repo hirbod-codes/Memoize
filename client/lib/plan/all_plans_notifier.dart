@@ -14,6 +14,7 @@ import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/plan/models/plan.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 import 'all_plans_storage.dart';
 
 class AllPlansState {
@@ -57,16 +58,20 @@ class AllPlansNotifier extends Notifier<AllPlansState> {
       await AllPlansStorage.save(info);
       state = state.copyWith(info: info, isLoading: false, clearError: true);
       return true;
-    } catch (_) {
-      state = state.copyWith(isLoading: false, error: 'Failed to verify your plan.');
+    } catch (e) {
+      Talker().error('caught error in refresh method of AllPlansNotifier', e);
+      state = state.copyWith(isLoading: false, error: 'Failed to fetch all plans.');
       return false;
     }
   }
 
   Future<List<Plan>?> _fetchFromServer() async {
     final dio = ref.read(dioProvider);
-    final result = await apiCall(() => dio.get('/api/plan'));
-    return result.dataOrNull?['plans'];
+    final result = await apiCall<List<Plan>?>(
+      () => dio.get('/api/plan'),
+      fromJson: (data) => (data['plans'] as List<dynamic>).map((e) => Plan.fromJson(e)).toList(),
+    );
+    return result.dataOrNull;
   }
 
   /// Call on logout.

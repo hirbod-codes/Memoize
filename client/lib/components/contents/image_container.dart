@@ -57,7 +57,7 @@ class _ImagesState extends ConsumerState<ImageContainer> {
   }
 
   FutureOr<Null> _handleError(dynamic e, dynamic st) {
-    Talker().error('caught error while trying to fetch audio', e, st);
+    Talker().error('caught error while trying to fetch audio', e);
     if (!mounted) return null;
 
     AppLocalizations l10n = AppLocalizations.of(context)!;

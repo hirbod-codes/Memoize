@@ -75,14 +75,6 @@ export const localizedText = mixed<{ [key: string]: string }>().optional().test(
     return ov
 })
 
-export const currencySchema = string().oneOf(['IRR', 'IRT', 'USD', 'EUR', 'BTC', 'ETH'])
-export const priceSchema = object().shape({
-    currency: currencySchema.required(),
-    amount: number().integer().min(0).required(),
-})
-export type Currency = InferType<typeof currencySchema>
-export type Price = InferType<typeof priceSchema>
-
 export function uniqueArrayTest(list: any) {
     if (!list) return true
     if (!Array.isArray(list)) return false

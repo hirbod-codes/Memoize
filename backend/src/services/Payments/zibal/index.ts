@@ -19,8 +19,7 @@ export class Zibal implements IPay {
             const result = await httpsRequest(
                 { host: `${this.baseEndpoint.replace('https://', '')}`, path: '/request/lazy', method: 'post', headers: { 'content-type': 'application/json', accept: 'application/json' } },
                 JSON.stringify({
-                    // merchant: this.merchantId,
-                    merchant: 'zibal',
+                    merchant: this.merchantId,
                     amount,
                     callbackUrl: callbackUrl,
                     description: 'Plan payment',
@@ -64,8 +63,7 @@ export class Zibal implements IPay {
             const zibalResult = await httpsRequest(
                 { host: `${this.baseEndpoint.replace('https://', '')}`, path: '/verify', method: 'post', headers: { 'content-type': 'application/json', accept: 'application/json' } },
                 JSON.stringify({
-                    // merchant: this.merchantId,
-                    merchant: 'zibal',
+                    merchant: this.merchantId,
                     trackId
                 })
             )
@@ -105,8 +103,7 @@ export class Zibal implements IPay {
             const result = await httpsRequest(
                 { host: `${this.baseEndpoint.replace('https://', '')}`, path: 'pg/v4/payment/reverse.json', method: 'post', headers: { 'content-type': 'application/json', accept: 'application/json' } },
                 JSON.stringify({
-                    // merchant: this.merchantId,
-                    merchant: 'zibal',
+                    merchant: this.merchantId,
                     trackId
                 })
             )

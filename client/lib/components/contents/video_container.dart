@@ -59,13 +59,13 @@ class _VideosState extends ConsumerState<VideoContainer> {
         _url = '${AppConfig.apiUrl}/api/video/file${signedToken == null ? '' : '/$signedToken'}/${_video!.id}/index.m3u8';
         _loading = false;
       });
-    } catch (e, st) {
-      _handleError(e, st);
+    } catch (e) {
+      _handleError(e);
     }
   }
 
-  FutureOr<Null> _handleError(dynamic e, dynamic st) {
-    Talker().error('caught error while trying to fetch video', e, st);
+  FutureOr<Null> _handleError(dynamic e) {
+    Talker().error('caught error while trying to fetch video', e);
     if (!mounted) return null;
 
     AppLocalizations l10n = AppLocalizations.of(context)!;

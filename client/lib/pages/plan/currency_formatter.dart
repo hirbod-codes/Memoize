@@ -18,22 +18,22 @@ import 'package:intl/intl.dart';
 /// If your backend uses a different convention, this is the one place
 /// to change it — nothing else in the UI knows or cares about units.
 class CurrencyFormatter {
-  static String format(int rawValue, Currency currency, {String locale = 'en'}) {
+  static String format(double rawValue, Currency currency, {String locale = 'en'}) {
     locale = _resolveLocale(locale);
 
     switch (currency) {
       case Currency.usd:
-        return '\$${_decimal(rawValue, 100, 2, locale)}';
+        return '\$${_decimal((rawValue * 100).ceil(), 100, 2, locale)}';
       case Currency.eur:
-        return '€${_decimal(rawValue, 100, 2, locale)}';
+        return '€${_decimal((rawValue * 100).ceil(), 100, 2, locale)}';
       case Currency.irt:
-        return '${_thousands(rawValue, locale)} Toman';
+        return '${_thousands(rawValue.ceil(), locale)} Toman';
       case Currency.irr:
-        return '${_thousands(rawValue, locale)} Rial';
+        return '${_thousands(rawValue.ceil(), locale)} Rial';
       case Currency.btc:
-        return '${_trimmed(rawValue, 100000000, 8, locale)} BTC';
+        return '${_trimmed((rawValue * 100000000).ceil(), 100000000, 8, locale)} BTC';
       case Currency.eth:
-        return '${_trimmed(rawValue, 1000000000000000000, 8, locale)} ETH';
+        return '${_trimmed((rawValue * 1000000000000000000).ceil(), 1000000000000000000, 8, locale)} ETH';
     }
   }
 

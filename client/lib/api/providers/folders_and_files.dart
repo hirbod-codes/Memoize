@@ -87,8 +87,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("addFolder succeeded: id=$newId");
       return newId;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.addFolder throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.addFolder throws an error", e);
       NotificationService.showError(context: rootContext!, message: l10n.folder_add_failed);
       return null;
     } finally {
@@ -137,8 +137,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("setFolder succeeded: id=${folder.id}, folderIndex=$folderIndex");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.setFolder throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.setFolder throws an error", e);
       NotificationService.showError(message: l10n.folder_set_failed);
       return false;
     } finally {
@@ -180,8 +180,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("removeFolder succeeded: id=$targetId, index=$index");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.removeFolder throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.removeFolder throws an error", e);
       NotificationService.showError(message: l10n.folder_remove_failed);
       return false;
     } finally {
@@ -228,8 +228,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("removeFolderById succeeded: id=$id");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.removeFolderById throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.removeFolderById throws an error", e);
       NotificationService.showError(message: l10n.folder_remove_failed);
       return false;
     } finally {
@@ -258,8 +258,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("moveFolder succeeded: id=${folder.id}, destId=$destId");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.moveFolder throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.moveFolder throws an error", e);
       NotificationService.showError(context: rootContext!, message: l10n.folder_move_failed);
       return false;
     } finally {
@@ -302,8 +302,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("addFile succeeded: id=$newId, treeNodeId=$treeNodeId");
       return newId;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.addFile throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.addFile throws an error", e);
       NotificationService.showError(context: rootContext!, message: l10n.file_add_failed);
       return null;
     } finally {
@@ -356,8 +356,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("setFile succeeded: id=${file.id}, fileIndex=$fileIndex");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.setFile throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.setFile throws an error", e);
       NotificationService.showError(message: l10n.file_set_failed);
       return false;
     } finally {
@@ -399,8 +399,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("removeFile succeeded: id=$targetId, index=$index");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.removeFile throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.removeFile throws an error", e);
       NotificationService.showError(message: l10n.file_remove_failed);
       return false;
     } finally {
@@ -447,8 +447,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("removeFileById succeeded: id=$id");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.removeFileById throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.removeFileById throws an error", e);
       NotificationService.showError(message: l10n.file_remove_failed);
       return false;
     } finally {
@@ -473,8 +473,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("moveFile succeeded: id=${file.id}, destId=$destId");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.moveFile throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.moveFile throws an error", e);
       NotificationService.showError(context: rootContext!, message: l10n.file_move_failed);
       return false;
     } finally {
@@ -546,8 +546,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("setContent succeeded: fileId=${tempFile.id}, contentIndex=$contentIndex, isTerm=${state.isTerm}");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.setContent throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.setContent throws an error", e);
       NotificationService.showError(context: rootContext!, message: l10n.content_set_failed);
       return false;
     } finally {
@@ -604,8 +604,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("addContent succeeded: fileId=${tempFile.id}, isTerm=${state.isTerm}");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.addContent throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.addContent throws an error", e);
       NotificationService.showError(context: rootContext!, message: l10n.content_add_failed);
       return false;
     } finally {
@@ -662,8 +662,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("removeContent succeeded: fileId=${tempFile.id}, index=$index");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.removeContent throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.removeContent throws an error", e);
       NotificationService.showError(context: rootContext!, message: l10n.content_remove_failed);
       return false;
     } finally {
@@ -736,8 +736,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("setContentValue succeeded: fileId=${tempFile.id}, contentIndex=$contentIndex, contentValueIndex=$contentValueIndex");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.setContentValue throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.setContentValue throws an error", e);
       NotificationService.showError(context: rootContext!, message: l10n.content_value_set_failed);
       return false;
     } finally {
@@ -794,8 +794,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("addContentValue succeeded: fileId=${tempFile.id}, contentIndex=$contentIndex");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.addContentValue throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.addContentValue throws an error", e);
       NotificationService.showError(context: rootContext!, message: l10n.content_value_add_failed);
       return false;
     } finally {
@@ -854,8 +854,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
 
       log.info("removeContentValue succeeded: fileId=${tempFile.id}, contentIndex=$contentIndex, valueIndex=$valueIndex");
       return true;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.removeContentValue throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.removeContentValue throws an error", e);
       NotificationService.showError(context: rootContext!, message: l10n.content_value_remove_failed);
       return false;
     } finally {
@@ -903,8 +903,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       final result = await setFile(file);
       log.info("moveContent ${result ? 'succeeded' : 'failed'}: fileId=${file.id}, fromIndex=$fromIndex, toIndex=$toIndex");
       return result;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.moveContent throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.moveContent throws an error", e);
       NotificationService.showError(message: l10n.content_move_failed);
       return false;
     } finally {
@@ -960,8 +960,8 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       final result = await setFile(file);
       log.info("moveContentValue ${result ? 'succeeded' : 'failed'}: fileId=${file.id}, contentIndex=$contentIndex, fromIndex=$fromIndex, toIndex=$toIndex");
       return result;
-    } catch (e, st) {
-      log.error("FoldersAndFiles.moveContentValue throws an error", e, st);
+    } catch (e) {
+      log.error("FoldersAndFiles.moveContentValue throws an error", e);
       NotificationService.showError(message: l10n.content_move_failed);
       return false;
     } finally {

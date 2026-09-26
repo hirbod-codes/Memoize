@@ -1,4 +1,4 @@
-import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId } from 'mongodb';
+import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId, WithId } from 'mongodb';
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
@@ -55,41 +55,41 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
         return await SubscriptionRepository.collection!.insertOne({ ...plan, updatedAt: Date.now(), createdAt: Date.now() }, { session: this.session })
     }
 
-    async get(id: string): Promise<Subscription> {
+    async get(id: string): Promise<WithId<Subscription>> {
         return (await SubscriptionRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
-    async getForUser(userId: string): Promise<Subscription[]> {
+    async getForUser(userId: string): Promise<WithId<Subscription>[]> {
         return await SubscriptionRepository.collection!.find({ userId }, { session: this.session }).toArray()
     }
 
-    async getByStatusByTitleForUser(userId: string, status: Subscription['status'][], planTitle: string) {
+    async getByStatusByTitleForUser(userId: string, status: Subscription['status'][], planTitle: string): Promise<WithId<Subscription>[]> {
         return await SubscriptionRepository.collection!.find({ userId, status: { $in: status }, planTitle }, { session: this.session }).toArray()
     }
 
-    async getByStatusForUser(userId: string, status: Subscription['status'][]) {
+    async getByStatusForUser(userId: string, status: Subscription['status'][]): Promise<WithId<Subscription>[]> {
         return await SubscriptionRepository.collection!.find({ userId, status: { $in: status } }, { session: this.session }).toArray()
     }
 
-    async getByStatus(status: Subscription['status'][]) {
+    async getByStatus(status: Subscription['status'][]): Promise<WithId<Subscription>[]> {
         return await SubscriptionRepository.collection!.find({ status: { $in: status } }, { session: this.session }).toArray()
     }
 
-    async getActiveByUserId(userId: string): Promise<Subscription> {
+    async getActiveByUserId(userId: string): Promise<WithId<Subscription>[]> {
         const redis = await Redis.getClient()
 
         const subscription = await redis.get(`${collectionName}:active:${userId}`)
         if (subscription)
             return JSON.parse(subscription)
 
-        const result = (await SubscriptionRepository.collection!.find({ userId, status: { $in: ['active', 'trial'] } }, { session: this.session }).toArray())[0]
+        const result = await SubscriptionRepository.collection!.find({ userId, status: { $in: ['active', 'trial'] } }, { session: this.session }).toArray()
         if (result)
             await redis.set(`${collectionName}:active:${userId}`, JSON.stringify(result))
 
         return result
     }
 
-    async getByPlanTitleForUser(planTitle: string, userId: string): Promise<Subscription[]> {
+    async getByPlanTitleForUser(planTitle: string, userId: string): Promise<WithId<Subscription>[]> {
         return await SubscriptionRepository.collection!.find({ planTitle, userId }, { session: this.session }).toArray()
     }
 

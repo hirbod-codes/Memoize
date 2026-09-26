@@ -750,4 +750,19 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get avatar_delete_success => 'آواتار کاربر با موفقیت حذف شد.';
+
+  @override
+  String get remove_subscription => 'حذف اشتراک';
+
+  @override
+  String get subscription_delete_success => 'اشتراک با موفقیت حذف شد.';
+
+  @override
+  String get storage_usage => 'میزان استفاده از فضای ذخیره‌سازی';
+
+  @override
+  String get add_storage => 'افزودن فضای ذخیره‌سازی';
+
+  @override
+  String get continue_to_payment => 'ادامه به پرداخت';
 }

@@ -9,6 +9,7 @@ declare global {
             user?: {
                 userId: string
                 userData: User
+                planTitle?: string
                 privileges?: Privileges
                 jwtPayload?: JwtPayload
             }

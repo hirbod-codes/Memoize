@@ -5,7 +5,7 @@ import { paymentMethodSchema, subscriptionDurationSchema } from "../../DB/models
 export const postSchema = object().required().shape({
     planTitle: string().required().label('Plan Title'),
     paymentMethod: paymentMethodSchema.required().strict(),
-    duration: subscriptionDurationSchema.required(),
+    subscriptionDueTSMS: number().integer().min(1).required().label('Subscription due'),
 })
 
 export const zibalVerifySchema = object().required().shape({

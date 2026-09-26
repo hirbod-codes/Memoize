@@ -9,6 +9,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum SubscriptionDuration { month, year }
@@ -61,36 +62,40 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
   }
 
   Future<void> _fetchPaymentMethods() async {
-    setState(() {
-      _loadingMethods = true;
-      _loadError = null;
-    });
-
-    final result = await apiCall(() => _authDio.get('/api/subscription/supported_payment_methods'));
-
-    if (!mounted) return;
-
-    if (result.isFailure || result.dataOrNull == null) {
+    try {
       setState(() {
-        _loadingMethods = false;
-        _loadError = AppLocalizations.of(context)!.checkout_load_methods_failed;
+        _loadingMethods = true;
+        _loadError = null;
       });
-      return;
+
+      final result = await apiCall(() => _authDio.get('/api/subscription/supported_payment_methods'));
+
+      if (!mounted) return;
+
+      if (result.isFailure || result.dataOrNull == null) {
+        setState(() {
+          _loadingMethods = false;
+          _loadError = AppLocalizations.of(context)!.checkout_load_methods_failed;
+        });
+        return;
+      }
+
+      final raw = (result.dataOrNull!['methods'] as List<dynamic>?) ?? [];
+      final methods = raw.cast<String>();
+
+      setState(() {
+        _methods = methods;
+        _loadingMethods = false;
+        _selectedMethod = methods.isNotEmpty ? methods.first : null;
+      });
+    } catch (e) {
+      Talker().error('caught error in _fetchPaymentMethods method of _CheckoutDialogState class', e);
     }
-
-    final raw = (result.dataOrNull!['methods'] as List<dynamic>?) ?? [];
-    final methods = raw.cast<String>();
-
-    setState(() {
-      _methods = methods;
-      _loadingMethods = false;
-      _selectedMethod = methods.isNotEmpty ? methods.first : null;
-    });
   }
 
   Currency? get _selectedCurrency => _selectedMethod == null ? null : currencyForPaymentMethod(_selectedMethod!);
 
-  int? get _totalPriceRaw {
+  double? get _totalPriceRaw {
     final currency = _selectedCurrency;
     if (currency == null) return null;
     final monthly = widget.plan.price.forCurrency(currency);

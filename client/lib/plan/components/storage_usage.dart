@@ -92,7 +92,7 @@ class StorageUsage extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            // Expanded(child: Text(l10n.account_load_failed, style: Theme.of(context).textTheme.bodySmall)),
+            Expanded(child: Text(l10n.account_load_failed, style: Theme.of(context).textTheme.bodySmall)),
             Text(l10n.uncaughtError),
           ],
         ),

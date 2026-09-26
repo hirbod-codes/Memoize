@@ -264,5 +264,10 @@
   "upgrade": "Upgrade",
   "sentence": "sentence",
   "remove": "Remove",
-  "avatar_delete_success": "successfully removed user 's avatar"
+  "avatar_delete_success": "successfully removed user 's avatar",
+  "remove_subscription": "Remove subscription",
+  "subscription_delete_success": "Subscription removed successfully.",
+  "storage_usage": "Storage usage",
+  "add_storage": "Add storage",
+  "continue_to_payment": "Continue to payment"
 }

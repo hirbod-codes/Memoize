@@ -7,11 +7,11 @@ import 'package:client/plan/models/currency_label.dart';
 /// which you should confirm against your actual backend convention.
 class Price {
   final Currency currency;
-  final int amount;
+  final double amount;
 
   Price({required this.currency, required this.amount});
 
-  factory Price.fromJson(Map<String, dynamic> json) => Price(currency: Currency.toCurrency(json['currency'] as String), amount: json['amount'] as int);
+  factory Price.fromJson(Map<String, dynamic> json) => Price(currency: Currency.toCurrency(json['currency'] as String), amount: json['amount'] as double);
 
   Map<String, dynamic> toJson() => {'amount': amount, 'currency': currency.toString()};
 }

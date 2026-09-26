@@ -37,8 +37,8 @@ class AvatarBytesNotifier extends Notifier<Uint8List?> {
 
       await save(bytes, avatarKey: cachedAvatarKey);
       state = bytes;
-    } catch (e, st) {
-      Talker().error('caught error in fetchAvatar method of AccountController', e, st);
+    } catch (e) {
+      Talker().error('caught error in fetchAvatar method of AccountController', e);
       return;
     }
   }

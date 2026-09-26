@@ -362,8 +362,8 @@ router.get('/tts', async (req, res) => {
                 return res.status(401).json({ status: 'error', message: 'Unauthorized' });
             }
 
-            if (user.role !== 'admin' && user?.planTitle === 'free') {
-                log.info({ plan: user.planTitle }, 'Rejected TTS request: plan does not include TTS');
+            if (user.role !== 'admin' && req.user?.planTitle === 'free') {
+                log.info({ plan: req.user?.planTitle }, 'Rejected TTS request: plan does not include TTS');
                 return res.status(403).json({ status: 'error', message: 'Your plan does not include text-to-speech' });
             }
 

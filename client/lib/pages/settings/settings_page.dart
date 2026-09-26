@@ -16,6 +16,8 @@ import 'package:client/pages/settings/change_email_sheet.dart';
 import 'package:client/pages/settings/change_password_sheet.dart';
 import 'package:client/pages/settings/change_phone_sheet.dart';
 import 'package:client/plan/components/storage_usage.dart';
+import 'package:client/subscription/models/subscription.dart';
+import 'package:client/subscription/subscription_notifier.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:dio/dio.dart';
@@ -26,8 +28,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' hide context;
 
-/// Wrap this in AppShell at the route level, same as HomePage:
-///   GoRoute(path: '/settings', builder: (context, state) => const AppShell(child: SettingsPage())),
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
@@ -39,35 +39,34 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    ref.invalidate(userInfoProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(userInfoProvider.notifier).refresh();
+      await ref.read(subscriptionProvider.notifier).refresh();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(userInfoProvider);
+    final userInfoState = ref.watch(userInfoProvider);
+    final subscriptionState = ref.watch(subscriptionProvider);
 
-    if (state.isLoading && state.info == null) {
+    if (userInfoState.isLoading || subscriptionState.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (state.error != null && state.info == null) {
+    if (userInfoState.error != null || userInfoState.info == null) {
       return _RetryState(onRetry: () => ref.read(userInfoProvider.notifier).refresh());
     }
 
-    final userInfo = state.info;
-    if (userInfo == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/login?from=/settings'));
-      return const SizedBox.shrink();
-    }
-
-    return SettingsContent(userInfo: userInfo);
+    return SettingsContent(userInfo: userInfoState.info!, subscription: subscriptionState.subscription);
   }
 }
 
 class SettingsContent extends ConsumerStatefulWidget {
   final UserInfo userInfo;
+  final Subscription? subscription;
 
-  const SettingsContent({super.key, required this.userInfo});
+  const SettingsContent({super.key, required this.userInfo, this.subscription});
 
   @override
   ConsumerState<SettingsContent> createState() => _SettingsContent();
@@ -76,6 +75,8 @@ class SettingsContent extends ConsumerStatefulWidget {
 class _SettingsContent extends ConsumerState<SettingsContent> {
   bool _isUploadingAvatar = false;
   bool _isRemovingAvatar = false;
+  bool _isCancelingPlan = false;
+  bool _isAddingStorage = false;
 
   @override
   Widget build(BuildContext context) {
@@ -86,8 +87,24 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
     return ListView(
       children: [
         _SectionHeader(title: l10n.account),
-        _InfoTile(label: l10n.plan, value: widget.userInfo.planTitle),
+        _InfoTile(label: l10n.plan, value: widget.subscription?.planTitle ?? 'free'),
         if (widget.userInfo.username != null) _InfoTile(label: l10n.username, value: widget.userInfo.username!),
+        if (widget.subscription != null)
+          Button(
+            type: ButtonType.outlined,
+            label: l10n.remove_subscription,
+            color: ThemeColorName.error,
+            isLoading: _isCancelingPlan,
+            onPressed: () async {
+              setState(() {
+                _isCancelingPlan = true;
+              });
+              await apiCall(() => ref.read(authDioProvider).delete('/api/subscription').notifyOnSuccess(l10n.subscription_delete_success));
+              setState(() {
+                _isCancelingPlan = false;
+              });
+            },
+          ),
         const SizedBox(height: 8),
 
         if (isEmailAccount) ...[
@@ -187,14 +204,30 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
           ],
         ),
 
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _SectionHeader(title: l10n.timeZone),
-            const StorageUsage(),
-          ],
-        ),
+        if (widget.subscription != null && widget.subscription!.planTitle != 'free') ...[
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _SectionHeader(title: l10n.storage_usage),
+              Expanded(child: const StorageUsage()),
+              Button(
+                type: ButtonType.outlined,
+                label: l10n.add_storage,
+                isLoading: _isAddingStorage,
+                onPressed: () async {
+                  setState(() {
+                    _isAddingStorage = true;
+                  });
+                  await showDialog<String?>(context: context, builder: (_) => AvatarUpdateSetting());
+                  setState(() {
+                    _isAddingStorage = false;
+                  });
+                },
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }

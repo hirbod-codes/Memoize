@@ -1556,6 +1556,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'successfully removed user \'s avatar'**
   String get avatar_delete_success;
+
+  /// No description provided for @remove_subscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove subscription'**
+  String get remove_subscription;
+
+  /// No description provided for @subscription_delete_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription removed successfully.'**
+  String get subscription_delete_success;
+
+  /// No description provided for @storage_usage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage usage'**
+  String get storage_usage;
+
+  /// No description provided for @add_storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add storage'**
+  String get add_storage;
+
+  /// No description provided for @continue_to_payment.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to payment'**
+  String get continue_to_payment;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

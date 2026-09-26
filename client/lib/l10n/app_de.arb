@@ -265,5 +265,10 @@
   "sentence": "Satz",
   "remove": "Entfernen",
   "avatar_delete_success": "Das Profilbild des Benutzers wurde erfolgreich entfernt.",
-  "file_manager_content_delete_dialog_heading": "Sind Sie sicher?\nDiese Aktion kann nicht rückgängig gemacht werden!"
+  "file_manager_content_delete_dialog_heading": "Sind Sie sicher?\nDiese Aktion kann nicht rückgängig gemacht werden!",
+  "remove_subscription": "Abonnement entfernen",
+  "subscription_delete_success": "Abonnement erfolgreich entfernt.",
+  "storage_usage": "Speichernutzung",
+  "add_storage": "Speicher hinzufügen",
+  "continue_to_payment": "Weiter zur Zahlung"
 }

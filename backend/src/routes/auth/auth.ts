@@ -123,7 +123,6 @@ router.post('/otp/verify', unAuth, async (req: Request, res: Response) => {
             const created = await runWithLogger(log, () => ur.create({
                 authMethod: 'phone',
                 role: 'user',
-                planTitle: 'free',
                 phoneNumber: phoneNumber,
                 temporaryAvatar: true,
                 language: 'fa',
@@ -251,7 +250,6 @@ router.post('/email/verify', unAuth, async (req: Request, res: Response) => {
         const created = await runWithLogger(log, () => ur.create({
             authMethod: 'email',
             role: 'user',
-            planTitle: 'free',
             email,
             temporaryAvatar: true,
             password: redisPassword,

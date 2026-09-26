@@ -16,7 +16,6 @@ import 'package:client/localization/calendars/calendar_system.dart';
 class UserInfo {
   final String? id;
   final String role;
-  final String planTitle;
   final AuthMethod authMethod;
   final String? username;
   final String? phoneNumber;
@@ -30,7 +29,6 @@ class UserInfo {
   const UserInfo({
     this.id,
     required this.role,
-    required this.planTitle,
     required this.authMethod,
     this.username,
     this.phoneNumber,
@@ -45,7 +43,6 @@ class UserInfo {
   factory UserInfo.fromJson(Map<String, dynamic> json) => UserInfo(
     id: json['_id'] as String?,
     role: json['role'] as String,
-    planTitle: json['planTitle'] as String,
     authMethod: json['authMethod'] == 'phone' ? AuthMethod.phone : AuthMethod.email,
     username: json['username'] as String?,
     phoneNumber: json['phoneNumber'] as String?,
@@ -68,7 +65,6 @@ class UserInfo {
   Map<String, dynamic> toJson() => {
     '_id': id,
     'role': role,
-    'planTitle': planTitle,
     'authMethod': authMethod.name,
     'username': username,
     'phoneNumber': phoneNumber,

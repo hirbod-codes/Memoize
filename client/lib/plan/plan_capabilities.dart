@@ -1,18 +1,18 @@
 import 'package:client/account/models/user_info.dart';
-import 'package:client/account/user_info_notifier.dart';
 import 'package:client/plan/models/plan.dart';
 import 'package:client/plan/all_plans_notifier.dart';
+import 'package:client/subscription/subscription_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 extension PlanCapabilities on UserInfo {
   Plan? _getPlan(WidgetRef ref) {
-    final info = ref.watch(userInfoProvider).info;
-    if (info == null) return null;
+    final subscription = ref.watch(subscriptionProvider).subscription;
+    if (subscription == null) return null;
 
     final plans = ref.watch(allPlansProvider).plans;
     if (plans == null) return null;
 
-    final plan = plans.firstWhere((e) => e.title == info.planTitle);
+    final plan = plans.firstWhere((e) => e.title == subscription.planTitle);
     return plan;
   }
 

@@ -265,5 +265,10 @@
   "sentence": "جمله",
   "remove": "حذف",
   "avatar_delete_success": "آواتار کاربر با موفقیت حذف شد.",
-  "file_manager_content_delete_dialog_heading": "آیا مطمئن هستید؟\nاین عمل قابل بازگشت نیست!"
+  "file_manager_content_delete_dialog_heading": "آیا مطمئن هستید؟\nاین عمل قابل بازگشت نیست!",
+  "remove_subscription": "حذف اشتراک",
+  "subscription_delete_success": "اشتراک با موفقیت حذف شد.",
+  "storage_usage": "میزان استفاده از فضای ذخیره‌سازی",
+  "add_storage": "افزودن فضای ذخیره‌سازی",
+  "continue_to_payment": "ادامه به پرداخت"
 }

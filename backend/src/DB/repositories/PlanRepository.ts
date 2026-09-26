@@ -14,9 +14,6 @@ class PlanRepository implements IRepository, ISeedable, IDropable {
     private session: ClientSession | undefined = undefined
     private static collection: Collection<Plan> | undefined = undefined
 
-    // To cache
-    private static allPlans?: Plan[] = undefined;
-
     seed(count?: number): Promise<void> {
         throw new Error('Method not implemented.');
     }
@@ -59,8 +56,8 @@ class PlanRepository implements IRepository, ISeedable, IDropable {
         const redis = await Redis.getClient()
 
         const allPlans = await redis.get('allPlans')
-        if (allPlans) {
-            const plans = JSON.parse(allPlans);
+        if (0) {
+            const plans = JSON.parse(allPlans!);
             if (Array.isArray(plans)) {
                 const plan = (plans as Plan[]).find(f => f._id?.toString() === id)
                 if (plan)
@@ -77,8 +74,8 @@ class PlanRepository implements IRepository, ISeedable, IDropable {
         const redis = await Redis.getClient()
 
         const allPlans = await redis.get('allPlans')
-        if (allPlans)
-            return JSON.parse(allPlans);
+        if (0)
+            return JSON.parse(allPlans!);
 
         const result = await PlanRepository.collection!.find({}, { session: this.session }).toArray()
 

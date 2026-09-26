@@ -751,4 +751,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get avatar_delete_success => 'Das Profilbild des Benutzers wurde erfolgreich entfernt.';
+
+  @override
+  String get remove_subscription => 'Abonnement entfernen';
+
+  @override
+  String get subscription_delete_success => 'Abonnement erfolgreich entfernt.';
+
+  @override
+  String get storage_usage => 'Speichernutzung';
+
+  @override
+  String get add_storage => 'Speicher hinzufügen';
+
+  @override
+  String get continue_to_payment => 'Weiter zur Zahlung';
 }

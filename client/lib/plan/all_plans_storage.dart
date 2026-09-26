@@ -17,7 +17,7 @@ class AllPlansStorage {
       return;
     }
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_preferencesKey, jsonEncode(plans.map((e) => e.toJson())));
+    await preferences.setString(_preferencesKey, jsonEncode(plans.map((e) => e.toJson()).toList()));
   }
 
   static Future<List<Plan>?> load() async {
@@ -26,7 +26,7 @@ class AllPlansStorage {
     if (raw == null) return null;
 
     try {
-      return (jsonDecode(raw) as List<Map<String, dynamic>>).map((e) => Plan.fromJson(e)).toList();
+      return (jsonDecode(raw) as List<dynamic>).map((e) => Plan.fromJson(e)).toList();
     } catch (_) {
       return null; // corrupted or outdated cache shape — treat as absent
     }

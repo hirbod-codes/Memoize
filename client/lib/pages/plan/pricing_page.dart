@@ -1,5 +1,6 @@
 import "package:client/components/checkout/checkout_dialog.dart";
 import "package:client/l10n/app_localizations.dart";
+import "package:client/plan/all_plans_notifier.dart";
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
@@ -7,7 +8,6 @@ import "package:client/plan/models/plan.dart";
 import "package:talker/talker.dart";
 import "../../plan/models/currency_label.dart";
 import "currency_formatter.dart";
-import "plans_provider.dart";
 
 /// Public pricing page. No auth required — this is meant to be
 /// reachable by anyone, logged in or not, which is why it goes through
@@ -32,52 +32,58 @@ class _PricingPageState extends ConsumerState<PricingPage> {
   @override
   void initState() {
     super.initState();
-    ref.invalidate(plansProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) => ref.read(allPlansProvider.notifier).refresh());
   }
 
   @override
   Widget build(BuildContext context) {
-    final plansAsync = ref.watch(plansProvider);
+    final plansState = ref.watch(allPlansProvider);
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
-    return Padding(
-      padding: const EdgeInsets.all(48.0),
-      child: plansAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) {
-          Talker().error("plansProvider threw an error", error, stackTrace);
-          return _RetryState(message: l10n.pricing_page_could_not_load, onRetry: () => ref.invalidate(plansProvider));
-        },
-        data: (plans) {
-          if (plans == null || plans.isEmpty) return _RetryState(message: l10n.pricing_page_no_plan_available);
+    if (plansState.isLoading) {
+      return Padding(
+        padding: const EdgeInsets.all(48.0),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    } else if (plansState.error != null) {
+      Talker().error("allPlansProvider threw an error", plansState.error);
+      return Padding(
+        padding: const EdgeInsets.all(48.0),
+        child: _RetryState(message: l10n.pricing_page_could_not_load, onRetry: () => ref.read(allPlansProvider.notifier).refresh()),
+      );
+    } else {
+      final plans = plansState.plans;
 
-          List<Plan> sortedPlans = List.empty(growable: true);
-          try {
-            for (var j = 0; j < plans.length; j++) {
-              int max = 10000000;
-              int? maxIndex;
-              for (var i = 0; i < plans.length; i++) {
-                final p = plans[i];
-                if (p.price.usd < max && p.price.usd > (sortedPlans.lastOrNull?.price.usd ?? -1)) {
-                  max = p.price.usd;
-                  maxIndex = i;
-                }
+      if (plans == null || plans.isEmpty) return _RetryState(message: l10n.pricing_page_no_plan_available);
 
-                if (i == plans.length - 1) {
-                  sortedPlans.add(plans[maxIndex!]);
-                }
-              }
+      List<Plan> sortedPlans = List.empty(growable: true);
+      try {
+        for (var j = 0; j < plans.length; j++) {
+          double max = 10000000;
+          int? maxIndex;
+          for (var i = 0; i < plans.length; i++) {
+            final p = plans[i];
+            if (p.price.usd < max && p.price.usd > (sortedPlans.lastOrNull?.price.usd ?? -1)) {
+              max = p.price.usd;
+              maxIndex = i;
             }
-          } catch (e, st) {
-            Talker().error("sorting plans failed", e, st);
-            sortedPlans = plans;
-          }
 
-          return _PricingContent(plans: sortedPlans, onSelectPlan: widget.onSelectPlan);
-        },
-      ),
-    );
+            if (i == plans.length - 1) {
+              sortedPlans.add(plans[maxIndex!]);
+            }
+          }
+        }
+      } catch (e) {
+        Talker().error("sorting plans failed", e);
+        sortedPlans = plans;
+      }
+
+      return Padding(
+        padding: const EdgeInsets.all(48.0),
+        child: _PricingContent(plans: sortedPlans, onSelectPlan: widget.onSelectPlan),
+      );
+    }
   }
 }
 

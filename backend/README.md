@@ -121,3 +121,8 @@ Ctrl + C DOES NOT work to terminate the app, run `taskkill /IM node.exe /F` on w
 16. add payment for storage quota
 17. allow logout for invalid refresh tokens for web clients
 18. fix: authorizeNestedLevels and authorizeCategoriesPerNestedLevel functions
+19. delete cloud data of users with expired plans
+20. add downgrading feature for plan and storage quota
+21. add recently visited categories and utilize hierarchy fields
+22. fix price calculations
+23. clients specify plan end due

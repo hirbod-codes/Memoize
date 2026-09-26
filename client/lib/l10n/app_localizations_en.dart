@@ -749,4 +749,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get avatar_delete_success => 'successfully removed user \'s avatar';
+
+  @override
+  String get remove_subscription => 'Remove subscription';
+
+  @override
+  String get subscription_delete_success => 'Subscription removed successfully.';
+
+  @override
+  String get storage_usage => 'Storage usage';
+
+  @override
+  String get add_storage => 'Add storage';
+
+  @override
+  String get continue_to_payment => 'Continue to payment';
 }
