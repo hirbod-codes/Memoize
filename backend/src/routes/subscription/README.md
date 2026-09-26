@@ -19,6 +19,8 @@
 
 ### to renewal a plan
 
+plan renewal is just another upgrade, same plan title, new `subscriptionDueTSMS`
+
 ### to upgrade to a another plan
 
 1. fetch and check if more than one active subscription exist

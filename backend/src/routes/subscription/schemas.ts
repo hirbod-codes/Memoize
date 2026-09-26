@@ -6,6 +6,7 @@ export const postSchema = object().required().shape({
     planTitle: string().required().label('Plan Title'),
     paymentMethod: paymentMethodSchema.required().strict(),
     subscriptionDueTSMS: number().integer().min(1).required().label('Subscription due'),
+    storageBytes: number().integer().min(1).required().label('Storage space'),
 })
 
 export const zibalVerifySchema = object().required().shape({

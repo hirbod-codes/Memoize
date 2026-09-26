@@ -141,13 +141,10 @@ export async function calculatePricesForSubscriptionDue({
         const pricePerGbPerMonth = pricingSettings.pricePerGbPerMonth[currency]
 
         const extraBytes = privilegesStorageBytes - plan.privileges.storageBytes
-        if (extraBytes < 0) {
-            log.error({ pricingSettings }, "calculated subscription's extra purchased storage is less than zero!")
-            res?.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
-            return undefined
-        }
-
-        storagePricePerPeriod = (extraBytes / (1024 * 1024 * 1024)) * pricePerGbPerMonth * remainingPlanDueFractionPerMonth
+        if (extraBytes > 0)
+            storagePricePerPeriod = (extraBytes / (1024 * 1024 * 1024)) * pricePerGbPerMonth * remainingPlanDueFractionPerMonth
+        else
+            log.error({ pricingSettings }, "the provided plan already covers storage bytes")
     }
 
     planPrice = remainingPlanDueFractionPerMonth * planPricePerPeriod
