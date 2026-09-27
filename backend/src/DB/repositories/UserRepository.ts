@@ -65,6 +65,15 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
+    async getAdmins(): Promise<WithId<User>[] | false | undefined> {
+        try {
+            return await UserRepository.collection!.find({ role: 'admin' }).toArray()
+        } catch (err) {
+            console.error(err)
+            return false
+        }
+    }
+
     async get(id: string): Promise<WithId<User> | false | undefined> {
         try {
             const redis = await Redis.getClient()

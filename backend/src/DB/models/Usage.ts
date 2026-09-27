@@ -8,19 +8,19 @@ export const schemaVersion = 'v1.0.0'
 const positiveInteger = number().integer().moreThan(-1)
 
 const post = {
-    storageBytesCount: positiveInteger.required(),
+    storageBytes: positiveInteger.required(),
 }
 export const usagePostSchema = object().shape(post).required()
 
 const create = {
     userId: likeObjectId.required(),
 
-    storageBytesCount: positiveInteger.required(),
+    storageBytes: positiveInteger.required(),
 }
 export const usageCreateSchema = object().shape(create).required()
 
 const update = {
-    storageBytesCount: positiveInteger.optional(),
+    storageBytes: positiveInteger.optional(),
 }
 export const usageUpdateSchema = object().shape(update).required()
 
@@ -30,7 +30,7 @@ export const usageSchema = object().shape({
 
     userId: likeObjectId.required(),
 
-    storageBytesCount: positiveInteger.required(),
+    storageBytes: positiveInteger.required(),
 
     createdAt: number().optional(),
     updatedAt: number().optional(),

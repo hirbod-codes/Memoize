@@ -5,8 +5,8 @@ export const collectionName = 'subscription'
 
 export const schemaVersion = 'v1.0.0'
 
-export type SubscriptionStatus = 'active' | 'canceled' | 'trial' | 'paymentNotVerified' | 'paymentNotCompleted' | 'inDebtToUser'
-const statusSchema = string().oneOf<SubscriptionStatus>(['active', 'canceled', 'trial', 'paymentNotVerified', 'paymentNotCompleted', 'inDebtToUser'])
+export type SubscriptionStatus = 'active' | 'canceled' | 'trial' | 'expired' | 'paymentNotVerified' | 'paymentNotCompleted' | 'inDebtToUser'
+const statusSchema = string().oneOf<SubscriptionStatus>(['active', 'canceled', 'trial', 'expired', 'paymentNotVerified', 'paymentNotCompleted', 'inDebtToUser'])
 
 const processorSubscriptionIdSchema = string().when('status', { is: 'paymentNotVerified', then(s) { return s.optional() }, otherwise(s) { return s.required() } })
 

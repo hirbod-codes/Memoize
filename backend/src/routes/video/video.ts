@@ -113,7 +113,7 @@ router.post('/', auth, async (req, res) => {
                 log.error("failed to find authenticated user's usage data")
                 return res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
             }
-            const allowedStorageBytes = maxTotalStorageBytes - usage.storageBytesCount
+            const allowedStorageBytes = maxTotalStorageBytes - usage.storageBytes
             log.debug({ availableStorageBytes: allowedStorageBytes })
 
             // ------------------------------------------------------------------------- Store upload stream on disk
@@ -456,6 +456,7 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
 
 router.delete('/:videoId', auth, async (req, res) => {
     let log = getLogger().child({ module: 'video', route: 'DELETE /api/video/:videoId' });
+
     try {
         log.info('Video delete request received');
 
@@ -489,23 +490,22 @@ router.delete('/:videoId', auth, async (req, res) => {
         log.info('Marked video temporary in DB before delete')
 
         log.info('deleting video file in s3 storage')
-        const s3Result = await s3.send(
-            new DeleteObjectCommand({
-                Bucket: BUCKET_NAME,
-                Key: video.bucketKey
-            })
-        );
-        log.info({ s3Result })
-        log.info('deleted video file')
+
+        if (video?.bucketKey) {
+            const s3Result = await runWithLogger(log, () => deleteFromS3(video.bucketKey!))
+            log.info({ s3Result })
+            log.info('deleted video file')
+        }
+
+        if (video?.webBucketKey) {
+            const s3Result = await runWithLogger(log, () => deleteFromS3(video.webBucketKey!))
+            log.info({ s3Result })
+            log.info('deleted web video file')
+        }
 
         if (video?.thumbnailKey) {
             log.info('deleting video thumbnail file in s3 storage')
-            const s3ThumbnailResult = await s3.send(
-                new DeleteObjectCommand({
-                    Bucket: BUCKET_NAME,
-                    Key: video.thumbnailKey
-                })
-            );
+            const s3ThumbnailResult = await runWithLogger(log, () => deleteFromS3(video.thumbnailKey!))
             log.info({ s3ThumbnailResult })
             log.info('deleted video thumbnail file')
         }

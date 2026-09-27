@@ -114,6 +114,10 @@ class ImageRepository implements IRepository, ISeedable, IDropable {
     async deleteTemporaries(): Promise<DeleteResult> {
         return await ImageRepository.collection!.deleteMany({ temporary: true }, { session: this.session })
     }
+
+    async deleteAllForUser(userId: string): Promise<DeleteResult> {
+        return await ImageRepository.collection!.deleteMany({ userId }, { session: this.session })
+    }
 }
 
 export default ImageRepository;

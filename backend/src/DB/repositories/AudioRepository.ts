@@ -114,6 +114,10 @@ class AudioRepository implements IRepository, ISeedable, IDropable {
     async deleteTemporaries(): Promise<DeleteResult> {
         return await AudioRepository.collection!.deleteMany({ temporary: true }, { session: this.session })
     }
+
+    async deleteAllForUser(userId: string): Promise<DeleteResult> {
+        return await AudioRepository.collection!.deleteMany({ userId }, { session: this.session })
+    }
 }
 
 export default AudioRepository;

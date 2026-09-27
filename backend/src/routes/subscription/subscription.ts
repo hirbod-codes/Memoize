@@ -3,7 +3,7 @@ import { auth, unAuth } from "../../middlewares/auth";
 import { getLogger, runWithLogger } from "../../observability/requestLoggerContext";
 import { handleError, validate } from "../../lib";
 import { Redis } from "../../DB/redis";
-import { postSchema, zarinpalVerifyCheckSchema, zibalVerifySchema } from "./schemas";
+import { postSchema, postUpgradeSchema, zarinpalVerifyCheckSchema, zibalVerifySchema } from "./schemas";
 import SubscriptionRepository from "../../DB/repositories/SubscriptionRepository";
 import { Subscription, SubscriptionCreate, subscriptionCreateSchema } from "../../DB/models/Subscription";
 import { appUrl } from "../../configs";
@@ -12,24 +12,25 @@ import { randomUUID } from "node:crypto";
 import { fetchBusinessPlan, resolveCurrencyAndPayment, calculatePricesForSubscriptionDue } from "./lib";
 import AppSettingsRepository from "../../DB/repositories/AppSettingsRepository";
 import { WithId } from "mongodb";
+import UsageRepository from "../../DB/repositories/UsageRepository";
 
 const router = Router();
 
 const PAYMENT_CHECKPOINT_BASE = '/api/subscription'
 
 const ZARINPAL_PAYMENT_BASE = `/zarinpal`
-const ZARINPAL_PAYMENT_VERIFY = `${ZARINPAL_PAYMENT_BASE}/verify`                                                       // /zarinpal/verify
-const ZARINPAL_PAYMENT_VERIFY_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZARINPAL_PAYMENT_VERIFY}`                             // /api/subscription/zarinpal/verify
+const ZARINPAL_PAYMENT_VERIFY = `${ZARINPAL_PAYMENT_BASE}/verify`                                       // /zarinpal/verify
+const ZARINPAL_PAYMENT_VERIFY_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZARINPAL_PAYMENT_VERIFY}`             // /api/subscription/zarinpal/verify
 export const ZARINPAL_PAYMENT_VERIFY_CALLBACK_URL = (subscriptionId: string) => `https://${appUrl.replace('https://', '')}${ZARINPAL_PAYMENT_VERIFY_PATH}/${subscriptionId}`
-const ZARINPAL_PAYMENT_VERIFY_CHECK = `${ZARINPAL_PAYMENT_VERIFY}/check`                                                // /zarinpal/verify/check
-const ZARINPAL_PAYMENT_VERIFY_CHECK_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZARINPAL_PAYMENT_VERIFY_CHECK}`                 // /zarinpal/verify/check
+const ZARINPAL_PAYMENT_VERIFY_CHECK = `${ZARINPAL_PAYMENT_VERIFY}/check`                                // /zarinpal/verify/check
+const ZARINPAL_PAYMENT_VERIFY_CHECK_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZARINPAL_PAYMENT_VERIFY_CHECK}` // /zarinpal/verify/check
 
 const ZIBAL_PAYMENT_BASE = `/zibal`
-const ZIBAL_PAYMENT_VERIFY = `${ZIBAL_PAYMENT_BASE}/verify`                                                       // /zibal/verify
-const ZIBAL_PAYMENT_VERIFY_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZIBAL_PAYMENT_VERIFY}`                             // /api/subscription/zibal/verify
+const ZIBAL_PAYMENT_VERIFY = `${ZIBAL_PAYMENT_BASE}/verify`                                             // /zibal/verify
+const ZIBAL_PAYMENT_VERIFY_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZIBAL_PAYMENT_VERIFY}`                   // /api/subscription/zibal/verify
 export const ZIBAL_PAYMENT_VERIFY_CALLBACK_URL = (subscriptionId: string) => `https://${appUrl.replace('https://', '')}${ZIBAL_PAYMENT_VERIFY_PATH}/${subscriptionId}`
-const ZIBAL_PAYMENT_VERIFY_CHECK = `${ZIBAL_PAYMENT_VERIFY}/check`                                                // /zibal/verify/check
-const ZIBAL_PAYMENT_VERIFY_CHECK_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZIBAL_PAYMENT_VERIFY_CHECK}`                 // /zibal/verify/check
+const ZIBAL_PAYMENT_VERIFY_CHECK = `${ZIBAL_PAYMENT_VERIFY}/check`                                      // /zibal/verify/check
+const ZIBAL_PAYMENT_VERIFY_CHECK_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZIBAL_PAYMENT_VERIFY_CHECK}`       // /zibal/verify/check
 
 router.get('/', auth, async (req, res) => {
     const log = getLogger().child({ module: 'subscription', route: `GET ${PAYMENT_CHECKPOINT_BASE}` });
@@ -79,127 +80,9 @@ router.get('/upgrade/calculate', auth, async (req, res) => {
     try {
         log.info('subscription upgrade calculation request received');
 
-        log.debug({ query: req.query });
-        const { planTitle, paymentMethod, subscriptionDueTSMS, storageBytes } = await runWithLogger(log, () => validate(postSchema, req.query))
-        log.debug({ planTitle, paymentMethod, subscriptionDueTSMS, storageBytes });
-
-        if (planTitle === 'free') {
-            log.info("invalid plan 'free' is chosen")
-            return res.status(400).json({ status: 'error', error_code: 'INVALID_PLAN' })
-        }
-
-        const nowTS = Date.now()
-        if (subscriptionDueTSMS && subscriptionDueTSMS <= nowTS) {
-            log.info("invalid 'subscriptionDueTSMS' provided")
-            return res.status(400).json({ status: 'error', error_code: 'INVALID_SUBSCRIPTION_DUE' })
-        }
-
-        log.info('input validated');
-
-        const userId = req.user!.userId;
-        log.debug({ userId });
-
-        const appSettingsRepository = new AppSettingsRepository()
-        const subscriptionRepository = new SubscriptionRepository()
-
-        // ------------------------------------------------------------------------- fetch and check if more than one active subscription exist
-        log.info('fetch and check if more than one active subscription exist')
-        const subscriptions = await runWithLogger(log, () => subscriptionRepository.getActiveByUserId(userId))
-        log.debug({ subscriptionsLength: subscriptions.length, subscriptions });
-        if (subscriptions.length > 1) {
-            log.warn('user has too many subscriptions active!')
-            return res.status(500).json({ status: 'error' })
-        }
-        if (subscriptions.length === 0) {
-            log.info('user has no active subscription')
-            return res.status(400).json({ status: 'error', error_code: 'USER_HAS_NO_ACTIVE_PLAN' })
-        }
-        const activeSubscription = subscriptions[0]
-
-        // ------------------------------------------------------------------------- check if the active subscription is expired
-        log.info('check if the active subscription is expired')
-        const expired = !activeSubscription.currentPeriodEnd || activeSubscription.currentPeriodEnd <= nowTS
-        log.debug({ activeSubscription, expired })
-        if (expired) {
-            log.info("active plan is expired")
-            return res.status(400).json({ status: 'error', error_code: 'ACTIVE_PLAN_EXPIRED' })
-        }
-
-        // ------------------------------------------------------------------------- check if at least one of these provided: 'subscriptionDueTSMS' or 'storageBytes' or 'planTitle'
-        log.info("check if at least one of these provided: 'subscriptionDueTSMS' or 'storageBytes' or 'planTitle'")
-        if (subscriptionDueTSMS === activeSubscription.currentPeriodEnd && storageBytes === 0 && activeSubscription.planTitle === planTitle) {
-            log.info("at least one of these must be provided: 'subscriptionDueTSMS' or 'storageBytes' or 'planTitle'")
-            return res.status(400).json({ status: 'error', error_code: 'INVALID_PARAMETERS' })
-        }
-
-        // ------------------------------------------------------------------------- fetching business plans
-        const currentPlan = await fetchBusinessPlan({ log, planTitle: activeSubscription.planTitle, res })
-        if (!currentPlan) return
-
-        const requestedPlan = await fetchBusinessPlan({ log, planTitle, res })
-        if (!requestedPlan) return
-
-        // ------------------------------------------------------------------------- resolving currency and payment method and callback url
-        const resolved = await resolveCurrencyAndPayment({ log, paymentMethod, res })
-        if (!resolved) return
-        const [currency, payment, callback] = resolved
-
-        // ------------------------------------------------------------------------- check if the currency doesn't match
-        log.info("check if the currency doesn't match")
-        if (activeSubscription.payment.currency !== currency) {
-            log.info('active plan is in another currency')
-            return res.status(400).json({ status: 'error', error_code: 'ACTIVE_PLAN_CURRENCY_MISMATCH' })
-        }
-
-        // ------------------------------------------------------------------------- calculating price
-        const remainingDueOfActiveSubscriptionPriceCalculations = await calculatePricesForSubscriptionDue({
-            log,
-            plan: currentPlan,
-            durationMS: activeSubscription.currentPeriodEnd - nowTS,
-            currency: currency,
-            privilegesStorageBytes: activeSubscription.privileges.storageBytes,
-            appSettingsRepository,
-            res
-        })
-        if (!remainingDueOfActiveSubscriptionPriceCalculations) return
-        const [, , remainingTotalPrice] = remainingDueOfActiveSubscriptionPriceCalculations
-
-        const dueCalculations = await calculatePricesForSubscriptionDue({
-            log,
-            plan: requestedPlan,
-            durationMS: subscriptionDueTSMS - nowTS,
-            currency: currency,
-            privilegesStorageBytes: activeSubscription.privileges.storageBytes,
-            appSettingsRepository,
-            res
-        })
-        if (!dueCalculations) return
-        const [, , dueTotalPrice] = dueCalculations
-
-        let totalPrice = dueTotalPrice - remainingTotalPrice
-        if (activeSubscription.payment.amount < 0)
-            totalPrice += activeSubscription.payment.amount
-
-        log.debug({ remainingDueOfActiveSubscriptionPriceCalculations, dueCalculations, totalPrice })
-
-        if (totalPrice < 0)
-            log.info({ totalPrice }, "we are in dept to user")
-
-        return res.status(200).json({ status: 'success', data: { totalPrice, currency } })
-    } catch (error) {
-        runWithLogger(log, () => handleError(res, error))
-    }
-});
-
-router.post('/upgrade', auth, async (req, res) => {
-    const log = getLogger().child({ module: 'subscription', route: 'POST /api/subscription/upgrade' });
-
-    try {
-        log.info('subscription upgrade request received');
-
         log.debug({ body: req.body });
-        const { planTitle, paymentMethod, subscriptionDueTSMS, storageBytes } = await runWithLogger(log, () => validate(postSchema, req.body))
-        log.debug({ planTitle, paymentMethod, subscriptionDueTSMS, storageBytes });
+        let { planTitle, paymentMethod, subscriptionDueTSMS, extraStorageBytes } = await runWithLogger(log, () => validate(postUpgradeSchema, req.body))
+        log.debug({ planTitle, paymentMethod, subscriptionDueTSMS, extraStorageBytes });
 
         if (planTitle === 'free') {
             log.info("invalid plan 'free' is chosen")
@@ -246,7 +129,7 @@ router.post('/upgrade', auth, async (req, res) => {
 
         // ------------------------------------------------------------------------- check if at least one of these provided: 'subscriptionDueTSMS' or 'storageBytes' or 'planTitle'
         log.info("check if at least one of these provided: 'subscriptionDueTSMS' or 'storageBytes' or 'planTitle'")
-        if (subscriptionDueTSMS === activeSubscription.currentPeriodEnd && storageBytes === 0 && activeSubscription.planTitle === planTitle) {
+        if (subscriptionDueTSMS === activeSubscription.currentPeriodEnd && extraStorageBytes === 0 && activeSubscription.planTitle === planTitle) {
             log.info("at least one of these must be provided: 'subscriptionDueTSMS' or 'storageBytes' or 'planTitle'")
             return res.status(400).json({ status: 'error', error_code: 'INVALID_PARAMETERS' })
         }
@@ -255,8 +138,36 @@ router.post('/upgrade', auth, async (req, res) => {
         const currentPlan = await fetchBusinessPlan({ log, planTitle: activeSubscription.planTitle, res })
         if (!currentPlan) return
 
-        const requestedPlan = await fetchBusinessPlan({ log, planTitle, res })
+        const requestedPlan = !planTitle || planTitle === activeSubscription.planTitle ? currentPlan : await fetchBusinessPlan({ log, planTitle, res })
         if (!requestedPlan) return
+
+        // ------------------------------------------------------------------------- validating parameters according to active subscription
+        log.info('validating parameters according to active subscription')
+
+        if ((!planTitle || planTitle === activeSubscription.planTitle) && !paymentMethod && !subscriptionDueTSMS && !extraStorageBytes) {
+            log.info('no parameters provided, user is not as asking for any upgrades!')
+            return res.status(400).json({ status: 'error', error_code: 'INVALID_PARAMETERS' })
+        }
+
+        if (!planTitle) {
+            log.info("no 'planTitle' provided, defaulting to current active subscription planTitle")
+            planTitle = activeSubscription.planTitle
+        }
+
+        if (!paymentMethod) {
+            log.info("no 'paymentMethod' provided, defaulting to current active subscription payment method")
+            paymentMethod = activeSubscription.payment.method
+        }
+
+        if (!subscriptionDueTSMS) {
+            log.info("no 'subscriptionDueTSMS' provided, defaulting to current active subscription currentPeriodEnd")
+            subscriptionDueTSMS = activeSubscription.currentPeriodEnd
+        }
+
+        if (!extraStorageBytes) {
+            log.info("no 'storageBytes' provided, defaulting to current active subscription storageBytes")
+            extraStorageBytes = activeSubscription.privileges.storageBytes - currentPlan.privileges.storageBytes
+        }
 
         // ------------------------------------------------------------------------- resolving currency and payment method and callback url
         const resolved = await resolveCurrencyAndPayment({ log, paymentMethod, res })
@@ -288,7 +199,161 @@ router.post('/upgrade', auth, async (req, res) => {
             plan: requestedPlan,
             durationMS: subscriptionDueTSMS - nowTS,
             currency: currency,
+            privilegesStorageBytes: requestedPlan.privileges.storageBytes + extraStorageBytes,
+            appSettingsRepository,
+            res
+        })
+        if (!dueCalculations) return
+        const [, , dueTotalPrice] = dueCalculations
+
+        let totalPrice = dueTotalPrice - remainingTotalPrice
+        if (activeSubscription.payment.amount < 0)
+            totalPrice += activeSubscription.payment.amount
+
+        log.debug({ remainingDueOfActiveSubscriptionPriceCalculations, dueCalculations, totalPrice })
+
+        if (totalPrice < 0)
+            log.warn({ totalPrice }, "we are in dept to user")
+
+        return res.status(200).json({ status: 'success', data: { totalPrice, currency } })
+    } catch (error) {
+        runWithLogger(log, () => handleError(res, error))
+    }
+});
+
+router.post('/upgrade', auth, async (req, res) => {
+    const log = getLogger().child({ module: 'subscription', route: 'POST /api/subscription/upgrade' });
+
+    try {
+        log.info('subscription upgrade request received');
+
+        log.debug({ body: req.body });
+        let { planTitle, paymentMethod, subscriptionDueTSMS, extraStorageBytes } = await runWithLogger(log, () => validate(postUpgradeSchema, req.body))
+        log.debug({ planTitle, paymentMethod, subscriptionDueTSMS, extraStorageBytes });
+
+        if (planTitle === 'free') {
+            log.info("invalid plan 'free' is chosen")
+            return res.status(400).json({ status: 'error', error_code: 'INVALID_PLAN' })
+        }
+
+        const nowTS = Date.now()
+        if (subscriptionDueTSMS && subscriptionDueTSMS <= nowTS) {
+            log.info("invalid 'subscriptionDueTSMS' provided")
+            return res.status(400).json({ status: 'error', error_code: 'INVALID_SUBSCRIPTION_DUE' })
+        }
+
+        log.info('input validated');
+
+        const userId = req.user!.userId;
+        log.debug({ userId });
+
+        const redis = await Redis.getClient();
+        const appSettingsRepository = new AppSettingsRepository()
+        const subscriptionRepository = new SubscriptionRepository()
+
+        // ------------------------------------------------------------------------- fetch and check if more than one active subscription exist
+        log.info('fetch and check if more than one active subscription exist')
+        const subscriptions = await runWithLogger(log, () => subscriptionRepository.getActiveByUserId(userId))
+        log.debug({ subscriptionsLength: subscriptions.length, subscriptions });
+        if (subscriptions.length > 1) {
+            log.warn('user has too many subscriptions active!')
+            return res.status(500).json({ status: 'error' })
+        }
+        if (subscriptions.length === 0) {
+            log.info('user has no active subscription')
+            return res.status(400).json({ status: 'error', error_code: 'USER_HAS_NO_ACTIVE_PLAN' })
+        }
+        const activeSubscription = subscriptions[0]
+
+        // ------------------------------------------------------------------------- check if the active subscription is expired
+        log.info('check if the active subscription is expired')
+        const expired = !activeSubscription.currentPeriodEnd || activeSubscription.currentPeriodEnd <= nowTS
+        log.debug({ activeSubscription, expired })
+        if (expired) {
+            log.info("active plan is expired")
+            return res.status(400).json({ status: 'error', error_code: 'ACTIVE_PLAN_EXPIRED' })
+        }
+
+        // ------------------------------------------------------------------------- check if at least one of these provided: 'subscriptionDueTSMS' or 'storageBytes' or 'planTitle'
+        log.info("check if at least one of these provided: 'subscriptionDueTSMS' or 'storageBytes' or 'planTitle'")
+        if (subscriptionDueTSMS === activeSubscription.currentPeriodEnd && extraStorageBytes === 0 && activeSubscription.planTitle === planTitle) {
+            log.info("at least one of these must be provided: 'subscriptionDueTSMS' or 'storageBytes' or 'planTitle'")
+            return res.status(400).json({ status: 'error', error_code: 'INVALID_PARAMETERS' })
+        }
+
+        // ------------------------------------------------------------------------- fetching business plans
+        const currentPlan = await fetchBusinessPlan({ log, planTitle: activeSubscription.planTitle, res })
+        if (!currentPlan) return
+
+        const requestedPlan = !planTitle || planTitle === activeSubscription.planTitle ? currentPlan : await fetchBusinessPlan({ log, planTitle, res })
+        if (!requestedPlan) return
+
+        // ------------------------------------------------------------------------- validating parameters according to active subscription
+        log.info('validating parameters according to active subscription')
+
+        if ((!planTitle || planTitle === activeSubscription.planTitle) && !paymentMethod && !subscriptionDueTSMS && !extraStorageBytes) {
+            log.info('no parameters provided, user is not as asking for any upgrades!')
+            return res.status(400).json({ status: 'error', error_code: 'INVALID_PARAMETERS' })
+        }
+
+        if (!planTitle) {
+            log.info("no 'planTitle' provided, defaulting to current active subscription planTitle")
+            planTitle = activeSubscription.planTitle
+        }
+
+        if (!paymentMethod) {
+            log.info("no 'paymentMethod' provided, defaulting to current active subscription payment method")
+            paymentMethod = activeSubscription.payment.method
+        }
+
+        if (!subscriptionDueTSMS) {
+            log.info("no 'subscriptionDueTSMS' provided, defaulting to current active subscription currentPeriodEnd")
+            subscriptionDueTSMS = activeSubscription.currentPeriodEnd
+        }
+
+        if (!extraStorageBytes) {
+            log.info("no 'storageBytes' provided, defaulting to current active subscription storageBytes")
+            extraStorageBytes = activeSubscription.privileges.storageBytes - currentPlan.privileges.storageBytes
+        } else {
+            const usageRepository = new UsageRepository
+
+            const usage = await runWithLogger(log, () => usageRepository.getByUserId(userId))
+            if ((usage?.storageBytes ?? 0) > requestedPlan.privileges.storageBytes + extraStorageBytes) {
+                return res.status(402).json({ error: 'error', error_code: 'QUOTA_EXCEEDED' })
+            }
+        }
+
+        // ------------------------------------------------------------------------- resolving currency and payment method and callback url
+        const resolved = await resolveCurrencyAndPayment({ log, paymentMethod, res })
+        if (!resolved) return
+        const [currency, payment, callback] = resolved
+
+        // ------------------------------------------------------------------------- check if the currency doesn't match
+        log.info("check if the currency doesn't match")
+        if (activeSubscription.payment.currency !== currency) {
+            log.info('active plan is in another currency')
+            return res.status(400).json({ status: 'error', error_code: 'ACTIVE_PLAN_CURRENCY_MISMATCH' })
+        }
+
+        // ------------------------------------------------------------------------- calculating price
+        const remainingDueOfActiveSubscriptionPriceCalculations = await calculatePricesForSubscriptionDue({
+            log,
+            plan: currentPlan,
+            durationMS: activeSubscription.currentPeriodEnd - nowTS,
+            currency: currency,
             privilegesStorageBytes: activeSubscription.privileges.storageBytes,
+            appSettingsRepository,
+            res
+        })
+        if (!remainingDueOfActiveSubscriptionPriceCalculations) return
+        const [, , remainingTotalPrice] = remainingDueOfActiveSubscriptionPriceCalculations
+
+        const dueCalculations = await calculatePricesForSubscriptionDue({
+            log,
+            plan: requestedPlan,
+            durationMS: subscriptionDueTSMS - nowTS,
+            currency: currency,
+            privilegesStorageBytes: requestedPlan.privileges.storageBytes + extraStorageBytes,
             appSettingsRepository,
             res
         })
@@ -434,8 +499,8 @@ router.post('/', auth, async (req, res) => {
 
         // ------------------------------------------------------------------------- validation
         log.debug({ body: req.body });
-        const { planTitle, paymentMethod, subscriptionDueTSMS } = await runWithLogger(log, () => validate(postSchema, req.body))
-        log.debug({ planTitle, paymentMethod, subscriptionDueTSMS });
+        const { planTitle, paymentMethod, subscriptionDueTSMS, extraStorageBytes } = await runWithLogger(log, () => validate(postSchema, req.body))
+        log.debug({ planTitle, paymentMethod, subscriptionDueTSMS, extraStorageBytes });
 
         if (planTitle === 'free') {
             log.info("invalid plan 'free' is chosen")

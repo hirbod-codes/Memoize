@@ -97,7 +97,7 @@ router.post('/', auth, async (req, res) => {
                 log.error("failed to find authenticated user's usage data")
                 return res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
             }
-            const allowedStorageBytes = maxTotalStorageBytes - usage.storageBytesCount
+            const allowedStorageBytes = maxTotalStorageBytes - usage.storageBytes
             log.debug({ availableStorageBytes: allowedStorageBytes })
 
             // ------------------------------------------------------------------------- store upload stream on disk

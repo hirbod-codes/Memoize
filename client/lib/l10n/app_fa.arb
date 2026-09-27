@@ -270,5 +270,12 @@
   "subscription_delete_success": "اشتراک با موفقیت حذف شد.",
   "storage_usage": "میزان استفاده از فضای ذخیره‌سازی",
   "add_storage": "افزودن فضای ذخیره‌سازی",
-  "continue_to_payment": "ادامه به پرداخت"
+  "continue_to_payment": "ادامه به پرداخت",
+  "renewal": "تمدید",
+  "please_fill_inputs_correctly": "لطفاً ورودی‌ها را به‌درستی تکمیل کنید",
+  "checkout_additional_storage": "فضای ذخیره‌سازی اضافی",
+  "checkout_storage_invalid": "مقدار فضای ذخیره‌سازی نامعتبر است",
+  "checkout_days_suffix": "روز",
+  "checkout_duration_days": "مدت زمان طرح به روز",
+  "checkout_duration_invalid": "مقدار روز نامعتبر است"
 }

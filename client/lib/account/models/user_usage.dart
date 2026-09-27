@@ -1,10 +1,10 @@
 class UserUsage {
   final String _id;
-  final int storageBytesCount;
+  final int storageBytes;
 
-  const UserUsage({required String id, required this.storageBytesCount}) : _id = id;
+  const UserUsage({required String id, required this.storageBytes}) : _id = id;
 
-  factory UserUsage.fromJson(Map<String, dynamic> json) => UserUsage(id: json['_id'] as String, storageBytesCount: json['storageBytesCount'] as int);
+  factory UserUsage.fromJson(Map<String, dynamic> json) => UserUsage(id: json['_id'] as String, storageBytes: json['storageBytes'] as int);
 
-  Map<String, dynamic> toJson() => {'_id': _id, 'storageBytesCount': storageBytesCount};
+  Map<String, dynamic> toJson() => {'_id': _id, 'storageBytes': storageBytes};
 }

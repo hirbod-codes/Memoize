@@ -24,10 +24,11 @@ plan renewal is just another upgrade, same plan title, new `subscriptionDueTSMS`
 ### to upgrade to a another plan
 
 1. fetch and check if more than one active subscription exist
-2. check if the active subscription with same title exist, if it's expired or if the currency doesn't match
-3. fetching business plans
-4. resolving currency and payment method
-5. calculating price
+2. validating parameters according to active subscription
+3. check if the active subscription with same title exist, if it's expired or if the currency doesn't match
+4. fetching business plans
+5. resolving currency and payment method
+6. calculating price
    1. uses `Subscription['currentPeriodEnd']` and `nowTS` time difference to calculate how much user's unused plan worths
    2. uses request body input `subscriptionDueTSMS` and `nowTS` time difference to calculate how much user needs to pay according to requested plan and `subscriptionDueTSMS`
    3. subtracts these unused price from the requested due price to get the `totalPrice`
@@ -37,13 +38,13 @@ plan renewal is just another upgrade, same plan title, new `subscriptionDueTSMS`
          2. the subscription is then created with `active` status
       2. if zero
          1. the subscription is then created with `active` status
-6. deleting old subscriptions with 'paymentNotCompleted' status
-7. creating temporary subscription with status 'paymentNotCompleted'
-8. storing the created subscription in session
-9. requesting payment
-10. sending redirect url to user, so that user visit the payment page
-11. user is redirected to `callback url` after payment is finished
-12. `callback url` endpoint then does payment verification
+7. deleting old subscriptions with 'paymentNotCompleted' status
+8. creating temporary subscription with status 'paymentNotCompleted'
+9. storing the created subscription in session
+10. requesting payment
+11. sending redirect url to user, so that user visit the payment page
+12. user is redirected to `callback url` after payment is finished
+13. `callback url` endpoint then does payment verification
 
 ### payment verification
 

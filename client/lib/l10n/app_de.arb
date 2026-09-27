@@ -270,5 +270,12 @@
   "subscription_delete_success": "Abonnement erfolgreich entfernt.",
   "storage_usage": "Speichernutzung",
   "add_storage": "Speicher hinzufügen",
-  "continue_to_payment": "Weiter zur Zahlung"
+  "continue_to_payment": "Weiter zur Zahlung",
+  "renewal": "Verlängerung",
+  "please_fill_inputs_correctly": "Bitte füllen Sie die Eingabefelder korrekt aus",
+  "checkout_additional_storage": "Zusätzlicher Speicherplatz",
+  "checkout_storage_invalid": "Ungültiger Speicherplatzwert",
+  "checkout_days_suffix": "Tage",
+  "checkout_duration_days": "Tarifdauer in Tagen",
+  "checkout_duration_invalid": "Ungültige Anzahl an Tagen"
 }

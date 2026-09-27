@@ -99,6 +99,6 @@ class StorageUsage extends ConsumerWidget {
       );
     }
 
-    return StorageUsageWidget(usedBytes: userUsage.usage!.storageBytesCount, totalBytes: subscription.subscription!.privileges.storageBytes);
+    return StorageUsageWidget(usedBytes: userUsage.usage!.storageBytes, totalBytes: subscription.subscription!.privileges.storageBytes);
   }
 }

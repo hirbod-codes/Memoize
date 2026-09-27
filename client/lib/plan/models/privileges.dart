@@ -1,13 +1,6 @@
 import 'package:client/plan/models/content_type_flags.dart';
 import 'package:client/plan/models/max_value_per_content.dart';
 
-// categoriesPerNestedLevel
-// nestedLevels
-// cardsPerCategory
-// contentsPerCardSide
-// storageBytes
-// valuePerContent
-// allowedContentTypes
 /// Mirrors `privilegesSchema`.
 class Privileges {
   final int categoriesPerNestedLevel;

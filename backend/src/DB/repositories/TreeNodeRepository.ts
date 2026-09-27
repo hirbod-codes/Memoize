@@ -151,6 +151,10 @@ class TreeNodeRepository implements IRepository, ISeedable, IDropable {
     async deleteForUser(id: string, userId: string): Promise<DeleteResult> {
         return await TreeNodeRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id), userId }, { session: this.session })
     }
+
+    async deleteAllForUser(userId: string): Promise<DeleteResult> {
+        return await TreeNodeRepository.collection!.deleteMany({ userId }, { session: this.session })
+    }
 }
 
 export default TreeNodeRepository;

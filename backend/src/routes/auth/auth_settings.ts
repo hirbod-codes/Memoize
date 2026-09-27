@@ -12,7 +12,7 @@ export async function getAuthSettings(): Promise<AppSettings> {
 
     if (!doc) {
         log.info('No auth settings document found, using defaults');
-        return { key: 'auth', allowEmailRegistration: true, allowOtp: false };
+        return { key: 'auth', allowEmailRegistration: true, allowOtp: false } as any;
     }
 
     return doc

@@ -766,4 +766,25 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get continue_to_payment => 'Weiter zur Zahlung';
+
+  @override
+  String get renewal => 'Verlängerung';
+
+  @override
+  String get please_fill_inputs_correctly => 'Bitte füllen Sie die Eingabefelder korrekt aus';
+
+  @override
+  String get checkout_additional_storage => 'Zusätzlicher Speicherplatz';
+
+  @override
+  String get checkout_storage_invalid => 'Ungültiger Speicherplatzwert';
+
+  @override
+  String get checkout_days_suffix => 'Tage';
+
+  @override
+  String get checkout_duration_days => 'Tarifdauer in Tagen';
+
+  @override
+  String get checkout_duration_invalid => 'Ungültige Anzahl an Tagen';
 }

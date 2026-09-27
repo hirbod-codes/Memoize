@@ -13,7 +13,7 @@ const update = {
 }
 export const appSettingsUpdateSchema = object().shape(update).required()
 
-export type AppSettingsKey = "auth" | "pricing"
+export type AppSettingsKey = "auth" | "pricing" | "expiration"
 
 export const appSettingsSchema = object().required().stripUnknown().strict(true).shape({
     schemaVersion: string().optional().min(6).max(20),
@@ -21,12 +21,18 @@ export const appSettingsSchema = object().required().stripUnknown().strict(true)
     // discriminates which settings group this document holds, e.g. 'auth'.
     // one document per group rather than a single blob, so each group can
     // grow its own typed fields the same way User.ts does.
-    key: string().required().oneOf<AppSettingsKey>(['auth', 'pricing']),
+    key: string().required().oneOf<AppSettingsKey>(['auth', 'pricing', 'expiration']),
 
-    allowEmailRegistration: boolean().when('key', { is: 'auth', then(s) { return s.required() } }),
-    allowOtp: boolean().when('key', { is: 'auth', then(s) { return s.required() } }),
+    // auth
+    allowEmailRegistration: boolean().when('key', { is: 'auth', then(s) { return s.required() }, otherwise(s) { return s.optional(); } }),
+    allowOtp: boolean().when('key', { is: 'auth', then(s) { return s.required() }, otherwise(s) { return s.optional(); } }),
 
-    pricePerGbPerMonth: priceSchema.when('key', { is: 'pricing', then(s) { return s.required() } }),
+    // pricing
+    pricePerGbPerMonth: priceSchema.when('key', { is: 'pricing', then(s) { return s.required() }, otherwise(s) { return s.optional(); } }),
+
+    // expiration
+    deleteS3StorageAfterExpiredDaysCount: number().integer().min(1).optional(),
+    deleteDataAfterExpiredDaysCount: number().integer().min(1).optional(),
 
     createdAt: number().optional(),
     updatedAt: number().optional(),

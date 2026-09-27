@@ -114,6 +114,10 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
     async deleteTemporaries(): Promise<DeleteResult> {
         return await VideoRepository.collection!.deleteMany({ temporary: true }, { session: this.session })
     }
+
+    async deleteAllForUser(userId: string): Promise<DeleteResult> {
+        return await VideoRepository.collection!.deleteMany({ userId }, { session: this.session })
+    }
 }
 
 export default VideoRepository;

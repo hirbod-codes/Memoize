@@ -269,5 +269,12 @@
   "subscription_delete_success": "Subscription removed successfully.",
   "storage_usage": "Storage usage",
   "add_storage": "Add storage",
-  "continue_to_payment": "Continue to payment"
+  "continue_to_payment": "Continue to payment",
+  "renewal": "Renewal",
+  "please_fill_inputs_correctly": "Please fill in the inputs correctly",
+  "checkout_additional_storage": "Additional Storage",
+  "checkout_storage_invalid": "Invalid storage value",
+  "checkout_days_suffix": "days",
+  "checkout_duration_days": "Plan duration in days",
+  "checkout_duration_invalid": "Invalid days value"
 }

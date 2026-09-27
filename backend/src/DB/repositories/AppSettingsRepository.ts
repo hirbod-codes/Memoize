@@ -2,7 +2,7 @@ import { ClientSession, Collection, Db, WithId } from 'mongodb';
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
-import { collectionName, AppSettings, AppSettingsUpdate } from '../models/AppSettings';
+import { collectionName, AppSettings, AppSettingsUpdate, AppSettingsKey } from '../models/AppSettings';
 import { MongoDB } from '../mongodb';
 import { Redis } from '../redis';
 
@@ -72,7 +72,7 @@ export default class AppSettingsRepository implements IRepository, ISeedable, ID
      * Upserts by `key` and invalidates the cache entry rather than trying to
      * update it in place, so the next getByKey() re-reads from Mongo.
      */
-    async upsertByKey(key: string, updates: Partial<AppSettingsUpdate>): Promise<boolean> {
+    async upsertByKey(key: AppSettingsKey, updates: Partial<AppSettingsUpdate>): Promise<boolean> {
         try {
             const redis = await Redis.getClient()
 

@@ -764,4 +764,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get continue_to_payment => 'Continue to payment';
+
+  @override
+  String get renewal => 'Renewal';
+
+  @override
+  String get please_fill_inputs_correctly => 'Please fill in the inputs correctly';
+
+  @override
+  String get checkout_additional_storage => 'Additional Storage';
+
+  @override
+  String get checkout_storage_invalid => 'Invalid storage value';
+
+  @override
+  String get checkout_days_suffix => 'days';
+
+  @override
+  String get checkout_duration_days => 'Plan duration in days';
+
+  @override
+  String get checkout_duration_invalid => 'Invalid days value';
 }

@@ -100,7 +100,7 @@ router.post('/', auth, async (req, res) => {
                 log.error("failed to find authenticated user's usage data")
                 return res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
             }
-            const allowedStorageBytes = maxTotalStorageBytes - usage.storageBytesCount
+            const allowedStorageBytes = maxTotalStorageBytes - usage.storageBytes
             log.debug({ availableStorageBytes: allowedStorageBytes })
 
             // ------------------------------------------------------------------------- Store upload stream on disk
@@ -532,9 +532,17 @@ router.delete('/:audioId', auth, async (req, res) => {
         }
         log.info('Marked audio temporary before delete');
 
-        await runWithLogger(log, () => s3.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: audio.bucketKey })));
-        log.debug({ key: audio.bucketKey });
-        log.info('Deleted audio file from storage');
+        if (audio?.bucketKey) {
+            await runWithLogger(log, () => deleteFromS3(audio.bucketKey!));
+            log.debug({ key: audio.bucketKey });
+            log.info('Deleted audio file from storage');
+        }
+
+        if (audio?.webBucketKey) {
+            await runWithLogger(log, () => deleteFromS3(audio.webBucketKey!));
+            log.debug({ key: audio.bucketKey });
+            log.info('Deleted web audio file from storage');
+        }
 
         if (audio?.coverArtKey) {
             await runWithLogger(log, () => s3.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: audio.coverArtKey })));

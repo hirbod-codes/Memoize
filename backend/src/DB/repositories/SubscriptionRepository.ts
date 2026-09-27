@@ -1,4 +1,4 @@
-import { ClientSession, Collection, Db, DeleteResult, InsertOneResult, ObjectId, WithId } from 'mongodb';
+import { ClientSession, Collection, Db, DeleteResult, FindCursor, InsertOneResult, ObjectId, WithId } from 'mongodb';
 import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
@@ -73,6 +73,14 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
 
     async getByStatus(status: Subscription['status'][]): Promise<WithId<Subscription>[]> {
         return await SubscriptionRepository.collection!.find({ status: { $in: status } }, { session: this.session }).toArray()
+    }
+
+    async getCreatedBeforeByStatusCursor(status: Subscription['status'][], createdBeforeTSMS: number): Promise<FindCursor<WithId<Subscription>>> {
+        return SubscriptionRepository.collection!.find({ createdAt: { $lte: createdBeforeTSMS }, status: { $in: status } }, { session: this.session })
+    }
+
+    async getUnhandledExpiredBeforeCursor(expiredBeforeTSMS: number): Promise<FindCursor<WithId<Subscription>>> {
+        return SubscriptionRepository.collection!.find({ status: { $ne: 'expired' }, currentPeriodEnd: { $lte: expiredBeforeTSMS } }, { session: this.session })
     }
 
     async getActiveByUserId(userId: string): Promise<WithId<Subscription>[]> {

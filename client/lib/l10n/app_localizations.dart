@@ -1586,6 +1586,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue to payment'**
   String get continue_to_payment;
+
+  /// No description provided for @renewal.
+  ///
+  /// In en, this message translates to:
+  /// **'Renewal'**
+  String get renewal;
+
+  /// No description provided for @please_fill_inputs_correctly.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill in the inputs correctly'**
+  String get please_fill_inputs_correctly;
+
+  /// No description provided for @checkout_additional_storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional Storage'**
+  String get checkout_additional_storage;
+
+  /// No description provided for @checkout_storage_invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid storage value'**
+  String get checkout_storage_invalid;
+
+  /// No description provided for @checkout_days_suffix.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get checkout_days_suffix;
+
+  /// No description provided for @checkout_duration_days.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan duration in days'**
+  String get checkout_duration_days;
+
+  /// No description provided for @checkout_duration_invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid days value'**
+  String get checkout_duration_invalid;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

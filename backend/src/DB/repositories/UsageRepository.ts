@@ -68,7 +68,7 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
         let usage = (await UsageRepository.collection!.find({ userId }, { session: this.session }).toArray())[0]
 
         if (!usage) {
-            const result = await this.insert({ userId, storageBytesCount: 0 })
+            const result = await this.insert({ userId, storageBytes: 0 })
 
             if (!result.acknowledged)
                 return undefined
@@ -94,7 +94,7 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
      * @returns Return null if quota would be exceeded, WithId<Usage> otherwise.
      */
     async tryIncrementStorageQuota(userId: string, amount: number, limit: number): Promise<WithId<Usage> | null> {
-        const usage = await UsageRepository.collection!.findOneAndUpdate({ userId, storageBytesCount: { $lte: limit - amount } }, { $inc: { storageBytesCount: amount }, $set: { updatedAt: Date.now() } }, { session: this.session })
+        const usage = await UsageRepository.collection!.findOneAndUpdate({ userId, storageBytes: { $lte: limit - amount } }, { $inc: { storageBytes: amount }, $set: { updatedAt: Date.now() } }, { session: this.session })
 
         const redis = await Redis.getClient()
         await redis.set(`${collectionName}:userId:${userId}`, JSON.stringify(usage), 'EX', UsageRepository.USAGE_DATA_CACHE_TTL_SECONDS)
@@ -103,7 +103,7 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
     }
 
     async decrementStorageQuota(userId: string, amount: number): Promise<UpdateResult> {
-        const usage = await UsageRepository.collection!.updateOne({ userId, storageBytesCount: { $gte: amount } }, { $inc: { storageBytesCount: -amount }, $set: { updatedAt: Date.now() } }, { session: this.session });
+        const usage = await UsageRepository.collection!.updateOne({ userId, storageBytes: { $gte: amount } }, { $inc: { storageBytes: -amount }, $set: { updatedAt: Date.now() } }, { session: this.session });
 
         const redis = await Redis.getClient()
         await redis.set(`${collectionName}:userId:${userId}`, JSON.stringify(usage), 'EX', UsageRepository.USAGE_DATA_CACHE_TTL_SECONDS)
@@ -119,7 +119,7 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
         }
     }
 
-    async deleteByUserId(id: string) {
+    async findOneAndDeleteByUserId(id: string) {
         const result = await UsageRepository.collection!.findOneAndDelete({ userId: id }, { session: this.session })
         if (result) {
             const redis = await Redis.getClient()
@@ -127,6 +127,16 @@ class UsageRepository implements IRepository, ISeedable, IDropable {
         }
 
         return result !== null && result !== undefined
+    }
+
+    async deleteByUserId(id: string) {
+        const usage = await UsageRepository.collection!.findOne({ userId: id }, { session: this.session })
+        if (usage) {
+            const redis = await Redis.getClient()
+            await redis.del(`${collectionName}:userId:${usage.userId}`)
+        }
+
+        return await UsageRepository.collection!.deleteOne({ userId: id }, { session: this.session })
     }
 }
 

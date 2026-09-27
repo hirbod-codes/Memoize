@@ -1,12 +1,19 @@
 import { number, string } from "yup";
 import { object } from "yup";
-import { paymentMethodSchema, subscriptionDurationSchema } from "../../DB/models/Subscription";
+import { paymentMethodSchema } from "../../DB/models/Subscription";
+
+export const postUpgradeSchema = object().required().shape({
+    planTitle: string().optional().label('Plan Title'),
+    paymentMethod: paymentMethodSchema.optional().strict(),
+    subscriptionDueTSMS: number().integer().min(1).optional().label('Subscription due'),
+    extraStorageBytes: number().integer().min(1).optional().label('Storage space'),
+})
 
 export const postSchema = object().required().shape({
     planTitle: string().required().label('Plan Title'),
     paymentMethod: paymentMethodSchema.required().strict(),
     subscriptionDueTSMS: number().integer().min(1).required().label('Subscription due'),
-    storageBytes: number().integer().min(1).required().label('Storage space'),
+    extraStorageBytes: number().integer().min(1).default(0).label('Storage space'),
 })
 
 export const zibalVerifySchema = object().required().shape({

@@ -1,12 +1,14 @@
 import "package:client/components/checkout/checkout_dialog.dart";
 import "package:client/l10n/app_localizations.dart";
 import "package:client/plan/all_plans_notifier.dart";
+import "package:client/plan/models/currency_label.dart";
+import "package:client/subscription/models/subscription.dart";
+import "package:client/subscription/subscription_notifier.dart";
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "package:client/plan/models/plan.dart";
 import "package:talker/talker.dart";
-import "../../plan/models/currency_label.dart";
 import "currency_formatter.dart";
 
 /// Public pricing page. No auth required — this is meant to be
@@ -32,21 +34,25 @@ class _PricingPageState extends ConsumerState<PricingPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => ref.read(allPlansProvider.notifier).refresh());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(allPlansProvider.notifier).refresh();
+      await ref.read(subscriptionProvider.notifier).refresh();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final plansState = ref.watch(allPlansProvider);
+    final subscriptionState = ref.watch(subscriptionProvider);
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
-    if (plansState.isLoading) {
+    if (plansState.isLoading || subscriptionState.isLoading) {
       return Padding(
         padding: const EdgeInsets.all(48.0),
         child: const Center(child: CircularProgressIndicator()),
       );
-    } else if (plansState.error != null) {
+    } else if (plansState.error != null || subscriptionState.error != null) {
       Talker().error("allPlansProvider threw an error", plansState.error);
       return Padding(
         padding: const EdgeInsets.all(48.0),
@@ -81,17 +87,18 @@ class _PricingPageState extends ConsumerState<PricingPage> {
 
       return Padding(
         padding: const EdgeInsets.all(48.0),
-        child: _PricingContent(plans: sortedPlans, onSelectPlan: widget.onSelectPlan),
+        child: _PricingContent(plans: sortedPlans, subscription: subscriptionState.subscription, onSelectPlan: widget.onSelectPlan),
       );
     }
   }
 }
 
 class _PricingContent extends StatefulWidget {
+  final Subscription? subscription;
   final List<Plan> plans;
   final ValueChanged<Plan>? onSelectPlan;
 
-  const _PricingContent({required this.plans, this.onSelectPlan});
+  const _PricingContent({required this.plans, this.onSelectPlan, this.subscription});
 
   @override
   State<_PricingContent> createState() => _PricingContentState();
@@ -131,7 +138,7 @@ class _PricingContentState extends State<_PricingContent> {
                   children: [
                     for (final plan in widget.plans) ...[
                       Expanded(
-                        child: _PlanCard(plan: plan, currency: _currency, onSelect: widget.onSelectPlan),
+                        child: _PlanCard(plan: plan, currency: _currency, subscription: widget.subscription, onSelect: widget.onSelectPlan),
                       ),
                       if (plan != widget.plans.last) const SizedBox(width: 16),
                     ],
@@ -142,7 +149,7 @@ class _PricingContentState extends State<_PricingContent> {
             return Column(
               children: [
                 for (final plan in widget.plans) ...[
-                  _PlanCard(plan: plan, currency: _currency, onSelect: widget.onSelectPlan),
+                  _PlanCard(plan: plan, currency: _currency, subscription: widget.subscription, onSelect: widget.onSelectPlan),
                   if (plan != widget.plans.last) const SizedBox(height: 16),
                 ],
               ],
@@ -155,11 +162,12 @@ class _PricingContentState extends State<_PricingContent> {
 }
 
 class _PlanCard extends StatelessWidget {
+  final Subscription? subscription;
   final Plan plan;
   final Currency currency;
   final ValueChanged<Plan>? onSelect;
 
-  const _PlanCard({required this.plan, required this.currency, this.onSelect});
+  const _PlanCard({required this.plan, required this.currency, this.onSelect, this.subscription});
 
   @override
   Widget build(BuildContext context) {
@@ -168,6 +176,9 @@ class _PlanCard extends StatelessWidget {
     final privileges = plan.privileges;
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    final nowTS = DateTime.now().millisecondsSinceEpoch;
+    if (subscription != null && subscription!.currentPeriodEnd > nowTS) {}
 
     return Card(
       elevation: 1,
@@ -211,9 +222,9 @@ class _PlanCard extends StatelessWidget {
               FilledButton(
                 onPressed: () async {
                   onSelect?.call(plan);
-                  await showCheckoutDialog(context, plan: plan);
+                  await showCheckoutDialog(context, plan: plan, subscription: subscription);
                 },
-                child: Text(l10n.pricing_page_get_started),
+                child: Text(subscription == null ? l10n.pricing_page_get_started : (subscription!.planTitle == plan.title ? l10n.renewal : l10n.upgrade)),
               ),
           ],
         ),

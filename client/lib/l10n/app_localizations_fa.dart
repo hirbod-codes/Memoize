@@ -765,4 +765,25 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get continue_to_payment => 'ادامه به پرداخت';
+
+  @override
+  String get renewal => 'تمدید';
+
+  @override
+  String get please_fill_inputs_correctly => 'لطفاً ورودی‌ها را به‌درستی تکمیل کنید';
+
+  @override
+  String get checkout_additional_storage => 'فضای ذخیره‌سازی اضافی';
+
+  @override
+  String get checkout_storage_invalid => 'مقدار فضای ذخیره‌سازی نامعتبر است';
+
+  @override
+  String get checkout_days_suffix => 'روز';
+
+  @override
+  String get checkout_duration_days => 'مدت زمان طرح به روز';
+
+  @override
+  String get checkout_duration_invalid => 'مقدار روز نامعتبر است';
 }

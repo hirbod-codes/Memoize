@@ -13,7 +13,7 @@ import type { ReadableStream as NodeWebReadableStream } from 'stream/web';
 import { UploadTooLargeError } from "../errors/UploadTooLargeError";
 import { InvalidMediaError } from "../errors/InvalidMediaError";
 import { Request } from "express";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, S3ServiceException } from "@aws-sdk/client-s3";
 
 export async function detectContentType(filePath: string): Promise<{ mimeType: string; extension: string }> {
     const type = await fileTypeFromFile(filePath);
@@ -21,7 +21,17 @@ export async function detectContentType(filePath: string): Promise<{ mimeType: s
     return { mimeType: type.mime, extension: type.ext };
 }
 
+export class S3OperationError extends Error {
+    constructor(message: string, public readonly operation: "upload" | "delete", public readonly key: string, public readonly cause?: unknown) {
+        super(message);
+        this.name = "S3OperationError";
+    }
+}
+
 export async function uploadToS3(readStream: Readable, key: string, contentType?: string, start: boolean = true): Promise<Upload> {
+    if (!key)
+        throw new S3OperationError("S3 key must not be empty", "upload", key);
+
     const upload = new Upload({
         client: s3,
         params: {
@@ -32,19 +42,57 @@ export async function uploadToS3(readStream: Readable, key: string, contentType?
         },
     });
 
-    if (start)
-        await upload.done();
+    // Surface read-stream errors even if 'start' is false and caller
+    // awaits upload.done() later — otherwise these can go unhandled.
+    readStream.on("error", (err) => {
+        upload.abort().catch(() => {
+            // best-effort abort; ignore secondary failure
+        });
+    });
 
-    return upload
+    if (start) {
+        try {
+            await upload.done();
+        } catch (err) {
+            // Make sure any partial multipart upload is cleaned up.
+            try { await upload.abort(); }
+            catch {
+                // ignore abort failure, original error is more important
+            }
+
+            if (err instanceof S3ServiceException) {
+                throw new S3OperationError(`Failed to upload object "${key}": ${err.name} (${err.$metadata?.httpStatusCode ?? "?"})`, "upload", key, err);
+            }
+
+            throw new S3OperationError(`Failed to upload object "${key}": ${(err as Error).message ?? "unknown error"}`, "upload", key, err);
+        }
+    }
+
+    return upload;
 }
 
-export async function deleteFromS3(Key: string) {
-    return s3.send(
-        new DeleteObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: Key
-        })
-    );
+export async function deleteFromS3(Key: string): Promise<void> {
+    if (!Key)
+        throw new S3OperationError("S3 key must not be empty", "delete", Key);
+
+    try {
+        await s3.send(
+            new DeleteObjectCommand({
+                Bucket: BUCKET_NAME,
+                Key,
+            })
+        );
+    } catch (err) {
+        if (err instanceof S3ServiceException) {
+            // treat NoSuchKey as a no-op.
+            if (err.name === "NoSuchKey")
+                return;
+
+            throw new S3OperationError(`Failed to delete object "${Key}": ${err.name} (${err.$metadata?.httpStatusCode ?? "?"})`, "delete", Key, err);
+        }
+
+        throw new S3OperationError(`Failed to delete object "${Key}": ${(err as Error).message ?? "unknown error"}`, "delete", Key, err);
+    }
 }
 
 /**

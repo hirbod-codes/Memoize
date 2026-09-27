@@ -164,6 +164,10 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
     async deleteForUser(id: string, userId: string): Promise<DeleteResult> {
         return await LeafRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id), userId }, { session: this.session })
     }
+
+    async deleteAllForUser(userId: string): Promise<DeleteResult> {
+        return await LeafRepository.collection!.deleteMany({ userId }, { session: this.session })
+    }
 }
 
 export default LeafRepository;
