@@ -13,15 +13,19 @@ export async function validate<T extends ISchema<any, any>>(schema: T, input: an
 }
 
 export function handleError(res: Response, err: any, log?: Logger) {
-    log = log ?? getLogger().child({ step: 'handleError' })
+    try {
+        log = log ?? getLogger().child({ step: 'handleError' })
 
-    if (err.name === 'ValidationError') {
-        log.info({ errors: err.errors ?? err.message }, 'request input validation failed');
-        try { return res.status(400).json({ status: 'error', error: err.errors ?? err.message }); } catch (_) { }
+        if (err.name === 'ValidationError') {
+            log.info({ errors: err.errors ?? err.message }, 'request input validation failed');
+            try { return res.status(400).json({ status: 'error', error: err.errors ?? err.message }); } catch (_) { }
+        }
+
+        log.error({ err }, 'Unhandled error');
+        try { return res.status(500).json({ status: 'error', error_code: 'INTERNAL' }); } catch (_) { }
+    } catch (err) {
+        console.error('handleError function threw Error!!!', err)
     }
-
-    log.error({ err }, 'Unhandled error');
-    try { return res.status(500).json({ status: 'error', error_code: 'INTERNAL' }); } catch (_) { }
 }
 
 export function generateCode() {

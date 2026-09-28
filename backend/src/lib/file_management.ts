@@ -13,7 +13,7 @@ import type { ReadableStream as NodeWebReadableStream } from 'stream/web';
 import { UploadTooLargeError } from "../errors/UploadTooLargeError";
 import { InvalidMediaError } from "../errors/InvalidMediaError";
 import { Request } from "express";
-import { DeleteObjectCommand, S3ServiceException } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, HeadObjectCommand, S3ServiceException } from "@aws-sdk/client-s3";
 
 export async function detectContentType(filePath: string): Promise<{ mimeType: string; extension: string }> {
     const type = await fileTypeFromFile(filePath);
@@ -22,9 +22,35 @@ export async function detectContentType(filePath: string): Promise<{ mimeType: s
 }
 
 export class S3OperationError extends Error {
-    constructor(message: string, public readonly operation: "upload" | "delete", public readonly key: string, public readonly cause?: unknown) {
+    constructor(message: string, public readonly operation: "upload" | "delete" | "head", public readonly key: string, public readonly cause?: unknown) {
         super(message);
         this.name = "S3OperationError";
+    }
+}
+/**
+ * returns zero if not found
+ * @param key 
+ * @returns 
+ */
+export async function getS3ObjectSize(key: string): Promise<number> {
+    try {
+        const result = await s3.send(
+            new HeadObjectCommand({
+                Bucket: BUCKET_NAME,
+                Key: key,
+            })
+        );
+
+        // ContentLength is in bytes
+        return result.ContentLength ?? 0;
+    } catch (err) {
+        if (err instanceof S3ServiceException) {
+            if (err.name === "NotFound") {
+                return 0
+            }
+            throw new S3OperationError(`Failed to get metadata for "${key}": ${err.name}`, "head", key, err);
+        }
+        throw new S3OperationError(`Failed to get metadata for "${key}": ${(err as Error).message}`, "head", key, err);
     }
 }
 
@@ -71,6 +97,12 @@ export async function uploadToS3(readStream: Readable, key: string, contentType?
     return upload;
 }
 
+/**
+ * function returns if key is not found
+ * 
+ * @param Key 
+ * @returns 
+ */
 export async function deleteFromS3(Key: string): Promise<void> {
     if (!Key)
         throw new S3OperationError("S3 key must not be empty", "delete", Key);

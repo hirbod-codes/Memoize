@@ -55,27 +55,27 @@ class AudioRepository implements IRepository, ISeedable, IDropable {
     }
 
     async get(id: string): Promise<Audio> {
-        return (await AudioRepository.collection!.find({ temporary: false, _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
+        return (await AudioRepository.collection!.find({ deletionQueued: { $ne: true }, temporary: false, _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
     }
 
     async getForUser(audioId: string, userId: string): Promise<Audio> {
-        return (await AudioRepository.collection!.find({ temporary: false, _id: ObjectId.createFromHexString(audioId), userId }, { session: this.session }).toArray())[0]
+        return (await AudioRepository.collection!.find({ deletionQueued: { $ne: true }, temporary: false, _id: ObjectId.createFromHexString(audioId), userId }, { session: this.session }).toArray())[0]
     }
 
     async getForUserByTitle(title: string, userId: string): Promise<Audio> {
-        return (await AudioRepository.collection!.find({ temporary: false, title, userId }, { session: this.session }).toArray())[0]
+        return (await AudioRepository.collection!.find({ deletionQueued: { $ne: true }, temporary: false, title, userId }, { session: this.session }).toArray())[0]
     }
 
     async getManyForUser(audioIds: string[], userId: string): Promise<Audio[]> {
-        return await AudioRepository.collection!.find({ temporary: false, _id: { $in: audioIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
+        return await AudioRepository.collection!.find({ deletionQueued: { $ne: true }, temporary: false, _id: { $in: audioIds.map(m => ObjectId.createFromHexString(m)) }, userId }, { session: this.session }).toArray()
     }
 
     async getByUserId(userId: string) {
-        return await AudioRepository.collection!.find({ temporary: false, userId }, { session: this.session }).toArray()
+        return await AudioRepository.collection!.find({ deletionQueued: { $ne: true }, temporary: false, userId }, { session: this.session }).toArray()
     }
 
     async getPageForUser(userId: string, skip: number, limit: number): Promise<Audio[]> {
-        return await AudioRepository.collection!.find({ temporary: false, userId }, { session: this.session }).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray()
+        return await AudioRepository.collection!.find({ deletionQueued: { $ne: true }, temporary: false, userId }, { session: this.session }).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray()
     }
 
     async countForUser(userId: string): Promise<number> {
@@ -83,11 +83,11 @@ class AudioRepository implements IRepository, ISeedable, IDropable {
     }
 
     getFromCursor(fromTsMs: number) {
-        return AudioRepository.collection!.find({ temporary: false, updatedAt: { $gte: fromTsMs } })
+        return AudioRepository.collection!.find({ temporary: false, updatedAt: { $gte: fromTsMs } }, { session: this.session })
     }
 
     getTemporariesFromCursor(fromTsMs: number) {
-        return AudioRepository.collection!.find({ temporary: true, updatedAt: { $gte: fromTsMs } })
+        return AudioRepository.collection!.find({ $and: [{ updatedAt: { $gte: fromTsMs } }, { $or: [{ temporaryAvatar: true }, { deletionQueued: true }] }] }, { session: this.session })
     }
 
     async updateTitle(audioId: string, title: string) {

@@ -1,7 +1,5 @@
 import cron from 'node-cron'
 import VideoRepository from './DB/repositories/VideoRepository'
-import { BUCKET_NAME } from './configs'
-import { DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
 import { Video } from './DB/models/Video'
 import { Audio } from './DB/models/Audio'
 import AudioRepository from './DB/repositories/AudioRepository'
@@ -19,6 +17,8 @@ import AppSettingsRepository from './DB/repositories/AppSettingsRepository'
 import LeafRepository from './DB/repositories/LeafRepository'
 import TreeNodeRepository from './DB/repositories/TreeNodeRepository'
 import UsageRepository from './DB/repositories/UsageRepository'
+import { rollbackStorageQuota } from './middlewares/authorization'
+import { MongoDB } from './DB/mongodb'
 
 export const runCronjobs = async () => {
     const cronLog = getLogger()
@@ -41,97 +41,167 @@ export const runCronjobs = async () => {
             const imageRepo = new ImageRepository()
             const audioRepo = new AudioRepository()
 
-            const deleteVideo = async (videoId: string) => {
-                log.info(`Deleting video id: ${videoId} ...`);
+            const deleteVideo = async (video: Video) => {
+                log.info(`Deleting video id: ${video._id?.toString()} ...`);
 
+                let db: MongoDB | undefined = undefined
                 try {
-                    const videoRepoDeleteResult = await runWithLogger(log, () => videoRepo.delete(videoId));
-                    log.debug({ videoRepoDeleteResult })
+                    log.info({ video })
 
-                    log.info('done')
-                } catch (err) {
-                    log.error({ err }, 'caught error in deleteVideo function')
-                }
-            }
+                    db = MongoDB.getDbInstance()
+                    const session = await db.startTransaction()
 
-            const deleteAudio = async (audioId: string) => {
-                log.info(`Deleting audio id: ${audioId} ...`);
+                    const videoRepository = new VideoRepository();
+                    videoRepository.setTransactionSession(session)
 
-                try {
-                    const audioRepoDeleteResult = await runWithLogger(log, () => audioRepo.delete(audioId));
-                    log.debug({ audioRepoDeleteResult })
+                    if (video.totalFilesBytes) {
+                        if (!(await runWithLogger(log, () => rollbackStorageQuota(video.userId.toString(), video.totalFilesBytes!)))) {
+                            log.info(`failed to decrease user storage bytes usage by ${video.totalFilesBytes}`)
+                            await db.abortTransaction()
+                            return
+                        }
+                        log.info(`decreased user storage bytes usage by ${video.totalFilesBytes}`)
+                    }
 
+                    const rr = await runWithLogger(log, () => videoRepository.delete(video._id!.toString()));
+                    log.info({ deleteResult: rr });
+                    if (!rr.acknowledged) {
+                        log.error({ deleteResult: rr }, 'Failed to delete video record from DB');
+                        await db.abortTransaction()
+                        return
+                    }
+                    log.info('Deleted video record in DB')
+
+                    await db.commitTransaction()
                     log.info('done')
                 } catch (err) {
                     log.error({ err }, 'caught error in deleteAudio function')
+                    await db?.abortTransaction()
                 }
             }
 
-            const deleteImage = async (imageId: string) => {
-                log.info(`Deleting image id: ${imageId} ...`);
+            const deleteAudio = async (audio: Audio) => {
+                log.info(`Deleting audio id: ${audio._id?.toString()} ...`);
 
+                let db: MongoDB | undefined = undefined
                 try {
-                    const imageRepoDeleteResult = await runWithLogger(log, () => imageRepo.delete(imageId));
-                    log.debug({ imageRepoDeleteResult })
+                    log.info({ audio })
 
+                    db = MongoDB.getDbInstance()
+                    const session = await db.startTransaction()
+
+                    const audioRepository = new AudioRepository();
+                    audioRepository.setTransactionSession(session)
+
+                    if (audio.totalFilesBytes) {
+                        if (!(await runWithLogger(log, () => rollbackStorageQuota(audio.userId.toString(), audio.totalFilesBytes!)))) {
+                            log.info(`failed to decrease user storage bytes usage by ${audio.totalFilesBytes}`)
+                            await db.abortTransaction()
+                            return
+                        }
+                        log.info(`decreased user storage bytes usage by ${audio.totalFilesBytes}`)
+                    }
+
+                    const rr = await runWithLogger(log, () => audioRepository.delete(audio._id!.toString()));
+                    log.info({ deleteResult: rr });
+                    if (!rr.acknowledged) {
+                        log.error({ deleteResult: rr }, 'Failed to delete audio record from DB');
+                        await db.abortTransaction()
+                        return
+                    }
+                    log.info('Deleted audio record in DB')
+
+                    await db.commitTransaction()
                     log.info('done')
                 } catch (err) {
-                    log.error({ err }, 'caught error in deleteImage function')
+                    log.error({ err }, 'caught error in deleteAudio function')
+                    await db?.abortTransaction()
                 }
             }
 
-            const deleteAvatar = async (userId: string) => {
-                log.info(`Deleting avatar of user id: ${userId} ...`);
+            const deleteImage = async (image: Image) => {
+                log.info(`Deleting video id: ${image._id?.toString()} ...`);
 
+                let db: MongoDB | undefined = undefined
                 try {
-                    const userRepoDeleteAvatarResult = await runWithLogger(log, () => userRepo.unsafeUpdate(userId, { avatarKey: undefined, temporaryAvatar: false }));
-                    log.debug({ userRepoDeleteAvatarResult })
+                    log.info({ image })
 
+                    db = MongoDB.getDbInstance()
+                    const session = await db.startTransaction()
+
+                    const imageRepository = new ImageRepository();
+                    imageRepository.setTransactionSession(session)
+
+                    if (image.totalFilesBytes) {
+                        if (!(await runWithLogger(log, () => rollbackStorageQuota(image.userId.toString(), image.totalFilesBytes!)))) {
+                            log.info(`failed to decrease user storage bytes usage by ${image.totalFilesBytes}`)
+                            await db.abortTransaction()
+                            return
+                        }
+                        log.info(`decreased user storage bytes usage by ${image.totalFilesBytes}`)
+                    }
+
+                    const rr = await runWithLogger(log, () => imageRepository.delete(image._id!.toString()));
+                    log.info({ deleteResult: rr });
+                    if (!rr.acknowledged) {
+                        log.error({ deleteResult: rr }, 'Failed to delete image record from DB');
+                        await db.abortTransaction()
+                        return
+                    }
+                    log.info('Deleted image record in DB')
+
+                    await db.commitTransaction()
                     log.info('done')
                 } catch (err) {
-                    log.error({ err }, 'caught error in deleteAvatar function')
+                    log.error({ err }, 'caught error in deleteAudio function')
+                    await db?.abortTransaction()
                 }
             }
 
-            const objectExistsInS3 = async (key: string): Promise<boolean> => {
+            const deleteAvatar = async (user: User) => {
+                log.info(`Deleting user id: ${user._id?.toString()} ...`);
+
+                let db: MongoDB | undefined = undefined
                 try {
-                    await s3.send(new HeadObjectCommand({ Bucket: BUCKET_NAME, Key: key }))
+                    log.info({ user })
 
-                    return true
-                } catch (e: any) {
-                    if (e?.name === 'NotFound' || e?.$metadata?.httpStatusCode === 404) return false
+                    db = MongoDB.getDbInstance()
+                    const session = await db.startTransaction()
 
-                    throw e
-                }
-            }
+                    const userRepository = new UserRepository();
+                    userRepository.setTransactionSession(session)
 
-            const deleteObjectInS3 = async (key: string): Promise<boolean> => {
-                try {
-                    await s3.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: key }))
+                    if (user.totalFilesBytes) {
+                        if (!(await runWithLogger(log, () => rollbackStorageQuota(user._id!.toString(), user.totalFilesBytes!)))) {
+                            log.info(`failed to decrease user storage bytes usage by ${user.totalFilesBytes}`)
+                            await db.abortTransaction()
+                            return
+                        }
+                        log.info(`decreased user storage bytes usage by ${user.totalFilesBytes}`)
+                    }
 
-                    return true
-                } catch (e: any) {
-                    if (e?.name === 'NotFound' || e?.$metadata.httpStatusCode === 404) return false
+                    const rr = await runWithLogger(log, () => userRepository.unsafeUpdate(user._id!.toString(), { avatarDeletionQueued: false, avatarKey: undefined, temporaryAvatar: false }));
+                    log.info({ deleteResult: rr });
+                    if (!rr) {
+                        log.error({ deleteResult: rr }, 'Failed to delete user record from DB');
+                        await db.abortTransaction()
+                        return
+                    }
+                    log.info('Deleted user record in DB')
 
-                    throw e
-                }
-            }
-
-            const deleteObjectIfExists = async (key: string) => {
-                try {
-                    if (!await objectExistsInS3(key)) return true
-
-                    await deleteObjectInS3(key)
-                } catch (e) {
-                    log.error({ err: e }, `failure while trying to delete video file with key: ${key}`)
+                    await db.commitTransaction()
+                    log.info('done')
+                } catch (err) {
+                    log.error({ err }, 'caught error in deleteAudio function')
+                    await db?.abortTransaction()
                 }
             }
 
             log.info('Deleting dangling avatar files...');
             const handleAvatarRemove = async (user: User) => {
                 if (user.avatarKey)
-                    await deleteObjectIfExists(user.avatarKey)
-                await deleteAvatar(user._id!.toString())
+                    await deleteFromS3(user.avatarKey)
+                await deleteAvatar(user)
             }
             let userCursor = userRepo.getTemporaryAvatarFromCursor(from)
             for await (const user of userCursor)
@@ -140,10 +210,12 @@ export const runCronjobs = async () => {
             log.info('Deleting dangling video files...');
             const handleVideoRemove = async (video: Video) => {
                 if (video.bucketKey)
-                    await deleteObjectIfExists(video.bucketKey)
+                    await deleteFromS3(video.bucketKey)
+                if (video.webBucketKey)
+                    await deleteFromS3(video.webBucketKey)
                 if (video.thumbnailKey)
-                    await deleteObjectIfExists(video.thumbnailKey)
-                await deleteVideo(video._id!.toString())
+                    await deleteFromS3(video.thumbnailKey)
+                await deleteVideo(video)
             }
             let videoCursor = videoRepo.getTemporariesFromCursor(from)
             for await (const video of videoCursor)
@@ -152,10 +224,12 @@ export const runCronjobs = async () => {
             log.info('Deleting dangling audio files...');
             const handleAudioRemove = async (audio: Audio) => {
                 if (audio.bucketKey)
-                    await deleteObjectIfExists(audio.bucketKey)
+                    await deleteFromS3(audio.bucketKey)
+                if (audio.webBucketKey)
+                    await deleteFromS3(audio.webBucketKey)
                 if (audio.coverArtKey)
-                    await deleteObjectIfExists(audio.coverArtKey)
-                await deleteAudio(audio._id!.toString())
+                    await deleteFromS3(audio.coverArtKey)
+                await deleteAudio(audio)
             }
             let audioCursor = audioRepo.getTemporariesFromCursor(from)
             for await (const audio of audioCursor)
@@ -164,8 +238,8 @@ export const runCronjobs = async () => {
             log.info('Deleting dangling image files...');
             const handleImageRemove = async (image: Image) => {
                 if (image.bucketKey)
-                    await deleteObjectIfExists(image.bucketKey)
-                await deleteImage(image._id!.toString())
+                    await deleteFromS3(image.bucketKey)
+                await deleteImage(image)
             }
             let imageCursor = imageRepo.getTemporariesFromCursor(from)
             for await (const image of imageCursor)

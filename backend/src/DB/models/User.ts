@@ -18,6 +18,8 @@ const update = {
     email: string().optional().email(),
 
     avatarKey: string().optional(), // user/avatar/<userId>/
+    totalFilesBytes: number().integer().min(0).optional(), // named this way for consistency
+    avatarDeletionQueued: boolean().optional(),
     temporaryAvatar: boolean().optional(),
 
     password: string().optional(),
@@ -41,6 +43,8 @@ export const userSchema = object().required().stripUnknown().strict(true).shape(
     password: string().optional().when('authMethod', { is: 'email', then: s => s.required() }),
 
     avatarKey: string().optional(), // user/avatar/<userId>/
+    totalFilesBytes: number().integer().min(0).optional(), // named this way for consistency
+    avatarDeletionQueued: boolean().optional(),
     temporaryAvatar: boolean().required(),
 
     refreshToken: string().optional(),

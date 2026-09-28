@@ -14,11 +14,13 @@ const create = {
     userId: likeObjectId.required(),
     contentType: contentTypeSchema.optional(),
     title: string().required().label('Title'),
+    totalFilesBytes: number().integer().min(0).optional(),
     fileName: string().required().label('File name'),
     thumbnailFileName: string().optional().label('Thumbnail file name'),
     bucketKey: string().optional().url(), // video/${userId}/${videoId}
     webBucketKey: string().optional().url(), // audio/<userId>/web/<audioId>
     thumbnailKey: string().optional().url(), // video/thumbnail/${userId}/${videoId}
+    deletionQueued: boolean().optional(),
     temporary: boolean().required(),
 }
 export const videoCreateSchema = object().shape(create).required()
@@ -34,6 +36,7 @@ const update = {
 
     contentType: contentTypeSchema.optional(),
     title: string().optional().label('Title'),
+    totalFilesBytes: number().integer().min(0).optional(),
     fileName: string().optional().label('File name'),
     thumbnailFileName: string().optional().label('Thumbnail file name'),
 
@@ -41,6 +44,7 @@ const update = {
     webBucketKey: string().optional().url(), // audio/<userId>/web/<audioId>
     thumbnailKey: string().optional().url(), // video/thumbnail/${userId}/${videoId}
 
+    deletionQueued: boolean().optional(),
     temporary: boolean().optional(),
 }
 export const videoUpdateSchema = object().shape(update).required()
@@ -53,6 +57,7 @@ export const videoSchema = object().shape({
 
     contentType: contentTypeSchema.optional(),
     title: string().required().label('Title'),
+    totalFilesBytes: number().integer().min(0).optional(),
     fileName: string().required().label('File name'),
     thumbnailFileName: string().optional().label('Thumbnail file name'),
 
@@ -60,6 +65,7 @@ export const videoSchema = object().shape({
     webBucketKey: string().optional().url(), // audio/<userId>/web/<audioId>
     thumbnailKey: string().optional().url(), // video/thumbnail/${userId}/${videoId}
 
+    deletionQueued: boolean().optional(),
     temporary: boolean().required(),
 
     createdAt: number().optional(),

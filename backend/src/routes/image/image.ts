@@ -7,7 +7,7 @@ import { s3 } from '../..';
 import { authorizeAllowedContentTypes, authorizeStorageQuota, rollbackStorageQuota } from '../../middlewares/authorization';
 import { join } from 'path';
 import { mkdir, rm, unlink } from 'fs/promises';
-import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../../lib/file_management';
+import { deleteFromS3, detectContentType, getS3ObjectSize, receiveUpload, uploadToS3 } from '../../lib/file_management';
 import { Usage } from '../../DB/models/Usage';
 import { UploadTooLargeError } from '../../errors/UploadTooLargeError';
 import { createReadStream } from 'fs';
@@ -23,6 +23,7 @@ import {
     deleteParamsSchema,
 } from './schemas';
 import UsageRepository from '../../DB/repositories/UsageRepository';
+import { MongoDB } from '../../DB/mongodb';
 
 const router = express.Router();
 
@@ -122,11 +123,11 @@ router.post('/', auth, async (req, res) => {
             // ------------------------------------------------------------------------- authorize generated file sizes
             log.info('authorize generated file sizes')
 
-            const totalStorageBytes = inputSize;
-            log.debug({ inputSize, totalStorageBytes }, 'Computed total storage footprint');
+            const totalFilesBytes = inputSize;
+            log.debug({ inputSize, totalStorageBytes: totalFilesBytes }, 'Computed total storage footprint');
 
-            if ((await authorizeStorageQuota(req, totalStorageBytes, undefined, res)) !== true) {
-                log.info({ totalStorageBytes }, 'Rejected video upload: exceeds plan storage limit')
+            if ((await authorizeStorageQuota(req, totalFilesBytes, undefined, res)) !== true) {
+                log.info({ totalStorageBytes: totalFilesBytes }, 'Rejected video upload: exceeds plan storage limit')
                 throw new UploadTooLargeError('Generated files exceed plan storage limit')
             }
             log.info('Storage quota authorized')
@@ -135,24 +136,32 @@ router.post('/', auth, async (req, res) => {
                 // ------------------------------------------------------------------------- Upload files to the S3 compatible object storage
                 log.info('Uploading files to object storage');
                 await runWithLogger(log, () => uploadToS3(createReadStream(inputPath), imageFileBucketKey, contentType.mimeType));
-                log.debug({ imageFileBucketKey, totalStorageBytes });
+                log.debug({ imageFileBucketKey, totalStorageBytes: totalFilesBytes });
                 log.info('Uploaded files to object storage');
 
                 // ------------------------------------------------------------------------- Update image info in DB, Make it permanent and set content type
-                const updateResult = await runWithLogger(log, () => imageRepository.unsafeUpdate(imageId, userId, { contentType: contentType, temporary: false, bucketKey: imageFileBucketKey }));
+                const updateResult = await runWithLogger(log, () => imageRepository.unsafeUpdate(
+                    imageId,
+                    userId,
+                    {
+                        contentType: contentType,
+                        temporary: false,
+                        totalFilesBytes,
+                        bucketKey: imageFileBucketKey
+                    }));
                 log.debug({ updateResult });
                 if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
                     log.info('updating image record failed');
                     throw new Error('failed to upload image');
                 }
                 log.info('Updated image record');
-                log.info({ totalStorageBytes }, 'Image upload finalized');
+                log.info({ totalStorageBytes: totalFilesBytes }, 'Image upload finalized');
             } catch (error) {
                 log.error({ err: error }, 'Post-upload finalization failed, rolling back stored artifacts');
                 rollbackPromises = Promise.allSettled([
                     runWithLogger(log, () => deleteFromS3(imageFileBucketKey).catch((_) => { })),
                     runWithLogger(log, () => imageRepository.delete(imageId).catch((_) => { })),
-                    runWithLogger(log, () => rollbackStorageQuota(req, totalStorageBytes)).catch((err) => { log.error({ err, userId, totalStorageBytes }, 'failed to decrement user usage') }),
+                    runWithLogger(log, () => rollbackStorageQuota(userId, totalFilesBytes)).catch((err) => { log.error({ err, userId, totalStorageBytes: totalFilesBytes }, 'failed to decrement user usage') }),
                 ]);
 
                 throw error;
@@ -305,6 +314,7 @@ router.get('/file/:imageId', auth, async (req, res) => {
 router.delete('/:imageId', auth, async (req, res) => {
     let log = getLogger().child({ module: 'image', route: 'DELETE /api/image/:imageId' });
 
+    let db: MongoDB | undefined = undefined
     try {
         log.info('Image delete request received');
 
@@ -316,7 +326,16 @@ router.delete('/:imageId', auth, async (req, res) => {
         const userId = req.user!.userId;
         log = log.child({ userId, imageId });
 
+        db = MongoDB.getDbInstance()
+
+        // sessions are set after in case s3 storage deletion process gets interrupted
+        const session = await db.startTransaction()
+
         const imageRepository = new ImageRepository();
+        imageRepository.setTransactionSession(session)
+
+        const usageRepository = new UsageRepository();
+        usageRepository.setTransactionSession(session)
 
         const image = await runWithLogger(log, () => imageRepository.getForUser(imageId, userId));
         log.debug({ image, bucketKey: image?.bucketKey });
@@ -326,7 +345,7 @@ router.delete('/:imageId', auth, async (req, res) => {
             return res.status(404).json({ status: 'error', message: 'Image not found' });
         }
 
-        const r = await runWithLogger(log, () => imageRepository.unsafeUpdate(imageId, userId, { temporary: true }));
+        const r = await runWithLogger(log, () => imageRepository.unsafeUpdate(imageId, userId, { title: `deletionQueued_${image.title}`, deletionQueued: true }));
         log.debug({ updateResult: r });
         if (!r.acknowledged || r.matchedCount) {
             log.error({ updateResult: r }, 'Failed to mark image temporary before delete');
@@ -334,21 +353,52 @@ router.delete('/:imageId', auth, async (req, res) => {
         }
         log.info('Marked image temporary in DB before delete');
 
-        await runWithLogger(log, () => s3.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: image.bucketKey })));
-        log.debug({ key: image.bucketKey });
-        log.info('Deleted image file from storage');
+        if (image.bucketKey) {
+            await runWithLogger(log, () => deleteFromS3(image.bucketKey!));
+            log.debug({ key: image.bucketKey });
+            log.info('Deleted image file from storage');
+        }
+
+        if (!image.totalFilesBytes) {
+            log.info("'totalFilesBytes' field is undefined in image object, fetching files size from s3 storage")
+
+            let total = 0
+            if (image?.bucketKey)
+                total += await getS3ObjectSize(image.bucketKey)
+            log.debug({ total })
+
+            if (!(await rollbackStorageQuota(userId, total))) {
+                log.info(`failed to decrease user storage bytes usage by ${total}`)
+                await db.abortTransaction()
+                res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
+                return
+            }
+            log.info(`decreased user storage bytes usage by ${total}`)
+        } else {
+            if (!(await rollbackStorageQuota(userId, image.totalFilesBytes))) {
+                log.info(`failed to decrease user storage bytes usage by ${image.totalFilesBytes}`)
+                await db.abortTransaction()
+                res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
+                return
+            }
+            log.info(`decreased user storage bytes usage by ${image.totalFilesBytes}`)
+        }
 
         const rr = await runWithLogger(log, () => imageRepository.delete(imageId));
         log.debug({ deleteResult: rr });
         if (!rr.acknowledged) {
             log.error({ deleteResult: rr }, 'Failed to delete image record from DB');
-            return res.status(500).json({ status: 'error', message: 'Error deleting image' });
+            await db.abortTransaction()
+            res.status(500).json({ status: 'error', message: 'Error deleting image' });
+            return
         }
         log.info('Image deleted');
 
+        await db.commitTransaction()
         res.status(204).json({ status: 'success' });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err));
+        await db?.abortTransaction()
     }
 });
 

@@ -10,6 +10,8 @@ import { getLogger, runWithLogger } from '../../observability/requestLoggerConte
 import { handleError, validate } from '../../lib';
 import { fetchAvatarSchema, preferencesSchema, uploadAvatarSchema } from './schemas';
 import UsageRepository from '../../DB/repositories/UsageRepository';
+import { deleteFromS3 } from '../../lib/file_management';
+import { MongoDB } from '../../DB/mongodb';
 
 const router = express.Router();
 
@@ -147,7 +149,7 @@ router.get('/avatar', async (req, res) => {
             return res.status(404).json({ status: 'error', error_code: 'USER_NOT_FOUND' });
         }
 
-        if (!user.avatarKey || user.temporaryAvatar) {
+        if (!user.avatarKey || user.temporaryAvatar || user?.avatarDeletionQueued === true) {
             log.info('avatar not found')
             return res.status(404).json({ status: 'error', error_code: 'AVATAR_NOT_FOUND' });
         }
@@ -180,42 +182,68 @@ router.get('/avatar', async (req, res) => {
 router.delete('/avatar', async (req, res) => {
     const log = getLogger().child({ module: 'user', route: 'DELETE /api/user/avatar' });
 
+    let db: MongoDB | undefined = undefined
     try {
         log.info('user avatar delete request received')
 
         const userId = req.user!.userId
 
+        db = MongoDB.getDbInstance()
+
+        // sessions are set after in case s3 storage deletion process gets interrupted
+        const session = await db.startTransaction()
+
         const userRepository = new UserRepository()
+        userRepository.setTransactionSession(session)
 
         const user = await runWithLogger(log, () => userRepository.get(userId))
         log.debug({ user })
         if (!user) {
             log.info('user not found')
-            return res.status(404).json({ message: 'User not found' });
+            await db.abortTransaction()
+            res.status(404).json({ message: 'User not found' });
+            return
         }
         if (!user.avatarKey || user.temporaryAvatar) {
             log.info('user avatar not found')
-            return res.status(404).json({ message: 'Avatar not found' });
+            await db.abortTransaction()
+            res.status(404).json({ message: 'Avatar not found' });
+            return
         }
 
-        log.info('deleting user avatar...')
-        await s3.send(new DeleteObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: user.avatarKey,
-        }));
-        log.info('deleted user avatar')
+        const r = await runWithLogger(log, () => userRepository.unsafeUpdate(userId, { avatarDeletionQueued: true }));
+        log.debug({ updateResult: r });
+        if (!r) {
+            log.error({ updateResult: r }, 'Failed to mark audio temporary before delete');
+            await db.abortTransaction()
+            res.status(500).json({ status: 'error', message: 'Error deleting audio' });
+            return
+        }
+        log.info('Marked audio temporary before delete');
 
-        console.log("Deleting image in DB...");
-        const result = await userRepository.unsafeUpdate(userId, { avatarKey: undefined, temporaryAvatar: false })
+        log.info('deleting user avatar...')
+        if (user.avatarKey) {
+            await runWithLogger(log, () => deleteFromS3(user.avatarKey!))
+            log.info('deleted user avatar')
+        }
+
+        console.log("Deleting avatar in DB...");
+        const result = await runWithLogger(log, () => userRepository.unsafeUpdate(userId, { avatarKey: undefined, temporaryAvatar: false, avatarDeletionQueued: false }))
         log.debug({ result })
         if (result !== true) {
             log.warn('failed to delete user avatar from MongoDB')
-            return res.status(500).send()
+            await db.abortTransaction()
+            res.status(500).send()
+            return
         }
-        console.log("Deleted image in DB");
+        console.log("Deleted avatar in DB");
 
+        await db.commitTransaction()
+
+        log.info('avatar deleted successfully');
         return res.status(200).send();
     } catch (err) {
+        await db?.abortTransaction()
         runWithLogger(log, () => handleError(res, err))
     }
 })

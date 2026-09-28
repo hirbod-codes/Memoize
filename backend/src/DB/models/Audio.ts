@@ -14,10 +14,12 @@ const create = {
     userId: likeObjectId.required(),
     contentType: contentTypeSchema.optional(),
     title: string().required().label('Title'),
+    totalFilesBytes: number().integer().min(0).optional(),
     coverArtFileName: string().optional().label('Cover art file name'),
     bucketKey: string().optional().url(), // audio/<userId>/<audioId>
     webBucketKey: string().optional().url(), // audio/<userId>/web/<audioId>
     coverArtKey: string().optional().url(), // audio/cover_art/<userId>/<audioId>
+    deletionQueued: boolean().optional(),
     temporary: boolean().required(),
 }
 export const audioCreateSchema = object().shape(create).required()
@@ -33,12 +35,14 @@ const update = {
 
     contentType: contentTypeSchema.optional(),
     title: string().optional().label('Title'),
+    totalFilesBytes: number().integer().min(0).optional(),
     coverArtFileName: string().optional().label('Cover art file name'),
 
     bucketKey: string().optional().url(), // audio/<userId>/<audioId>
     webBucketKey: string().optional().url(), // audio/<userId>/web/<audioId>
     coverArtKey: string().optional().url(), // audio/cover_art/<userId>/<audioId>
 
+    deletionQueued: boolean().optional(),
     temporary: boolean().optional(),
 }
 export const audioUpdateSchema = object().shape(update).required()
@@ -51,12 +55,14 @@ export const audioSchema = object().shape({
 
     contentType: contentTypeSchema.optional(),
     title: string().required().label('Title'),
+    totalFilesBytes: number().integer().min(0).optional(),
     coverArtFileName: string().optional().label('Cover art file name'),
 
     bucketKey: string().optional().url(), // audio/<userId>/<audioId>
     webBucketKey: string().optional().url(), // audio/<userId>/web/<audioId>
     coverArtKey: string().optional().url(), // audio/cover_art/<userId>/<audioId>
 
+    deletionQueued: boolean().optional(),
     temporary: boolean().required(),
 
     createdAt: number().optional(),

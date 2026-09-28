@@ -58,7 +58,7 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
 
     async create(user: User): Promise<InsertOneResult | false> {
         try {
-            return await UserRepository.collection!.insertOne(user)
+            return await UserRepository.collection!.insertOne(user, { session: this.session })
         } catch (err) {
             console.error(err)
             return false
@@ -67,7 +67,7 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
 
     async getAdmins(): Promise<WithId<User>[] | false | undefined> {
         try {
-            return await UserRepository.collection!.find({ role: 'admin' }).toArray()
+            return await UserRepository.collection!.find({ role: 'admin' }, { session: this.session }).toArray()
         } catch (err) {
             console.error(err)
             return false
@@ -82,7 +82,7 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
             if (userJson)
                 return JSON.parse(userJson)
 
-            const user = (await UserRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }).toArray())[0]
+            const user = (await UserRepository.collection!.find({ _id: ObjectId.createFromHexString(id) }, { session: this.session }).toArray())[0]
             if (!user)
                 return undefined
 
@@ -97,7 +97,7 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
 
     async getByUsername(username: string): Promise<WithId<User> | false | undefined> {
         try {
-            return (await UserRepository.collection!.find({ username }).toArray())[0]
+            return (await UserRepository.collection!.find({ username }, { session: this.session }).toArray())[0]
         } catch (err) {
             console.error(err)
             return false
@@ -106,7 +106,7 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
 
     async getByEmail(email: string): Promise<WithId<User> | false | undefined> {
         try {
-            return (await UserRepository.collection!.find({ email }).toArray())[0]
+            return (await UserRepository.collection!.find({ email }, { session: this.session }).toArray())[0]
         } catch (err) {
             console.error(err)
             return false
@@ -115,7 +115,7 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
 
     async getByPhoneNumber(phoneNumber: string): Promise<WithId<User> | false | undefined> {
         try {
-            return (await UserRepository.collection!.find({ phoneNumber }).toArray())[0]
+            return (await UserRepository.collection!.find({ phoneNumber }, { session: this.session }).toArray())[0]
         } catch (err) {
             console.error(err)
             return false
@@ -123,14 +123,14 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
     }
 
     getTemporaryAvatarFromCursor(fromTsMs: number) {
-        return UserRepository.collection!.find({ temporaryAvatar: true, updatedAt: { $gte: fromTsMs } })
+        return UserRepository.collection!.find({ $and: [{ updatedAt: { $gte: fromTsMs } }, { $or: [{ temporaryAvatar: true }, { deletionQueued: true }] }] }, { session: this.session })
     }
 
     async updateRefreshToken(id: string, refreshToken: string) {
         try {
             const redis = await Redis.getClient()
 
-            const user = await UserRepository.collection!.findOneAndUpdate({ _id: ObjectId.createFromHexString(id) }, { $set: { refreshToken: refreshToken } })
+            const user = await UserRepository.collection!.findOneAndUpdate({ _id: ObjectId.createFromHexString(id) }, { $set: { refreshToken: refreshToken } }, { session: this.session })
             if (!user)
                 return false
 
@@ -147,7 +147,7 @@ export class UserRepository implements IRepository, ISeedable, IDropable {
         try {
             const redis = await Redis.getClient()
 
-            const user = await UserRepository.collection!.findOneAndUpdate({ _id: ObjectId.createFromHexString(id) }, { $set: { avatarKey, updatedAt: Date.now() } })
+            const user = await UserRepository.collection!.findOneAndUpdate({ _id: ObjectId.createFromHexString(id) }, { $set: { avatarKey, updatedAt: Date.now() } }, { session: this.session })
             if (!user)
                 return false
 

@@ -2,7 +2,7 @@ import express, { } from 'express';
 import { auth, authenticateToken } from '../../middlewares/auth';
 import { audioUploadTmpDir, BUCKET_NAME, ttsApiKey } from '../../configs';
 import AudioRepository from '../../DB/repositories/AudioRepository';
-import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { generateStreamToken, verifyStreamToken } from '../../lib/signed_urls';
 import { UserRepository } from '../../DB/repositories/UserRepository';
 import { httpsStreamRequest } from '../../utils';
@@ -12,7 +12,7 @@ import { getLogger, runWithLogger } from '../../observability/requestLoggerConte
 import { listQuerySchema, infoQuerySchema, signedTokenQuerySchema, ttsQuerySchema, fileParamsSchema, webFileParamsSchema, coverArtParamsSchema, deleteParamsSchema, postSchema } from './schemas';
 import { handleError, validate } from '../../lib';
 import { authorizeAllowedContentTypes, authorizeStorageQuota, rollbackStorageQuota } from '../../middlewares/authorization';
-import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../../lib/file_management';
+import { deleteFromS3, detectContentType, getS3ObjectSize, receiveUpload, uploadToS3 } from '../../lib/file_management';
 import { extractCoverArt, generateWebCompatibleCopy, isWebCompatible, probeFile } from '../../ffmpeg';
 import { InvalidMediaError } from '../../errors/InvalidMediaError';
 import { join, basename } from 'path';
@@ -22,6 +22,7 @@ import { mkdir, unlink, rm, stat } from 'fs/promises';
 import { createWriteStream, createReadStream } from 'fs';
 import { streamAudioFile } from './lib';
 import UsageRepository from '../../DB/repositories/UsageRepository';
+import { MongoDB } from '../../DB/mongodb';
 
 const router = express.Router();
 
@@ -52,7 +53,9 @@ router.post('/', auth, async (req, res) => {
         const usageRepository = new UsageRepository();
         const audioRepository = new AudioRepository()
 
-        // ------------------------------------------------------------------------- Checking weather title already exists...
+        // ------------------------------------------------------------------------- checking weather title already exists
+        log.info("checking weather title already exists")
+
         const audio = await runWithLogger(log, () => audioRepository.getForUserByTitle(title, userId));
         log.debug({ audio });
         log.info('Checked title uniqueness');
@@ -61,7 +64,9 @@ router.post('/', auth, async (req, res) => {
             return res.status(400).json({ status: 'error', message: 'Audio title must be unique.' });
         }
 
-        // ------------------------------------------------------------------------- Inserting audio...
+        // ------------------------------------------------------------------------- inserting audio
+        log.info("inserting audio")
+
         const audioInsertResult = await runWithLogger(log, () => audioRepository.insert({ title, userId, temporary: true }))
         log.debug({ audioInsertResult });
         if (!audioInsertResult.acknowledged || !audioInsertResult.insertedId) {
@@ -73,7 +78,9 @@ router.post('/', auth, async (req, res) => {
         const audioId = audioInsertResult.insertedId.toString()
         log.debug({ audioId })
 
-        // ------------------------------------------------------------------------- Make the temporary directory
+        // ------------------------------------------------------------------------- make the temporary directory
+        log.info("make the temporary directory")
+
         const jobDir = join(audioUploadTmpDir, audioId)
         await mkdir(jobDir, { recursive: true });
         log.debug({ jobDir });
@@ -90,7 +97,8 @@ router.post('/', auth, async (req, res) => {
         let rollbackPromises: undefined | Promise<any> = undefined
         try {
             // ------------------------------------------------------------------------- fetch available storage bytes for user from user subscription and usage
-            log.info('fetch available storage bytes for user from user subscription and usage')
+            log.info("fetch available storage bytes for user from user subscription and usage")
+
             const maxTotalStorageBytes = req.user!.privileges!.storageBytes;
             log.debug({ maxTotalStorageBytes }, 'Resolved plan storage limit');
 
@@ -103,13 +111,17 @@ router.post('/', auth, async (req, res) => {
             const allowedStorageBytes = maxTotalStorageBytes - usage.storageBytes
             log.debug({ availableStorageBytes: allowedStorageBytes })
 
-            // ------------------------------------------------------------------------- Store upload stream on disk
+            // ------------------------------------------------------------------------- store upload stream on disk
+            log.info("store upload stream on disk")
+
             const { path: inputPath, size: inputSize } = await runWithLogger(log, () => receiveUpload(req, allowedStorageBytes, jobDir))
             cleanupPaths.push(inputPath)
             log.debug({ inputSize, inputPath })
             log.info('Upload received and stored to disk')
 
-            // ------------------------------------------------------------------------- Probe received file, get info and Validate it
+            // ------------------------------------------------------------------------- probe received file, get info and Validate it
+            log.info("probe received file, get info and Validate it")
+
             const info = await runWithLogger(log, () => probeFile(inputPath))
             const audioStream = info.streams.find((s) => s.codec_type === 'audio')
             log.debug({ audioCodec: audioStream?.codec_name })
@@ -119,7 +131,9 @@ router.post('/', auth, async (req, res) => {
                 throw new InvalidMediaError('Unsupported or unrecognized audio format')
             }
 
-            // ------------------------------------------------------------------------- Set bucket keys
+            // ------------------------------------------------------------------------- set bucket keys
+            log.info("set bucket keys")
+
             const isUploadWebCompatible = runWithLogger(log, () => isWebCompatible(undefined, audioStream))
             const audioFileBucketKey = `audio/${userId}/${audioId}`
             const webCompatibleAudioFileBucketKey = isUploadWebCompatible ? undefined : `audio/${userId}/web/${audioId}`
@@ -127,7 +141,9 @@ router.post('/', auth, async (req, res) => {
             log.debug({ isUploadWebCompatible, audioFileBucketKey, webCompatibleAudioFileBucketKey, coverArtBucketKey })
             log.info('Computed bucket keys')
 
-            // ------------------------------------------------------------------------- Set file paths
+            // ------------------------------------------------------------------------- set file paths
+            log.info("set file paths")
+
             const webCopyPath = isUploadWebCompatible ? undefined : join(jobDir, `${audioId}-web.m4a`)
             if (webCopyPath)
                 cleanupPaths.push(webCopyPath);
@@ -137,7 +153,9 @@ router.post('/', auth, async (req, res) => {
             log.debug({ webCopyPath, coverArtPath });
             log.info('Resolved output paths');
 
-            // ------------------------------------------------------------------------- Wait for web compatible file and cover art to be generated and content type to be collected
+            // ------------------------------------------------------------------------- wait for web compatible file and cover art to be generated and content type to be collected
+            log.info("wait for web compatible file and cover art to be generated and content type to be collected")
+
             const promises = await Promise.all([
                 runWithLogger(log, () => detectContentType(inputPath)
                     .then((ct) => {
@@ -164,39 +182,56 @@ router.post('/', auth, async (req, res) => {
             log.debug({ isUploadWebCompatible, coverArtResult });
             log.info('Generated web compatible file and cover art');
 
-            // ------------------------------------------------------------------------- Validate generated file sizes
+            // ------------------------------------------------------------------------- authorize generated file sizes
+            log.info("authorize generated file sizes")
+
             const [coverArtStat, webCopyStat] = await Promise.all([
                 stat(coverArtPath),
                 ...(isUploadWebCompatible ? [] : [stat(webCopyPath!)]),
             ]);
-            const totalStorageBytes = inputSize + (webCopyStat ? webCopyStat.size : 0) + coverArtStat.size;
+            const totalFilesBytes = inputSize + (webCopyStat ? webCopyStat.size : 0) + coverArtStat.size;
 
-            if ((await authorizeStorageQuota(req, totalStorageBytes, undefined, res)) !== true) {
-                log.info({ totalStorageBytes }, 'Rejected video upload: exceeds plan storage limit')
+            if ((await authorizeStorageQuota(req, totalFilesBytes, undefined, res)) !== true) {
+                log.info({ totalFilesBytes }, 'Rejected video upload: exceeds plan storage limit')
                 throw new UploadTooLargeError('Generated files exceed plan storage limit')
             }
             log.info('Storage quota authorized')
 
             try {
-                // ------------------------------------------------------------------------- Upload files to the S3 compatible object storage
-                log.info('Uploading files to object storage');
+                // ------------------------------------------------------------------------- upload files to the S3 compatible object storage
+                log.info("upload files to the S3 compatible object storage")
+
                 await Promise.all([
                     runWithLogger(log, () => uploadToS3(createReadStream(inputPath), audioFileBucketKey, contentType.mimeType)),
                     ...(isUploadWebCompatible ? [] : [runWithLogger(log, () => uploadToS3(createReadStream(webCopyPath!), webCompatibleAudioFileBucketKey!, 'audio/mp4'))]),
                     ...(coverArtResult ? [runWithLogger(log, () => uploadToS3(createReadStream(coverArtResult.path), coverArtBucketKey, coverArtResult.mimeType))] : [])
                 ]);
-                log.debug({ audioFileBucketKey, webCompatibleAudioFileBucketKey, hasCoverArt: !!coverArtResult, totalStorageBytes });
+                log.debug({ audioFileBucketKey, webCompatibleAudioFileBucketKey, hasCoverArt: !!coverArtResult, totalFilesBytes });
                 log.info('Uploaded files to object storage');
 
-                // ------------------------------------------------------------------------- Update audio info in DB, Make it permanent and set content type
-                const updateResult = await audioRepository.unsafeUpdate(audioId, userId, { contentType: contentType, temporary: false, bucketKey: audioFileBucketKey, webBucketKey: webCompatibleAudioFileBucketKey, coverArtKey: coverArtBucketKey, coverArtFileName: basename(coverArtPath) });
+                // ------------------------------------------------------------------------- update audio info in DB, Make it permanent and set content type
+                log.info("update audio info in DB, Make it permanent and set content type")
+
+                const updateResult = await audioRepository.unsafeUpdate(
+                    audioId,
+                    userId,
+                    {
+                        contentType: contentType,
+                        temporary: false,
+                        bucketKey: audioFileBucketKey,
+                        webBucketKey: webCompatibleAudioFileBucketKey,
+                        coverArtKey: coverArtBucketKey,
+                        totalFilesBytes,
+                        coverArtFileName: basename(coverArtPath)
+                    }
+                );
                 log.debug({ updateResult });
                 if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
                     log.info('updating audio record failed');
                     throw new Error('failed to upload audio')
                 }
                 log.info('Updated audio record');
-                log.info({ totalStorageBytes }, 'Audio upload finalized');
+                log.info({ totalFilesBytes }, 'Audio upload finalized');
             } catch (error) {
                 log.error({ err: error }, 'Post-upload finalization failed, rolling back stored artifacts');
                 rollbackPromises = Promise.allSettled([
@@ -205,7 +240,7 @@ router.post('/', auth, async (req, res) => {
                     ...(coverArtResult ? [runWithLogger(log, () => deleteFromS3(coverArtBucketKey).catch((err) => { log.error({ err }, 'deleting cover art files from cloud storage failed') }))] : []),
                     runWithLogger(log, () => audioRepository.delete(audioId).catch((err) => { log.error({ err }, 'deleting audio info from db failed') })),
                     runWithLogger(log, () => audioRepository.delete(audioId).catch((err) => { log.error({ err }, 'deleting audio info from db failed') })),
-                    runWithLogger(log, () => rollbackStorageQuota(req, totalStorageBytes)).catch((err) => { log.error({ err, userId, totalStorageBytes }, 'failed to decrement user usage') }),
+                    runWithLogger(log, () => rollbackStorageQuota(userId, totalFilesBytes)).catch((err) => { log.error({ err, userId, totalStorageBytes: totalFilesBytes }, 'failed to decrement user usage') }),
                 ])
 
                 throw error
@@ -503,6 +538,7 @@ router.get('/coverArt/:audioId', auth, async (req, res) => {
 router.delete('/:audioId', auth, async (req, res) => {
     let log = getLogger().child({ module: 'audio', route: 'DELETE /api/audio/:audioId' });
 
+    let db: MongoDB | undefined = undefined
     try {
         log.info('Audio delete request received');
 
@@ -514,53 +550,102 @@ router.delete('/:audioId', auth, async (req, res) => {
         const userId = req.user!.userId;
         log = log.child({ userId, audioId });
 
+        db = MongoDB.getDbInstance()
+
+        // sessions are set after in case s3 storage deletion process gets interrupted
+        const session = await db.startTransaction()
+
         const audioRepository = new AudioRepository();
+        audioRepository.setTransactionSession(session)
+
+        const usageRepository = new UsageRepository();
+        usageRepository.setTransactionSession(session)
 
         const audio = await runWithLogger(log, () => audioRepository.getForUser(audioId, userId));
         log.debug({ audio });
         log.info('Checked audio ownership');
         if (!audio) {
             log.info('Rejected audio delete request: audio not found');
-            return res.status(404).json({ status: 'error', message: 'Audio not found' });
+            res.status(404).json({ status: 'error', message: 'Audio not found' });
+            await db.abortTransaction()
+            return
         }
 
-        const r = await runWithLogger(log, () => audioRepository.unsafeUpdate(audioId, userId, { temporary: true }));
+        const r = await runWithLogger(log, () => audioRepository.unsafeUpdate(audioId, userId, { title: `deletionQueued_${audio.title}`, deletionQueued: true }));
         log.debug({ updateResult: r });
         if (!r.acknowledged || r.matchedCount) {
             log.error({ updateResult: r }, 'Failed to mark audio temporary before delete');
-            return res.status(500).json({ status: 'error', message: 'Error deleting audio' });
+            res.status(500).json({ status: 'error', message: 'Error deleting audio' });
+            await db.abortTransaction()
+            return
         }
         log.info('Marked audio temporary before delete');
 
+        const promises = []
         if (audio?.bucketKey) {
-            await runWithLogger(log, () => deleteFromS3(audio.bucketKey!));
+            log.info('Deleting audio file from storage');
+            promises.push(runWithLogger(log, () => deleteFromS3(audio.bucketKey!)))
             log.debug({ key: audio.bucketKey });
-            log.info('Deleted audio file from storage');
         }
 
         if (audio?.webBucketKey) {
-            await runWithLogger(log, () => deleteFromS3(audio.webBucketKey!));
-            log.debug({ key: audio.bucketKey });
-            log.info('Deleted web audio file from storage');
+            log.info('Deleting web audio file from storage');
+            promises.push(runWithLogger(log, () => deleteFromS3(audio.webBucketKey!)))
+            log.debug({ key: audio.webBucketKey });
         }
 
         if (audio?.coverArtKey) {
-            await runWithLogger(log, () => s3.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: audio.coverArtKey })));
+            log.info('Deleting cover art from storage');
+            promises.push(runWithLogger(log, () => deleteFromS3(audio.coverArtKey!)))
             log.debug({ key: audio.coverArtKey });
-            log.info('Deleted cover art from storage');
+        }
+
+        const results = await Promise.allSettled(promises)
+        log.debug({ results })
+        const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+        log.info(
+            {
+                fulfilledCount: results.length - rejected.length,
+                rejectedCount: rejected.length,
+                ...(rejected.length > 0 && { errors: rejected.map(r => r.reason instanceof Error ? r.reason.message : r.reason) }),
+            },
+            'handled all the object deletions from s3 storage'
+        );
+
+        if (rejected.length > 0) {
+            log.info({ rejectedLength: rejected.length }, `failed to delete objects in s3 storage`)
+            res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
+            await db.abortTransaction()
+            return
+        }
+
+        if (audio.totalFilesBytes) {
+            if (!(await runWithLogger(log, () => rollbackStorageQuota(userId, audio.totalFilesBytes!, usageRepository)))) {
+                log.info(`failed to decrease user storage bytes usage by ${audio.totalFilesBytes}`)
+                await db.abortTransaction()
+                res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
+                return
+            }
+            log.info(`decreased user storage bytes usage by ${audio.totalFilesBytes}`)
         }
 
         const rr = await runWithLogger(log, () => audioRepository.delete(audioId));
         log.debug({ deleteResult: rr });
         if (!rr.acknowledged) {
             log.error({ deleteResult: rr }, 'Failed to delete audio record from DB');
-            return res.status(500).json({ status: 'error', message: 'Error deleting audio' });
+            await db.abortTransaction()
+            res.status(500).json({ status: 'error', message: 'Error deleting audio' });
+            return
         }
-        log.info('Audio deleted');
+        log.info('Deleted audio record in DB')
 
+        await db.commitTransaction()
+
+        log.info('audio deleted successfully');
         res.status(204).json({ status: 'success' });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err));
+        await db?.abortTransaction()
     }
 });
 

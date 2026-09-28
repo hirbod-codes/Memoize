@@ -87,7 +87,7 @@ class ImageRepository implements IRepository, ISeedable, IDropable {
     }
 
     getTemporariesFromCursor(fromTsMs: number) {
-        return ImageRepository.collection!.find({ temporary: true, updatedAt: { $gte: fromTsMs } })
+        return ImageRepository.collection!.find({ $and: [{ updatedAt: { $gte: fromTsMs } }, { $or: [{ temporaryAvatar: true }, { deletionQueued: true }] }] }, { session: this.session })
     }
 
     async updateTitle(imageId: string, title: string) {

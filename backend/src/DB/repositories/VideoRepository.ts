@@ -83,11 +83,7 @@ class VideoRepository implements IRepository, ISeedable, IDropable {
     }
 
     getTemporariesFromCursor(fromTsMs: number) {
-        return VideoRepository.collection!.find({ temporary: true, updatedAt: { $gte: fromTsMs } })
-    }
-
-    getFromCursor(fromTsMs: number) {
-        return VideoRepository.collection!.find({ temporary: false, updatedAt: { $gte: fromTsMs } })
+        return VideoRepository.collection!.find({ $and: [{ updatedAt: { $gte: fromTsMs } }, { $or: [{ temporaryAvatar: true }, { deletionQueued: true }] }] }, { session: this.session })
     }
 
     async updateTitle(videoId: string, title: string) {

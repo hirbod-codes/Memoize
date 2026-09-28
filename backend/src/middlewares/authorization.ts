@@ -7,11 +7,13 @@ import UsageRepository from '../DB/repositories/UsageRepository';
 import { Usage } from '../DB/models/Usage';
 import { TreeNode } from '../DB/models/TreeNode';
 
-export async function authorizeStorageQuota(req: Request, bytes: number, usage?: Usage, res?: Response) {
+export async function authorizeStorageQuota(req: Request, bytes: number, usage?: Usage, res?: Response, usageRepository?: UsageRepository) {
     const log = getLogger().child({ step: 'authorizeStorageQuota' });
 
     try {
         log.debug({ reqUser: req.user, bytes })
+
+        usageRepository ??= new UsageRepository()
 
         if (!req.user || !req.user.userData || !req.user.userId) {
             log.info('Denied: no authenticated user on request');
@@ -26,9 +28,7 @@ export async function authorizeStorageQuota(req: Request, bytes: number, usage?:
         const maxTotalStorageBytes = req.user!.privileges!.storageBytes;
         log.debug({ maxTotalStorageBytes }, 'Resolved plan storage limit');
 
-        const usageRepository = new UsageRepository()
-
-        const usageUpdateResult = await runWithLogger(log, () => usageRepository.tryIncrementStorageQuota(req.user!.userId, bytes, maxTotalStorageBytes))
+        const usageUpdateResult = await runWithLogger(log, () => usageRepository!.tryIncrementStorageQuota(req.user!.userId, bytes, maxTotalStorageBytes))
         log.debug({ usageUpdateResult })
         if (!usageUpdateResult) {
             log.info({ bytes }, 'Rejected video upload: exceeds plan storage limit')
@@ -43,25 +43,15 @@ export async function authorizeStorageQuota(req: Request, bytes: number, usage?:
     }
 }
 
-export async function rollbackStorageQuota(req: Request, bytes: number) {
+export async function rollbackStorageQuota(userId: string, bytes: number, usageRepository?: UsageRepository) {
     const log = getLogger().child({ step: 'authorizeStorageQuota' });
 
     try {
-        log.debug({ reqUser: req.user, bytes })
+        log.debug({ userId, bytes })
 
-        if (!req.user || !req.user.userData || !req.user.userId) {
-            log.info('Denied: no authenticated user on request');
-            return false
-        }
+        usageRepository ??= new UsageRepository()
 
-        if (!req.user.privileges) {
-            log.info('Denied: user has no active subscription');
-            return false
-        }
-
-        const usageRepository = new UsageRepository()
-
-        await runWithLogger(log, () => usageRepository.decrementStorageQuota(req.user!.userId, bytes))
+        await runWithLogger(log, () => usageRepository!.decrementStorageQuota(userId, bytes))
 
         return true
     } catch (err) {

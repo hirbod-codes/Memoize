@@ -14,7 +14,9 @@ const create = {
     userId: likeObjectId.required(),
     contentType: contentTypeSchema.optional(),
     title: string().required().label('Title'),
+    totalFilesBytes: number().integer().min(0).optional(),
     bucketKey: string().optional().url(), // image/<userId>/<imageId>
+    deletionQueued: boolean().optional(),
     temporary: boolean().required(),
 }
 export const imageCreateSchema = object().shape(create).required()
@@ -25,9 +27,11 @@ const update = {
 
     contentType: contentTypeSchema.optional(),
     title: string().optional().label('Title'),
+    totalFilesBytes: number().integer().min(0).optional(),
 
     bucketKey: string().optional().url(), // image/<userId>/<imageId>
 
+    deletionQueued: boolean().optional(),
     temporary: boolean().optional(),
 }
 export const imageUpdateSchema = object().shape(update).required()
@@ -40,9 +44,11 @@ export const imageSchema = object().shape({
 
     contentType: contentTypeSchema.optional(),
     title: string().required().label('Title'),
+    totalFilesBytes: number().integer().min(0).optional(),
 
     bucketKey: string().optional().url(), // image/<userId>/<imageId>
 
+    deletionQueued: boolean().optional(),
     temporary: boolean().required(),
 
     createdAt: number().optional(),

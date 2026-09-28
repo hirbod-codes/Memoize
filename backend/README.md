@@ -126,3 +126,4 @@ Ctrl + C DOES NOT work to terminate the app, run `taskkill /IM node.exe /F` on w
 21. add downgrading feature for plan and storage quota
 22. fix price calculations
 23. clients specify plan end due
+24. decrease users storage usage when a content is removed

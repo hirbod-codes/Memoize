@@ -20,6 +20,7 @@ import { getLogger, runWithLogger } from '../../observability/requestLoggerConte
 import UsageRepository from '../../DB/repositories/UsageRepository';
 import { Usage } from '../../DB/models/Usage';
 import { authorizeAllowedContentTypes, authorizeStorageQuota, rollbackStorageQuota } from '../../middlewares/authorization';
+import { MongoDB } from '../../DB/mongodb';
 
 const router = express.Router();
 
@@ -214,7 +215,7 @@ router.post('/', auth, async (req, res) => {
                     runWithLogger(log, () => deleteFromS3(webCompatibleVideoFileBucketKey)).catch((err) => { log.error({ err }, 'failed to delete web compatible video in cloud storage') }),
                     runWithLogger(log, () => deleteFromS3(thumbnailBucketKey)).catch((err) => { log.error({ err }, 'failed to delete thumbnail in cloud storage') }),
                     runWithLogger(log, () => videoRepository.delete(videoId)).catch((err) => { log.error({ err }, 'failed to delete video info in db') }),
-                    runWithLogger(log, () => rollbackStorageQuota(req, totalStorageBytes)).catch((err) => { log.error({ err, userId, totalStorageBytes }, 'failed to decrement user usage') }),
+                    runWithLogger(log, () => rollbackStorageQuota(userId, totalStorageBytes)).catch((err) => { log.error({ err, userId, totalStorageBytes }, 'failed to decrement user usage') }),
                 ])
 
                 throw error
@@ -457,6 +458,7 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
 router.delete('/:videoId', auth, async (req, res) => {
     let log = getLogger().child({ module: 'video', route: 'DELETE /api/video/:videoId' });
 
+    let db: MongoDB | undefined = undefined
     try {
         log.info('Video delete request received');
 
@@ -468,46 +470,74 @@ router.delete('/:videoId', auth, async (req, res) => {
         const userId = req.user!.userId
         log.debug({ userId });
 
+        db = MongoDB.getDbInstance()
+
+        // sessions are set after in case s3 storage deletion process gets interrupted
+        const session = await db.startTransaction()
+
         const videoRepository = new VideoRepository()
+        videoRepository.setTransactionSession(session)
+
+        const usageRepository = new UsageRepository();
+        usageRepository.setTransactionSession(session)
 
         log.info('fetching video');
         const video = await runWithLogger(log, () => videoRepository.getForUser(videoId, userId))
         log.debug({ video });
         if (!video) {
             log.info('Video not found');
+            await db.abortTransaction()
             res.status(404).json({ status: 'error', message: 'Video not found' });
             return
         }
         log.info('fetched video');
 
         log.info('making video temporary');
-        const updateResult = await runWithLogger(log, () => videoRepository.unsafeUpdate(videoId, userId, { temporary: true }))
+        const updateResult = await runWithLogger(log, () => videoRepository.unsafeUpdate(videoId, userId, { title: `deletionQueued_${video.title}`, deletionQueued: true }))
         log.debug({ updateResult });
         if (!updateResult.acknowledged || updateResult.matchedCount) {
             log.error({ updateResult }, 'Failed to mark video temporary before delete');
-            return res.status(500).json({ status: 'error' })
+            await db.abortTransaction()
+            res.status(500).json({ status: 'error' })
+            return
         }
         log.info('Marked video temporary in DB before delete')
 
         log.info('deleting video file in s3 storage')
 
+        const promises = []
         if (video?.bucketKey) {
-            const s3Result = await runWithLogger(log, () => deleteFromS3(video.bucketKey!))
-            log.info({ s3Result })
-            log.info('deleted video file')
+            log.info('deleting video file')
+            promises.push(runWithLogger(log, () => deleteFromS3(video.bucketKey!)))
         }
 
         if (video?.webBucketKey) {
-            const s3Result = await runWithLogger(log, () => deleteFromS3(video.webBucketKey!))
-            log.info({ s3Result })
-            log.info('deleted web video file')
+            log.info('deleting web video file')
+            promises.push(runWithLogger(log, () => deleteFromS3(video.webBucketKey!)))
         }
 
         if (video?.thumbnailKey) {
             log.info('deleting video thumbnail file in s3 storage')
-            const s3ThumbnailResult = await runWithLogger(log, () => deleteFromS3(video.thumbnailKey!))
-            log.info({ s3ThumbnailResult })
-            log.info('deleted video thumbnail file')
+            promises.push(runWithLogger(log, () => deleteFromS3(video.thumbnailKey!)))
+        }
+
+        const results = await Promise.allSettled(promises)
+        log.debug({ results })
+        const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+        log.info(
+            {
+                fulfilledCount: results.length - rejected.length,
+                rejectedCount: rejected.length,
+                ...(rejected.length > 0 && { errors: rejected.map(r => r.reason instanceof Error ? r.reason.message : r.reason) }),
+            },
+            'handled all the object deletions from s3 storage'
+        );
+
+        if (rejected.length > 0) {
+            log.info({ rejectedLength: rejected.length }, `failed to delete objects in s3 storage`)
+            await db.abortTransaction()
+            res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' })
+            return
         }
 
         log.info('Deleting video record in DB')
@@ -515,14 +545,19 @@ router.delete('/:videoId', auth, async (req, res) => {
         log.debug({ videoRecordDeleteResult });
         if (!videoRecordDeleteResult.acknowledged) {
             log.error({ videoRecordDeleteResult }, 'Failed to delete video record in DB');
-            return res.status(500).send()
+            await db.abortTransaction()
+            res.status(500).send()
+            return
         }
         log.info('Deleted video record in DB')
 
-        log.info('Video deleted successfully');
+        await db.commitTransaction()
+
+        log.info('video deleted successfully');
         res.status(204).json({ status: 'success' });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
+        await db?.abortTransaction()
     }
 });
 
