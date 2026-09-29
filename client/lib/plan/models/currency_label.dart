@@ -1,7 +1,6 @@
 enum Currency {
   usd,
   eur,
-  irt,
   irr,
   btc,
   eth;
@@ -12,8 +11,6 @@ enum Currency {
         return Currency.usd;
       case 'EUR':
         return Currency.eur;
-      case 'IRT':
-        return Currency.irt;
       case 'IRR':
         return Currency.irr;
       case 'BTC':
@@ -32,8 +29,6 @@ enum Currency {
         return 'USD';
       case Currency.eur:
         return 'EUR';
-      case Currency.irt:
-        return 'IRT';
       case Currency.irr:
         return 'IRR';
       case Currency.btc:
@@ -51,8 +46,6 @@ extension CurrencyLabel on Currency {
         return 'USD';
       case Currency.eur:
         return 'EUR';
-      case Currency.irt:
-        return 'Toman';
       case Currency.irr:
         return 'Rial';
       case Currency.btc:

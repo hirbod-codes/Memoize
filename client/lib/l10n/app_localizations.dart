@@ -1628,6 +1628,270 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid days value'**
   String get checkout_duration_invalid;
+
+  /// No description provided for @error_code_unsupported_payment_method.
+  ///
+  /// In en, this message translates to:
+  /// **'This payment method is not supported.'**
+  String get error_code_unsupported_payment_method;
+
+  /// No description provided for @error_code_internal.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get error_code_internal;
+
+  /// No description provided for @error_code_internal_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get error_code_internal_error;
+
+  /// No description provided for @error_code_plan_state_invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The current plan state is invalid.'**
+  String get error_code_plan_state_invalid;
+
+  /// No description provided for @error_code_otp_cooldown.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait before requesting another verification code.'**
+  String get error_code_otp_cooldown;
+
+  /// No description provided for @error_code_phone_registration_disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number registration is currently unavailable.'**
+  String get error_code_phone_registration_disabled;
+
+  /// No description provided for @error_code_create_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create the requested item.'**
+  String get error_code_create_failed;
+
+  /// No description provided for @error_code_fetch_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load the requested data.'**
+  String get error_code_fetch_failed;
+
+  /// No description provided for @error_code_email_registration_disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Email registration is currently unavailable.'**
+  String get error_code_email_registration_disabled;
+
+  /// No description provided for @error_code_smtp_cooldown.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait before requesting another email.'**
+  String get error_code_smtp_cooldown;
+
+  /// No description provided for @error_code_invalid_input.
+  ///
+  /// In en, this message translates to:
+  /// **'Some of the provided information is invalid.'**
+  String get error_code_invalid_input;
+
+  /// No description provided for @error_code_email_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'No account was found with this email.'**
+  String get error_code_email_not_found;
+
+  /// No description provided for @error_code_update_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update the requested item.'**
+  String get error_code_update_failed;
+
+  /// No description provided for @error_code_no_refresh_token.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please log in again.'**
+  String get error_code_no_refresh_token;
+
+  /// No description provided for @error_code_refresh_invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please log in again.'**
+  String get error_code_refresh_invalid;
+
+  /// No description provided for @error_code_invalid_plan.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected plan is invalid.'**
+  String get error_code_invalid_plan;
+
+  /// No description provided for @error_code_user_has_no_active_plan.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have an active plan.'**
+  String get error_code_user_has_no_active_plan;
+
+  /// No description provided for @error_code_plan_already_active.
+  ///
+  /// In en, this message translates to:
+  /// **'This plan is already active.'**
+  String get error_code_plan_already_active;
+
+  /// No description provided for @error_code_must_use_same_payment_method_as_previous_plan.
+  ///
+  /// In en, this message translates to:
+  /// **'You must use the same payment method as your previous plan.'**
+  String get error_code_must_use_same_payment_method_as_previous_plan;
+
+  /// No description provided for @error_code_user_has_active_plan.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have an active plan.'**
+  String get error_code_user_has_active_plan;
+
+  /// No description provided for @error_code_upload_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to upload the file.'**
+  String get error_code_upload_failed;
+
+  /// No description provided for @error_code_user_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'User not found.'**
+  String get error_code_user_not_found;
+
+  /// No description provided for @error_code_avatar_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Avatar not found.'**
+  String get error_code_avatar_not_found;
+
+  /// No description provided for @error_code_unauthenticated.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication is required. Please log in again.'**
+  String get error_code_unauthenticated;
+
+  /// No description provided for @error_code_invalid_parent_treenode.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected parent is invalid.'**
+  String get error_code_invalid_parent_treenode;
+
+  /// No description provided for @error_code_subscription_state_invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The current subscription state is invalid.'**
+  String get error_code_subscription_state_invalid;
+
+  /// No description provided for @error_code_invalid_treenode_id.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected item is invalid.'**
+  String get error_code_invalid_treenode_id;
+
+  /// No description provided for @error_code_leaf_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'The requested item was not found.'**
+  String get error_code_leaf_not_found;
+
+  /// No description provided for @error_code_invalid_plan_title.
+  ///
+  /// In en, this message translates to:
+  /// **'The plan title is invalid.'**
+  String get error_code_invalid_plan_title;
+
+  /// No description provided for @error_code_subscription_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription not found.'**
+  String get error_code_subscription_not_found;
+
+  /// No description provided for @error_code_active_plan_expired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your active plan has expired.'**
+  String get error_code_active_plan_expired;
+
+  /// No description provided for @error_code_active_plan_currency_mismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The currency does not match your active plan.'**
+  String get error_code_active_plan_currency_mismatch;
+
+  /// No description provided for @error_code_no_subscription.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have a subscription.'**
+  String get error_code_no_subscription;
+
+  /// No description provided for @error_code_uuid_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'The requested item was not found.'**
+  String get error_code_uuid_not_found;
+
+  /// No description provided for @error_code_invalid_subscription_due.
+  ///
+  /// In en, this message translates to:
+  /// **'The subscription due date is invalid.'**
+  String get error_code_invalid_subscription_due;
+
+  /// No description provided for @error_code_invalid_parameters.
+  ///
+  /// In en, this message translates to:
+  /// **'Some of the provided parameters are invalid.'**
+  String get error_code_invalid_parameters;
+
+  /// No description provided for @calculate_price.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate Price'**
+  String get calculate_price;
+
+  /// No description provided for @error_code_plan_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan not found'**
+  String get error_code_plan_not_found;
+
+  /// No description provided for @error_code_plan_payment_method.
+  ///
+  /// In en, this message translates to:
+  /// **'This payment method is not available for this plan'**
+  String get error_code_plan_payment_method;
+
+  /// No description provided for @error_code_no_upgrade_options.
+  ///
+  /// In en, this message translates to:
+  /// **'Each plan renewal must add at least 3 days to the due date or 1 GB to storage'**
+  String get error_code_no_upgrade_options;
+
+  /// No description provided for @checkout_upgrade_requirement_title.
+  ///
+  /// In en, this message translates to:
+  /// **'At least one of the following must be satisfied:'**
+  String get checkout_upgrade_requirement_title;
+
+  /// No description provided for @checkout_upgrade_duration_requirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan duration must be changed by more than 3 days.'**
+  String get checkout_upgrade_duration_requirement;
+
+  /// No description provided for @checkout_upgrade_storage_requirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage must be changed by more than 10 GB.'**
+  String get checkout_upgrade_storage_requirement;
+
+  /// No description provided for @checkout_free_purchase_message.
+  ///
+  /// In en, this message translates to:
+  /// **'This purchase is free for you. The remaining balance will be saved for future purchases.'**
+  String get checkout_free_purchase_message;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

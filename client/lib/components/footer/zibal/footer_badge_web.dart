@@ -3,13 +3,8 @@ import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/widgets.dart';
 
-const _viewType = 'memoize-enamad-badge';
+const _viewType = 'memoize-zibal-badge';
 bool _registered = false;
-
-// PLACEHOLDERS — replace with whatever you were actually given.
-// const _linkUrl = 'https://REPLACE_WITH_LINK_URL';
-// const _imageUrl = 'https://REPLACE_WITH_IMAGE_URL';
-// const _altText = 'REPLACE_WITH_ALT_TEXT';
 
 /// Embeds the badge as real DOM elements, built directly rather than
 /// via setInnerHtml + a NodeValidator.
@@ -28,18 +23,20 @@ Widget buildFooterBadgeWidget() {
     ui_web.platformViewRegistry.registerViewFactory(_viewType, (int viewId) {
       final anchor = html.AnchorElement()
         ..referrerPolicy = 'origin'
-        ..href = 'https://trustseal.enamad.ir/?id=7649114&Code=73PTlAXHjPhgtZVV7hxJPlvoz0D1AWKq'
+        ..href = 'https://gateway.zibal.ir/trustMe/memoize.ir'
         ..target = '_blank'
-        ..rel = 'noopener noreferrer'
+        ..rel = 'noopener'
         ..style.display = 'inline-block';
 
       final img = html.ImageElement()
         ..referrerPolicy = 'origin'
-        ..src = 'https://trustseal.enamad.ir/logo.aspx?id=7649114&Code=73PTlAXHjPhgtZVV7hxJPlvoz0D1AWKq'
-        ..attributes['code'] = '73PTlAXHjPhgtZVV7hxJPlvoz0D1AWKq'
+        ..src = 'https://zibal.ir/trust/assets/1.png'
         ..style.cursor = 'pointer'
-        ..style.height = '64px'
-        ..style.width = 'auto';
+        ..style.height = '100px'
+        ..style.width = 'auto'
+      // ..style.height = 'auto'
+      // ..style.maxWidth = '110px'
+      ;
 
       anchor.append(img);
 

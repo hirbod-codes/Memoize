@@ -8,14 +8,12 @@ export const schemaVersion = 'v1.0.0'
 export type SubscriptionStatus = 'active' | 'canceled' | 'trial' | 'expired' | 'paymentNotVerified' | 'paymentNotCompleted' | 'inDebtToUser'
 const statusSchema = string().oneOf<SubscriptionStatus>(['active', 'canceled', 'trial', 'expired', 'paymentNotVerified', 'paymentNotCompleted', 'inDebtToUser'])
 
-const processorSubscriptionIdSchema = string().when('status', { is: 'paymentNotVerified', then(s) { return s.optional() }, otherwise(s) { return s.required() } })
-
 export type PaymentMethod = "zarinpal" | "paypal" | "bitcoin" | "zibal"
 export type SubscriptionDuration = "month" | "year"
 export const paymentMethodSchema = string().oneOf<PaymentMethod>(['zarinpal', 'zibal', 'paypal', 'bitcoin'])
 export const subscriptionDurationSchema = string().oneOf<SubscriptionDuration>(['month', 'year'])
 
-export const currencySchema = string().oneOf(['IRR', 'IRT', 'USD', 'EUR', 'BTC', 'ETH'])
+export const currencySchema = string().oneOf(['IRR', 'USD', 'EUR', 'BTC', 'ETH'])
 export const currencyRequiredSchema = currencySchema.required()
 export type Currency = InferType<typeof currencySchema>
 export type CurrencyRequired = InferType<typeof currencyRequiredSchema>
@@ -27,7 +25,7 @@ export const paymentSchema = object().shape({
     refId: string().optional(),
     cardNumber: string().optional(),
     cardNumberHash: string().optional(),
-    processorSubscriptionId: processorSubscriptionIdSchema,
+    processorSubscriptionId: string(),
     method: paymentMethodSchema.required(),
     currency: currencyRequiredSchema,
     amount: number().integer().min(0).required(), // Negative values indicate we are in dept to user

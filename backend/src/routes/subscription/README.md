@@ -4,6 +4,17 @@
 
 ### to purchase a plan
 
+fetch and check if more than one active subscription exist
+check if the active subscription is expired
+fetching business plans
+resolving currency and payment method and callback url
+check if the currency doesn't match
+calculating price
+deleting old subscriptions with 'paymentNotCompleted' status
+creating temporary subscription with status 'paymentNotCompleted'
+storing the created subscription in session
+requesting payment
+
 1. validation
 2. fetch and check if any active subscription exist
 3. fetching business plans
@@ -86,7 +97,7 @@ type Subscription = {
     currentPeriodEnd: number;
     paymentMethod: "zarinpal" | "paypal" | "bitcoin" | "zibal";
     price: {
-        currency: NonNullable<"IRR" | "IRT" | "USD" | "EUR" | "BTC" | "ETH" | undefined>;
+        currency: NonNullable<"IRR" | "USD" | "EUR" | "BTC" | "ETH" | undefined>;
         amount: number;
     };
     privileges: {

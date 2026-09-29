@@ -787,4 +787,137 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get checkout_duration_invalid => 'Ungültige Anzahl an Tagen';
+
+  @override
+  String get error_code_unsupported_payment_method => 'Diese Zahlungsmethode wird nicht unterstützt.';
+
+  @override
+  String get error_code_internal => 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.';
+
+  @override
+  String get error_code_internal_error => 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.';
+
+  @override
+  String get error_code_plan_state_invalid => 'Der aktuelle Tarifstatus ist ungültig.';
+
+  @override
+  String get error_code_otp_cooldown => 'Bitte warten Sie, bevor Sie einen neuen Bestätigungscode anfordern.';
+
+  @override
+  String get error_code_phone_registration_disabled => 'Die Registrierung per Telefonnummer ist derzeit nicht verfügbar.';
+
+  @override
+  String get error_code_create_failed => 'Das Erstellen des gewünschten Elements ist fehlgeschlagen.';
+
+  @override
+  String get error_code_fetch_failed => 'Die angeforderten Daten konnten nicht geladen werden.';
+
+  @override
+  String get error_code_email_registration_disabled => 'Die Registrierung per E-Mail ist derzeit nicht verfügbar.';
+
+  @override
+  String get error_code_smtp_cooldown => 'Bitte warten Sie, bevor Sie eine weitere E-Mail anfordern.';
+
+  @override
+  String get error_code_invalid_input => 'Einige der eingegebenen Informationen sind ungültig.';
+
+  @override
+  String get error_code_email_not_found => 'Für diese E-Mail-Adresse wurde kein Konto gefunden.';
+
+  @override
+  String get error_code_update_failed => 'Die Aktualisierung des gewünschten Elements ist fehlgeschlagen.';
+
+  @override
+  String get error_code_no_refresh_token => 'Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.';
+
+  @override
+  String get error_code_refresh_invalid => 'Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.';
+
+  @override
+  String get error_code_invalid_plan => 'Der ausgewählte Tarif ist ungültig.';
+
+  @override
+  String get error_code_user_has_no_active_plan => 'Sie haben keinen aktiven Tarif.';
+
+  @override
+  String get error_code_plan_already_active => 'Dieser Tarif ist bereits aktiv.';
+
+  @override
+  String get error_code_must_use_same_payment_method_as_previous_plan => 'Sie müssen dieselbe Zahlungsmethode wie bei Ihrem vorherigen Tarif verwenden.';
+
+  @override
+  String get error_code_user_has_active_plan => 'Sie haben bereits einen aktiven Tarif.';
+
+  @override
+  String get error_code_upload_failed => 'Das Hochladen der Datei ist fehlgeschlagen.';
+
+  @override
+  String get error_code_user_not_found => 'Benutzer nicht gefunden.';
+
+  @override
+  String get error_code_avatar_not_found => 'Avatar nicht gefunden.';
+
+  @override
+  String get error_code_unauthenticated => 'Eine Authentifizierung ist erforderlich. Bitte melden Sie sich erneut an.';
+
+  @override
+  String get error_code_invalid_parent_treenode => 'Das ausgewählte übergeordnete Element ist ungültig.';
+
+  @override
+  String get error_code_subscription_state_invalid => 'Der aktuelle Abonnementstatus ist ungültig.';
+
+  @override
+  String get error_code_invalid_treenode_id => 'Das ausgewählte Element ist ungültig.';
+
+  @override
+  String get error_code_leaf_not_found => 'Das angeforderte Element wurde nicht gefunden.';
+
+  @override
+  String get error_code_invalid_plan_title => 'Der Tarifname ist ungültig.';
+
+  @override
+  String get error_code_subscription_not_found => 'Abonnement nicht gefunden.';
+
+  @override
+  String get error_code_active_plan_expired => 'Ihr aktiver Tarif ist abgelaufen.';
+
+  @override
+  String get error_code_active_plan_currency_mismatch => 'Die Währung stimmt nicht mit Ihrem aktiven Tarif überein.';
+
+  @override
+  String get error_code_no_subscription => 'Sie haben kein Abonnement.';
+
+  @override
+  String get error_code_uuid_not_found => 'Das angeforderte Element wurde nicht gefunden.';
+
+  @override
+  String get error_code_invalid_subscription_due => 'Das Fälligkeitsdatum des Abonnements ist ungültig.';
+
+  @override
+  String get error_code_invalid_parameters => 'Einige der angegebenen Parameter sind ungültig.';
+
+  @override
+  String get calculate_price => 'Preis berechnen';
+
+  @override
+  String get error_code_plan_not_found => 'Tarif nicht gefunden';
+
+  @override
+  String get error_code_plan_payment_method => 'Diese Zahlungsmethode ist für diesen Tarif nicht verfügbar';
+
+  @override
+  String get error_code_no_upgrade_options =>
+      'Jede Tarifverlängerung muss das Fälligkeitsdatum um mindestens 3 Tage oder den Speicherplatz um mindestens 1 GB erhöhen';
+
+  @override
+  String get checkout_upgrade_requirement_title => 'Mindestens eine der folgenden Bedingungen muss erfüllt sein:';
+
+  @override
+  String get checkout_upgrade_duration_requirement => 'Die Tarifdauer muss um mehr als 3 Tage geändert werden.';
+
+  @override
+  String get checkout_upgrade_storage_requirement => 'Der Speicherplatz muss um mehr als 10 GB geändert werden.';
+
+  @override
+  String get checkout_free_purchase_message => 'Dieser Kauf ist für Sie kostenlos. Das verbleibende Guthaben wird für zukünftige Käufe gespeichert.';
 }

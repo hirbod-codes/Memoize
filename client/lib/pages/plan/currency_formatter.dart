@@ -11,8 +11,7 @@ import 'package:intl/intl.dart';
 /// the unit. This assumes the common convention of storing money in the
 /// smallest subunit to avoid floating-point rounding bugs:
 ///   - USD/EUR stored in cents (divide by 100)
-///   - IRT/IRR stored as whole Toman/Rial (Iran doesn't really use a
-///     fractional subunit in practice, so no division)
+///   - IRR stored as whole Rial (Iran doesn't really use a fractional subunit in practice, so no division)
 ///   - BTC stored in satoshis (divide by 100,000,000)
 ///   - ETH stored in wei (divide by 10^18)
 /// If your backend uses a different convention, this is the one place
@@ -26,8 +25,6 @@ class CurrencyFormatter {
         return '\$${_decimal((rawValue * 100).ceil(), 100, 2, locale)}';
       case Currency.eur:
         return '€${_decimal((rawValue * 100).ceil(), 100, 2, locale)}';
-      case Currency.irt:
-        return '${_thousands(rawValue.ceil(), locale)} Toman';
       case Currency.irr:
         return '${_thousands(rawValue.ceil(), locale)} Rial';
       case Currency.btc:

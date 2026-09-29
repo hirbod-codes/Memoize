@@ -1,11 +1,14 @@
 import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
+import 'package:client/components/button.dart';
+import 'package:client/components/checkout/choose_payment_method_currency.dart';
 import 'package:client/plan/models/currency_label.dart';
 import 'package:client/plan/models/plan.dart'; // for Currency and Plan
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/pages/plan/currency_formatter.dart';
 import 'package:client/subscription/models/subscription.dart';
+import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -17,7 +20,7 @@ import 'package:url_launcher/url_launcher.dart';
 Currency currencyForPaymentMethod(String method) {
   switch (method) {
     case 'zarinpal':
-      return Currency.irt;
+      return Currency.irr;
     case 'zibal':
       return Currency.irr;
     case 'stripe':
@@ -49,34 +52,41 @@ class CheckoutDialog extends ConsumerStatefulWidget {
 class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
   Dio get _authDio => ref.read(authDioProvider);
 
-  bool _loadingMethods = true;
   bool _submitting = false;
-  String? _loadError;
-  List<String> _methods = [];
   String? _selectedMethod;
 
-  static const int _defaultDurationDays = 30;
+  static const double _defaultDurationDays = 30;
   static const int _defaultAdditionalStorageGb = 0;
 
   late final TextEditingController _durationController;
   late final TextEditingController _additionalStorageController;
 
-  int _durationDays = _defaultDurationDays;
+  double _durationDays = _defaultDurationDays;
   int _additionalStorageGb = _defaultAdditionalStorageGb;
 
   String? _durationError;
   String? _additionalStorageError;
 
+  Currency? _selectedCurrency;
+
+  double? _totalPrice;
+
   @override
   void initState() {
     super.initState();
-    _durationController = TextEditingController(text: _defaultDurationDays.toString());
-    _additionalStorageController = TextEditingController(
-      text: widget.subscription == null
-          ? _defaultAdditionalStorageGb.toString()
-          : (widget.subscription!.privileges.storageBytes - widget.plan.privileges.storageBytes).toString(),
-    );
-    _fetchPaymentMethods();
+
+    setState(() {
+      _durationDays = widget.subscription == null
+          ? _defaultDurationDays
+          : ((widget.subscription!.currentPeriodEnd - DateTime.now().millisecondsSinceEpoch) / (1000 * 60 * 60 * 24));
+      _durationController = TextEditingController(text: _durationDays.toStringAsFixed(2));
+
+      _additionalStorageController = TextEditingController(
+        text: widget.subscription == null
+            ? _defaultAdditionalStorageGb.toString()
+            : (widget.subscription!.privileges.storageBytes - widget.plan.privileges.storageBytes).toString(),
+      );
+    });
   }
 
   @override
@@ -86,60 +96,76 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
     super.dispose();
   }
 
-  Currency? get _selectedCurrency => _selectedMethod == null ? null : currencyForPaymentMethod(_selectedMethod!);
+  bool _isDurationValid() {
+    final nowTS = DateTime.now().millisecondsSinceEpoch;
+    final subscriptionDueTSMS = nowTS + (_durationDays * 24 * 60 * 60 * 1000);
+    Talker().debug({'subscriptionDueTSMS': subscriptionDueTSMS});
 
-  double? get _totalPriceRawPerMonth {
-    final currency = _selectedCurrency;
-    if (currency == null) return null;
-    return widget.plan.price.forCurrency(currency);
+    if (widget.subscription == null) return _durationDays >= 3;
+
+    return (widget.subscription!.currentPeriodEnd - subscriptionDueTSMS).abs() >= (3 * 24 * 60 * 60 * 1000);
   }
 
-  Future<void> _fetchPaymentMethods() async {
-    try {
-      setState(() {
-        _loadingMethods = true;
-        _loadError = null;
-      });
+  bool _isStorageValid() {
+    final bytes = (_additionalStorageGb * 1024 * 1024 * 1024);
+    if (widget.subscription == null) return _additionalStorageGb >= 10;
 
-      final result = await apiCall(() => _authDio.get('/api/subscription/supported_payment_methods'));
+    return (widget.subscription!.privileges.storageBytes - (widget.plan.privileges.storageBytes + bytes)).abs() >= (10 * 1024 * 1024 * 1024);
+  }
 
-      if (!mounted) return;
+  bool _isPayable() {
+    bool isUpgrading = false;
+    if (widget.subscription != null) isUpgrading = true;
 
-      if (result.isFailure || result.dataOrNull == null) {
-        setState(() {
-          _loadingMethods = false;
-          _loadError = AppLocalizations.of(context)!.checkout_load_methods_failed;
-        });
-        return;
-      }
+    Talker().debug({
+      'plan': widget.plan.toJson(),
+      'subscription': widget.subscription?.toJson(),
+      '_durationDays': _durationDays,
+      '_additionalStorageGb': _additionalStorageGb,
+      '_submitting': _submitting,
+      '_selectedMethod': _selectedMethod,
+      '_durationError': _durationError,
+      '_additionalStorageError': _additionalStorageError,
+      '_totalPrice': _totalPrice,
+    });
 
-      final raw = (result.dataOrNull!['methods'] as List<dynamic>?) ?? [];
-      final methods = raw.cast<String>();
-
-      setState(() {
-        _methods = methods;
-        _loadingMethods = false;
-        _selectedMethod = methods.isNotEmpty ? methods.first : null;
-      });
-    } catch (e) {
-      Talker().error('caught error in _fetchPaymentMethods method of _CheckoutDialogState class', e);
+    if (_selectedMethod == null || _durationError != null || _additionalStorageError != null || _durationDays == 0) {
+      return false;
     }
+
+    Talker().debug({
+      'planTitle': widget.plan.title == widget.subscription!.planTitle,
+      'subscriptionDueTSMS': _isDurationValid(),
+      'storageBytes': _isStorageValid(),
+    });
+
+    if (isUpgrading && (widget.plan.title == widget.subscription!.planTitle && !_isDurationValid() && !_isStorageValid())) {
+      return false;
+    }
+
+    return true;
   }
 
   Future<void> _pay() async {
     final l10n = AppLocalizations.of(context)!;
 
-    if (_submitting || _selectedMethod == null || _totalPriceRawPerMonth == null || _durationError != null || _additionalStorageError != null) {
-      return;
-    }
+    if (_submitting ||!_isPayable()) return;
+
+    final nowTS = DateTime.now().millisecondsSinceEpoch;
+    final subscriptionDueTSMS = nowTS + (_durationDays * 24 * 60 * 60 * 1000);
 
     setState(() => _submitting = true);
 
     try {
       final result = await apiCall(
         () => _authDio.post(
-          '/api/subscription/',
-          data: {'planTitle': widget.plan.title, 'paymentMethod': _selectedMethod, 'subscriptionDueTSMS': _durationDays, '': _additionalStorageGb},
+          '/api/subscription',
+          data: {
+            'planTitle': widget.plan.title,
+            'paymentMethod': _selectedMethod,
+            'subscriptionDueTSMS': subscriptionDueTSMS,
+            'extraStorageBytes': _additionalStorageGb * 1024 * 1024 * 1024,
+          },
         ),
       );
 
@@ -183,8 +209,60 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
     }
   }
 
+  Future<void> _calculateTotalPrice(String selectedMethod, Currency selectedCurrency) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (_submitting ||!_isPayable()) return;
+
+    final nowTS = DateTime.now().millisecondsSinceEpoch;
+    final subscriptionDueTSMS = nowTS + (_durationDays * 24 * 60 * 60 * 1000);
+
+    setState(() => _submitting = true);
+
+    try {
+      final result = await apiCall(
+        () => _authDio.get(
+          '/api/subscription/calculate?planTitle=${widget.plan.title}&paymentMethod=$selectedMethod&subscriptionDueTSMS=$subscriptionDueTSMS&extraStorageBytes=${_additionalStorageGb * 1024 * 1024 * 1024}',
+        ),
+      );
+
+      if (!mounted) return;
+
+      if (result.isFailure || result.dataOrNull == null) {
+        NotificationService.showError(context: context, message: l10n.checkout_pay_failed);
+        return;
+      }
+
+      Talker().debug({'data': result.dataOrNull});
+
+      final totalPrice = result.dataOrNull?['totalPrice'] as double?;
+      if (totalPrice == null) {
+        NotificationService.showError(context: context, message: l10n.checkout_pay_failed);
+        return;
+      }
+
+      final c = result.dataOrNull?['currency'] as String?;
+      final currency = c == null ? null : Currency.toCurrency(c);
+      Talker().debug({currency, selectedCurrency});
+      if (currency != selectedCurrency) {
+        NotificationService.showError(context: context, message: l10n.checkout_pay_failed);
+        return;
+      }
+
+      setState(() {
+        _totalPrice = totalPrice;
+      });
+    } catch (err) {
+      Talker().error('caught error in _calculateTotalPrice method of _CheckoutDialogState', err);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+
     final l10n = AppLocalizations.of(context)!;
 
     return Dialog(
@@ -201,6 +279,21 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
               const SizedBox(height: 4),
               Text(l10n.checkout_title, style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 16),
+
+              if (widget.subscription != null && !_isPayable())
+                Container(
+                  padding: EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(color: theme.error, borderRadius: BorderRadius.circular(12)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.checkout_upgrade_requirement_title, style: TextStyle(color: theme.onError)),
+                      Text(l10n.checkout_upgrade_duration_requirement, style: TextStyle(color: theme.onError)),
+                      Text(l10n.checkout_upgrade_storage_requirement, style: TextStyle(color: theme.onError)),
+                    ],
+                  ),
+                ),
+              if (widget.subscription != null && !_isPayable()) const SizedBox(height: 30),
 
               _buildDurationPicker(l10n),
               const SizedBox(height: 20),
@@ -224,14 +317,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton(
-                      onPressed:
-                          (_submitting ||
-                              _selectedMethod == null ||
-                              _totalPriceRawPerMonth == null ||
-                              _durationError != null ||
-                              _additionalStorageError != null)
-                          ? null
-                          : _pay,
+                      onPressed: !_submitting && _isPayable() ? _pay : null,
                       child: _submitting ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Text(l10n.checkout_pay),
                     ),
                   ),
@@ -256,16 +342,24 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(isDense: true, border: const OutlineInputBorder(), suffixText: l10n.checkout_days_suffix, errorText: _durationError),
-          onChanged: (value) {
-            final parsed = int.tryParse(value);
-            setState(() {
-              if (parsed == null || parsed < 1) {
-                _durationError = l10n.checkout_duration_invalid;
-              } else {
-                _durationError = null;
-                _durationDays = parsed;
-              }
-            });
+          onChanged: (value) async {
+            double? parsed = double.tryParse(value);
+            if (parsed != null) {
+              parsed = (parsed * 100).truncateToDouble() / 100;
+              _durationDays = parsed;
+            }
+
+            if (mounted) {
+              setState(() {
+                _totalPrice = null;
+                if (parsed == null || parsed < 1) {
+                  _durationError = l10n.checkout_duration_invalid;
+                } else {
+                  _durationError = null;
+                  _durationDays = parsed;
+                }
+              });
+            }
           },
         ),
       ],
@@ -283,13 +377,8 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
           enabled: !_submitting,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: InputDecoration(
-            isDense: true,
-            border: const OutlineInputBorder(),
-            suffixText: 'GB',
-            errorText: _additionalStorageError,
-          ),
-          onChanged: (value) {
+          decoration: InputDecoration(isDense: true, border: const OutlineInputBorder(), suffixText: 'GB', errorText: _additionalStorageError),
+          onChanged: (value) async {
             // Empty field is treated as 0 rather than invalid, since
             // most users will leave this blank/default.
             if (value.isEmpty) {
@@ -301,14 +390,22 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
             }
 
             final parsed = int.tryParse(value);
-            setState(() {
-              if (parsed == null || parsed < 0) {
-                _additionalStorageError = l10n.checkout_storage_invalid;
-              } else {
-                _additionalStorageError = null;
-                _additionalStorageGb = parsed;
-              }
-            });
+
+            if (parsed != null) {
+              _additionalStorageGb = parsed;
+            }
+
+            if (mounted) {
+              setState(() {
+                _totalPrice = null;
+                if (parsed == null || parsed < 0) {
+                  _additionalStorageError = l10n.checkout_storage_invalid;
+                } else {
+                  _additionalStorageError = null;
+                  _additionalStorageGb = parsed;
+                }
+              });
+            }
           },
         ),
       ],
@@ -316,56 +413,46 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
   }
 
   Widget _buildMethodsList(BuildContext context, AppLocalizations l10n) {
-    if (_loadingMethods) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_loadError != null) {
-      return Column(
-        children: [
-          Text(_loadError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-          const SizedBox(height: 8),
-          TextButton(onPressed: _fetchPaymentMethods, child: Text(l10n.checkout_retry)),
-        ],
-      );
-    }
-
-    if (_methods.isEmpty) {
-      return Text(l10n.checkout_no_methods);
-    }
-
-    return Column(
-      children: _methods
-          .map(
-            (method) => RadioListTile<String>(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: Text(method), // swap for a display-name lookup if you want nicer labels than the raw identifier
-              value: method,
-              groupValue: _selectedMethod,
-              onChanged: _submitting ? null : (value) => setState(() => _selectedMethod = value),
-            ),
-          )
-          .toList(),
+    return ChoosePaymentCurrency(
+      onSelect: (paymentCurrency) async {
+        await _calculateTotalPrice(paymentCurrency.paymentMethod, paymentCurrency.currency);
+        if (mounted) {
+          setState(() {
+            _selectedMethod = paymentCurrency.paymentMethod;
+            _selectedCurrency = paymentCurrency.currency;
+          });
+        }
+      },
     );
   }
 
   Widget _buildPriceRow(BuildContext context, AppLocalizations l10n) {
     final locale = Localizations.localeOf(context).languageCode;
-    final total = _totalPriceRawPerMonth;
+    final total = _totalPrice;
     final currency = _selectedCurrency;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
       children: [
-        Text(l10n.checkout_total, style: Theme.of(context).textTheme.titleMedium),
-        Text(
-          (total == null || currency == null) ? '—' : CurrencyFormatter.format(total, currency, locale: locale),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(l10n.checkout_total, style: Theme.of(context).textTheme.titleMedium),
+            Button(
+              type: ButtonType.elevated,
+              label: l10n.calculate_price,
+              onPressed: _submitting || !_isPayable()
+                  ? null
+                  : () async {
+                      await _calculateTotalPrice(_selectedMethod!, _selectedCurrency!);
+                    },
+            ),
+            Text(
+              (total == null || currency == null) ? '—' : CurrencyFormatter.format(total, currency, locale: locale),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
+        if (total != null && total < 0) Text(l10n.checkout_free_purchase_message),
       ],
     );
   }

@@ -16,7 +16,7 @@ enum SubscriptionDuration { month, year }
 Currency currencyForPaymentMethod(String method) {
   switch (method) {
     case 'zarinpal':
-      return Currency.irt;
+      return Currency.irr;
     case 'zibal':
       return Currency.irr;
     case 'stripe':

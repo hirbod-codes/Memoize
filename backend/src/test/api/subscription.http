@@ -1,1 +1,4 @@
-POST http://localhost:8081/api/subscription/zibal/verify/6ab5aca201dcc3cfe1407b9e?success=1&status=2&trackId=4807788598 HTTP/1.1
+POST http://localhost:8081/api/subscription/zibal/verify/6abbc9bf1c56522feb5c3b7a?success=1&status=2&trackId=4817831468 HTTP/1.1
+
+###
+GET http://localhost:8081/api/subscription/zibal/verify/check?uuid=99efe4d3-3eb7-4bb3-9471-cace6e57006e HTTP/1.1

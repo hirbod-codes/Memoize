@@ -1,4 +1,5 @@
 import 'package:client/components/footer/enamad/badge.dart';
+import 'package:client/components/footer/zibal/badge.dart';
 import 'package:flutter/material.dart';
 
 /// Renders nothing on mobile/desktop — a footer bar makes sense on a
@@ -14,7 +15,7 @@ class AppFooter extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      height: 150,
+      height: 200,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: theme.dividerColor)),
@@ -23,6 +24,13 @@ class AppFooter extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(width: 70, height: 70, child: const EnamadBadge()),
+              SizedBox(width: 70, height: 70, child: const ZibalBadge()),
+            ],
+          ),
           SizedBox(
             width: 100,
             height: 20,
@@ -31,8 +39,6 @@ class AppFooter extends StatelessWidget {
               child: Text('© ${DateTime.now().year} Memoize', style: theme.textTheme.bodySmall),
             ),
           ),
-          SizedBox(width: 70, height: 70, child: const FooterBadge()),
-          SizedBox(width: 100, height: 20),
         ],
       ),
     );

@@ -22,7 +22,7 @@ export function handleError(res: Response, err: any, log?: Logger) {
         }
 
         log.error({ err }, 'Unhandled error');
-        try { return res.status(500).json({ status: 'error', error_code: 'INTERNAL' }); } catch (_) { }
+        try { return res.status(500).json({ status: 'error', error_code: 'INTERNAL_ERROR' }); } catch (_) { }
     } catch (err) {
         console.error('handleError function threw Error!!!', err)
     }

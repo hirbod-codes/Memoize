@@ -82,7 +82,7 @@ export async function resolveCurrencyAndPayment({ log, paymentMethod, res }: { l
 export function resolveCurrencyFromPaymentMethod(paymentMethod: PaymentMethod): CurrencyRequired {
     switch (paymentMethod) {
         case 'zarinpal':
-            return 'IRT'
+            return 'IRR'
 
         case 'zibal':
             return 'IRR'
@@ -102,7 +102,7 @@ type calculatePricesForRemainingPlanDueOptions = {
     log: Logger,
     plan: Plan,
     durationMS: number,
-    privilegesStorageBytes?: number,
+    privilegesStorageBytes: number,
     currency: CurrencyRequired,
     appSettingsRepository?: AppSettingsRepository,
     res?: Response
@@ -115,19 +115,18 @@ export async function calculatePricesForSubscriptionDue({
     currency,
     appSettingsRepository,
     res
-}: calculatePricesForRemainingPlanDueOptions): Promise<[planPrice: number, storagePrice: number | undefined, totalPrice: number] | undefined> {
+}: calculatePricesForRemainingPlanDueOptions): Promise<[planPrice: number, storagePrice: number, totalPrice: number] | undefined> {
     log.info('calculating price')
 
-    const remainingPlanDueFractionPerMonth = (durationMS) / (A_MONTH_IN_MILLISECONDS)
-    if (remainingPlanDueFractionPerMonth < 0) {
+    const durationPerMonth = (durationMS) / (A_MONTH_IN_MILLISECONDS)
+    if (durationPerMonth < 0) {
         log.error("logic error!!!, 'currentPeriodEnd' can not be smaller than 'nowTS'")
         throw new Error("logic error!!!, 'currentPeriodEnd' can not be smaller than 'nowTS'")
     }
 
-    const planPricePerPeriod = remainingPlanDueFractionPerMonth * plan.price[currency]
-    let planPrice: number, storagePrice: number | undefined = undefined, storagePricePerPeriod: number | undefined = undefined
+    let planPrice: number, storagePrice: number | undefined = undefined, storagePricePerMonth: number = 0
 
-    if (privilegesStorageBytes && privilegesStorageBytes > plan.privileges.storageBytes) {
+    if (privilegesStorageBytes > plan.privileges.storageBytes) {
         log.info('user has purchased extra storage, calculating additional storage cost')
 
         const pricingSettings = await runWithLogger(log, () => (appSettingsRepository ?? new AppSettingsRepository()).getByKey('pricing'))
@@ -142,16 +141,16 @@ export async function calculatePricesForSubscriptionDue({
 
         const extraBytes = privilegesStorageBytes - plan.privileges.storageBytes
         if (extraBytes > 0)
-            storagePricePerPeriod = (extraBytes / (1024 * 1024 * 1024)) * pricePerGbPerMonth * remainingPlanDueFractionPerMonth
+            storagePricePerMonth = (extraBytes / (1024 * 1024 * 1024)) * pricePerGbPerMonth
         else
             log.error({ pricingSettings }, "the provided plan already covers storage bytes")
     }
 
-    planPrice = remainingPlanDueFractionPerMonth * planPricePerPeriod
-    storagePrice = remainingPlanDueFractionPerMonth * (storagePricePerPeriod ?? 0)
+    planPrice = durationPerMonth * plan.price[currency]
+    storagePrice = durationPerMonth * storagePricePerMonth
     const totalPrice = planPrice + storagePrice
     log.info({
-        remainingPlanDueFractionPerMonth,
+        remainingPlanDueFractionPerMonth: durationPerMonth,
         calculatedPlanPrice: planPrice,
         calculatedStoragePrice: storagePrice,
         totalPrice,

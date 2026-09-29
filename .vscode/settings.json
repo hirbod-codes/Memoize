@@ -21,6 +21,7 @@
         "datasources",
         "debouncer",
         "dotenv",
+        "Enamad",
         "ffprobe",
         "flac",
         "getmeili",

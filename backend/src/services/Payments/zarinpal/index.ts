@@ -23,7 +23,7 @@ export class Zarinpal implements IPay {
                     // merchant_id: this.merchantId,
                     merchant_id: randomUUID(),
                     amount,
-                    currency: "IRT",
+                    currency: "IRR",
                     callback_url: callbackUrl,
                     description: 'plan payment',
                     metadata: {

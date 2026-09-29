@@ -7,24 +7,17 @@ import 'package:client/plan/models/currency_label.dart';
 /// which you should confirm against your actual backend convention.
 class Price {
   final double irr;
-  final double irt;
   final double usd;
   final double eur;
   final double btc;
   final double eth;
 
-  const Price({required this.irr, required this.irt, required this.usd, required this.eur, required this.btc, required this.eth});
+  const Price({required this.irr, required this.usd, required this.eur, required this.btc, required this.eth});
 
-  factory Price.fromJson(Map<String, dynamic> json) => Price(
-    irr: json['IRR'] as double,
-    irt: json['IRT'] as double,
-    usd: json['USD'] as double,
-    eur: json['EUR'] as double,
-    btc: json['BTC'] as double,
-    eth: json['ETH'] as double,
-  );
+  factory Price.fromJson(Map<String, dynamic> json) =>
+      Price(irr: json['IRR'] as double, usd: json['USD'] as double, eur: json['EUR'] as double, btc: json['BTC'] as double, eth: json['ETH'] as double);
 
-  bool get isFree => irr == 0 && irt == 0 && usd == 0 && eur == 0 && btc == 0 && eth == 0;
+  bool get isFree => irr == 0 && usd == 0 && eur == 0 && btc == 0 && eth == 0;
 
   double forCurrency(Currency currency) {
     switch (currency) {
@@ -32,8 +25,6 @@ class Price {
         return usd;
       case Currency.eur:
         return eur;
-      case Currency.irt:
-        return irt;
       case Currency.irr:
         return irr;
       case Currency.btc:
@@ -43,12 +34,11 @@ class Price {
     }
   }
 
-  Map<String, dynamic> toJson() => {'IRR': irr, 'IRT': irt, 'USD': usd, 'EUR': eur, 'BTC': btc, 'ETH': eth};
+  Map<String, dynamic> toJson() => {'IRR': irr, 'USD': usd, 'EUR': eur, 'BTC': btc, 'ETH': eth};
 
   double? operator [](String other) {
     if (Currency.usd.name == other) return usd;
     if (Currency.eur.name == other) return eur;
-    if (Currency.irt.name == other) return irt;
     if (Currency.irr.name == other) return irr;
     if (Currency.btc.name == other) return btc;
     if (Currency.eth.name == other) return eth;

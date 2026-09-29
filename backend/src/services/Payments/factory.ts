@@ -1,5 +1,5 @@
 import { Zibal } from "./zibal";
-import { payments } from "../../configs";
+import { isProduction, payments } from "../../configs";
 import { Zarinpal } from "./zarinpal";
 
 export class PaymentFactory {
@@ -9,7 +9,7 @@ export class PaymentFactory {
                 return new Zarinpal(payments.zarinpal.url!, payments.zarinpal.merchantId!)
 
             case 'zibal':
-                return new Zibal(payments.zibal.url!, payments.zibal.merchantId!)
+                return new Zibal(payments.zibal.url!, isProduction ? payments.zibal.merchantId! : 'zibal')
 
             default:
                 throw new Error('UNSUPPORTED_PAYMENT_METHOD')

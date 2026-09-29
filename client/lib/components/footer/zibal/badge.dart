@@ -9,8 +9,8 @@ import 'footer_badge_stub.dart' if (dart.library.html) 'footer_badge_web.dart' a
 /// conditional import above already resolves to the right
 /// implementation at compile time, same pattern as your
 /// video_player_web/just_audio_web platform splits.
-class EnamadBadge extends StatelessWidget {
-  const EnamadBadge({super.key});
+class ZibalBadge extends StatelessWidget {
+  const ZibalBadge({super.key});
 
   @override
   Widget build(BuildContext context) => impl.buildFooterBadgeWidget();

@@ -785,4 +785,136 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checkout_duration_invalid => 'Invalid days value';
+
+  @override
+  String get error_code_unsupported_payment_method => 'This payment method is not supported.';
+
+  @override
+  String get error_code_internal => 'Something went wrong. Please try again.';
+
+  @override
+  String get error_code_internal_error => 'Something went wrong. Please try again.';
+
+  @override
+  String get error_code_plan_state_invalid => 'The current plan state is invalid.';
+
+  @override
+  String get error_code_otp_cooldown => 'Please wait before requesting another verification code.';
+
+  @override
+  String get error_code_phone_registration_disabled => 'Phone number registration is currently unavailable.';
+
+  @override
+  String get error_code_create_failed => 'Failed to create the requested item.';
+
+  @override
+  String get error_code_fetch_failed => 'Failed to load the requested data.';
+
+  @override
+  String get error_code_email_registration_disabled => 'Email registration is currently unavailable.';
+
+  @override
+  String get error_code_smtp_cooldown => 'Please wait before requesting another email.';
+
+  @override
+  String get error_code_invalid_input => 'Some of the provided information is invalid.';
+
+  @override
+  String get error_code_email_not_found => 'No account was found with this email.';
+
+  @override
+  String get error_code_update_failed => 'Failed to update the requested item.';
+
+  @override
+  String get error_code_no_refresh_token => 'Your session has expired. Please log in again.';
+
+  @override
+  String get error_code_refresh_invalid => 'Your session has expired. Please log in again.';
+
+  @override
+  String get error_code_invalid_plan => 'The selected plan is invalid.';
+
+  @override
+  String get error_code_user_has_no_active_plan => 'You do not have an active plan.';
+
+  @override
+  String get error_code_plan_already_active => 'This plan is already active.';
+
+  @override
+  String get error_code_must_use_same_payment_method_as_previous_plan => 'You must use the same payment method as your previous plan.';
+
+  @override
+  String get error_code_user_has_active_plan => 'You already have an active plan.';
+
+  @override
+  String get error_code_upload_failed => 'Failed to upload the file.';
+
+  @override
+  String get error_code_user_not_found => 'User not found.';
+
+  @override
+  String get error_code_avatar_not_found => 'Avatar not found.';
+
+  @override
+  String get error_code_unauthenticated => 'Authentication is required. Please log in again.';
+
+  @override
+  String get error_code_invalid_parent_treenode => 'The selected parent is invalid.';
+
+  @override
+  String get error_code_subscription_state_invalid => 'The current subscription state is invalid.';
+
+  @override
+  String get error_code_invalid_treenode_id => 'The selected item is invalid.';
+
+  @override
+  String get error_code_leaf_not_found => 'The requested item was not found.';
+
+  @override
+  String get error_code_invalid_plan_title => 'The plan title is invalid.';
+
+  @override
+  String get error_code_subscription_not_found => 'Subscription not found.';
+
+  @override
+  String get error_code_active_plan_expired => 'Your active plan has expired.';
+
+  @override
+  String get error_code_active_plan_currency_mismatch => 'The currency does not match your active plan.';
+
+  @override
+  String get error_code_no_subscription => 'You do not have a subscription.';
+
+  @override
+  String get error_code_uuid_not_found => 'The requested item was not found.';
+
+  @override
+  String get error_code_invalid_subscription_due => 'The subscription due date is invalid.';
+
+  @override
+  String get error_code_invalid_parameters => 'Some of the provided parameters are invalid.';
+
+  @override
+  String get calculate_price => 'Calculate Price';
+
+  @override
+  String get error_code_plan_not_found => 'Plan not found';
+
+  @override
+  String get error_code_plan_payment_method => 'This payment method is not available for this plan';
+
+  @override
+  String get error_code_no_upgrade_options => 'Each plan renewal must add at least 3 days to the due date or 1 GB to storage';
+
+  @override
+  String get checkout_upgrade_requirement_title => 'At least one of the following must be satisfied:';
+
+  @override
+  String get checkout_upgrade_duration_requirement => 'Plan duration must be changed by more than 3 days.';
+
+  @override
+  String get checkout_upgrade_storage_requirement => 'Storage must be changed by more than 10 GB.';
+
+  @override
+  String get checkout_free_purchase_message => 'This purchase is free for you. The remaining balance will be saved for future purchases.';
 }

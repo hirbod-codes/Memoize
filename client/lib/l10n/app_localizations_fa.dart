@@ -786,4 +786,136 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get checkout_duration_invalid => 'مقدار روز نامعتبر است';
+
+  @override
+  String get error_code_unsupported_payment_method => 'این روش پرداخت پشتیبانی نمی‌شود.';
+
+  @override
+  String get error_code_internal => 'مشکلی پیش آمد. لطفاً دوباره تلاش کنید.';
+
+  @override
+  String get error_code_internal_error => 'مشکلی پیش آمد. لطفاً دوباره تلاش کنید.';
+
+  @override
+  String get error_code_plan_state_invalid => 'وضعیت فعلی طرح نامعتبر است.';
+
+  @override
+  String get error_code_otp_cooldown => 'لطفاً قبل از درخواست کد تأیید جدید صبر کنید.';
+
+  @override
+  String get error_code_phone_registration_disabled => 'ثبت‌نام با شماره تلفن در حال حاضر در دسترس نیست.';
+
+  @override
+  String get error_code_create_failed => 'ایجاد مورد موردنظر ناموفق بود.';
+
+  @override
+  String get error_code_fetch_failed => 'بارگذاری اطلاعات موردنظر ناموفق بود.';
+
+  @override
+  String get error_code_email_registration_disabled => 'ثبت‌نام با ایمیل در حال حاضر در دسترس نیست.';
+
+  @override
+  String get error_code_smtp_cooldown => 'لطفاً قبل از درخواست ایمیل جدید صبر کنید.';
+
+  @override
+  String get error_code_invalid_input => 'برخی از اطلاعات واردشده نامعتبر هستند.';
+
+  @override
+  String get error_code_email_not_found => 'حسابی با این ایمیل پیدا نشد.';
+
+  @override
+  String get error_code_update_failed => 'به‌روزرسانی موردنظر ناموفق بود.';
+
+  @override
+  String get error_code_no_refresh_token => 'نشست شما منقضی شده است. لطفاً دوباره وارد شوید.';
+
+  @override
+  String get error_code_refresh_invalid => 'نشست شما منقضی شده است. لطفاً دوباره وارد شوید.';
+
+  @override
+  String get error_code_invalid_plan => 'طرح انتخاب‌شده نامعتبر است.';
+
+  @override
+  String get error_code_user_has_no_active_plan => 'شما طرح فعالی ندارید.';
+
+  @override
+  String get error_code_plan_already_active => 'این طرح از قبل فعال است.';
+
+  @override
+  String get error_code_must_use_same_payment_method_as_previous_plan => 'باید از همان روش پرداخت طرح قبلی استفاده کنید.';
+
+  @override
+  String get error_code_user_has_active_plan => 'شما از قبل یک طرح فعال دارید.';
+
+  @override
+  String get error_code_upload_failed => 'بارگذاری فایل ناموفق بود.';
+
+  @override
+  String get error_code_user_not_found => 'کاربر پیدا نشد.';
+
+  @override
+  String get error_code_avatar_not_found => 'آواتار پیدا نشد.';
+
+  @override
+  String get error_code_unauthenticated => 'احراز هویت الزامی است. لطفاً دوباره وارد شوید.';
+
+  @override
+  String get error_code_invalid_parent_treenode => 'والد انتخاب‌شده نامعتبر است.';
+
+  @override
+  String get error_code_subscription_state_invalid => 'وضعیت فعلی اشتراک نامعتبر است.';
+
+  @override
+  String get error_code_invalid_treenode_id => 'مورد انتخاب‌شده نامعتبر است.';
+
+  @override
+  String get error_code_leaf_not_found => 'مورد موردنظر پیدا نشد.';
+
+  @override
+  String get error_code_invalid_plan_title => 'عنوان طرح نامعتبر است.';
+
+  @override
+  String get error_code_subscription_not_found => 'اشتراک پیدا نشد.';
+
+  @override
+  String get error_code_active_plan_expired => 'طرح فعال شما منقضی شده است.';
+
+  @override
+  String get error_code_active_plan_currency_mismatch => 'واحد پول با طرح فعال شما مطابقت ندارد.';
+
+  @override
+  String get error_code_no_subscription => 'شما اشتراکی ندارید.';
+
+  @override
+  String get error_code_uuid_not_found => 'مورد موردنظر پیدا نشد.';
+
+  @override
+  String get error_code_invalid_subscription_due => 'تاریخ سررسید اشتراک نامعتبر است.';
+
+  @override
+  String get error_code_invalid_parameters => 'برخی از پارامترهای واردشده نامعتبر هستند.';
+
+  @override
+  String get calculate_price => 'محاسبه قیمت';
+
+  @override
+  String get error_code_plan_not_found => 'طرح پیدا نشد';
+
+  @override
+  String get error_code_plan_payment_method => 'این روش پرداخت برای این طرح در دسترس نیست';
+
+  @override
+  String get error_code_no_upgrade_options => 'هر تمدید طرح باید حداقل ۳ روز به تاریخ سررسید یا حداقل ۱ گیگابایت به فضای ذخیره‌سازی اضافه کند';
+
+  @override
+  String get checkout_upgrade_requirement_title => 'حداقل یکی از موارد زیر باید رعایت شود:';
+
+  @override
+  String get checkout_upgrade_duration_requirement => 'مدت زمان طرح باید بیش از ۳ روز تغییر کند.';
+
+  @override
+  String get checkout_upgrade_storage_requirement => 'فضای ذخیره‌سازی باید بیش از ۱۰ گیگابایت تغییر کند.';
+
+  @override
+  String get checkout_free_purchase_message => 'این خرید برای شما رایگان است. مبلغ باقی‌مانده برای خریدهای آینده ذخیره خواهد شد.';
 }
