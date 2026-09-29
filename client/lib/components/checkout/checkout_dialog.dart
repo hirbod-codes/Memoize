@@ -81,11 +81,10 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
           : ((widget.subscription!.currentPeriodEnd - DateTime.now().millisecondsSinceEpoch) / (1000 * 60 * 60 * 24));
       _durationController = TextEditingController(text: _durationDays.toStringAsFixed(2));
 
-      _additionalStorageController = TextEditingController(
-        text: widget.subscription == null
-            ? _defaultAdditionalStorageGb.toString()
-            : (widget.subscription!.privileges.storageBytes - widget.plan.privileges.storageBytes).toString(),
-      );
+      _additionalStorageGb = widget.subscription == null
+          ? _defaultAdditionalStorageGb
+          : ((widget.subscription!.privileges.storageBytes - widget.plan.privileges.storageBytes) / (1024 * 1024 * 1024)) as int;
+      _additionalStorageController = TextEditingController(text: _additionalStorageGb.toStringAsFixed(2));
     });
   }
 
@@ -149,7 +148,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
   Future<void> _pay() async {
     final l10n = AppLocalizations.of(context)!;
 
-    if (_submitting ||!_isPayable()) return;
+    if (_submitting || !_isPayable()) return;
 
     final nowTS = DateTime.now().millisecondsSinceEpoch;
     final subscriptionDueTSMS = nowTS + (_durationDays * 24 * 60 * 60 * 1000);
@@ -212,7 +211,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
   Future<void> _calculateTotalPrice(String selectedMethod, Currency selectedCurrency) async {
     final l10n = AppLocalizations.of(context)!;
 
-    if (_submitting ||!_isPayable()) return;
+    if (_submitting || !_isPayable()) return;
 
     final nowTS = DateTime.now().millisecondsSinceEpoch;
     final subscriptionDueTSMS = nowTS + (_durationDays * 24 * 60 * 60 * 1000);

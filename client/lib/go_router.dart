@@ -36,6 +36,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isPublicRoute = _publicPaths.contains(path);
 
       if (kIsWeb) {
+        if (path.contains('/payment/result')) {
+          return null;
+        }
+
         // '/' is the public landing page. An authenticated visitor
         // lands straight in the app instead of seeing marketing copy.
         if (loggedIn && path == '/') return '/app';

@@ -9,7 +9,7 @@ import { Subscription, SubscriptionCreate, subscriptionCreateSchema } from "../.
 import { appUrl, isProduction } from "../../configs";
 import { payments } from "../..";
 import { randomUUID } from "node:crypto";
-import { fetchBusinessPlan, resolveCurrencyAndPayment, calculatePricesForSubscriptionDue } from "./lib";
+import { fetchBusinessPlan, resolveCurrencyAndPayment, calculatePricesForSubscriptionDue, getRedisKeyForTemporarySubscription } from "./lib";
 import AppSettingsRepository from "../../DB/repositories/AppSettingsRepository";
 import { WithId } from "mongodb";
 
@@ -20,14 +20,14 @@ const PAYMENT_CHECKPOINT_BASE = '/api/subscription'
 const ZARINPAL_PAYMENT_BASE = `/zarinpal`
 const ZARINPAL_PAYMENT_VERIFY = `${ZARINPAL_PAYMENT_BASE}/verify`                                       // /zarinpal/verify
 const ZARINPAL_PAYMENT_VERIFY_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZARINPAL_PAYMENT_VERIFY}`             // /api/subscription/zarinpal/verify
-export const ZARINPAL_PAYMENT_VERIFY_CALLBACK_URL = (subscriptionId: string) => `https://${isProduction ? appUrl.replace('https://', '') : 'localhost:8081'}${ZARINPAL_PAYMENT_VERIFY_PATH}/${subscriptionId}`
+export const ZARINPAL_PAYMENT_VERIFY_CALLBACK_URL = (subscriptionId: string) => `${isProduction ? `https://${appUrl.replace('https://', '')}` : 'http://localhost:8081'}${ZARINPAL_PAYMENT_VERIFY_PATH}/${subscriptionId}`
 const ZARINPAL_PAYMENT_VERIFY_CHECK = `${ZARINPAL_PAYMENT_VERIFY}/check`                                // /zarinpal/verify/check
 const ZARINPAL_PAYMENT_VERIFY_CHECK_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZARINPAL_PAYMENT_VERIFY_CHECK}` // /zarinpal/verify/check
 
 const ZIBAL_PAYMENT_BASE = `/zibal`
 const ZIBAL_PAYMENT_VERIFY = `${ZIBAL_PAYMENT_BASE}/verify`                                             // /zibal/verify
 const ZIBAL_PAYMENT_VERIFY_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZIBAL_PAYMENT_VERIFY}`                   // /api/subscription/zibal/verify
-export const ZIBAL_PAYMENT_VERIFY_CALLBACK_URL = (subscriptionId: string) => `https://${isProduction ? appUrl.replace('https://', '') : 'localhost:8081'}${ZIBAL_PAYMENT_VERIFY_PATH}/${subscriptionId}`
+export const ZIBAL_PAYMENT_VERIFY_CALLBACK_URL = (subscriptionId: string) => `${isProduction ? `https://${appUrl.replace('https://', '')}` : 'http://localhost:8081'}${ZIBAL_PAYMENT_VERIFY_PATH}/${subscriptionId}`
 const ZIBAL_PAYMENT_VERIFY_CHECK = `${ZIBAL_PAYMENT_VERIFY}/check`                                      // /zibal/verify/check
 const ZIBAL_PAYMENT_VERIFY_CHECK_PATH = `${PAYMENT_CHECKPOINT_BASE}${ZIBAL_PAYMENT_VERIFY_CHECK}`       // /zibal/verify/check
 
@@ -366,8 +366,8 @@ router.post('/', auth, async (req, res) => {
 
         // ------------------------------------------------------------------------- storing the created subscription in session
         log.info('storing the created subscription in session')
-        const redisKey = `plan_request:${newSubscription._id!.toString()}`
-        await redis.set(redisKey, JSON.stringify(newSubscription), 'EX', 60)
+        const redisKey = getRedisKeyForTemporarySubscription(newSubscription._id!.toString())
+        await redis.set(redisKey, JSON.stringify(newSubscription), 'EX', 1500)
 
         // ------------------------------------------------------------------------- requesting payment
         log.info('requesting payment')
@@ -411,8 +411,8 @@ router.get(`${ZIBAL_PAYMENT_VERIFY_CHECK}`, unAuth, async (req, res) => {
     }
 })
 
-router.post(`${ZIBAL_PAYMENT_VERIFY}/:subscriptionId`, unAuth, async (req, res) => {
-    const log = getLogger().child({ module: 'subscription', route: `POST ${ZIBAL_PAYMENT_VERIFY_PATH}/:subscriptionId` });
+router.get(`${ZIBAL_PAYMENT_VERIFY}/:subscriptionId`, unAuth, async (req, res) => {
+    const log = getLogger().child({ module: 'subscription', route: `GET ${ZIBAL_PAYMENT_VERIFY_PATH}/:subscriptionId` });
 
     try {
         log.info('zibal subscription verification request received');
@@ -432,7 +432,7 @@ router.post(`${ZIBAL_PAYMENT_VERIFY}/:subscriptionId`, unAuth, async (req, res) 
 
         // ------------------------------------------------------------------------- fetching the subscription
         log.info('fetching the subscription')
-        const redisKey = `plan_request:${subscriptionId}`
+        const redisKey = getRedisKeyForTemporarySubscription(subscriptionId)
         const subscriptionStr = await redis.get(redisKey)
         log.debug({ redisKey, subscriptionStr })
         if (!subscriptionStr) {
@@ -578,7 +578,7 @@ router.post(`${ZIBAL_PAYMENT_VERIFY}/:subscriptionId`, unAuth, async (req, res) 
 function redirectToPaymentPage(res: Response, params: Record<string, string>) {
     const query = new URLSearchParams(params as Record<string, string>).toString();
 
-    return res.redirect(`https://${isProduction ? appUrl.replace('https://', '') : 'localhost:8081'}/#/payment/result?${query}`);
+    return res.redirect(`${isProduction ? `https://${appUrl.replace('https://', '')}` : 'http://localhost:8081'}/#/payment/result?${query}`);
 }
 
 export { router as subscriptionRoutes }

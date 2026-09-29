@@ -1,14 +1,15 @@
 import { Response } from "express";
-import { Currency, CurrencyRequired, PaymentMethod, Subscription, SubscriptionDuration } from "../../DB/models/Subscription";
+import { CurrencyRequired, PaymentMethod } from "../../DB/models/Subscription";
 import PlanRepository from "../../DB/repositories/PlanRepository";
 import { Logger } from "../../observability/logger";
 import { runWithLogger } from "../../observability/requestLoggerContext";
 import { Plan } from "../../DB/models/Plan";
 import { payments } from "../..";
 import { ZARINPAL_PAYMENT_VERIFY_CALLBACK_URL, ZIBAL_PAYMENT_VERIFY_CALLBACK_URL } from "./subscription";
-import { ObjectId, WithId } from "mongodb";
 import { A_MONTH_IN_MILLISECONDS } from "../../lib";
 import AppSettingsRepository from "../../DB/repositories/AppSettingsRepository";
+
+export const getRedisKeyForTemporarySubscription = (subscriptionId: string) => `plan_request:${subscriptionId}`
 
 /**
  * fetches business plan by plan title
