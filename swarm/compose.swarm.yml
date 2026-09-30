@@ -66,6 +66,8 @@ secrets:
     external: true
   MEMOIZE_ZARINPAL_MERCHANT_ID:
     external: true
+  MEMOIZE_ZIBAL_MERCHANT_ID:
+    external: true
 
 services:
   nginx:
@@ -125,6 +127,7 @@ services:
 
       SUPPORTED_PAYMENT_METHODS: zarinpal
       ZARINPAL_URL: ${MEMOIZE_ZARINPAL_URL}
+      ZIBAL_URL: ${MEMOIZE_ZIBAL_URL}
 
       TTS_API_KEY_FILE: /run/secrets/MEMOIZE_TTS_API_KEY
       MONGODB_USERNAME_FILE: /run/secrets/MEMOIZE_MONGODB_USERNAME
@@ -146,6 +149,7 @@ services:
       MELIPAYAMAK_FROM_FILE: /run/secrets/MEMOIZE_MELIPAYAMAK_FROM
 
       ZARINPAL_MERCHANT_ID_FILE: /run/secrets/MEMOIZE_ZARINPAL_MERCHANT_ID
+      ZIBAL_MERCHANT_ID_FILE: /run/secrets/MEMOIZE_ZIBAL_MERCHANT_ID
     secrets:
       - MEMOIZE_TTS_API_KEY
       - MEMOIZE_MONGODB_USERNAME
@@ -165,6 +169,7 @@ services:
       - MEMOIZE_MELIPAYAMAK_API_KEY
       - MEMOIZE_MELIPAYAMAK_FROM
       - MEMOIZE_ZARINPAL_MERCHANT_ID
+      - MEMOIZE_ZIBAL_MERCHANT_ID
     volumes:
       - ${ROOT_ABSOLUTE_PATH}/memoize_logs:/app/logs:rw
     networks:
@@ -450,27 +455,3 @@ services:
         reservations:
           cpus: "0.05"
           memory: 32M
-
-  # cadvisor:
-  #   image: gcr.io/cadvisor/cadvisor:v0.49.1
-  #   volumes:
-  #     - /:/rootfs:ro
-  #     - /var/run:/var/run:ro
-  #     - /sys:/sys:ro
-  #     - /var/lib/docker:/var/lib/docker:ro
-  #     - /dev/disk:/dev/disk:ro
-  #   devices:
-  #     - /dev/kmsg
-  #   networks:
-  #     - observability
-  #   deploy:
-  #     mode: global
-  #     restart_policy:
-  #       condition: on-failure
-  #     resources:
-  #       limits:
-  #         cpus: "0.50"
-  #         memory: 256M
-  #       reservations:
-  #         cpus: "0.10"
-  #         memory: 64M
