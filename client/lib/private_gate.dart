@@ -27,7 +27,7 @@ class PrivateWidget extends ConsumerWidget {
     bool unauthenticated = ref.read(authControllerProvider).status == AuthStatus.unauthenticated;
 
     if (unauthenticated) {
-      context.go('/auth');
+      context.go('/login');
       return const SizedBox.shrink();
     }
 

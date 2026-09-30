@@ -34,18 +34,11 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     TimezoneService.initialize();
 
-    final auth = ref.watch(authControllerProvider);
-
-    if (auth.status == AuthStatus.loading) {
-      return const MaterialApp(
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
-      );
-    }
-
     // Read (not built until now) since the loading branch above already
     // guarantees the initial session check has resolved by this point —
     // goRouterProvider's redirect logic depends on that being settled.
     final router = ref.watch(goRouterProvider);
+    final auth = ref.watch(authControllerProvider);
     final locale = ref.watch(localeControllerProvider);
 
     return MaterialApp.router(
@@ -65,6 +58,14 @@ class MyApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ref.watch(themeModeProvider),
       debugShowCheckedModeBanner: false,
+    builder: (context, child) {
+      if (auth.status == AuthStatus.loading) {
+        return const MaterialApp(
+          home: Scaffold(body: Center(child: CircularProgressIndicator())),
+        );
+      }
+      return child!;
+    },
     );
   }
 }

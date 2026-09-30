@@ -42,7 +42,7 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
             color: ThemeColorName.success,
             type: ButtonType.text,
             onPressed: () {
-              context.go('/auth');
+              context.go('/login');
             },
           ),
         if (isAuthenticated) ...[

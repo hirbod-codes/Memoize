@@ -4,6 +4,7 @@ import 'package:client/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 enum _CheckState { loading, success, error }
 
@@ -62,7 +63,7 @@ class _PaymentResultPageState extends ConsumerState<PaymentResultPage> {
                 const SizedBox(height: 8),
                 Text(_message(l10n), style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center),
                 const SizedBox(height: 24),
-                FilledButton(onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false), child: Text(l10n.payment_result_continue)),
+                FilledButton(onPressed: () => context.go('/'), child: Text(l10n.payment_result_continue)),
               ],
             ],
           ),

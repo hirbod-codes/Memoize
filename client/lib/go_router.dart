@@ -28,11 +28,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: rootNavigatorKey,
     refreshListenable: GoRouterRefreshNotifier(ref),
     redirect: (context, state) async {
+      final path = state.matchedLocation;
+
+      if (kIsWeb) {
+        if (path.contains('/payment/result')) {
+          return null;
+        }
+      }
+
       final authStatus = ref.read(authControllerProvider).status;
       if (authStatus == AuthStatus.loading) return null;
 
       final loggedIn = authStatus == AuthStatus.authenticated;
-      final path = state.matchedLocation;
       final isPublicRoute = _publicPaths.contains(path);
 
       if (kIsWeb) {
