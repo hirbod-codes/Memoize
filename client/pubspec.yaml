@@ -30,14 +30,21 @@ environment:
 flutter_launcher_icons:
   android: true
   ios: true
-  macos:
+  image_path: "assets/icon/icon_1024.png"
+  min_sdk_android: 21
+  web:
     generate: true
+    image_path: "assets/icon/icon_1024.png"
   windows:
     generate: true
-  linux:
+    image_path: "assets/icon/icon_1024.png"
+  macos:
     generate: true
+    image_path: "assets/icon/icon_1024.png"
+  adaptive_icon_background: "assets/icon/adaptive_background_1024.png"
+  adaptive_icon_foreground: "assets/icon/adaptive_foreground_1024.png"
+  adaptive_icon_monochrome: "assets/icon/monochrome_1024.png"
 
-  image_path: "assets/icon/app_icon.png"
 dependencies:
   flutter:
     sdk: flutter
@@ -101,6 +108,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   riverpod_generator: ^4.0.0+1
+  flutter_launcher_icons: ^0.14.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -112,6 +120,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   generate: true # enables flutter gen-l10n
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:

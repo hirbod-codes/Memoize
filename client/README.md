@@ -65,3 +65,7 @@ taskkill /F /PID <pid>
 ### Localization
 
 any update to localization .arb files needs a running this command: `flutter gen-l10n`
+
+### for icons
+
+run `dart run flutter_launcher_icons`
