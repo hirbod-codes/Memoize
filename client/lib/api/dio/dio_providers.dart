@@ -1,3 +1,4 @@
+import 'package:client/api/dio/plan_limit_interceptor.dart';
 import 'package:client/api/dio/web/dio_web_config.dart';
 import 'package:client/app_config.dart';
 import 'package:client/auth/auth_controller.dart';
@@ -33,6 +34,8 @@ final authDioProvider = Provider<Dio>((ref) {
 
   var controller = ref.read(authControllerProvider.notifier);
   dio.interceptors.add(RefreshInterceptor(dio: dio, storage: storage, ref: ref, logout: controller.logout, refresh: controller.refresh));
+
+  dio.interceptors.add(PlanLimitInterceptor());
 
   // Must be added after RefreshInterceptor — see comment above.
   dio.interceptors.add(GlobalErrorInterceptor());
