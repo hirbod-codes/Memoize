@@ -111,6 +111,7 @@ services:
       DB_DATABASE_NAME: Memoize
       DB_SUPPORTS_TRANSACTION: "false"
       DB_URL: mongodb://mongo:27017
+      MAX_UPLOAD_SIZE: 50000000000
 
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -239,7 +240,7 @@ services:
           memory: 64M
 
   meilisearch:
-    image: getmeili/meilisearch:v1
+    image: getmeili/meilisearch:v1.53.2
     ports:
       - "${MEMOIZE_MEILISEARCH_PORT}:7700"
     environment:
