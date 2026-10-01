@@ -56,13 +56,13 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
   String? _selectedMethod;
 
   static const double _defaultDurationDays = 30;
-  static const int _defaultAdditionalStorageGb = 0;
+  static const double _defaultAdditionalStorageGb = 0;
 
   late final TextEditingController _durationController;
   late final TextEditingController _additionalStorageController;
 
   double _durationDays = _defaultDurationDays;
-  int _additionalStorageGb = _defaultAdditionalStorageGb;
+  double _additionalStorageGb = _defaultAdditionalStorageGb;
 
   String? _durationError;
   String? _additionalStorageError;
@@ -83,7 +83,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
 
       _additionalStorageGb = widget.subscription == null
           ? _defaultAdditionalStorageGb
-          : ((widget.subscription!.privileges.storageBytes - widget.plan.privileges.storageBytes) / (1024 * 1024 * 1024)) as int;
+          : ((widget.subscription!.privileges.storageBytes - widget.plan.privileges.storageBytes) / (1024 * 1024 * 1024));
       _additionalStorageController = TextEditingController(text: _additionalStorageGb.toStringAsFixed(2));
     });
   }
@@ -270,55 +270,61 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
         constraints: const BoxConstraints(maxWidth: 420),
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: ListView(
             children: [
-              Text(widget.plan.title, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 4),
-              Text(l10n.checkout_title, style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 16),
-
-              if (widget.subscription != null && !_isPayable())
-                Container(
-                  padding: EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(color: theme.error, borderRadius: BorderRadius.circular(12)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(l10n.checkout_upgrade_requirement_title, style: TextStyle(color: theme.onError)),
-                      Text(l10n.checkout_upgrade_duration_requirement, style: TextStyle(color: theme.onError)),
-                      Text(l10n.checkout_upgrade_storage_requirement, style: TextStyle(color: theme.onError)),
-                    ],
-                  ),
-                ),
-              if (widget.subscription != null && !_isPayable()) const SizedBox(height: 30),
-
-              _buildDurationPicker(l10n),
-              const SizedBox(height: 20),
-
-              _buildAdditionalStorageField(l10n),
-              const SizedBox(height: 20),
-
-              Text(l10n.checkout_payment_method, style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 8),
-              _buildMethodsList(context, l10n),
-
-              const SizedBox(height: 20),
-              _buildPriceRow(context, l10n),
-              const SizedBox(height: 20),
-
-              Row(
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(onPressed: _submitting ? null : () => Navigator.of(context).pop(), child: Text(l10n.checkout_cancel)),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: !_submitting && _isPayable() ? _pay : null,
-                      child: _submitting ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Text(l10n.checkout_pay),
+                  Text(widget.plan.title, style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 4),
+                  Text(l10n.checkout_title, style: Theme.of(context).textTheme.bodyMedium),
+                  const SizedBox(height: 16),
+
+                  if (widget.subscription != null && !_isPayable())
+                    Container(
+                      padding: EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(color: theme.error, borderRadius: BorderRadius.circular(12)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(l10n.checkout_upgrade_requirement_title, style: TextStyle(color: theme.onError)),
+                          Text(l10n.checkout_upgrade_duration_requirement, style: TextStyle(color: theme.onError)),
+                          Text(l10n.checkout_upgrade_storage_requirement, style: TextStyle(color: theme.onError)),
+                        ],
+                      ),
                     ),
+                  if (widget.subscription != null && !_isPayable()) const SizedBox(height: 30),
+
+                  _buildDurationPicker(l10n),
+                  const SizedBox(height: 20),
+
+                  _buildAdditionalStorageField(l10n),
+                  const SizedBox(height: 20),
+
+                  Text(l10n.checkout_payment_method, style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: 8),
+                  _buildMethodsList(context, l10n),
+
+                  const SizedBox(height: 20),
+                  _buildPriceRow(context, l10n),
+                  const SizedBox(height: 20),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(onPressed: _submitting ? null : () => Navigator.of(context).pop(), child: Text(l10n.checkout_cancel)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: !_submitting && _isPayable() ? _pay : null,
+                          child: _submitting
+                              ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                              : Text(l10n.checkout_pay),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -388,7 +394,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
               return;
             }
 
-            final parsed = int.tryParse(value);
+            final parsed = double.tryParse(value);
 
             if (parsed != null) {
               _additionalStorageGb = parsed;
@@ -436,20 +442,20 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(l10n.checkout_total, style: Theme.of(context).textTheme.titleMedium),
-            Button(
-              type: ButtonType.elevated,
-              label: l10n.calculate_price,
-              onPressed: _submitting || !_isPayable()
-                  ? null
-                  : () async {
-                      await _calculateTotalPrice(_selectedMethod!, _selectedCurrency!);
-                    },
-            ),
             Text(
               (total == null || currency == null) ? '—' : CurrencyFormatter.format(total, currency, locale: locale),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
+        ),
+        Button(
+          type: ButtonType.elevated,
+          label: l10n.calculate_price,
+          onPressed: _submitting || !_isPayable()
+              ? null
+              : () async {
+                  await _calculateTotalPrice(_selectedMethod!, _selectedCurrency!);
+                },
         ),
         if (total != null && total < 0) Text(l10n.checkout_free_purchase_message),
       ],

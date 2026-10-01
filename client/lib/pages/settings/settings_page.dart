@@ -8,6 +8,7 @@ import 'package:client/api/api_call_extensions.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/auth/models/auth_models.dart';
 import 'package:client/components/button.dart';
+import 'package:client/components/checkout/checkout_dialog.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/components/calendar_switcher.dart';
 import 'package:client/localization/components/locale_switcher.dart';
@@ -15,7 +16,9 @@ import 'package:client/localization/components/timezone_switcher.dart';
 import 'package:client/pages/settings/change_email_sheet.dart';
 import 'package:client/pages/settings/change_password_sheet.dart';
 import 'package:client/pages/settings/change_phone_sheet.dart';
+import 'package:client/plan/all_plans_notifier.dart';
 import 'package:client/plan/components/storage_usage.dart';
+import 'package:client/plan/models/plan.dart';
 import 'package:client/subscription/models/subscription.dart';
 import 'package:client/subscription/subscription_notifier.dart';
 import 'package:client/theme/theme_colors.dart';
@@ -26,6 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' hide context;
+import 'package:talker/talker.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -48,8 +52,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget build(BuildContext context) {
     final userInfoState = ref.watch(userInfoProvider);
     final subscriptionState = ref.watch(subscriptionProvider);
+    final allPlans = ref.watch(allPlansProvider);
 
-    if (userInfoState.isLoading || subscriptionState.isLoading) {
+    if (userInfoState.isLoading || subscriptionState.isLoading || allPlans.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -57,15 +62,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       return _RetryState(onRetry: () => ref.read(userInfoProvider.notifier).refresh());
     }
 
-    return SettingsContent(userInfo: userInfoState.info!, subscription: subscriptionState.subscription);
+    Talker().debug('qqqqqqqqqqqqqqqqqq', {'plans': allPlans.plans});
+
+    Plan? plan;
+    try {
+      plan = allPlans.plans?.singleWhere((element) => element.title == subscriptionState.subscription?.planTitle);
+    } catch (e) {}
+
+    return SettingsContent(userInfo: userInfoState.info!, subscription: subscriptionState.subscription, plan: plan);
   }
 }
 
 class SettingsContent extends ConsumerStatefulWidget {
   final UserInfo userInfo;
   final Subscription? subscription;
+  final Plan? plan;
 
-  const SettingsContent({super.key, required this.userInfo, this.subscription});
+  const SettingsContent({super.key, required this.userInfo, this.subscription, this.plan});
 
   @override
   ConsumerState<SettingsContent> createState() => _SettingsContent();
@@ -211,7 +224,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
           ],
         ),
 
-        if (widget.subscription != null && widget.subscription!.planTitle != 'free') ...[
+        if (widget.plan != null && widget.subscription != null && widget.subscription!.planTitle != 'free') ...[
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -226,7 +239,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
                   setState(() {
                     _isAddingStorage = true;
                   });
-                  await showDialog<String?>(context: context, builder: (_) => AvatarUpdateSetting());
+                  await showCheckoutDialog(context, plan: widget.plan!, subscription: widget.subscription!);
                   setState(() {
                     _isAddingStorage = false;
                   });

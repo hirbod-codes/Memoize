@@ -47,6 +47,8 @@ class AllPlansNotifier extends Notifier<AllPlansState> {
     final cached = await AllPlansStorage.load();
     if (cached != null) {
       state = state.copyWith(info: cached);
+    } else {
+      await refresh();
     }
   }
 
