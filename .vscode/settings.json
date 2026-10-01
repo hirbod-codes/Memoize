@@ -1,6 +1,7 @@
 {
     "cSpell.ignorePaths": [
         "client/lib/l10n/",
+        "client/pubspec.yaml",
         "!client/lib/l10n/app_en.arb",
         "package-lock.json",
         "node_modules",
@@ -47,6 +48,7 @@
         "sadd",
         "satoshis",
         "Seedable",
+        "shamsi",
         "signup",
         "smembers",
         "springify",

@@ -12,7 +12,9 @@
 
 import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
+import 'package:client/api/dio/global_error_interceptor.dart';
 import 'package:client/subscription/models/subscription.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'subscription_storage.dart';
 
@@ -50,10 +52,10 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
   /// Hits the server for the user's subscription. Called by the
   /// resume-gate, but any widget could call this too (e.g. pull-to-refresh
   /// on a settings screen) — all watchers update together.
-  Future<bool> refresh() async {
+  Future<bool> refresh({bool silentError = false}) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final subscription = await _fetchFromServer();
+      final subscription = await _fetchFromServer(silentError: silentError);
       await SubscriptionStorage.save(subscription);
       state = state.copyWith(subscription: subscription, isLoading: false, clearError: true);
       return true;
@@ -63,9 +65,12 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
     }
   }
 
-  Future<Subscription?> _fetchFromServer() async {
+  Future<Subscription?> _fetchFromServer({bool silentError = false}) async {
     final dio = ref.read(authDioProvider);
-    final result = await apiCall<Subscription>(() => dio.get('/api/subscription'), fromJson: (data) => Subscription.fromJson(data));
+    final result = await apiCall<Subscription>(
+      () => dio.get('/api/subscription', options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: silentError})),
+      fromJson: (data) => Subscription.fromJson(data),
+    );
     return result.dataOrNull;
   }
 

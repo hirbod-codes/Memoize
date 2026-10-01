@@ -4,6 +4,7 @@ import 'package:client/auth/token_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:talker/talker.dart';
 
 class RefreshInterceptor extends Interceptor {
   final Dio dio;
@@ -27,7 +28,9 @@ class RefreshInterceptor extends Interceptor {
 
   @override
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode != 401) {
+    final requestOptions = err.requestOptions;
+
+    if (err.response?.statusCode != 401 || requestOptions.path == '/api/auth/refresh') {
       handler.next(err);
       return;
     }
@@ -52,14 +55,13 @@ class RefreshInterceptor extends Interceptor {
       final newRefreshToken = response.refreshToken;
       if (newRefreshToken != null) await storage.saveRefreshToken(newRefreshToken);
 
-      final request = err.requestOptions;
+      requestOptions.headers['Authorization'] = 'Bearer $accessToken';
 
-      request.headers['Authorization'] = 'Bearer $accessToken';
-
-      final retryResponse = await dio.fetch(request);
+      final retryResponse = await dio.fetch(requestOptions);
 
       handler.resolve(retryResponse);
     } catch (e) {
+      Talker().error('error caught in RefreshInterceptor, onError', e );
       await storage.clear();
 
       await logout(silent: _isSilent);

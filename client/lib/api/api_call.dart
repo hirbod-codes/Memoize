@@ -100,12 +100,13 @@ Future<ApiCallResult<T>> apiCall<T>(Future<Response> Function() request, {T Func
       return result;
     }
 
-    final message = _extractMessage(parsed, response.data);
+    final message = _extractMessage(parsed, response.data, url: response.requestOptions.path);
     _showError(message);
     return ApiCallFailure<T>(message);
   } on DioException catch (e) {
-    final message = _extractMessage(ApiResponse.tryParse(e.response?.data), e.response?.data);
-    _showError(message);
+    final message = _extractMessage(ApiResponse.tryParse(e.response?.data), e.response?.data, url: e.response?.requestOptions.path);
+    // message is already shown by dio GlobalErrorInterceptor
+    // _showError(message);
     return ApiCallFailure<T>(message);
   } catch (e) {
     Talker().error('apiCall: unexpected error', e);
@@ -115,9 +116,7 @@ Future<ApiCallResult<T>> apiCall<T>(Future<Response> Function() request, {T Func
   }
 }
 
-class A {}
-
-String _extractMessage(ApiResponse? parsed, dynamic rawBody) {
+String _extractMessage(ApiResponse? parsed, dynamic rawBody, {String? url}) {
   switch (parsed) {
     case ApiErrorCode(:final code):
       return messageForErrorCode(code);

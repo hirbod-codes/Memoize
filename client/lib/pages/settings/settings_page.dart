@@ -136,6 +136,8 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 10,
           children: [
             _SectionHeader(title: l10n.language),
             const LocaleSwitcher(),
@@ -145,6 +147,8 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 10,
           children: [
             _SectionHeader(title: l10n.calendar),
             const CalendarSwitcher(),
@@ -154,6 +158,8 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 10,
           children: [
             _SectionHeader(title: l10n.timeZone),
             const TimezoneSwitcher(),
@@ -163,6 +169,8 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 10,
           children: [
             _SectionHeader(title: l10n.avatar),
             Row(
@@ -207,9 +215,9 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _SectionHeader(title: l10n.storage_usage),
-              Expanded(child: const StorageUsage()),
               Button(
                 type: ButtonType.outlined,
                 label: l10n.add_storage,
@@ -226,6 +234,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
               ),
             ],
           ),
+          Expanded(child: const StorageUsage()),
         ],
       ],
     );
@@ -239,10 +248,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-    );
+    return Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold));
   }
 }
 

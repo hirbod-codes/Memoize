@@ -5,6 +5,7 @@ import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,13 +20,10 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
     final isAuthenticated = ref.watch(authControllerProvider).status == AuthStatus.authenticated;
     final avatarBytes = ref.watch(avatarBytesProvider);
 
-    // final avatarBytesNotifier = ref.watch(avatarBytesProvider.notifier);
-    // if (userInfoState.info?.avatarKey != avatarBytesNotifier.) ref.watch(avatarBytesProvider.notifier).refresh();
-
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
     return AppBar(
-      title: title ?? Text(l10n.appTitle),
+      title: title ?? _buildDefaultTitle(context, l10n),
       centerTitle: false,
       actions: [
         Button(
@@ -70,6 +68,21 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildDefaultTitle(BuildContext context, AppLocalizations l10n) {
+    final text = Text(l10n.appTitle);
+
+    // '/' is only a registered route on web (see _publicPaths /
+    // routes in go_router.dart) — non-web has no landing page, so
+    // the title stays non-interactive there.
+    if (!kIsWeb) return text;
+
+    return InkWell(
+      onTap: () => context.go('/'),
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), child: text),
     );
   }
 

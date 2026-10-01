@@ -12,7 +12,9 @@
 
 import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
+import 'package:client/api/dio/global_error_interceptor.dart';
 import 'package:client/plan/models/plan.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker/talker.dart';
 import 'all_plans_storage.dart';
@@ -51,10 +53,10 @@ class AllPlansNotifier extends Notifier<AllPlansState> {
   /// Hits the server for the latest plans. Called by the
   /// resume-gate, but any widget could call this too (e.g. pull-to-refresh
   /// on a settings screen) — all watchers update together.
-  Future<bool> refresh() async {
+  Future<bool> refresh({bool silentError = false}) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final info = await _fetchFromServer();
+      final info = await _fetchFromServer(silentError: silentError);
       await AllPlansStorage.save(info);
       state = state.copyWith(info: info, isLoading: false, clearError: true);
       return true;
@@ -65,10 +67,10 @@ class AllPlansNotifier extends Notifier<AllPlansState> {
     }
   }
 
-  Future<List<Plan>?> _fetchFromServer() async {
+  Future<List<Plan>?> _fetchFromServer({bool silentError = false}) async {
     final dio = ref.read(dioProvider);
     final result = await apiCall<List<Plan>?>(
-      () => dio.get('/api/plan'),
+      () => dio.get('/api/plan', options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: silentError})),
       fromJson: (data) => (data['plans'] as List<dynamic>).map((e) => Plan.fromJson(e)).toList(),
     );
     return result.dataOrNull;

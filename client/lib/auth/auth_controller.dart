@@ -6,6 +6,7 @@ import 'package:client/account/models/user_info.dart';
 import 'package:client/account/user_info_notifier.dart';
 import 'package:client/account/user_usage_notifier.dart';
 import 'package:client/api/api_call.dart';
+import 'package:client/api/dio/global_error_interceptor.dart';
 import 'package:client/api/root_navigator_key.dart';
 import 'package:client/auth/auth_api.dart';
 import 'package:client/api/dio/dio_providers.dart';
@@ -160,7 +161,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     final response = await _authDio.post(
       '/api/auth/refresh',
       data: {'refreshToken': kIsWeb ? null : refreshToken, 'client': _client},
-      options: Options(extra: {'silentErrors': silent}),
+      options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: silent}),
     );
     Talker().info('response status code: ${response.statusCode}');
 
@@ -186,7 +187,7 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
       final r = _authDio.post(
         '/api/auth/logout',
         data: {'refreshToken': refreshToken, 'accessToken': accessToken},
-        options: Options(extra: {'silentErrors': silent}),
+        options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: silent}),
       );
 
       if (!silent && rootContext != null) r.notifyOnSuccess(AppLocalizations.of(rootContext!)!.logout_success);

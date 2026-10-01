@@ -45,13 +45,8 @@ class GlobalErrorInterceptor extends Interceptor {
 
       handler?.next(err);
     } else {
-      final context = rootContext;
-      if (context != null && !_isSilent) {
-        NotificationService.showError(
-          message: rootContext == null
-              ? 'Something went wrong. Please try again.'
-              : AppLocalizations.of(rootContext!)?.uncaughtError ?? 'Something went wrong. Please try again.',
-        );
+      if (!_isSilent && rootContext != null) {
+        NotificationService.showError(message: AppLocalizations.of(rootContext!)?.uncaughtError ?? 'Something went wrong. Please try again.');
       }
     }
   }

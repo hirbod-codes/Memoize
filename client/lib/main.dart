@@ -58,14 +58,14 @@ class MyApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ref.watch(themeModeProvider),
       debugShowCheckedModeBanner: false,
-    builder: (context, child) {
-      if (auth.status == AuthStatus.loading) {
-        return const MaterialApp(
-          home: Scaffold(body: Center(child: CircularProgressIndicator())),
-        );
-      }
-      return child!;
-    },
+      builder: (context, child) {
+        if (auth.status == AuthStatus.loading) {
+          return const MaterialApp(
+            home: Scaffold(body: Center(child: CircularProgressIndicator())),
+          );
+        }
+        return child!;
+      },
     );
   }
 }

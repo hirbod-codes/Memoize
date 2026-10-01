@@ -35,10 +35,7 @@ class ActionController extends AsyncNotifier<void> {
     if (shouldNotifyUser && error != null && error is! DioException) {
       Talker().error('caught error in action controller', error, result.stackTrace);
 
-      final context = rootContext;
-      if (context != null) {
-        NotificationService.showError(message: rootContext == null ? 'Something went wrong.' : AppLocalizations.of(rootContext!)!.uncaughtError);
-      }
+      NotificationService.showError(message: rootContext == null ? 'Something went wrong.' : AppLocalizations.of(rootContext!)!.uncaughtError);
     }
   }
 }
