@@ -203,7 +203,6 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
         );
         if (!mounted) return;
         if (result.isFailure || result.dataOrNull == null) {
-          NotificationService.showError(message: l10n.app_page_folder_pagination_failed);
           return;
         }
 
@@ -229,7 +228,6 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
         );
         if (!mounted) return;
         if (result.isFailure || result.dataOrNull == null) {
-          NotificationService.showError(message: l10n.app_page_file_pagination_failed);
           return;
         }
 

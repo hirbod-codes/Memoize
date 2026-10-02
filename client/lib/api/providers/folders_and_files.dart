@@ -582,12 +582,11 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       contents.add(content);
       log.debug("addContent appended entry, new length=${contents.length}");
 
-      ApiCallResult<dynamic> result;
-      if (state.isTerm) {
-        result = await _updateLeaf(id: tempFile.id, termContents: contents, successMessage: l10n.content_add_success);
-      } else {
-        result = await _updateLeaf(id: tempFile.id, definitionContents: contents, successMessage: l10n.content_add_success);
-      }
+      ApiCallResult<dynamic> result = await apiCall(
+        () => _authDio
+            .post('/api/leaf/content', data: {'leafId': tempFile.id, 'type': 'imageId', 'isTerm': state.isTerm})
+            .notifyOnSuccess(l10n.content_add_success),
+      );
       if (result.isFailure) {
         log.warning("addContent rejected: request failed for fileId=${tempFile.id}");
         NotificationService.showError(context: rootContext!, message: l10n.content_add_failed);
@@ -640,12 +639,11 @@ class FoldersAndFiles extends Notifier<FoldersAndFilesState> {
       contents.removeAt(index);
       log.debug("removeContent removed entry at index=$index, new length=${contents.length}");
 
-      ApiCallResult<dynamic> result;
-      if (state.isTerm) {
-        result = await _updateLeaf(id: tempFile.id, termContents: contents, successMessage: l10n.content_remove_success);
-      } else {
-        result = await _updateLeaf(id: tempFile.id, definitionContents: contents, successMessage: l10n.content_remove_success);
-      }
+      ApiCallResult<dynamic> result = await apiCall(
+        () => _authDio
+            .delete('/api/leaf/content', data: {'leafId': tempFile.id, 'type': 'imageId', 'isTerm': state.isTerm, 'atIndex': index})
+            .notifyOnSuccess(l10n.content_add_success),
+      );
       if (result.isFailure) {
         log.warning("removeContent rejected: request failed for fileId=${tempFile.id}, index=$index");
         NotificationService.showError(context: rootContext!, message: l10n.content_remove_failed);

@@ -135,8 +135,8 @@ router.get('/list', async (req, res) => {
     try {
         log.info('leaf list request received');
 
-        log.debug({ body: req.body });
-        const { parentId, search, limit, skip } = await runWithLogger(log, () => validate(leafListSchema, req.body))
+        log.debug({ query: req.query });
+        const { parentId, search, limit, skip } = await runWithLogger(log, () => validate(leafListSchema, req.query))
         log.info('input validated');
         log.debug({ parentId, search, limit, skip });
 
@@ -402,9 +402,9 @@ router.patch('/', async (req, res) => {
         log.info('leaf delete content value request received');
 
         log.debug({ body: req.body });
-        const { title, leafId } = await runWithLogger(log, () => validate(leafUpdateSchema, req.body))
+        const { title: newTitle, leafId } = await runWithLogger(log, () => validate(leafUpdateSchema, req.body))
         log.info('input validated');
-        log.debug({ title, leafId });
+        log.debug({ newTitle, leafId });
 
         const userId = req.user!.userId;
         log.debug({ userId });
@@ -412,7 +412,7 @@ router.patch('/', async (req, res) => {
         const leafRepository = new LeafRepository()
 
         log.info('updating leaf')
-        const updateResult = await leafRepository.updateForUser({ _id: leafId, title }, userId)
+        const updateResult = await leafRepository.updateForUser({ _id: leafId, title: newTitle }, userId)
         log.debug({ updateResult })
         if (!updateResult.acknowledged) {
             log.warn('failed to update card')
@@ -427,7 +427,7 @@ router.patch('/', async (req, res) => {
         const index = meili.index(MEILI_LEAF)
         const task = await index.updateDocuments([{
             _id: leafId,
-            title: title,
+            title: newTitle,
             updatedAt: new Date().toISOString()
         }])
         const result = await index.tasks.waitForTask(task.taskUid)

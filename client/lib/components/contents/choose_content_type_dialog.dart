@@ -64,15 +64,15 @@ class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
                       isLocked: (ui) {
                         switch (m) {
                           case ContentType.imageId:
-                            return ui?.isImageContentAllowed(ref) ?? false;
+                            return ui?.isImageContentForbidden(ref) ?? false;
                           case ContentType.audioId:
-                            return ui?.isAudioContentAllowed(ref) ?? false;
+                            return ui?.isAudioContentForbidden(ref) ?? false;
                           case ContentType.videoId:
-                            return ui?.isVideoContentAllowed(ref) ?? false;
+                            return ui?.isVideoContentForbidden(ref) ?? false;
                           case ContentType.string:
-                            return ui?.isStringContentAllowed(ref) ?? false;
+                            return ui?.isStringContentForbidden(ref) ?? false;
                           case ContentType.richText:
-                            return ui?.isRichTextContentAllowed(ref) ?? false;
+                            return ui?.isRichTextContentForbidden(ref) ?? false;
                         }
                       },
                       child: text,

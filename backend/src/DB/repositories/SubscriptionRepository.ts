@@ -5,6 +5,7 @@ import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
 import { collectionName, Subscription, SubscriptionCreate, SubscriptionUpdate } from '../models/Subscription';
 import { Redis } from '../redis';
+import { A_MONTH_IN_MILLISECONDS } from '../../lib';
 
 class SubscriptionRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -85,6 +86,7 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
 
     async getActiveByUserId(userId: string): Promise<WithId<Subscription>[]> {
         const redis = await Redis.getClient()
+        await redis.del(`${collectionName}:active:${userId}`)
 
         const subscription = await redis.get(`${collectionName}:active:${userId}`)
         if (subscription)
@@ -92,25 +94,13 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
 
         const result = await SubscriptionRepository.collection!.find({ userId, status: { $in: ['active', 'trial'] } }, { session: this.session }).toArray()
         if (result)
-            await redis.set(`${collectionName}:active:${userId}`, JSON.stringify(result))
+            await redis.set(`${collectionName}:active:${userId}`, JSON.stringify(result), 'EX', A_MONTH_IN_MILLISECONDS / 1000)
 
         return result
     }
 
-    async getByPlanTitleForUser(planTitle: string, userId: string): Promise<WithId<Subscription>[]> {
-        return await SubscriptionRepository.collection!.find({ planTitle, userId }, { session: this.session }).toArray()
-    }
-
     async cancelByStatus(status: Subscription['status'][], hoursOld: number) {
-        return await SubscriptionRepository.collection!.updateMany({ status: { $in: status }, createdAt: { $lte: Date.now() - (hoursOld * 60 * 60 * 1000) } }, { $set: { status: 'canceled' } })
-    }
-
-    async inactivate(userId: string) {
-        const redis = await Redis.getClient()
-
-        await redis.del(`${collectionName}:active:${userId}`)
-
-        return await SubscriptionRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(userId) }, { $set: { status: 'canceled', updatedAt: Date.now() } }, { session: this.session })
+        return await SubscriptionRepository.collection!.updateMany({ status: { $in: status }, createdAt: { $lte: Date.now() - (hoursOld * 60 * 60 * 1000) } }, { $set: { status: 'canceled', updatedAt: Date.now() } })
     }
 
     async inactivateForUser(userId: string) {
@@ -122,6 +112,10 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
     }
 
     async unsafeUpdate(subscriptionId: string, userId: string, updates: SubscriptionUpdate) {
+        const redis = await Redis.getClient()
+
+        await redis.del(`${collectionName}:active:${userId}`)
+
         return await SubscriptionRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(subscriptionId), userId }, { $set: { ...updates, updatedAt: Date.now() } }, { session: this.session })
     }
 
@@ -130,11 +124,24 @@ class SubscriptionRepository implements IRepository, ISeedable, IDropable {
     }
 
     async deleteByStatusForUser(userId: string, status: Subscription['status'][]): Promise<DeleteResult> {
+        if (status.includes('active') || status.includes('trial')) {
+            const redis = await Redis.getClient()
+
+            await redis.del(`${collectionName}:active:${userId}`)
+        }
+
         return await SubscriptionRepository.collection!.deleteMany({ userId, status: { $in: status } }, { session: this.session })
     }
 
-    async delete(id: string): Promise<DeleteResult> {
-        return await SubscriptionRepository.collection!.deleteOne({ _id: ObjectId.createFromHexString(id) }, { session: this.session })
+    async delete(id: string): Promise<WithId<Subscription> | null | undefined> {
+        const result = await SubscriptionRepository.collection!.findOneAndDelete({ _id: ObjectId.createFromHexString(id) }, { session: this.session })
+        if (result) {
+            const redis = await Redis.getClient()
+
+            await redis.del(`${collectionName}:active:${result.userId}`)
+        }
+
+        return result
     }
 }
 

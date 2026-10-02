@@ -13,17 +13,15 @@ class TimezoneSwitcher extends ConsumerWidget {
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
-    return Expanded(
-      child: DropdownMenu<String>(
-        initialSelection: current,
-        enableFilter: true,
-        requestFocusOnTap: true,
-        label: Text(l10n.timeZone),
-        onSelected: (zone) {
-          if (zone != null) ref.read(timezoneControllerProvider.notifier).setZone(zone);
-        },
-        dropdownMenuEntries: [for (final zone in TimezoneService.allZoneNames) DropdownMenuEntry(value: zone, label: zone)],
-      ),
+    return DropdownMenu<String>(
+      initialSelection: current,
+      enableFilter: true,
+      requestFocusOnTap: true,
+      label: Text(l10n.timeZone),
+      onSelected: (zone) {
+        if (zone != null) ref.read(timezoneControllerProvider.notifier).setZone(zone);
+      },
+      dropdownMenuEntries: [for (final zone in TimezoneService.allZoneNames) DropdownMenuEntry(value: zone, label: zone)],
     );
   }
 }

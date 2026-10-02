@@ -13,6 +13,10 @@ export class Zarinpal implements IPay {
         this.baseEndpoint = baseEndpoint
     }
 
+    isPreviouslyVerified(params: any): Promise<boolean> {
+        throw new Error("Method not implemented.");
+    }
+
     async request(amount: number, callbackUrl: string) {
         const log = getLogger().child({ step: 'request' });
 

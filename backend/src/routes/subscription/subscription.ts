@@ -38,7 +38,7 @@ router.get('/', auth, async (req, res) => {
         log.info('subscription fetch request received');
 
         const sr = new SubscriptionRepository()
-        const subscription = await runWithLogger(log, () => sr.getByStatusForUser(req.user!.userId, ['active', 'trial']))
+        const subscription = await runWithLogger(log, () => sr.getActiveByUserId(req.user!.userId))
         if (!subscription || subscription.length !== 1) {
             log.info('subscription not found')
             return res.status(404).json({ status: 'error', error_code: 'SUBSCRIPTION_NOT_FOUND' })
@@ -145,7 +145,7 @@ router.get('/calculate', auth, async (req, res) => {
 
         // ------------------------------------------------------------------------- check if the currency doesn't match
         log.info("check if the currency doesn't match")
-        if (activeSubscription?.payment.currency !== currency) {
+        if (activeSubscription && activeSubscription.payment.currency !== currency) {
             log.info('active plan is in another currency')
             return res.status(400).json({ status: 'error', error_code: 'ACTIVE_PLAN_CURRENCY_MISMATCH' })
         }
@@ -185,9 +185,10 @@ router.get('/calculate', auth, async (req, res) => {
         if (!dueCalculations) return
         const [, , dueTotalPrice] = dueCalculations
 
+        let totalPrice = dueTotalPrice - remainingTotalPrice
+
         // negative activeSubscription.payment.amount (our dept) is added if there is any
-        let totalPrice = dueTotalPrice - remainingTotalPrice + (activeSubscription.payment.amount < 0 ? activeSubscription.payment.amount : 0)
-        if (activeSubscription.payment.amount < 0)
+        if (activeSubscription && activeSubscription.payment.amount < 0)
             totalPrice += activeSubscription.payment.amount
 
         log.debug({ dueCalculations, totalPrice })
@@ -279,7 +280,7 @@ router.post('/', auth, async (req, res) => {
 
         // ------------------------------------------------------------------------- check if the currency doesn't match
         log.info("check if the currency doesn't match")
-        if (activeSubscription?.payment.currency !== currency) {
+        if (activeSubscription && activeSubscription.payment.currency !== currency) {
             log.info('active plan is in another currency')
             return res.status(400).json({ status: 'error', error_code: 'ACTIVE_PLAN_CURRENCY_MISMATCH' })
         }
@@ -317,9 +318,10 @@ router.post('/', auth, async (req, res) => {
         if (!dueCalculations) return
         const [, , dueTotalPrice] = dueCalculations
 
+        let totalPrice = dueTotalPrice - remainingTotalPrice
+
         // negative activeSubscription.payment.amount (our dept) is added if there is any
-        let totalPrice = dueTotalPrice - remainingTotalPrice + (activeSubscription.payment.amount < 0 ? activeSubscription.payment.amount : 0)
-        if (activeSubscription.payment.amount < 0)
+        if (activeSubscription && activeSubscription.payment.amount < 0)
             totalPrice += activeSubscription.payment.amount
 
         log.debug({ dueCalculations, totalPrice })
@@ -384,7 +386,7 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-router.get(`${ZIBAL_PAYMENT_VERIFY_CHECK}`, unAuth, async (req, res) => {
+router.get(`${ZIBAL_PAYMENT_VERIFY_CHECK}`, async (req, res) => {
     const log = getLogger().child({ module: 'subscription', route: `GET ${ZIBAL_PAYMENT_VERIFY_CHECK_PATH}` });
 
     try {
@@ -411,7 +413,7 @@ router.get(`${ZIBAL_PAYMENT_VERIFY_CHECK}`, unAuth, async (req, res) => {
     }
 })
 
-router.get(`${ZIBAL_PAYMENT_VERIFY}/:subscriptionId`, unAuth, async (req, res) => {
+router.get(`${ZIBAL_PAYMENT_VERIFY}/:subscriptionId`, async (req, res) => {
     const log = getLogger().child({ module: 'subscription', route: `GET ${ZIBAL_PAYMENT_VERIFY_PATH}/:subscriptionId` });
 
     try {
@@ -488,18 +490,31 @@ router.get(`${ZIBAL_PAYMENT_VERIFY}/:subscriptionId`, unAuth, async (req, res) =
             // cronjob will clean up the subscription
         }
 
+        async function responseSuccess() {
+            // to stop false success payment response redirects to be used by unauthenticated users
+            const uuid = randomUUID()
+            await redis.set(`payment_results:${uuid}`, 1, 'EX', 300)
+
+            return redirectToPaymentPage(res, { status: 'success', data: uuid })
+        }
+
         // ------------------------------------------------------------------------- verifying payment
         log.info('verifying payment')
-        const result = await runWithLogger(log, () => payment.verify({ trackId }))
-        log.debug({ result })
-        if (result == false) {
-            log.error('system failed to verify a payment, user payment will be rolled back by the payment provider automatically')
-            redirectToPaymentPage(res, { status: 'error', message: 'INTERNAL_ERROR' })
+        const verificationResult = await runWithLogger(log, () => payment.verify({ trackId }))
+        log.debug({ result: verificationResult })
+        if (verificationResult == false) {
+            const previouslyVerifiedResult = await runWithLogger(log, () => payment.isPreviouslyVerified({ trackId }))
+            if (previouslyVerifiedResult === false) {
+                log.error('system failed to verify a payment, user payment will be rolled back by the payment provider automatically')
+                redirectToPaymentPage(res, { status: 'error', message: 'INTERNAL_ERROR' })
 
-            await cancel()
-            return
+                await cancel()
+                return
+            }
+
+            await responseSuccess()
         }
-        const { refId } = result
+        const { refId } = verificationResult
 
         // ------------------------------------------------------------------------- remove user's valid subscriptions
         log.info("remove user's valid subscriptions")
@@ -530,15 +545,17 @@ router.get(`${ZIBAL_PAYMENT_VERIFY}/:subscriptionId`, unAuth, async (req, res) =
             return
         }
 
-        // to stop false success payment response redirects to be used by unauthenticated users
-        const uuid = randomUUID()
-        await redis.set(`payment_results:${uuid}`, 1, 'EX', 300)
-
-        return redirectToPaymentPage(res, { status: 'success', data: uuid })
+        await responseSuccess()
     } catch (error) {
         runWithLogger(log, () => handleError(res, error))
     }
-});
+})
+
+function redirectToPaymentPage(res: Response, params: Record<string, string>) {
+    const query = new URLSearchParams(params as Record<string, string>).toString();
+
+    return res.redirect(`${isProduction ? `https://${appUrl.replace('https://', '')}` : 'http://localhost:8081'}/#/payment/result?${query}`);
+}
 
 // Cancelling a subscription is currently not supported
 // router.delete(`/`, auth, async (req, res) => {
@@ -574,11 +591,5 @@ router.get(`${ZIBAL_PAYMENT_VERIFY}/:subscriptionId`, unAuth, async (req, res) =
 //         runWithLogger(log, () => handleError(res, error))
 //     }
 // })
-
-function redirectToPaymentPage(res: Response, params: Record<string, string>) {
-    const query = new URLSearchParams(params as Record<string, string>).toString();
-
-    return res.redirect(`${isProduction ? `https://${appUrl.replace('https://', '')}` : 'http://localhost:8081'}/#/payment/result?${query}`);
-}
 
 export { router as subscriptionRoutes }

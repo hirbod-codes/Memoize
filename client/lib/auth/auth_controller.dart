@@ -129,7 +129,9 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
         UserInfo userInfo = next.info!;
 
         final avatarBytesNotifier = ref.read(avatarBytesProvider.notifier);
-        if (userInfo.avatarKey != (await avatarBytesNotifier.getCachedAvatarKey())) {
+        if (kIsWeb) {
+          await avatarBytesNotifier.refresh();
+        } else if (userInfo.avatarKey != (await avatarBytesNotifier.getCachedAvatarKey())) {
           await avatarBytesNotifier.refresh();
         }
 

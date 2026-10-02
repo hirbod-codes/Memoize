@@ -133,12 +133,12 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
     }
 
     Talker().debug({
-      'planTitle': widget.plan.title == widget.subscription!.planTitle,
+      'planTitle': widget.plan.title == widget.subscription?.planTitle,
       'subscriptionDueTSMS': _isDurationValid(),
       'storageBytes': _isStorageValid(),
     });
 
-    if (isUpgrading && (widget.plan.title == widget.subscription!.planTitle && !_isDurationValid() && !_isStorageValid())) {
+    if (isUpgrading && (widget.plan.title == widget.subscription?.planTitle && !_isDurationValid() && !_isStorageValid())) {
       return false;
     }
 
@@ -344,7 +344,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
         TextFormField(
           controller: _durationController,
           enabled: !_submitting,
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.text,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(isDense: true, border: const OutlineInputBorder(), suffixText: l10n.checkout_days_suffix, errorText: _durationError),
           onChanged: (value) async {
@@ -380,8 +380,8 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
         TextFormField(
           controller: _additionalStorageController,
           enabled: !_submitting,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          keyboardType: TextInputType.text,
+          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^[0-9.]*$'))],
           decoration: InputDecoration(isDense: true, border: const OutlineInputBorder(), suffixText: 'GB', errorText: _additionalStorageError),
           onChanged: (value) async {
             // Empty field is treated as 0 rather than invalid, since
@@ -395,7 +395,6 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
             }
 
             final parsed = double.tryParse(value);
-
             if (parsed != null) {
               _additionalStorageGb = parsed;
             }

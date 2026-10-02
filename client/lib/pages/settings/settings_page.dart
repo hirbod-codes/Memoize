@@ -29,7 +29,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' hide context;
-import 'package:talker/talker.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -61,8 +60,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     if (userInfoState.error != null || userInfoState.info == null) {
       return _RetryState(onRetry: () => ref.read(userInfoProvider.notifier).refresh());
     }
-
-    Talker().debug('qqqqqqqqqqqqqqqqqq', {'plans': allPlans.plans});
 
     Plan? plan;
     try {
@@ -175,7 +172,12 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
           spacing: 10,
           children: [
             _SectionHeader(title: l10n.timeZone),
-            const TimezoneSwitcher(),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [Expanded(child: const TimezoneSwitcher())],
+              ),
+            ),
           ],
         ),
 

@@ -57,6 +57,49 @@ export class Zibal implements IPay {
         const log = getLogger().child({ step: 'verify payment' });
 
         try {
+            const responseData = await this.sendVerificationRequest(params)
+            log.debug({ responseData })
+            if (responseData == false) return false;
+
+            const { result, status, refNumber } = responseData
+
+            if (result !== 100 || (status !== 1 && status !== 2)) {
+                log.error({ result, status }, 'request from zibal `verify` endpoint, responded with errors')
+                return false
+            }
+
+            log.info('response from zibal `verify` received successfully')
+            return { refId: refNumber }
+        } catch (err) {
+            log.error({ err }, 'verifying payment failed with error')
+            return false
+        }
+    }
+
+    async isPreviouslyVerified(params: any) {
+        const log = getLogger().child({ step: 'verify payment' });
+
+        try {
+            const responseData = await this.sendVerificationRequest(params)
+            log.debug({ responseData })
+            if (responseData == false) return false;
+
+            const { message } = responseData
+
+            // typo is comes from provider side
+            if(message === 'previously verifed') return true
+
+            return false
+        } catch (err) {
+            log.error({ err }, 'verifying payment failed with error')
+            return false
+        }
+    }
+
+    private async sendVerificationRequest(params: any): Promise<false | { result: number, status: number, refNumber: number, message?: string }> {
+        const log = getLogger().child({ step: 'Send verification request' });
+
+        try {
             const { trackId } = await runWithLogger(log, () => validate(verifySchema, params))
             log.debug({ trackId })
 
@@ -76,18 +119,11 @@ export class Zibal implements IPay {
                 result: number,
                 status: number,
                 refNumber: number,
+                message?: string
             }
             log.debug({ responseData })
 
-            const { result, status, refNumber } = responseData
-
-            if (result !== 100 || (status !== 1 && status !== 2)) {
-                log.error({ result, status }, 'request from zibal `verify` endpoint, responded with errors')
-                return false
-            }
-
-            log.info('response from zibal `verify` received successfully')
-            return { refId: refNumber }
+            return responseData
         } catch (err) {
             log.error({ err }, 'verifying payment failed with error')
             return false

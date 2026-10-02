@@ -36,7 +36,6 @@ class AvatarBytesNotifier extends Notifier<Uint8List?> {
       final bytes = Uint8List.fromList(response.data!);
 
       await save(bytes, avatarKey: cachedAvatarKey);
-      state = bytes;
     } catch (e) {
       Talker().error('caught error in fetchAvatar method of AccountController', e);
       return;
@@ -60,6 +59,9 @@ class AvatarBytesNotifier extends Notifier<Uint8List?> {
     } on MissingPlatformDirectoryException {
       Talker().error('caught MissingPlatformDirectoryException exception in _getCacheFile method of AvatarCache class');
       return null;
+    } catch (err) {
+      Talker().error('caught exception in _getCacheFile method of AvatarCache class', {err});
+      return null;
     }
   }
 
@@ -82,16 +84,18 @@ class AvatarBytesNotifier extends Notifier<Uint8List?> {
   }
 
   Future<void> save(Uint8List bytes, {String? avatarKey}) async {
-    final file = await _getCacheFile();
-    if (file == null) return;
-
-    await file.writeAsBytes(bytes, flush: true);
+    state = bytes;
 
     final preferences = await SharedPreferences.getInstance();
     if (avatarKey != null) {
       await preferences.setString(_storageKey, avatarKey);
     } else {
       await preferences.remove(_storageKey);
+
+      final file = await _getCacheFile();
+      if (file == null) return;
+
+      await file.writeAsBytes(bytes, flush: true);
     }
   }
 }
