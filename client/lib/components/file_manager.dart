@@ -1,5 +1,6 @@
 import 'package:client/api/models/leaf.dart';
-import 'package:client/api/providers/folders_and_files.dart';
+import 'package:client/api/providers/files.dart';
+import 'package:client/api/providers/folders.dart';
 import 'package:client/components/contents/choose_content_type_dialog.dart';
 import 'package:client/components/dialogs/upload/audio_upload_dialog.dart';
 import 'package:client/components/button.dart';
@@ -43,7 +44,7 @@ class _FileManager extends ConsumerState<FileManager> {
       ContentType? type = await showDialog<ContentType?>(context: context, builder: (_) => ChooseContentTypeDialog());
       if (type == null || !mounted) return;
 
-      await ref.read(foldersAndFilesProvider.notifier).addContent(Content(type: type, value: []));
+      await ref.read(filesProvider.notifier).addContent(Content(type: type, value: []));
     } finally {
       if (mounted) {
         setState(() {
@@ -58,7 +59,7 @@ class _FileManager extends ConsumerState<FileManager> {
       _isAdding = index;
     });
 
-    final p = ref.watch(foldersAndFilesProvider);
+    final p = ref.watch(filesProvider);
     final file = p.files![p.fileIndex];
     List<Content> contents;
     if (p.isTerm) {
@@ -69,29 +70,29 @@ class _FileManager extends ConsumerState<FileManager> {
 
     switch (contents[index].type) {
       case ContentType.string:
-        await ref.read(foldersAndFilesProvider.notifier).addContentValue('', index);
+        await ref.read(filesProvider.notifier).addContentValue('', index);
         break;
 
       case ContentType.richText:
-        await ref.read(foldersAndFilesProvider.notifier).addContentValue('', index);
+        await ref.read(filesProvider.notifier).addContentValue('', index);
         break;
 
       case ContentType.imageId:
         String? newId = await showDialog<String?>(context: context, builder: (_) => ImageUploadDialog());
         if (newId == null || !mounted) return;
 
-        await ref.read(foldersAndFilesProvider.notifier).addContentValue(newId, index);
+        await ref.read(filesProvider.notifier).addContentValue(newId, index);
         break;
       case ContentType.videoId:
         String? newId = await showDialog<String?>(context: context, builder: (_) => VideoUploadDialog());
         if (newId == null || !mounted) return;
 
-        await ref.read(foldersAndFilesProvider.notifier).addContentValue(newId, index);
+        await ref.read(filesProvider.notifier).addContentValue(newId, index);
       case ContentType.audioId:
         String? newId = await showDialog<String?>(context: context, builder: (_) => AudioUploadDialog());
         if (newId == null || !mounted) return;
 
-        await ref.read(foldersAndFilesProvider.notifier).addContentValue(newId, index);
+        await ref.read(filesProvider.notifier).addContentValue(newId, index);
     }
     if (mounted) {
       setState(() {
@@ -105,7 +106,7 @@ class _FileManager extends ConsumerState<FileManager> {
       _isDeleting = index;
     });
 
-    final result = await ref.read(foldersAndFilesProvider.notifier).removeContent(index);
+    final result = await ref.read(filesProvider.notifier).removeContent(index);
 
     if (mounted) {
       setState(() {
@@ -174,7 +175,7 @@ class _FileManager extends ConsumerState<FileManager> {
   Widget build(BuildContext context) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
-    final p = ref.watch(foldersAndFilesProvider);
+    final p = ref.watch(filesProvider);
     final file = p.files![p.fileIndex];
     final contents = p.isTerm ? file.termContents : file.definitionContents;
 
@@ -229,7 +230,7 @@ class _FileManager extends ConsumerState<FileManager> {
                                 icon: Icons.flip,
                                 label: l10n.flip,
                                 onPressed: () {
-                                  ref.read(foldersAndFilesProvider.notifier).flip();
+                                  flip();
                                 },
                               ),
                               Button(
@@ -307,7 +308,7 @@ class _FileManager extends ConsumerState<FileManager> {
                                 _isMovingContent = true;
                               });
 
-                              await ref.watch(foldersAndFilesProvider.notifier).moveContent(_movingContentIndex!, contentIndex);
+                              await ref.watch(filesProvider.notifier).moveContent(_movingContentIndex!, contentIndex);
                               if (!mounted) return;
 
                               setState(() {
@@ -385,7 +386,7 @@ class _FileManager extends ConsumerState<FileManager> {
                                 _isMovingContent = true;
                               });
 
-                              await ref.watch(foldersAndFilesProvider.notifier).moveContent(_movingContentIndex!, contentIndex + 1);
+                              await ref.watch(filesProvider.notifier).moveContent(_movingContentIndex!, contentIndex + 1);
                               if (!mounted) return;
 
                               setState(() {
@@ -404,5 +405,10 @@ class _FileManager extends ConsumerState<FileManager> {
         );
       },
     );
+  }
+
+  void flip() {
+    ref.read(filesProvider.notifier).flip();
+    ref.read(foldersProvider.notifier).flip(isTerm: ref.watch(filesProvider).isTerm);
   }
 }

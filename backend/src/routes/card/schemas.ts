@@ -55,11 +55,11 @@ export const leafContentValueDeleteSchema = object().required().shape({
     type: contentTypesSchema.required().label('Type'),
     isTerm: bool().required(),
     atContentIndex: number().required().integer().min(0),
-    value: string().required(),
     atContentValueIndex: number().required().integer().min(0),
 })
 
 export const leafUpdateSchema = object().required().shape({
     leafId: string().objectIdString().required().label('Leaf id'),
-    title: string().required().label('Title')
+    title: string().optional().label('Title'),
+    treeNodeId: string().optional().label('Tree node id'),
 })

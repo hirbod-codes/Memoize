@@ -17,7 +17,7 @@ class PlanLimitInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler? handler) {
     if ((err.response?.statusCode ?? 500) == 402) {
       if (rootContext != null) {
-        showUpgradeDialog(rootContext!, reason: err.response?.data?['message'] as String?);
+        showUpgradeDialog(rootContext!);
       }
     }
 

@@ -1,11 +1,11 @@
 import 'dart:convert';
 
+import 'package:client/api/providers/files.dart';
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:client/api/models/leaf.dart';
-import 'package:client/api/providers/folders_and_files.dart';
 import 'package:client/components/contents/audio_container.dart';
 import 'package:client/components/contents/image_container.dart';
 import 'package:client/components/contents/text/text_editor.dart';
@@ -38,7 +38,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
   void initState() {
     super.initState();
 
-    final p = ref.watch(foldersAndFilesProvider);
+    final p = ref.watch(filesProvider);
     if (p.files == null || p.files!.isEmpty) return;
 
     final file = p.files![p.fileIndex];
@@ -61,7 +61,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
   Widget build(BuildContext context) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
-    final p = ref.watch(foldersAndFilesProvider);
+    final p = ref.watch(filesProvider);
     if (p.files == null || p.files!.isEmpty) return SizedBox.shrink();
 
     final file = p.files![p.fileIndex];
@@ -82,7 +82,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                   _isRemoving.add(index);
                 });
 
-                await ref.read(foldersAndFilesProvider.notifier).removeContentValue(widget.contentIndex, index);
+                await ref.read(filesProvider.notifier).removeContentValue(widget.contentIndex, index);
                 if (!mounted) return;
 
                 setState(() {
@@ -123,7 +123,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                         _isMovingContentValue = true;
                       });
 
-                      await ref.watch(foldersAndFilesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex);
+                      await ref.watch(filesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex);
                       if (!mounted) return;
 
                       setState(() {
@@ -143,7 +143,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           editing: widget.editing,
                           json: v,
                           onSave: (json) async {
-                            await ref.read(foldersAndFilesProvider.notifier).setContentValue(jsonEncode(json), widget.contentIndex, contentValueIndex);
+                            await ref.read(filesProvider.notifier).setContentValue(jsonEncode(json), widget.contentIndex, contentValueIndex);
                           },
                         ),
                       ),
@@ -183,7 +183,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                         _isMovingContentValue = true;
                       });
 
-                      await ref.watch(foldersAndFilesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
+                      await ref.watch(filesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                       if (!mounted) return;
 
                       setState(() {
@@ -221,7 +221,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref.watch(foldersAndFilesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex);
+                        await ref.watch(filesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex);
                         if (!mounted) return;
 
                         setState(() {
@@ -275,7 +275,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                                   });
 
                                   await ref
-                                      .read(foldersAndFilesProvider.notifier)
+                                      .read(filesProvider.notifier)
                                       .setContentValue(stringControllers[contentValueIndex].text.trim(), widget.contentIndex, contentValueIndex);
                                   if (!mounted) return;
 
@@ -310,7 +310,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                         });
 
                         await ref
-                            .watch(foldersAndFilesProvider.notifier)
+                            .watch(filesProvider.notifier)
                             .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 
@@ -365,7 +365,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref.watch(foldersAndFilesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex);
+                        await ref.watch(filesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex);
                         if (!mounted) return;
 
                         setState(() {
@@ -419,7 +419,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                         });
 
                         await ref
-                            .watch(foldersAndFilesProvider.notifier)
+                            .watch(filesProvider.notifier)
                             .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 
@@ -459,7 +459,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref.watch(foldersAndFilesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex);
+                        await ref.watch(filesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex);
                         if (!mounted) return;
 
                         setState(() {
@@ -515,7 +515,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                         });
 
                         await ref
-                            .watch(foldersAndFilesProvider.notifier)
+                            .watch(filesProvider.notifier)
                             .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 
@@ -555,7 +555,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref.watch(foldersAndFilesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex);
+                        await ref.watch(filesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex);
                         if (!mounted) return;
 
                         setState(() {
@@ -584,7 +584,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                         });
 
                         await ref
-                            .watch(foldersAndFilesProvider.notifier)
+                            .watch(filesProvider.notifier)
                             .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 

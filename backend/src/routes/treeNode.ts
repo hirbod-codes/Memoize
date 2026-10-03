@@ -223,7 +223,7 @@ router.patch('/', async (req, res) => {
         console.log('Validation...')
         let treeNode: TreeNodeUpdate
         try {
-            treeNode = await treeNodeUpdateSchema.required().validate(req.body.treeNode, { stripUnknown: true })
+            treeNode = await treeNodeUpdateSchema.required().validate(req.body, { stripUnknown: true })
             if (treeNode.parentId === null) treeNode.parentId = undefined;
             console.log({ treeNode });
         } catch (err) {

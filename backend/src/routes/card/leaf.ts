@@ -398,48 +398,94 @@ router.delete('/content/value', async (req, res) => {
 router.patch('/', async (req, res) => {
     let log = getLogger().child({ module: 'leaf', route: 'PATCH /api/leaf/' });
 
+    let db: MongoDB | undefined = undefined
     try {
         log.info('leaf delete content value request received');
 
         log.debug({ body: req.body });
-        const { title: newTitle, leafId } = await runWithLogger(log, () => validate(leafUpdateSchema, req.body))
+        const { title: newTitle, leafId, treeNodeId } = await runWithLogger(log, () => validate(leafUpdateSchema, req.body))
+        log.debug({ newTitle, leafId, treeNodeId });
+
+        if (!title && !treeNodeId) {
+            log.info('At least one parameter must be provided by the client');
+            return res.status(400).json({ status: 'error', error_code: 'AT_LEAST_ONE_PARAMETER_MUST_BE_PROVIDED' })
+        }
+
         log.info('input validated');
-        log.debug({ newTitle, leafId });
 
         const userId = req.user!.userId;
         log.debug({ userId });
 
+        db = MongoDB.getClient()
+        const session = db.startTransaction()
+
+        const treeNodeRepository = new TreeNodeRepository()
+        treeNodeRepository.setTransactionSession(session)
+
         const leafRepository = new LeafRepository()
+        leafRepository.setTransactionSession(session)
+
+        const updates: LeafUpdate = {}
+
+        if (treeNodeId) {
+            const parentTreeNode = await treeNodeRepository.get(treeNodeId)
+            log.debug({ parentTreeNode });
+            if (!parentTreeNode) {
+                log.info("requested parent tree node is not found");
+                await db.abortTransaction()
+                return res.status(404).json({ status: 'error', error_code: 'TREENODE_NOT_FOUND' })
+            }
+
+            if (parentTreeNode.userId !== userId) {
+                log.info("requested parent tree node does'n belong to user");
+                await db.abortTransaction()
+                return res.status(403).send()
+            }
+
+            updates.treeNodeId = treeNodeId
+        }
+
+        if (newTitle)
+            updates.title = newTitle
 
         log.info('updating leaf')
-        const updateResult = await leafRepository.updateForUser({ _id: leafId, title: newTitle }, userId)
+        const updateResult = await leafRepository.updateForUser({ _id: leafId, ...updates }, userId)
         log.debug({ updateResult })
         if (!updateResult.acknowledged) {
             log.warn('failed to update card')
+            await db.abortTransaction()
             return res.status(500).json({ status: 'error', status_code: 'INTERNAL_ERROR' })
         }
         if (updateResult.acknowledged && updateResult.matchedCount === 0) {
             log.info("card not found or it doesn't belong to user")
+            await db.abortTransaction()
             return res.status(403).json({ status: 'error', status_code: 'FORBIDDEN' })
         }
 
-        log.info("updating title in meilisearch")
-        const index = meili.index(MEILI_LEAF)
-        const task = await index.updateDocuments([{
-            _id: leafId,
-            title: newTitle,
-            updatedAt: new Date().toISOString()
-        }])
-        const result = await index.tasks.waitForTask(task.taskUid)
-        log.debug({ result })
-        if (result.status !== 'succeeded') {
-            console.error(result)
-            return res.status(500).send()
+        if (newTitle) {
+            log.info("updating title in meilisearch")
+            const index = meili.index(MEILI_LEAF)
+            const task = await index.updateDocuments([{
+                _id: leafId,
+                title: newTitle,
+                updatedAt: new Date().toISOString()
+            }])
+            const result = await index.tasks.waitForTask(task.taskUid)
+            log.debug({ result })
+            if (result.status !== 'succeeded') {
+                console.error(result)
+                await db.abortTransaction()
+                return res.status(500).json({ status: 'error' })
+            }
         }
+
+        await db.commitTransaction()
 
         log.info("successfully updated card")
         res.status(204).json({ status: 'success' })
     } catch (err) {
+        try { await db?.abortTransaction() } catch (e) { log.error({ err }, "failed to abort db transaction") }
+
         runWithLogger(log, () => handleError(res, err))
     }
 })

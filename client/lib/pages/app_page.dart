@@ -4,7 +4,8 @@ import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/api/models/folder.dart';
 import 'package:client/api/models/leaf.dart';
-import 'package:client/api/providers/folders_and_files.dart';
+import 'package:client/api/providers/files.dart';
+import 'package:client/api/providers/folders.dart';
 import 'package:client/components/button.dart';
 import 'package:client/components/dialogs/folder_file_create_dialog.dart';
 import 'package:client/components/file_manager.dart';
@@ -110,7 +111,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
     setState(() {
       _location.removeLast();
       _title = null;
-      ref.read(foldersAndFilesProvider.notifier).setFiles([]);
+      ref.read(filesProvider.notifier).setFiles([]);
       _filter = Filter.folder;
       _resetSearch();
     });
@@ -213,10 +214,10 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
 
           if (reset) {
             _folderSkip = folders.length;
-            ref.read(foldersAndFilesProvider.notifier).setFolders(folders);
+            ref.read(foldersProvider.notifier).setFolders(folders);
           } else {
             _folderSkip = folders.length + _folderSkip;
-            ref.read(foldersAndFilesProvider.notifier).setFolders([...(ref.read(foldersAndFilesProvider).folders ?? []), ...folders]);
+            ref.read(foldersProvider.notifier).setFolders([...(ref.read(foldersProvider).folders ?? []), ...folders]);
           }
         });
       } else if (filter == Filter.file) {
@@ -238,10 +239,10 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
 
           if (reset) {
             _fileSkip = files.length;
-            ref.read(foldersAndFilesProvider.notifier).setFiles(files);
+            ref.read(filesProvider.notifier).setFiles(files);
           } else {
             _fileSkip = files.length + _fileSkip;
-            ref.read(foldersAndFilesProvider.notifier).setFiles([...(ref.read(foldersAndFilesProvider).files ?? []), ...files]);
+            ref.read(filesProvider.notifier).setFiles([...(ref.read(filesProvider).files ?? []), ...files]);
           }
         });
       }
@@ -285,12 +286,12 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
       _deletingFolder = index;
     });
 
-    await ref.read(foldersAndFilesProvider.notifier).removeFolderById(folder.id);
+    await ref.read(foldersProvider.notifier).removeFolderById(folder.id);
     if (!mounted) return;
 
     setState(() {
       _deletingFolder = -1;
-      ref.read(foldersAndFilesProvider.notifier).removeFolderById(folder.id);
+      ref.read(foldersProvider.notifier).removeFolderById(folder.id);
     });
   }
 
@@ -299,12 +300,12 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
       _deletingFile = index;
     });
 
-    await ref.read(foldersAndFilesProvider.notifier).removeFileById(file.id);
+    await ref.read(filesProvider.notifier).removeFileById(file.id);
     if (!mounted) return;
 
     setState(() {
       _deletingFile = -1;
-      ref.read(foldersAndFilesProvider.notifier).removeFileById(file.id);
+      ref.read(filesProvider.notifier).removeFileById(file.id);
     });
   }
 
@@ -324,11 +325,10 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
       );
       if (title == null) return;
 
-      FoldersAndFiles p = ref.watch(foldersAndFilesProvider.notifier);
       if (_location.last == 'root' || _filter == Filter.folder) {
-        await p.addFolder(title, _location.last == 'root' ? null : _location.last);
+        await ref.read(foldersProvider.notifier).addFolder(title, _location.last == 'root' ? null : _location.last);
       } else {
-        await p.addFile(title, _location.last);
+        await ref.read(filesProvider.notifier).addFile(title, _location.last);
       }
     } finally {
       if (mounted) {
@@ -344,10 +344,10 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
       _isMovingFolder = true;
     });
 
-    await ref.read(foldersAndFilesProvider.notifier).moveFolder(_movingFolder!, _location.last == 'root' ? null : _location.last);
+    await ref.read(foldersProvider.notifier).moveFolder(_movingFolder!, _location.last == 'root' ? null : _location.last);
     if (!mounted) return;
 
-    ref.read(foldersAndFilesProvider.notifier).setFolders([...(ref.read(foldersAndFilesProvider).folders ?? []), _movingFolder!]);
+    ref.read(foldersProvider.notifier).setFolders([...(ref.read(foldersProvider).folders ?? []), _movingFolder!]);
 
     setState(() {
       _isMovingFolder = false;
@@ -362,10 +362,10 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
       _isMovingFile = true;
     });
 
-    await ref.read(foldersAndFilesProvider.notifier).moveFile(_movingFile!, _location.last);
+    await ref.read(filesProvider.notifier).moveFile(_movingFile!, _location.last);
     if (!mounted) return;
 
-    ref.read(foldersAndFilesProvider.notifier).setFiles([...(ref.read(foldersAndFilesProvider).files ?? []), _movingFile!]);
+    ref.read(filesProvider.notifier).setFiles([...(ref.read(filesProvider).files ?? []), _movingFile!]);
 
     setState(() {
       _isMovingFile = false;
@@ -386,10 +386,12 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
   Widget build(BuildContext context) {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
-    FoldersAndFiles p = ref.watch(foldersAndFilesProvider.notifier);
-    FoldersAndFilesState pState = ref.watch(foldersAndFilesProvider);
-    final folders = pState.folders ?? [];
-    final files = pState.files;
+    final foldersState = ref.watch(foldersProvider);
+    final folders = foldersState.folders ?? [];
+
+    final filesNotifier = ref.watch(filesProvider.notifier);
+    final filesState = ref.watch(filesProvider);
+    final files = filesState.files;
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
@@ -611,7 +613,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                                 clipBehavior: Clip.hardEdge,
                                 child: InkWell(
                                   onTap: () {
-                                    p.setFileIndex(index);
+                                    filesNotifier.setFileIndex(index);
                                     showDialog(
                                       context: context,
                                       barrierDismissible: true,
