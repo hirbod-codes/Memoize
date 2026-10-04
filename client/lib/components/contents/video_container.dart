@@ -12,7 +12,7 @@ import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 class VideoContainer extends ConsumerStatefulWidget {
   final String videoId;
@@ -65,7 +65,7 @@ class _VideosState extends ConsumerState<VideoContainer> {
   }
 
   FutureOr<Null> _handleError(dynamic e) {
-    Talker().error('caught error while trying to fetch video', e);
+    talker.error('caught error while trying to fetch video', e);
     if (!mounted) return null;
 
     AppLocalizations l10n = AppLocalizations.of(context)!;

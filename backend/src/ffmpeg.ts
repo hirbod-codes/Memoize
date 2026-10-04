@@ -5,6 +5,33 @@ import { spawn } from "child_process";
 import { Readable } from "stream";
 import { FfmpegError } from './errors/FfmpegError';
 import { FfprobeError } from './errors/FfprobeError';
+import { existsSync, chmodSync } from 'node:fs';
+
+function resolveBinary(name: 'ffmpeg' | 'ffprobe'): string {
+    // Env override wins (useful for CI, Docker, or a system install)
+    const override = process.env[`${name.toUpperCase()}_PATH`];
+    if (override) return override;
+
+    const file = process.platform === 'win32' ? `ffmpeg-8.1-essentials_build\\bin\\${name}.exe` : `ffmpeg-7.0.2-amd64-static/${name}`;
+    const fullPath = join(process.cwd(), 'src', file);
+
+    if (!existsSync(fullPath)) {
+        throw new Error(`${name} binary not found at ${fullPath}`);
+    }
+
+    if (process.platform !== 'win32') {
+        try { chmodSync(fullPath, 0o755); }
+        catch {
+            console.error("failed to make the file executable, in this line 'chmodSync(fullPath, 0o755);'")
+            /* read-only fs; hope it's already executable */
+        }
+    }
+
+    return fullPath;
+}
+
+export const FFPROBE_PATH = resolveBinary('ffprobe');
+export const FFMPEG_PATH = resolveBinary('ffmpeg');
 
 interface ProbeInfo {
     index: number;
@@ -31,7 +58,7 @@ export function probeFile(filePath: string): Promise<{ streams: ProbeInfo[]; for
             filePath,
         ];
 
-        const proc = spawn('ffprobe', args);
+        const proc = spawn(FFPROBE_PATH, args);
 
         let stdout = '';
         let stderr = '';
@@ -46,8 +73,11 @@ export function probeFile(filePath: string): Promise<{ streams: ProbeInfo[]; for
         proc.stdout.on('data', (chunk) => { stdout += chunk; });
         proc.stderr.on('data', (chunk) => { stderr += chunk; });
 
-        proc.on('error', (err) => {
-            settle(() => reject(new FfprobeError(`ffprobe spawn failed: ${err.message}`)));
+        proc.on('error', (err: NodeJS.ErrnoException) => {
+            const msg = err.code === 'ENOENT'
+                ? 'ffprobe binary not found; install FFmpeg or set FFPROBE_PATH'
+                : `ffprobe spawn failed: ${err.message}`;
+            settle(() => reject(new FfprobeError(msg)));
         });
 
         proc.on('close', (code) => {
@@ -72,7 +102,7 @@ export function probeFile(filePath: string): Promise<{ streams: ProbeInfo[]; for
  */
 export function runFfmpeg(args: string[]): Promise<void> {
     return new Promise((resolve, reject) => {
-        const proc = spawn('ffmpeg', args);
+        const proc = spawn(FFMPEG_PATH, args);
 
         let stderr = '';
         let settled = false;
@@ -169,7 +199,7 @@ export async function generateWebCompatibleCopy(inputPath: string, videoUploadTm
                 '-c:v', 'libx264',
                 '-preset', 'veryfast',
                 '-crf', '23',
-                '-pix_fmt', 'yuv420p', // avoids chroma-format playback issues on Safari/older browsers
+                '-pix_fmt', 'yuv420p',      // avoids chroma-format playback issues on Safari/older browsers
                 '-c:a', 'aac',
                 '-b:a', '128k',
                 '-movflags', '+faststart',
@@ -202,9 +232,12 @@ export async function generateWebCompatibleCopy(inputPath: string, videoUploadTm
         await runFfmpeg([
             '-y',
             '-i', inputPath,
+            '-vn',                      // drop the cover-art "video" stream
+            '-map', '0:a:0',            // first audio stream only (optional but explicit)
             '-c:a', 'aac',
             '-b:a', '192k',
             '-movflags', '+faststart',
+            '-map_metadata', '0',       // keep title/artist/album tags
             outputPath,
         ]);
 

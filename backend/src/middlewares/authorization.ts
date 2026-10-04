@@ -324,7 +324,7 @@ export function authorizeAllowedContentTypes(req: Request, contentType: keyof Pr
             return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
         }
 
-        if (req.user.privileges.allowedContentTypes[contentType]) {
+        if (!req.user.privileges.allowedContentTypes[contentType]) {
             log.info('Request is unauthorized')
             return res?.status(402).json({ status: 'error', error_code: 'QUOTA_EXCEEDED' }) ?? false;
         }

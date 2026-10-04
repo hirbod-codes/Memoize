@@ -4,7 +4,6 @@ import { number } from "yup";
 
 export const postSchema = object().required().shape({
     title: string().required().label('Title'),
-    fileName: string().required().label('File name'),
 })
 
 export const listQuerySchema = object().required().shape({

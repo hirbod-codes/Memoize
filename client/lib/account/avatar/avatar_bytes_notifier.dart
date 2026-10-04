@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 class AvatarBytesNotifier extends Notifier<Uint8List?> {
   static const _storageKey = 'avatar';
@@ -37,7 +37,7 @@ class AvatarBytesNotifier extends Notifier<Uint8List?> {
 
       await save(bytes, avatarKey: cachedAvatarKey);
     } catch (e) {
-      Talker().error('caught error in fetchAvatar method of AccountController', e);
+      talker.error('caught error in fetchAvatar method of AccountController', e);
       return;
     }
   }
@@ -57,10 +57,10 @@ class AvatarBytesNotifier extends Notifier<Uint8List?> {
       final dir = await getApplicationSupportDirectory(); // survives longer than cache dir
       return File('${dir.path}/$_fileName');
     } on MissingPlatformDirectoryException {
-      Talker().error('caught MissingPlatformDirectoryException exception in _getCacheFile method of AvatarCache class');
+      talker.error('caught MissingPlatformDirectoryException exception in _getCacheFile method of AvatarCache class');
       return null;
     } catch (err) {
-      Talker().error('caught exception in _getCacheFile method of AvatarCache class', {err});
+      talker.error('caught exception in _getCacheFile method of AvatarCache class', {err});
       return null;
     }
   }

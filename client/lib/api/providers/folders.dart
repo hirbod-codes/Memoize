@@ -1,3 +1,5 @@
+import "dart:convert";
+
 import "package:client/api/api_call.dart";
 import "package:client/api/api_call_extensions.dart";
 import "package:client/api/dio/dio_providers.dart";
@@ -8,7 +10,7 @@ import "package:client/components/global/notification_service.dart";
 import "package:client/l10n/app_localizations.dart";
 import "package:dio/dio.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
-import "package:talker/talker.dart";
+import "package:client/lib/talker.dart";
 
 enum FoldersStateResponseStatus { success, failure }
 
@@ -34,6 +36,11 @@ class FoldersState {
       isTerm: isTerm ?? this.isTerm,
     );
   }
+
+  @override
+  String toString() {
+    return jsonEncode({'folders': folders?.map((e) => e.toJson()).toList(), 'folderIndex': folderIndex, 'isTerm': isTerm});
+  }
 }
 
 class Folders extends Notifier<FoldersState> {
@@ -53,7 +60,7 @@ class Folders extends Notifier<FoldersState> {
 
   Future<String?> addFolder(String title, String? parentId) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Folders.addFolder is called...");
@@ -93,7 +100,7 @@ class Folders extends Notifier<FoldersState> {
   /// Currently supports Folder.title field only
   Future<bool> setFolder(Folder folder) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Folders.setFolder is called...");
@@ -142,7 +149,7 @@ class Folders extends Notifier<FoldersState> {
 
   Future<bool> removeFolder(int index) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Folders.removeFolder is called...");
@@ -185,7 +192,7 @@ class Folders extends Notifier<FoldersState> {
 
   Future<bool> removeFolderById(String id) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Folders.removeFolderById is called...");
@@ -233,7 +240,7 @@ class Folders extends Notifier<FoldersState> {
 
   Future<bool> moveFolder(Folder folder, String? destId) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Folders.moveFolder is called...");

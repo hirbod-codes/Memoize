@@ -21,12 +21,14 @@ import UsageRepository from '../../DB/repositories/UsageRepository';
 import { Usage } from '../../DB/models/Usage';
 import { authorizeAllowedContentTypes, authorizeStorageQuota, rollbackStorageQuota } from '../../middlewares/authorization';
 import { MongoDB } from '../../DB/mongodb';
+import { subscriptionGate } from '../../middlewares/planGate';
+import { randomUUID } from 'crypto';
 
 const router = express.Router();
 
 const ALLOWED_VIDEO_CODECS = new Set(['h264', 'hevc', 'vp9', 'av1', 'mpeg4']);
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, subscriptionGate, async (req, res) => {
     let log = getLogger().child({ module: 'video', route: 'POST /api/video/' });
 
     try {
@@ -62,7 +64,7 @@ router.post('/', auth, async (req, res) => {
         // ------------------------------------------------------------------------- Inserting video...
         log.info('Inserting video...')
 
-        const videoInsertResult = await runWithLogger(log, () => videoRepository.insert({ title, fileName, userId, temporary: true }))
+        const videoInsertResult = await runWithLogger(log, () => videoRepository.insert({ title: `${randomUUID()}__UNIQUE_SEPARATOR__${title}`, fileName, userId, temporary: true }))
         log.debug({ insertResult: videoInsertResult });
         if (!videoInsertResult.acknowledged || !videoInsertResult.insertedId) {
             log.error({ insertResult: videoInsertResult }, 'Video info creation failed');
@@ -199,7 +201,19 @@ router.post('/', auth, async (req, res) => {
                 // ------------------------------------------------------------------------- Update video info in DB, Make it permanent and set content type
                 log.info('Update video info in DB, Make it permanent and set content type')
 
-                const updateResult = await runWithLogger(log, () => videoRepository.unsafeUpdate(videoId, userId, { contentType: contentType, temporary: false, bucketKey: videoFileBucketKey, webBucketKey: webCompatibleVideoFileBucketKey, thumbnailKey: thumbnailBucketKey, thumbnailFileName: basename(thumbnailPath) }))
+                const updateResult = await runWithLogger(log, () => videoRepository.unsafeUpdate(
+                    videoId,
+                    userId,
+                    {
+                        title,
+                        contentType: contentType,
+                        temporary: false,
+                        bucketKey: videoFileBucketKey,
+                        webBucketKey: webCompatibleVideoFileBucketKey,
+                        thumbnailKey: thumbnailBucketKey,
+                        thumbnailFileName: basename(thumbnailPath)
+                    }
+                ))
                 log.debug({ updateResult });
                 if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
                     log.error({ updateResult }, 'Updating video record, failed');
@@ -237,13 +251,13 @@ router.post('/', auth, async (req, res) => {
             }
         }
 
-        return res.status(201).json({ status: 'success', data: { id: videoId } });
+        return res.status(201).json({ status: 'success', data: videoId });
     } catch (err) {
         runWithLogger(log, () => handleError(res, err))
     }
 });
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, subscriptionGate, async (req, res) => {
     let log = getLogger().child({ module: 'video', route: 'GET /api/video/' });
 
     try {
@@ -279,7 +293,7 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
-router.get('/info/', auth, async (req, res) => {
+router.get('/info/', auth, subscriptionGate, async (req, res) => {
     let log = getLogger().child({ module: 'video', route: 'GET /api/video/info' });
 
     try {
@@ -318,7 +332,7 @@ router.get('/info/', auth, async (req, res) => {
     }
 });
 
-router.get('/singed_token', auth, async (req, res) => {
+router.get('/singed_token', auth, subscriptionGate, async (req, res) => {
     let log = getLogger().child({ module: 'video', route: 'GET /api/video/singed_token' });
 
     try {
@@ -354,7 +368,7 @@ router.get('/singed_token', auth, async (req, res) => {
 });
 
 // For non web clients
-router.get('/file/:videoId', auth, async (req, res) => {
+router.get('/file/:videoId', auth, subscriptionGate, async (req, res) => {
     let log = getLogger().child({ module: 'video', route: 'GET /api/video/file/:videoId' });
 
     try {
@@ -398,7 +412,7 @@ router.get('/file/:token/:videoId', async (req, res) => {
     }
 });
 
-router.get('/thumbnail/:videoId', auth, async (req, res) => {
+router.get('/thumbnail/:videoId', auth, subscriptionGate, async (req, res) => {
     let log = getLogger().child({ module: 'video', route: 'GET /api/video/thumbnail/:videoId' });
 
     try {
@@ -455,7 +469,7 @@ router.get('/thumbnail/:videoId', auth, async (req, res) => {
     }
 });
 
-router.delete('/:videoId', auth, async (req, res) => {
+router.delete('/:videoId', auth, subscriptionGate, async (req, res) => {
     let log = getLogger().child({ module: 'video', route: 'DELETE /api/video/:videoId' });
 
     let db: MongoDB | undefined = undefined

@@ -1,6 +1,7 @@
 import { randomBytes, createHash } from 'crypto';
 import { Redis } from '../../DB/redis';
 import { getLogger } from '../../observability/requestLoggerContext';
+import { isProduction } from '../../configs';
 
 const REFRESH_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
 const REVOKED_TOMBSTONE_TTL_SECONDS = REFRESH_TTL_SECONDS;
@@ -68,17 +69,19 @@ export async function createSessionFamily(data: Omit<RefreshRecord, 'familyId' |
  */
 export async function rotateRefreshToken(oldTokenId: string): Promise<RefreshRecord & { newTokenId: string }> {
     const log = getLogger().child({ module: 'session', tokenFingerprint: fingerprint(oldTokenId) });
+
+    if (!isProduction) log.debug({ oldTokenId })
+
     const redis = await Redis.getClient();
 
     const raw = await redis.get(`refresh:${oldTokenId}`);
+    if (!isProduction) log.debug({ raw })
     if (!raw) {
         const revokedRaw = await redis.get(`revoked:${oldTokenId}`);
+        if (!isProduction) log.debug({ revokedRaw })
         if (revokedRaw) {
             const { familyId, userId } = JSON.parse(revokedRaw);
-            log.warn(
-                { userId, familyFingerprint: fingerprint(familyId) },
-                'Refresh token reuse detected (replay of an already-rotated token) — revoking entire family'
-            );
+            log.warn({ userId, familyFingerprint: fingerprint(familyId) }, 'Refresh token reuse detected (replay of an already-rotated token) — revoking entire family');
             await revokeFamily(familyId, userId);
         } else {
             log.debug('Refresh token not found (expired or invalid)');
@@ -88,6 +91,7 @@ export async function rotateRefreshToken(oldTokenId: string): Promise<RefreshRec
 
     const record: RefreshRecord = JSON.parse(raw);
     const newTokenId = newToken();
+    if (!isProduction) log.debug({ newTokenId })
 
     await redis.multi()
         .set(

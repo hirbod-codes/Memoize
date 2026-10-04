@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:client/api/controllers/image_controller.dart';
+import 'package:client/api/api_call.dart';
+import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
@@ -19,7 +20,7 @@ class ImageUploadDialog extends ConsumerStatefulWidget {
 
 class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
   final titleController = TextEditingController();
-  File? _image;
+  XFile? _image;
   bool _loading = false;
 
   @override
@@ -36,7 +37,10 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
     if (picked == null) return;
 
     setState(() {
-      _image = File(picked.path);
+      _image = picked;
+      List<String> split = picked.name.split('.');
+      split.removeLast();
+      titleController.text = split.join(' ');
     });
   }
 
@@ -48,11 +52,14 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
     setState(() => _loading = true);
 
     try {
-      Response<dynamic> res = await ref.read(imageControllerProvider).post(title: titleController.text.trim(), file: _image!);
-      if (res.statusCode == null || res.statusCode! < 200 || res.statusCode! > 299) return;
+      final form = FormData.fromMap({'file': MultipartFile.fromStream(() => _image!.openRead(), await _image!.length(), filename: _image!.name)});
+      final result = await apiCall(
+        () => ref.read(authDioProvider).post('/api/image/', data: form, queryParameters: {'title': titleController.text.trim(), 'fileName': _image!.name}),
+      );
       if (!mounted) return;
+      if (result.isFailure || result.dataOrNull == null) return;
 
-      Navigator.pop(context, res.data['id']);
+      Navigator.pop(context, result.dataOrNull);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -97,7 +104,7 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
                     ? Center(child: Text(l10n.image_not_selected))
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: kIsWeb ? Image.network(_image!.path, fit: BoxFit.fitWidth) : Image.file(_image!, fit: BoxFit.fitWidth),
+                        child: kIsWeb ? Image.network(_image!.path, fit: BoxFit.fitWidth) : Image.file(File(_image!.path), fit: BoxFit.fitWidth),
                       ),
               ),
 

@@ -4,7 +4,7 @@ import 'package:client/api/root_navigator_key.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 /// Distinguishes "the call failed" from "the call succeeded and the
 /// data happened to be null" (e.g. a 204 No Content response) — a
@@ -77,20 +77,20 @@ Future<ApiCallResult<T>> apiCall<T>(Future<Response> Function() request, {T Func
   try {
     final response = await request();
 
-    Talker().debug('api call data: ', response.data);
+    talker.debug('api call data: ', response.data);
     if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300 && (response.data == null || response.data == '')) {
       return ApiCallSuccess<T>(null);
     }
 
     final parsed = ApiResponse.tryParse(response.data);
-    Talker().debug('api call data: ', parsed);
+    talker.debug('api call data: ', parsed);
     if (parsed is ApiSuccess) {
       ApiCallSuccess<T> result;
       if (fromJson != null && parsed.data != null) {
         try {
           result = ApiCallSuccess<T>(fromJson(parsed.data));
         } catch (e) {
-          Talker().error('apiCall, failed parse data, error caught in apiCall method', e);
+          talker.error('apiCall, failed parse data, error caught in apiCall method', e);
           String message = rootContext == null ? 'Something went wrong.' : AppLocalizations.of(rootContext!)!.uncaughtError;
           return ApiCallFailure(message);
         }
@@ -109,7 +109,7 @@ Future<ApiCallResult<T>> apiCall<T>(Future<Response> Function() request, {T Func
     // _showError(message);
     return ApiCallFailure<T>(message);
   } catch (e) {
-    Talker().error('apiCall: unexpected error', e);
+    talker.error('apiCall: unexpected error', e);
     String message = rootContext == null ? 'Something went wrong.' : AppLocalizations.of(rootContext!)!.uncaughtError;
     _showError(message);
     return ApiCallFailure<T>(message);

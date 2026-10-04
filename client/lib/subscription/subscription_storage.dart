@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:client/subscription/models/subscription.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 /// Local cache of the last-fetched Plan. Two uses: lets the app
 /// show something (name, plan, avatar key) instantly on next launch
@@ -29,7 +29,7 @@ class SubscriptionStorage {
     try {
       return Subscription.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (e) {
-      Talker().error('caught error in load method of SubscriptionStorage class', e);
+      talker.error('caught error in load method of SubscriptionStorage class', e);
       return null; // corrupted or outdated cache shape — treat as absent
     }
   }

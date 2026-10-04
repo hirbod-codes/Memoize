@@ -4,14 +4,14 @@ import 'package:client/auth/token_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 class RefreshInterceptor extends Interceptor {
   final Dio dio;
   final TokenStorage storage;
   final Ref ref;
   final Future<void> Function({bool silent}) logout;
-  final Future<RefreshResponse> Function(String? refreshToken, {bool silent}) refresh;
+  final Future<RefreshResponse?> Function(String? refreshToken, {bool silent}) refresh;
 
   RefreshInterceptor({required this.dio, required this.storage, required this.ref, required this.logout, required this.refresh});
 
@@ -48,12 +48,17 @@ class RefreshInterceptor extends Interceptor {
       if (!kIsWeb && refreshToken == null) throw err;
 
       final response = await refresh(refreshToken, silent: _isSilent);
+      if (response == null) {
+        await storage.clear();
+        await logout(silent: _isSilent);
+        handler.next(err);
+        return;
+      }
 
       final accessToken = response.accessToken;
       await storage.saveAccessToken(accessToken);
 
-      final newRefreshToken = response.refreshToken;
-      if (newRefreshToken != null) await storage.saveRefreshToken(newRefreshToken);
+      if (response.refreshToken != null) await storage.saveRefreshToken(response.refreshToken!);
 
       requestOptions.headers['Authorization'] = 'Bearer $accessToken';
 
@@ -61,10 +66,7 @@ class RefreshInterceptor extends Interceptor {
 
       handler.resolve(retryResponse);
     } catch (e) {
-      Talker().error('error caught in RefreshInterceptor, onError', e );
-      await storage.clear();
-
-      await logout(silent: _isSilent);
+      talker.error('error caught in RefreshInterceptor, onError', e);
 
       handler.next(err);
     } finally {

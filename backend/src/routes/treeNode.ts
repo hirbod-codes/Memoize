@@ -6,10 +6,11 @@ import { number, string, ValidationError } from 'yup';
 import { meili } from '..';
 import { MEILI_TREE_NODE } from '../DB/meilisearch';
 import { authorizeCategoriesPerNestedLevel, authorizeNestedLevels } from '../middlewares/authorization';
+import { subscriptionGate } from '../middlewares/planGate';
 
 const router = express.Router();
 
-router.use(auth)
+router.use(auth, subscriptionGate)
 
 router.post('/', async (req, res) => {
     try {

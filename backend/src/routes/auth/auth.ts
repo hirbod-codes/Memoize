@@ -14,6 +14,7 @@ import { getLogger, runWithLogger } from '../../observability/requestLoggerConte
 import { handleError, validate } from '../../lib';
 import { Redis } from '../../DB/redis';
 import { requestSmtp, verifySmtp } from '../../services/SMTP/smtp_management';
+import { isProduction } from '../../configs';
 
 const router = Router();
 
@@ -408,6 +409,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         const body = await runWithLogger(log, () => validate(refreshSchema, req.body ?? {}))
 
         const oldTokenId = body.refreshToken ?? req.cookies?.[REFRESH_COOKIE_NAME];
+        if (!isProduction) log.debug({ oldTokenId })
         if (!oldTokenId) {
             log.info({ client: body.client }, 'Rejected refresh: no refresh token supplied');
             return res.status(401).json({ status: 'error', error_code: 'NO_REFRESH_TOKEN' });
@@ -416,8 +418,9 @@ router.post('/refresh', async (req: Request, res: Response) => {
         let rotated;
         try {
             rotated = await runWithLogger(log, () => rotateRefreshToken(oldTokenId))
-        } catch {
-            log.warn({ client: body.client }, 'Rejected refresh: token invalid, expired, or reused');
+            if (!isProduction) log.debug({ rotated })
+        } catch (err) {
+            log.warn({ err, client: body.client }, 'Rejected refresh: token invalid, expired, or reused');
             runWithLogger(log, () => clearAuthCookies(res))
             return res.status(401).json({ status: 'error', error_code: 'REFRESH_INVALID' });
         }

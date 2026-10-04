@@ -1,5 +1,5 @@
 import { bool, number, object, string } from "yup"
-import { contentTypesSchema } from "../../DB/models/Leaf"
+import { contentSchema, contentsSchema, contentTypesSchema } from "../../DB/models/Leaf"
 
 export const leafPostSchema = object().required().shape({
     treeNodeId: string().objectIdString().required().label('Tree node id'),
@@ -41,6 +41,13 @@ export const leafContentAddSchema = object().required().shape({
     atIndex: number().optional().integer().min(0),
 })
 
+export const leafContentPutSchema = object().required().shape({
+    leafId: string().objectIdString().required().label('Leaf id'),
+    isTerm: bool().required(),
+    atIndex: number().required().integer().min(0),
+    content: contentSchema.required(),
+})
+
 export const leafContentValueAddSchema = object().required().shape({
     leafId: string().objectIdString().required().label('Leaf id'),
     type: contentTypesSchema.required().label('Type'),
@@ -62,4 +69,6 @@ export const leafUpdateSchema = object().required().shape({
     leafId: string().objectIdString().required().label('Leaf id'),
     title: string().optional().label('Title'),
     treeNodeId: string().optional().label('Tree node id'),
+    termContents: contentsSchema.optional(),
+    definitionContents: contentsSchema.optional()
 })

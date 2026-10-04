@@ -3,7 +3,7 @@ import { IDropable } from '../IDropable';
 import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
-import { collectionName, ContentTypes, Leaf, LeafCreate, LeafUpdate, schemaVersion } from '../models/Leaf';
+import { collectionName, Content, ContentTypes, Leaf, LeafCreate, LeafUpdate, schemaVersion } from '../models/Leaf';
 
 class LeafRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -125,6 +125,22 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
                 $push: typeof atIndex !== 'number'
                     ? ({ [contentPath]: { $each: [{ type, value: [] }] } })
                     : { [contentPath]: { $each: [{ type, value: [] }], $position: atIndex + 1 } }
+            }
+        )
+    }
+
+    async setContentForUser(userId: string, leafId: string, isTerm: boolean, atIndex: number, content: Content) {
+        const contentPath = isTerm ? `termContents.${atIndex}` : `definitionContents.${atIndex}`;
+        return await LeafRepository.collection!.updateOne(
+            {
+                _id: ObjectId.createFromHexString(leafId.toString()),
+                userId
+            },
+            {
+                $set: {
+                    [contentPath]: content,
+                    updatedAt: Date.now()
+                }
             }
         )
     }

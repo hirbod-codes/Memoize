@@ -5,7 +5,7 @@ import 'package:client/plan/models/currency_label.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 class PaymentCurrency {
   final String paymentMethod;
@@ -50,7 +50,7 @@ class _ChoosePaymentCurrencyState extends ConsumerState<ChoosePaymentCurrency> {
       final result = await apiCall(() => _authDio.get('/api/subscription/supported_payment_methods'));
 
       if (!mounted) return;
-      Talker().info('mounted');
+      talker.info('mounted');
 
       if (result.isFailure || result.dataOrNull == null) {
         setState(() {
@@ -83,7 +83,7 @@ class _ChoosePaymentCurrencyState extends ConsumerState<ChoosePaymentCurrency> {
 
       final selectedCurrency = displayableCurrencies.isNotEmpty ? displayableCurrencies.first : null;
 
-      Talker().debug({supportedMethods, supportedCurrencies, selectedMethod, selectedCurrency, displayableCurrencies});
+      talker.debug({supportedMethods, supportedCurrencies, selectedMethod, selectedCurrency, displayableCurrencies});
 
       if (selectedMethod != null && selectedCurrency != null) {
         widget.onSelect?.call(PaymentCurrency(paymentMethod: selectedMethod, currency: selectedCurrency));
@@ -98,7 +98,7 @@ class _ChoosePaymentCurrencyState extends ConsumerState<ChoosePaymentCurrency> {
         _displayableCurrencies = displayableCurrencies;
       });
     } catch (e) {
-      Talker().error('caught error in _fetchPaymentMethods method of _ChoosePaymentCurrencyState class', e);
+      talker.error('caught error in _fetchPaymentMethods method of _ChoosePaymentCurrencyState class', e);
     }
   }
 

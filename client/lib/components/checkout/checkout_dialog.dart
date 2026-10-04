@@ -14,7 +14,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 Currency currencyForPaymentMethod(String method) {
@@ -98,7 +98,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
   bool _isDurationValid() {
     final nowTS = DateTime.now().millisecondsSinceEpoch;
     final subscriptionDueTSMS = nowTS + (_durationDays * 24 * 60 * 60 * 1000);
-    Talker().debug({'subscriptionDueTSMS': subscriptionDueTSMS});
+    talker.debug({'subscriptionDueTSMS': subscriptionDueTSMS});
 
     if (widget.subscription == null) return _durationDays >= 3;
 
@@ -116,7 +116,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
     bool isUpgrading = false;
     if (widget.subscription != null) isUpgrading = true;
 
-    Talker().debug({
+    talker.debug({
       'plan': widget.plan.toJson(),
       'subscription': widget.subscription?.toJson(),
       '_durationDays': _durationDays,
@@ -132,7 +132,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
       return false;
     }
 
-    Talker().debug({
+    talker.debug({
       'planTitle': widget.plan.title == widget.subscription?.planTitle,
       'subscriptionDueTSMS': _isDurationValid(),
       'storageBytes': _isStorageValid(),
@@ -202,7 +202,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
 
       if (mounted) Navigator.of(context).pop();
     } catch (err) {
-      Talker().error('caught error in _pay method of _CheckoutDialogState', err);
+      talker.error('caught error in _pay method of _CheckoutDialogState', err);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -232,7 +232,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
         return;
       }
 
-      Talker().debug({'data': result.dataOrNull});
+      talker.debug({'data': result.dataOrNull});
 
       final totalPrice = result.dataOrNull?['totalPrice'] as double?;
       if (totalPrice == null) {
@@ -242,7 +242,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
 
       final c = result.dataOrNull?['currency'] as String?;
       final currency = c == null ? null : Currency.toCurrency(c);
-      Talker().debug({currency, selectedCurrency});
+      talker.debug({currency, selectedCurrency});
       if (currency != selectedCurrency) {
         NotificationService.showError(context: context, message: l10n.checkout_pay_failed);
         return;
@@ -252,7 +252,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
         _totalPrice = totalPrice;
       });
     } catch (err) {
-      Talker().error('caught error in _calculateTotalPrice method of _CheckoutDialogState', err);
+      talker.error('caught error in _calculateTotalPrice method of _CheckoutDialogState', err);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

@@ -8,6 +8,7 @@ import 'package:client/components/content_container.dart';
 import 'package:client/components/dialogs/upload/image_upload_dialog.dart';
 import 'package:client/components/dialogs/upload/video_upload_dialog.dart';
 import 'package:client/l10n/app_localizations.dart';
+import 'package:client/lib/talker.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
@@ -58,46 +59,51 @@ class _FileManager extends ConsumerState<FileManager> {
     setState(() {
       _isAdding = index;
     });
+    try {
+      final p = ref.watch(filesProvider);
+      final file = p.files![p.fileIndex];
+      List<Content> contents;
+      if (p.isTerm) {
+        contents = file.termContents;
+      } else {
+        contents = file.definitionContents;
+      }
 
-    final p = ref.watch(filesProvider);
-    final file = p.files![p.fileIndex];
-    List<Content> contents;
-    if (p.isTerm) {
-      contents = file.termContents;
-    } else {
-      contents = file.definitionContents;
-    }
+      switch (contents[index].type) {
+        case ContentType.string:
+          await ref.read(filesProvider.notifier).addContentValue('', index);
+          break;
 
-    switch (contents[index].type) {
-      case ContentType.string:
-        await ref.read(filesProvider.notifier).addContentValue('', index);
-        break;
+        case ContentType.richText:
+          await ref.read(filesProvider.notifier).addContentValue('', index);
+          break;
 
-      case ContentType.richText:
-        await ref.read(filesProvider.notifier).addContentValue('', index);
-        break;
+        case ContentType.imageId:
+          String? newId = await showDialog<String?>(context: context, builder: (_) => ImageUploadDialog());
+          if (newId == null || !mounted) return;
+          talker.info({newId});
 
-      case ContentType.imageId:
-        String? newId = await showDialog<String?>(context: context, builder: (_) => ImageUploadDialog());
-        if (newId == null || !mounted) return;
+          await ref.read(filesProvider.notifier).addContentValue(newId, index);
+          break;
+        case ContentType.videoId:
+          String? newId = await showDialog<String?>(context: context, builder: (_) => VideoUploadDialog());
+          if (newId == null || !mounted) return;
+          talker.info({newId});
 
-        await ref.read(filesProvider.notifier).addContentValue(newId, index);
-        break;
-      case ContentType.videoId:
-        String? newId = await showDialog<String?>(context: context, builder: (_) => VideoUploadDialog());
-        if (newId == null || !mounted) return;
+          await ref.read(filesProvider.notifier).addContentValue(newId, index);
+        case ContentType.audioId:
+          String? newId = await showDialog<String?>(context: context, builder: (_) => AudioUploadDialog());
+          if (newId == null || !mounted) return;
+          talker.info({newId});
 
-        await ref.read(filesProvider.notifier).addContentValue(newId, index);
-      case ContentType.audioId:
-        String? newId = await showDialog<String?>(context: context, builder: (_) => AudioUploadDialog());
-        if (newId == null || !mounted) return;
-
-        await ref.read(filesProvider.notifier).addContentValue(newId, index);
-    }
-    if (mounted) {
-      setState(() {
-        _isAdding = null;
-      });
+          await ref.read(filesProvider.notifier).addContentValue(newId, index);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAdding = null;
+        });
+      }
     }
   }
 

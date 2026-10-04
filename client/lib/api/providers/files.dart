@@ -1,3 +1,5 @@
+import "dart:convert";
+
 import "package:client/api/api_call.dart";
 import "package:client/api/api_call_extensions.dart";
 import "package:client/api/dio/dio_providers.dart";
@@ -7,9 +9,9 @@ import "package:client/api/models/leaf.dart";
 import "package:client/api/root_navigator_key.dart";
 import "package:client/components/global/notification_service.dart";
 import "package:client/l10n/app_localizations.dart";
+import "package:client/lib/talker.dart";
 import "package:dio/dio.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
-import "package:talker/talker.dart";
 
 enum FilesStateResponseStatus { success, failure }
 
@@ -31,6 +33,11 @@ class FilesState {
   FilesState copyWith({List<Folder>? folders, List<Leaf>? files, int? folderIndex, int? fileIndex, bool? isTerm}) {
     return FilesState(files: files ?? this.files?.map((m) => m.copyWith()).toList(), fileIndex: fileIndex ?? this.fileIndex, isTerm: isTerm ?? this.isTerm);
   }
+
+  @override
+  String toString() {
+    return jsonEncode({'files': files?.map((e) => e.toJson()).toList(), 'fileIndex': fileIndex, 'isTerm': isTerm});
+  }
 }
 
 class Files extends Notifier<FilesState> {
@@ -50,7 +57,7 @@ class Files extends Notifier<FilesState> {
 
   Future<String?> addFile(String title, String treeNodeId) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Files.addFile is called...");
@@ -97,7 +104,7 @@ class Files extends Notifier<FilesState> {
 
   Future<bool> removeFile(int index) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Files.removeFile is called...");
@@ -144,7 +151,7 @@ class Files extends Notifier<FilesState> {
 
   Future<bool> removeFileById(String id) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Files.removeFileById is called...");
@@ -196,7 +203,7 @@ class Files extends Notifier<FilesState> {
 
   Future<bool> moveFile(Leaf file, String destId) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Files.moveFile is called...");
@@ -231,7 +238,7 @@ class Files extends Notifier<FilesState> {
   // Contents
   Future<bool> addContent(Content content, {int? atIndex}) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Files.addContent is called...");
@@ -262,7 +269,7 @@ class Files extends Notifier<FilesState> {
               '/api/leaf/content',
               data: {
                 'leafId': tempFile.id,
-                'type': 'imageId',
+                'type': content.type.name,
                 'isTerm': state.isTerm,
                 ...(atIndex == null ? {} : {'atIndex': atIndex}),
               },
@@ -297,7 +304,7 @@ class Files extends Notifier<FilesState> {
 
   Future<bool> removeContent(int index) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Files.removeContent is called...");
@@ -358,7 +365,7 @@ class Files extends Notifier<FilesState> {
 
   Future<bool> setContentValue(String value, int contentIndex, int contentValueIndex) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Files.setContentValue is called...");
@@ -396,6 +403,7 @@ class Files extends Notifier<FilesState> {
       }
 
       // Update
+      String type = contents[contentIndex].type.name;
       contents[contentIndex].value[contentValueIndex] = value;
       log.debug("setContentValue updated value at contentIndex=$contentIndex, contentValueIndex=$contentValueIndex");
 
@@ -405,7 +413,7 @@ class Files extends Notifier<FilesState> {
               '/api/leaf/content/value',
               data: {
                 'leafId': tempFile.id,
-                'type': 'imageId',
+                'type': type,
                 'isTerm': state.isTerm,
                 'atContentIndex': contentIndex,
                 'value': value,
@@ -464,11 +472,11 @@ class Files extends Notifier<FilesState> {
 
   Future<bool> addContentValue(String value, int contentIndex, {int? contentValueIndex}) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Files.addContentValue is called...");
-      log.debug("addContentValue input: contentIndex=$contentIndex, isTerm=${state.isTerm}");
+      log.debug({'state': state, 'value': value, 'contentIndex': contentIndex, 'contentValueIndex': contentValueIndex});
 
       if (state.files == null) {
         log.warning("addContentValue rejected: no files loaded in state");
@@ -486,6 +494,7 @@ class Files extends Notifier<FilesState> {
       }
 
       // Update
+      String type = contents[contentIndex].type.name;
       if (contentValueIndex != null) {
         contents[contentIndex].value.insert(contentValueIndex, value);
       } else {
@@ -499,7 +508,7 @@ class Files extends Notifier<FilesState> {
               '/api/leaf/content/value',
               data: {
                 'leafId': tempFile.id,
-                'type': 'imageId',
+                'type': type,
                 'isTerm': state.isTerm,
                 'atContentIndex': contentIndex,
                 'value': value,
@@ -536,7 +545,7 @@ class Files extends Notifier<FilesState> {
 
   Future<bool> removeContentValue(int contentIndex, int valueIndex) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Files.removeContentValue is called...");
@@ -558,6 +567,7 @@ class Files extends Notifier<FilesState> {
       }
 
       // Update
+      String type = contents[contentIndex].type.name;
       contents[contentIndex].value.removeAt(valueIndex);
       log.debug(
         "removeContentValue removed value at contentIndex=$contentIndex, valueIndex=$valueIndex, new value length=${contents[contentIndex].value.length}",
@@ -567,13 +577,7 @@ class Files extends Notifier<FilesState> {
         () => _authDio
             .delete(
               '/api/leaf/content/value',
-              data: {
-                'leafId': tempFile.id,
-                'type': 'imageId',
-                'isTerm': state.isTerm,
-                'atContentIndex': contentIndex,
-                'atContentValueIndex': valueIndex,
-              },
+              data: {'leafId': tempFile.id, 'type': type, 'isTerm': state.isTerm, 'atContentIndex': contentIndex, 'atContentValueIndex': valueIndex},
               options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: true}),
             )
             .notifyOnSuccess(l10n.content_value_remove_success),
@@ -605,7 +609,7 @@ class Files extends Notifier<FilesState> {
 
   Future<bool> moveContent(int fromIndex, int toIndex) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Files.moveContent is called...");
@@ -640,32 +644,17 @@ class Files extends Notifier<FilesState> {
       contents.insert(toIndex, fromContent);
       log.debug("moveContent reordered: fromIndex=$fromIndex, resolvedToIndex=$toIndex, fileId=${file.id}");
 
-      ApiCallResult<dynamic> addResult = await apiCall(
+      ApiCallResult<dynamic> result = await apiCall(
         () => _authDio
-            .post(
-              '/api/leaf/content',
-              data: {'leafId': file.id, 'type': 'imageId', 'isTerm': state.isTerm, 'atIndex': toIndex + 1},
+            .put(
+              '/api/leaf/',
+              data: {'leafId': file.id, state.isTerm ? 'termContents' : 'definitionContents': contents},
               options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: true}),
             )
             .notifyOnSuccess(l10n.content_add_success),
       );
-      if (addResult.isFailure) {
+      if (result.isFailure) {
         log.warning("moveContent rejected: request failed to add content for fileId=${file.id}");
-        NotificationService.showError(context: rootContext!, message: l10n.content_add_failed);
-        return false;
-      }
-
-      ApiCallResult<dynamic> deleteResult = await apiCall(
-        () => _authDio
-            .delete(
-              '/api/leaf/content',
-              data: {'leafId': file.id, 'type': 'imageId', 'isTerm': state.isTerm, 'atIndex': fromIndex + 1},
-              options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: true}),
-            )
-            .notifyOnSuccess(l10n.content_add_success),
-      );
-      if (deleteResult.isFailure) {
-        log.warning("moveContent rejected: request failed to delete content for fileId=${file.id}");
         NotificationService.showError(context: rootContext!, message: l10n.content_add_failed);
         return false;
       }
@@ -688,7 +677,7 @@ class Files extends Notifier<FilesState> {
 
   Future<bool> moveContentValue(int contentIndex, int fromIndex, int toIndex) async {
     AppLocalizations l10n = AppLocalizations.of(rootContext!)!;
-    final log = Talker();
+    final log = talker;
 
     try {
       log.info("Files.moveContentValue is called...");
@@ -717,6 +706,7 @@ class Files extends Notifier<FilesState> {
       }
 
       final content = contents[contentIndex];
+      String type = content.type.name;
 
       if (toIndex > content.value.length || fromIndex >= content.value.length) {
         log.warning("moveContentValue rejected: content value not found (fromIndex=$fromIndex, toIndex=$toIndex, length=${content.value.length})");
@@ -731,45 +721,17 @@ class Files extends Notifier<FilesState> {
       content.value.insert(toIndex, fromContentValue);
       log.debug("moveContentValue reordered: contentIndex=$contentIndex, fromIndex=$fromIndex, resolvedToIndex=$toIndex, fileId=${file.id}");
 
-      ApiCallResult<dynamic> addResult = await apiCall(
+      ApiCallResult<dynamic> result = await apiCall(
         () => _authDio
-            .post(
-              '/api/leaf/content/value',
-              data: {
-                'leafId': file.id,
-                'type': 'imageId',
-                'isTerm': state.isTerm,
-                'atContentIndex': contentIndex,
-                'value': fromContentValue,
-                'atContentValueIndex': toIndex + 1,
-              },
+            .put(
+              '/api/leaf/content/',
+              data: {'leafId': file.id, 'isTerm': state.isTerm, 'atIndex': contentIndex, 'content': content},
               options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: true}),
             )
             .notifyOnSuccess(l10n.content_add_success),
       );
-      if (addResult.isFailure) {
+      if (result.isFailure) {
         log.warning("moveContent rejected: request failed to add content for fileId=${file.id}");
-        NotificationService.showError(context: rootContext!, message: l10n.content_add_failed);
-        return false;
-      }
-
-      ApiCallResult<dynamic> deleteResult = await apiCall(
-        () => _authDio
-            .delete(
-              '/api/leaf/content/value',
-              data: {
-                'leafId': file.id,
-                'type': 'imageId',
-                'isTerm': state.isTerm,
-                'atContentIndex': contentIndex,
-                'atContentValueIndex': fromIndex + 1,
-              },
-              options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: true}),
-            )
-            .notifyOnSuccess(l10n.content_add_success),
-      );
-      if (deleteResult.isFailure) {
-        log.warning("moveContent rejected: request failed to delete content for fileId=${file.id}");
         NotificationService.showError(context: rootContext!, message: l10n.content_add_failed);
         return false;
       }

@@ -1,8 +1,8 @@
-import "package:client/api/action_controller.dart";
 import "package:client/auth/auth_controller.dart";
 import "package:client/auth/auth_state.dart";
 import "package:client/components/checkout/checkout_dialog.dart";
 import "package:client/l10n/app_localizations.dart";
+import "package:client/lib/talker.dart";
 import "package:client/plan/all_plans_notifier.dart";
 import "package:client/plan/models/currency_label.dart";
 import "package:client/subscription/models/subscription.dart";
@@ -11,7 +11,6 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "package:client/plan/models/plan.dart";
-import "package:talker/talker.dart";
 import "currency_formatter.dart";
 
 /// Public pricing page. No auth required — this is meant to be
@@ -57,7 +56,7 @@ class _PricingPageState extends ConsumerState<PricingPage> {
         child: const Center(child: CircularProgressIndicator()),
       );
     } else if (plansState.error != null || subscriptionState.error != null) {
-      Talker().error("allPlansProvider threw an error", plansState.error);
+      talker.error("allPlansProvider threw an error", plansState.error);
       return Padding(
         padding: const EdgeInsets.all(48.0),
         child: _RetryState(message: l10n.pricing_page_could_not_load, onRetry: () => ref.read(allPlansProvider.notifier).refresh()),
@@ -85,7 +84,7 @@ class _PricingPageState extends ConsumerState<PricingPage> {
           }
         }
       } catch (e) {
-        Talker().error("sorting plans failed", e);
+        talker.error("sorting plans failed", e);
         sortedPlans = plans;
       }
 

@@ -24,7 +24,7 @@ import 'package:client/subscription/subscription_notifier.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 class AuthController extends Notifier<AuthState> implements AuthApi {
   late final TokenStorage _storage;
@@ -47,48 +47,56 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
   }
 
   Future<void> _initialize() async {
-    Talker().info('kIsWeb: $kIsWeb, AuthController._initialize called...');
+    talker.info('kIsWeb: $kIsWeb, AuthController._initialize called...');
 
     if (kIsWeb) {
       try {
         final result = await refresh(null, silent: true);
-        Talker().info('refresh result: $result');
+        talker.info('refresh result: $result');
+        if (result == null) {
+          await _storage.clear();
+          state = const AuthState(AuthStatus.unauthenticated);
+          return;
+        }
 
         await _completeAuthentication(result.accessToken, null);
       } catch (e) {
-        Talker().error('error: $e');
+        talker.error('error: $e');
         await _storage.clear();
         state = const AuthState(AuthStatus.unauthenticated);
       }
-      Talker().info('AuthController._initialize ended (web)');
+      talker.info('AuthController._initialize ended (web)');
       return;
     }
 
     // Mobile/desktop: no cookie jar, so a refresh attempt is only
     // worth making if we actually have a token to send.
     final refreshToken = await _storage.getRefreshToken();
-    Talker().info('refreshToken: $refreshToken');
+    talker.info('refreshToken: $refreshToken');
 
     if (refreshToken == null) {
       state = const AuthState(AuthStatus.unauthenticated);
-      Talker().info('AuthController._initialize ended');
+      talker.info('AuthController._initialize ended');
       return;
     }
 
     try {
       final result = await refresh(refreshToken, silent: true);
-      Talker().info('refresh result: $result');
+      talker.info('refresh result: $result');
+      if (result == null) {
+        await _storage.clear();
+        state = const AuthState(AuthStatus.unauthenticated);
+        return;
+      }
 
       await _completeAuthentication(result.accessToken, result.refreshToken);
     } catch (e) {
-      Talker().error('error: $e');
-
+      talker.error('error: $e');
       await _storage.clear();
-
       state = const AuthState(AuthStatus.unauthenticated);
     }
 
-    Talker().info('AuthController._initialize ended');
+    talker.info('AuthController._initialize ended');
   }
 
   /// Persists tokens and flips global session state to authenticated.
@@ -110,15 +118,15 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
     try {
       await Future.wait([
         ref.read(userUsageProvider.notifier).refresh().catchError((e) {
-          Talker().error('error caught in _onAuthenticated method of AuthController class', e);
+          talker.error('error caught in _onAuthenticated method of AuthController class', e);
           return false;
         }),
         ref.read(subscriptionProvider.notifier).refresh().catchError((e) {
-          Talker().error('error caught in _onAuthenticated method of AuthController class', e);
+          talker.error('error caught in _onAuthenticated method of AuthController class', e);
           return false;
         }),
         ref.read(userInfoProvider.notifier).refresh().catchError((e) {
-          Talker().error('error caught in _onAuthenticated method of AuthController class', e);
+          talker.error('error caught in _onAuthenticated method of AuthController class', e);
           return false;
         }),
       ]);
@@ -141,33 +149,38 @@ class AuthController extends Notifier<AuthState> implements AuthApi {
           ref
               .read(localeControllerProvider.notifier)
               .setLocale(userInfo.locale != null ? Locale(userInfo.locale!) : ref.read(localeControllerProvider))
-              .catchError((e) => Talker().error('error caught in _onAuthenticated method of AuthController class', e)),
+              .catchError((e) => talker.error('error caught in _onAuthenticated method of AuthController class', e)),
           ref
               .read(calendarControllerProvider.notifier)
               .setCalendarType(userInfo.calendarType != null ? userInfo.calendarType! : ref.read(calendarControllerProvider))
-              .catchError((e) => Talker().error('error caught in _onAuthenticated method of AuthController class', e)),
+              .catchError((e) => talker.error('error caught in _onAuthenticated method of AuthController class', e)),
           ref
               .read(timezoneControllerProvider.notifier)
               .setZone(userInfo.timeZone != null ? userInfo.timeZone! : ref.read(timezoneControllerProvider))
-              .catchError((e) => Talker().error('error caught in _onAuthenticated method of AuthController class', e)),
+              .catchError((e) => talker.error('error caught in _onAuthenticated method of AuthController class', e)),
         ]);
       });
     } catch (e) {
-      Talker().error('error caught in _onAuthenticated method of AuthController class', e);
+      talker.error('error caught in _onAuthenticated method of AuthController class', e);
     }
   }
 
-  Future<RefreshResponse> refresh(String? refreshToken, {bool silent = false}) async {
-    Talker().info('AuthController.refresh called...');
+  Future<RefreshResponse?> refresh(String? refreshToken, {bool silent = false}) async {
+    talker.info('AuthController.refresh called...');
 
-    final response = await _authDio.post(
-      '/api/auth/refresh',
-      data: {'refreshToken': kIsWeb ? null : refreshToken, 'client': _client},
-      options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: silent}),
+    final response = await apiCall(
+      () => _authDio.post(
+        '/api/auth/refresh',
+        data: {'refreshToken': kIsWeb ? null : refreshToken, 'client': _client},
+        options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: silent}),
+      ),
     );
-    Talker().info('response status code: ${response.statusCode}');
+    talker.info({'response.dataOrNull': response.dataOrNull});
+    if (response.isFailure || response.dataOrNull == null) {
+      return null;
+    }
 
-    return RefreshResponse(accessToken: response.data['data']['accessToken'], refreshToken: response.data['data']?['refreshToken']);
+    return RefreshResponse(accessToken: response.dataOrNull['accessToken'], refreshToken: response.dataOrNull?['refreshToken']);
   }
 
   @override

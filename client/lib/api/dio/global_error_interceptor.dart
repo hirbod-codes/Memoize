@@ -4,7 +4,7 @@ import 'package:client/api/root_navigator_key.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 /// The single place that reads a failed API response and shows the
 /// error to the user. Attach this to every Dio instance that talks to
@@ -33,7 +33,7 @@ class GlobalErrorInterceptor extends Interceptor {
 
   @override
   void onError(Exception err, ErrorInterceptorHandler? handler) {
-    Talker().error('error caught in GlobalErrorInterceptor', err);
+    talker.error('error caught in GlobalErrorInterceptor', err);
     if (err is DioException) {
       if (!_isSilent) {
         final message = _messageFor(err);

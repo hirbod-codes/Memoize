@@ -2,18 +2,19 @@ import { Upload } from "@aws-sdk/lib-storage";
 import { fileTypeFromFile } from "file-type";
 import { s3 } from "..";
 import { BUCKET_NAME, MAX_UPLOAD_SIZE } from "../configs";
-import { Readable } from "stream";
+import { Readable, Transform } from "stream";
 import Busboy from 'busboy';
 import { stat, unlink } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
 import { createWriteStream } from "fs";
 import { pipeline } from "stream/promises";
-import type { ReadableStream as NodeWebReadableStream } from 'stream/web';
 import { UploadTooLargeError } from "../errors/UploadTooLargeError";
 import { InvalidMediaError } from "../errors/InvalidMediaError";
 import { Request } from "express";
 import { DeleteObjectCommand, HeadObjectCommand, S3ServiceException } from "@aws-sdk/client-s3";
+import type { IncomingMessage } from 'node:http';
+import { extname } from "node:path";
 
 export async function detectContentType(filePath: string): Promise<{ mimeType: string; extension: string }> {
     const type = await fileTypeFromFile(filePath);
@@ -141,8 +142,107 @@ export function toPlainHeaders(headers: Request['headers'] | globalThis.Headers)
     return headers as unknown as Record<string, string>;
 }
 
-export function receiveUpload(req: Request, fileSizeLimit: number, destDir: string): Promise<{ path: string; size: number; originalFilename: string }> {
-    fileSizeLimit = Math.max(fileSizeLimit, MAX_UPLOAD_SIZE)
+
+const ALLOWED_EXT = /^\.[a-z0-9]{1,5}$/i;
+
+export function receiveUpload(req: IncomingMessage, fileSizeLimit: number, destDir: string): Promise<{ path: string; size: number; originalFilename: string }> {
+    fileSizeLimit = Math.min(fileSizeLimit, MAX_UPLOAD_SIZE)
+
+    return new Promise((resolve, reject) => {
+        const contentType = req.headers['content-type'] ?? '';
+        if (!contentType.startsWith('multipart/form-data')) {
+            reject(new InvalidMediaError('Expected multipart/form-data'));
+            return;
+        }
+
+        const bb = Busboy({ headers: req.headers, limits: { files: 1, fileSize: fileSizeLimit } });
+
+        let handled = false;
+        let tempPath: string | null = null;
+        let originalFilename = 'upload';
+
+        const fail = (err: Error) => {
+            if (handled) return;
+            handled = true;
+            if (tempPath) unlink(tempPath).catch(() => { });
+            reject(err);
+        };
+
+        let fileSeen = false;
+
+        bb.on('file', (_name, file, info) => {
+            fileSeen = true;
+
+            originalFilename = info.filename || originalFilename;
+            const ext = extname(originalFilename);
+            tempPath = join(destDir, `${randomUUID()}-input${ALLOWED_EXT.test(ext) ? ext : ''}`);
+            const writeStream = createWriteStream(tempPath);
+
+            let limitExceeded = false;
+            file.on('limit', () => {
+                limitExceeded = true;
+                writeStream.destroy();
+                file.resume();
+            });
+
+            pipeline(file, writeStream)
+                .then(async () => {
+                    if (limitExceeded) {
+                        fail(new UploadTooLargeError(`File exceeds plan limit of ${fileSizeLimit} bytes`));
+                        return;
+                    }
+                    if (handled) return;
+                    handled = true;
+                    const { size } = await stat(tempPath!);
+                    resolve({ path: tempPath!, size, originalFilename });
+                })
+                .catch((err) => fail(limitExceeded
+                    ? new UploadTooLargeError(`File exceeds plan limit of ${fileSizeLimit} bytes`)
+                    : err));
+        });
+
+        bb.on('error', (err) => fail(err as Error));
+        bb.on('filesLimit', () => fail(new Error('Only one file allowed per upload')));
+        bb.on('close', () => { if (!fileSeen) fail(new InvalidMediaError('No file found in upload')) });
+
+        req.on('error', (err) => fail(err));
+        req.pipe(bb);
+    });
+}
+
+export async function receiveUploadddddd(req: Request, fileSizeLimit: number, destDir: string, originalFilename = 'upload'): Promise<{ path: string; size: number; originalFilename: string }> {
+    // Fail fast if the client declares a too-large body
+    const declared = Number(req.headers['content-length']);
+    if (Number.isFinite(declared) && declared > fileSizeLimit) {
+        throw new UploadTooLargeError(`File exceeds plan limit of ${fileSizeLimit} bytes`);
+    }
+
+    const tempPath = join(destDir, `${randomUUID()}-input`);
+    let received = 0;
+
+    // Enforce the limit on actual bytes, since Content-Length can lie or be absent
+    const limiter = new Transform({
+        transform(chunk: Buffer, _enc, cb) {
+            received += chunk.length;
+            if (received > fileSizeLimit) {
+                return cb(new UploadTooLargeError(`File exceeds plan limit of ${fileSizeLimit} bytes`));
+            }
+            cb(null, chunk);
+        },
+    });
+
+    try {
+        await pipeline(req, limiter, createWriteStream(tempPath));
+    } catch (err) {
+        await unlink(tempPath).catch(() => { });
+        throw err;
+    }
+
+    return { path: tempPath, size: received, originalFilename };
+}
+
+export function receiveUploadd(req: Request, fileSizeLimit: number, destDir: string): Promise<{ path: string; size: number; originalFilename: string }> {
+    fileSizeLimit = Math.min(fileSizeLimit, MAX_UPLOAD_SIZE)
 
     return new Promise((resolve, reject) => {
         const bb = Busboy({ headers: toPlainHeaders(req.headers), limits: { files: 1, fileSize: fileSizeLimit } });
@@ -189,16 +289,9 @@ export function receiveUpload(req: Request, fileSizeLimit: number, destDir: stri
 
         bb.on('error', (err) => fail(err as Error));
         bb.on('filesLimit', () => fail(new Error('Only one file allowed per upload')));
+        bb.on('close', () => fail(new InvalidMediaError('No file found in upload')));
 
-        // req here is a fetch-standard Request — its body is a Web
-        // ReadableStream, not a Node stream, so it can't be piped directly.
-        // Convert it once, then feed Busboy manually.
-        if (!req.body) {
-            fail(new Error('Request has no body'));
-            return;
-        }
-        const nodeStream = Readable.fromWeb(req.body as unknown as NodeWebReadableStream<Uint8Array>);
-        nodeStream.on('error', (err) => fail(err));
-        nodeStream.pipe(bb);
+        req.on('error', (err) => fail(err));
+        req.pipe(bb);
     });
 }

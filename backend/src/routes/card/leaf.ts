@@ -10,13 +10,14 @@ import { meili } from '../..';
 import { handleError, validate } from '../../lib';
 import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
 import { authorizeAllowedContentTypes, authorizeCardsPerCategory, authorizeContentsPerCardSide, authorizeValuePerContent } from '../../middlewares/authorization';
-import { leafContentAddSchema, leafContentValueAddSchema, leafContentValueDeleteSchema, leafGetSchema, leafListSchema, leafPostSchema, leafUpdateSchema } from './schemas';
+import { leafContentAddSchema, leafContentPutSchema, leafContentValueAddSchema, leafContentValueDeleteSchema, leafGetSchema, leafListSchema, leafPostSchema, leafUpdateSchema } from './schemas';
 import { convertToPlanContentType } from '../../DB/models/Plan';
 import { valueExists } from './lib';
+import { subscriptionGate } from '../../middlewares/planGate';
 
 const router = express.Router();
 
-router.use(auth)
+router.use(auth, subscriptionGate)
 
 router.post('/', async (req, res) => {
     let log = getLogger().child({ module: 'leaf', route: 'POST /api/leaf' });
@@ -196,7 +197,40 @@ router.post('/content', async (req, res) => {
         }
 
         const leafRepository = new LeafRepository()
-        const updateResult = await leafRepository.addContentForUser(userId, leafId, isTerm, type, atIndex)
+        const updateResult = await runWithLogger(log, () => leafRepository.addContentForUser(userId, leafId, isTerm, type, atIndex))
+        console.log({ updateResult })
+        if (!updateResult.acknowledged) {
+            log.info('failed to add content')
+            return res.status(500).json({ status: 'error', status_code: 'INTERNAL_ERROR' })
+        }
+        if (updateResult.acknowledged && updateResult.matchedCount === 0) {
+            log.info("leaf doesn't belong to user or it doesn't exist")
+            return res.status(403).json({ status: 'error', status_code: 'FORBIDDEN' })
+        }
+
+        log.info('content created successfully')
+        return res.status(204).json({ status: 'success' })
+    } catch (err) {
+        runWithLogger(log, () => handleError(res, err))
+    }
+})
+
+router.put('/content', async (req, res) => {
+    let log = getLogger().child({ module: 'leaf', route: 'PUT /api/leaf/content' });
+
+    try {
+        log.info('leaf replace content request received');
+
+        log.debug({ body: req.body });
+        const { leafId, isTerm, atIndex, content } = await runWithLogger(log, () => validate(leafContentPutSchema, req.body))
+        log.info('input validated');
+        log.debug({ leafId, isTerm, atIndex, content });
+
+        const userId = req.user!.userId;
+        log.debug({ userId });
+
+        const leafRepository = new LeafRepository()
+        const updateResult = await runWithLogger(log, () => leafRepository.setContentForUser(userId, leafId, isTerm, atIndex, content))
         console.log({ updateResult })
         if (!updateResult.acknowledged) {
             log.info('failed to add content')
@@ -235,7 +269,7 @@ router.delete('/content', async (req, res) => {
         const leafRepository = new LeafRepository()
         leafRepository.setTransactionSession(session)
 
-        const leaf = await runWithLogger(log, () => leafRepository.getForUser(userId, leafId))
+        const leaf = await runWithLogger(log, () => leafRepository.getForUser(leafId, userId))
         log.debug({ leaf })
         if (!leaf) {
             log.info('leaf not found')
@@ -247,7 +281,7 @@ router.delete('/content', async (req, res) => {
         const update: LeafUpdate = { _id: leafId, [contentsKey]: [] }
         update[contentsKey] = leaf[contentsKey].filter((e, i) => i !== atIndex)
 
-        const updateResult = await leafRepository.updateForUser(update, userId)
+        const updateResult = await runWithLogger(log, () => leafRepository.updateForUser(update, userId))
         console.log({ updateResult })
         if (!updateResult.acknowledged) {
             log.info('failed to delete content')
@@ -290,7 +324,7 @@ router.post('/content/value', async (req, res) => {
         }
 
         const leafRepository = new LeafRepository()
-        const leaf = await runWithLogger(log, () => leafRepository.getForUser(userId, leafId))
+        const leaf = await runWithLogger(log, () => leafRepository.getForUser(leafId, userId))
         log.debug({ leaf })
         if (!leaf) {
             log.info('leaf not found')
@@ -298,7 +332,7 @@ router.post('/content/value', async (req, res) => {
         }
 
         const contentsKey = isTerm ? 'termContents' : 'definitionContents';
-        if (leaf[contentsKey].length >= atContentIndex) {
+        if (leaf[contentsKey].length <= atContentIndex) {
             log.info('content not found')
             return res.status(404).json({ status: 'error', status_code: 'CONTENT_NOT_FOUND' })
         }
@@ -395,18 +429,18 @@ router.delete('/content/value', async (req, res) => {
     }
 })
 
-router.patch('/', async (req, res) => {
-    let log = getLogger().child({ module: 'leaf', route: 'PATCH /api/leaf/' });
+router.put('/', async (req, res) => {
+    let log = getLogger().child({ module: 'leaf', route: 'PUT /api/leaf/' });
 
     let db: MongoDB | undefined = undefined
     try {
-        log.info('leaf delete content value request received');
+        log.info('leaf replace request received');
 
         log.debug({ body: req.body });
-        const { title: newTitle, leafId, treeNodeId } = await runWithLogger(log, () => validate(leafUpdateSchema, req.body))
-        log.debug({ newTitle, leafId, treeNodeId });
+        const { title: newTitle, leafId, treeNodeId, termContents, definitionContents } = await runWithLogger(log, () => validate(leafUpdateSchema, req.body))
+        log.debug({ newTitle, leafId, treeNodeId, termContents, definitionContents });
 
-        if (!title && !treeNodeId) {
+        if (!newTitle && !treeNodeId) {
             log.info('At least one parameter must be provided by the client');
             return res.status(400).json({ status: 'error', error_code: 'AT_LEAST_ONE_PARAMETER_MUST_BE_PROVIDED' })
         }
@@ -416,8 +450,8 @@ router.patch('/', async (req, res) => {
         const userId = req.user!.userId;
         log.debug({ userId });
 
-        db = MongoDB.getClient()
-        const session = db.startTransaction()
+        db = MongoDB.getDbInstance()
+        const session = await db.startTransaction()
 
         const treeNodeRepository = new TreeNodeRepository()
         treeNodeRepository.setTransactionSession(session)
@@ -425,21 +459,15 @@ router.patch('/', async (req, res) => {
         const leafRepository = new LeafRepository()
         leafRepository.setTransactionSession(session)
 
-        const updates: LeafUpdate = {}
+        const updates: LeafUpdate = { _id: leafId }
 
         if (treeNodeId) {
-            const parentTreeNode = await treeNodeRepository.get(treeNodeId)
+            const parentTreeNode = await runWithLogger(log, () => treeNodeRepository.getForUser(treeNodeId, userId))
             log.debug({ parentTreeNode });
             if (!parentTreeNode) {
                 log.info("requested parent tree node is not found");
                 await db.abortTransaction()
                 return res.status(404).json({ status: 'error', error_code: 'TREENODE_NOT_FOUND' })
-            }
-
-            if (parentTreeNode.userId !== userId) {
-                log.info("requested parent tree node does'n belong to user");
-                await db.abortTransaction()
-                return res.status(403).send()
             }
 
             updates.treeNodeId = treeNodeId
@@ -448,8 +476,14 @@ router.patch('/', async (req, res) => {
         if (newTitle)
             updates.title = newTitle
 
+        if (definitionContents)
+            updates.definitionContents = definitionContents
+
+        if (termContents)
+            updates.termContents = termContents
+
         log.info('updating leaf')
-        const updateResult = await leafRepository.updateForUser({ _id: leafId, ...updates }, userId)
+        const updateResult = await runWithLogger(log, () => leafRepository.updateForUser(updates, userId))
         log.debug({ updateResult })
         if (!updateResult.acknowledged) {
             log.warn('failed to update card')
@@ -510,7 +544,7 @@ router.delete('/', async (req, res) => {
 
         console.log("deleting leaf...");
         const leafRepository = new LeafRepository()
-        const leaf = await leafRepository.delete(id)
+        const leaf = await leafRepository.deleteForUser(id, req.user!.userId)
         if (!leaf.acknowledged || leaf.deletedCount === 0)
             return res.status(500).send()
 

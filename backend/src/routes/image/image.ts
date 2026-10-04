@@ -24,10 +24,14 @@ import {
 } from './schemas';
 import UsageRepository from '../../DB/repositories/UsageRepository';
 import { MongoDB } from '../../DB/mongodb';
+import { subscriptionGate } from '../../middlewares/planGate';
+import { randomUUID } from 'crypto';
 
 const router = express.Router();
 
-router.post('/', auth, async (req, res) => {
+router.use(auth, subscriptionGate)
+
+router.post('/', async (req, res) => {
     let log = getLogger().child({ module: 'image', route: 'POST /api/image/' });
 
     try {
@@ -59,7 +63,7 @@ router.post('/', auth, async (req, res) => {
         }
 
         // ------------------------------------------------------------------------- Inserting image...
-        const imageInsertResult = await runWithLogger(log, () => imageRepository.insert({ title, userId, temporary: true }));
+        const imageInsertResult = await runWithLogger(log, () => imageRepository.insert({ title: `${randomUUID()}__UNIQUE_SEPARATOR__${title}`, userId, temporary: true }));
         log.debug({ imageInsertResult });
         if (!imageInsertResult.acknowledged || !imageInsertResult.insertedId) {
             log.error({ imageInsertResult }, 'temporary image info creation failed');
@@ -144,6 +148,7 @@ router.post('/', auth, async (req, res) => {
                     imageId,
                     userId,
                     {
+                        title,
                         contentType: contentType,
                         temporary: false,
                         totalFilesBytes,
@@ -168,12 +173,12 @@ router.post('/', auth, async (req, res) => {
             }
         } catch (err) {
             if (err instanceof UploadTooLargeError) {
-                res.status(402).json({ status: 'error', error: err.message });
+                return res.status(402).json({ status: 'error', error: err.message });
             } else if (err instanceof InvalidMediaError) {
-                res.status(400).json({ status: 'error', error: err.message });
+                return res.status(400).json({ status: 'error', error: err.message });
             } else {
                 log.error({ err }, 'Image upload failed');
-                res.status(500).json({ status: 'error', error: 'Upload failed' });
+                return res.status(500).json({ status: 'error', error: 'Upload failed' });
             }
         } finally {
             await cleanup();
@@ -189,7 +194,7 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-router.get('/', auth, async (req, res) => {
+router.get('/', async (req, res) => {
     let log = getLogger().child({ module: 'image', route: 'GET /api/image/' });
 
     try {
@@ -222,7 +227,7 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
-router.get('/info/', auth, async (req, res) => {
+router.get('/info/', async (req, res) => {
     let log = getLogger().child({ module: 'image', route: 'GET /api/image/info/' });
 
     try {
@@ -255,7 +260,7 @@ router.get('/info/', auth, async (req, res) => {
     }
 });
 
-router.get('/file/:imageId', auth, async (req, res) => {
+router.get('/file/:imageId', async (req, res) => {
     let log = getLogger().child({ module: 'image', route: 'GET /api/image/file/:imageId' });
 
     try {
@@ -311,7 +316,7 @@ router.get('/file/:imageId', auth, async (req, res) => {
     }
 });
 
-router.delete('/:imageId', auth, async (req, res) => {
+router.delete('/:imageId', async (req, res) => {
     let log = getLogger().child({ module: 'image', route: 'DELETE /api/image/:imageId' });
 
     let db: MongoDB | undefined = undefined

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 /// Mirrors the backend's response envelope:
 ///
@@ -41,7 +41,7 @@ sealed class ApiResponse {
     if (value is String) {
       try {
         value = jsonDecode(value);
-        Talker().info('json decoded value in tryParse method', value);
+        talker.info('json decoded value in tryParse method', value);
       } catch (_) {
         return null; // not JSON at all — e.g. an HTML error page from a proxy
       }

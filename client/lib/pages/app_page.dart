@@ -16,7 +16,7 @@ import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 class AppPage extends StatelessWidget {
   const AppPage({super.key});
@@ -247,7 +247,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
         });
       }
     } catch (e) {
-      Talker().error('The _paginate method in AppPage widget threw an error.', e);
+      talker.error('The _paginate method in AppPage widget threw an error.', e);
       NotificationService.showError(message: filter == Filter.file ? l10n.app_page_file_pagination_failed : l10n.app_page_folder_pagination_failed);
     } finally {
       if (mounted) {

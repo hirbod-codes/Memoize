@@ -16,7 +16,7 @@ import 'package:client/api/dio/global_error_interceptor.dart';
 import 'package:client/plan/models/plan.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 import 'all_plans_storage.dart';
 
 class AllPlansState {
@@ -63,7 +63,7 @@ class AllPlansNotifier extends Notifier<AllPlansState> {
       state = state.copyWith(info: info, isLoading: false, clearError: true);
       return true;
     } catch (e) {
-      Talker().error('caught error in refresh method of AllPlansNotifier', e);
+      talker.error('caught error in refresh method of AllPlansNotifier', e);
       state = state.copyWith(isLoading: false, error: 'Failed to fetch all plans.');
       return false;
     }

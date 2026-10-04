@@ -10,7 +10,7 @@ import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart' hide ImageInfo;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 class ImageContainer extends ConsumerStatefulWidget {
   final String imageId;
@@ -30,34 +30,31 @@ class _ImagesState extends ConsumerState<ImageContainer> {
   void initState() {
     super.initState();
 
-    ref
-        .read(imageControllerProvider)
-        .get(imageId: widget.imageId)
-        .then((v) {
-          if (!mounted) return;
-
-          final storage = ref.read(tokenStorageProvider);
-
-          storage
-              .getAccessToken()
-              .then((t) {
-                if (!mounted) return;
-
-                setState(() {
-                  if (t != null && t != '') {
-                    _token = t;
-                  }
-                  _image = v as ImageInfo;
-                  _loading = false;
-                });
-              })
-              .catchError(_handleError);
-        })
-        .catchError(_handleError);
+    _init();
   }
 
-  FutureOr<Null> _handleError(dynamic e, dynamic st) {
-    Talker().error('caught error while trying to fetch audio', e);
+  void _init() async {
+    try {
+      final image = await ref.read(imageControllerProvider).get(imageId: widget.imageId);
+      talker.info({'image': image?.toString()});
+      if (!mounted) return;
+
+      final s = ref.watch(tokenStorageProvider);
+      final token = await s.getAccessToken();
+      if (!mounted) return;
+
+      setState(() {
+        _image = image;
+        _token = token;
+        _loading = false;
+      });
+    } catch (e, st) {
+      _handleError(e, st);
+    }
+  }
+
+  FutureOr<Null> _handleError(dynamic e, StackTrace st) {
+    talker.error('caught error while trying to fetch image', e, st);
     if (!mounted) return null;
 
     AppLocalizations l10n = AppLocalizations.of(context)!;

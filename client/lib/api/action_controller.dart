@@ -5,7 +5,7 @@ import 'package:client/components/global/notification_service.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 /// Generic loading/error wrapper for a single in-flight auth action
 /// (login, signup, send-otp, verify-otp, reset-password — whichever
@@ -29,11 +29,11 @@ class ActionController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     final result = await AsyncValue.guard(action);
     state = result;
-    Talker().debug({state});
+    talker.debug({state});
 
     final error = result.error;
     if (shouldNotifyUser && error != null && error is! DioException) {
-      Talker().error('caught error in action controller', error, result.stackTrace);
+      talker.error('caught error in action controller', error, result.stackTrace);
 
       NotificationService.showError(message: rootContext == null ? 'Something went wrong.' : AppLocalizations.of(rootContext!)!.uncaughtError);
     }

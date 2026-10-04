@@ -29,3 +29,6 @@ dist-ssr
 *.pem
 
 tmp
+video_tmp
+audio_tmp
+image_tmp

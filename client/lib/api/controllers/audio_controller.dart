@@ -1,13 +1,12 @@
 import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:client/api/api_call.dart';
 import 'package:client/api/models/audio.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
-import 'package:path/path.dart' as p;
+import 'package:image_picker/image_picker.dart';
+import 'package:client/lib/talker.dart';
 
 class AudioController {
   final Ref ref;
@@ -16,81 +15,58 @@ class AudioController {
 
   AudioController(this.ref);
 
-  Future<Response> postForWeb({required String title, required Uint8List bytes, required String fileName, ProgressCallback? onSendProgress}) async {
-    Talker().info('AudioController.post is called...');
+  Future<Response> post({required String title, required XFile file, ProgressCallback? onSendProgress}) async {
+    talker.info('AudioController.post is called...');
 
-    final response = await _authDio.post(
-      '/api/audio/?title=$title&fileName=$fileName',
-      data: Stream.fromIterable([bytes]),
-      options: Options(headers: {Headers.contentLengthHeader: bytes.length}),
-      onSendProgress: onSendProgress,
-    );
-    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
+    final form = FormData.fromMap({'file': MultipartFile.fromStream(() => file.openRead(), await file.length(), filename: file.name)});
+    final response = await _authDio.post('/api/audio/', data: form, queryParameters: {'title': title, 'fileName': file.name}, onSendProgress: onSendProgress);
 
-    Talker().info('AudioController.post call ended');
-    return response;
-  }
+    talker.info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
 
-  Future<Response> post({required String title, required File file, String? fileName, ProgressCallback? onSendProgress}) async {
-    Talker().info('AudioController.post is called...');
-
-    final length = await file.length();
-
-    final response = await _authDio.post(
-      '/api/audio/?title=$title&fileName=${fileName ?? p.basename(file.path)}',
-      data: file.openRead(),
-      options: Options(headers: {Headers.contentLengthHeader: length}),
-      onSendProgress: onSendProgress,
-    );
-    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
-
-    Talker().info('AudioController.post call ended');
+    talker.info('AudioController.post call ended');
     return response;
   }
 
   Future<Audio?> get({required String audioId}) async {
-    Talker().info('AudioController.get is called...');
+    talker.info('AudioController.get is called...');
 
-    final response = await _authDio.get('/api/audio/info?audioId=$audioId');
-    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
-    if (response.data == null) {
-      Talker().info('Null response data!');
-      Talker().info('AudioController.get call ended');
+    final response = await apiCall(() => _authDio.get('/api/audio/info?audioId=$audioId'));
+    talker.info({'response.dataOrNull': response.dataOrNull});
+    if (response.isFailure || response.dataOrNull == null) {
+      talker.info('Null response data!');
+      talker.info('AudioController.get call ended');
       return null;
     }
 
-    Talker().info('AudioController.get call ended');
-    return Audio.fromJson(response.data);
+    return Audio.fromJson(response.dataOrNull);
   }
 
   Future<String?> getSignedToken({required String audioId}) async {
-    Talker().info('AudioController.get is called...');
+    talker.info('AudioController.get is called...');
 
-    final response = await _authDio.get('/api/audio/singed_token?audioId=$audioId');
-    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
-    if (response.data == null) {
-      Talker().info('Null response data!');
-      Talker().info('AudioController.get call ended');
+    final response = await apiCall(() => _authDio.get('/api/audio/singed_token?audioId=$audioId'));
+    talker.info({'response.dataOrNull': response.dataOrNull});
+    if (response.isFailure || response.dataOrNull == null) {
+      talker.info('Null response data!');
+      talker.info('AudioController.get call ended');
       return null;
     }
 
-    Talker().info('VideoController.get call ended');
-    return response.data['token'];
+    return response.dataOrNull;
   }
 
   Future<Audio?> getByTitle({required String title}) async {
-    Talker().info('AudioController.getByTitle is called...');
+    talker.info('AudioController.getByTitle is called...');
 
-    final response = await _authDio.get('/api/audio/info?title=$title');
-    Talker().info('response status code: ${response.statusCode}, data: ${jsonEncode(response.data)}');
-    if (response.data == null) {
-      Talker().info('Null response data!');
-      Talker().info('AudioController.getByTitle call ended');
+    final response = await apiCall(() => _authDio.get('/api/audio/info?title=$title'));
+    talker.info({'response.dataOrNull': response.dataOrNull});
+    if (response.isFailure || response.dataOrNull == null) {
+      talker.info('Null response data!');
+      talker.info('AudioController.getByTitle call ended');
       return null;
     }
 
-    Talker().info('AudioController.getByTitle call ended');
-    return Audio.fromJson(response.data);
+    return Audio.fromJson(response.dataOrNull);
   }
 }
 

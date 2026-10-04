@@ -199,8 +199,6 @@ export const payments = {
             res.send('test route' + (new Date()).toISOString());
         });
 
-    app.use(subscriptionGate)
-
     app.use('/api/auth', authRoutes);
     app.use('/api/user', userRoutes);
     app.use('/api/leaf', leafRoutes);

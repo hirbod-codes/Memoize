@@ -1,6 +1,6 @@
-import 'dart:io';
-
+import 'package:client/api/api_call.dart';
 import 'package:client/api/controllers/audio_controller.dart';
+import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
@@ -8,6 +8,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -21,8 +22,7 @@ class AudioUploadDialog extends ConsumerStatefulWidget {
 class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
   final titleController = TextEditingController();
   Player? _player;
-  File? _audioFile;
-  Uint8List? _audioBytes;
+  XFile? _audioFile;
   String? _fileName;
 
   bool _picking = false;
@@ -40,42 +40,59 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
     setState(() => _picking = true);
     final result = await FilePicker.pickFiles(type: FileType.audio, allowMultiple: false, withData: kIsWeb);
     if (!mounted) return;
-
     setState(() => _picking = false);
-
     if (result == null) return;
 
-    final path = result.files.single.path;
-    if (path == null) return;
+    final picked = result.files.single;
 
-    final bytes = result.files.single.bytes;
-    if (kIsWeb && bytes == null) return;
-
-    final file = File(path);
+    final XFile xFile;
+    if (kIsWeb) {
+      final bytes = picked.bytes;
+      if (bytes == null) return;
+      xFile = XFile.fromData(bytes, name: picked.name, length: bytes.length);
+    } else {
+      final path = picked.path;
+      if (path == null) return;
+      xFile = XFile(path, name: picked.name);
+    }
 
     await _player?.dispose();
-
     final player = Player();
-
-    await player.open(Media(path), play: false);
+    await player.open(Media(xFile.path), play: false);
 
     player.stream.playing.listen((playing) {
-      if (mounted) {
-        setState(() {
-          _playing = playing;
-        });
-      }
+      if (mounted) setState(() => _playing = playing);
     });
 
     setState(() {
-      if (kIsWeb) {
-        _audioBytes = bytes;
-      } else {
-        _audioFile = file;
-      }
-      _fileName = result.files.single.name;
+      _audioFile = xFile;
+      _fileName = picked.name;
       _player = player;
+
+      List<String> split = picked.name.split('.');
+      split.removeLast();
+      titleController.text = split.join(' ');
     });
+  }
+
+  bool isButtonDisabled() => _audioFile == null || titleController.text.trim().isEmpty;
+
+  Future<void> _upload() async {
+    if (isButtonDisabled()) return;
+    setState(() => _loading = true);
+
+    try {
+      final form = FormData.fromMap({'file': MultipartFile.fromStream(() => _audioFile!.openRead(), await _audioFile!.length(), filename: _audioFile!.name)});
+      final result = await apiCall(
+        () => ref.read(authDioProvider).post('/api/audio/', data: form, queryParameters: {'title': titleController.text.trim(), 'fileName': _audioFile!.name}),
+      );
+      if (!mounted) return;
+      if (result.isFailure || result.dataOrNull == null) return;
+
+      Navigator.pop(context, result.dataOrNull);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _togglePlay() async {
@@ -85,32 +102,6 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
       await _player!.pause();
     } else {
       await _player!.play();
-    }
-  }
-
-  bool isButtonDisabled() => (!kIsWeb && _audioFile == null) || (kIsWeb && _audioBytes == null) || titleController.text.trim().isEmpty;
-
-  Future<void> _upload() async {
-    if (isButtonDisabled()) return;
-
-    setState(() => _loading = true);
-
-    try {
-      Response<dynamic> res;
-      if (kIsWeb) {
-        res = await ref
-            .read(audioControllerProvider)
-            .postForWeb(title: titleController.text.trim(), bytes: _audioBytes!, fileName: _fileName ?? titleController.text.trim());
-      } else {
-        res = await ref.read(audioControllerProvider).post(title: titleController.text.trim(), file: _audioFile!, fileName: _fileName);
-      }
-
-      if (res.statusCode == null || res.statusCode! < 200 || res.statusCode! > 299) return;
-      if (!mounted) return;
-
-      Navigator.pop(context, res.data['id']);
-    } finally {
-      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -146,7 +137,7 @@ class _AudioUploadDialogState extends ConsumerState<AudioUploadDialog> {
                   border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: _audioFile == null && _audioBytes == null
+                child: _audioFile == null
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [

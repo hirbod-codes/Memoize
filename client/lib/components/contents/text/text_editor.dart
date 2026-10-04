@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker/talker.dart';
+import 'package:client/lib/talker.dart';
 
 class TextEditor extends ConsumerStatefulWidget {
   final bool editing;
@@ -47,7 +47,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
       }
     } catch (e) {
       _controller.document = Document();
-      Talker().error('Failure while trying to parse input json for the rich text editor, falling back to empty content for the editor.', e);
+      talker.error('Failure while trying to parse input json for the rich text editor, falling back to empty content for the editor.', e);
     }
 
     _controller.addListener(() {
@@ -90,7 +90,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
         _saving = false;
       });
     } catch (e) {
-      Talker().error('The _onSave method in TextEditor widget throws an error', e);
+      talker.error('The _onSave method in TextEditor widget throws an error', e);
       if (!mounted) return;
 
       setState(() {
@@ -106,7 +106,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
     final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
-    
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -143,7 +143,11 @@ class _TextEditorState extends ConsumerState<TextEditor> {
                 controller: _controller,
                 focusNode: _editorFocusNode,
                 scrollController: _editorScrollController,
-                config: QuillEditorConfig(placeholder: !widget.editing ? null :l10n.text_editor_placeholder, minHeight: 60, requestKeyboardFocusOnCheckListChanged: true),
+                config: QuillEditorConfig(
+                  placeholder: !widget.editing ? null : l10n.text_editor_placeholder,
+                  minHeight: 60,
+                  requestKeyboardFocusOnCheckListChanged: true,
+                ),
               ),
             ),
           ),
@@ -151,7 +155,15 @@ class _TextEditorState extends ConsumerState<TextEditor> {
           if (widget.editing)
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
-              children: [Button(type: ButtonType.text, color: _hasChanged ? ThemeColorName.warning : ThemeColorName.primary, icon: Icons.save, isLoading: _saving, onPressed: _onSave)],
+              children: [
+                Button(
+                  type: ButtonType.text,
+                  color: _hasChanged ? ThemeColorName.warning : ThemeColorName.primary,
+                  icon: Icons.save,
+                  isLoading: _saving,
+                  onPressed: _onSave,
+                ),
+              ],
             ),
         ],
       ),

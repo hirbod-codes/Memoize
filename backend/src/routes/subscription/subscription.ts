@@ -1,5 +1,5 @@
 import { Response, Router } from "express";
-import { auth, unAuth } from "../../middlewares/auth";
+import { auth } from "../../middlewares/auth";
 import { getLogger, runWithLogger } from "../../observability/requestLoggerContext";
 import { handleError, validate } from "../../lib";
 import { Redis } from "../../DB/redis";
