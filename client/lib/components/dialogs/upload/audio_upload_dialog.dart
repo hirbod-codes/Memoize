@@ -1,5 +1,4 @@
 import 'package:client/api/api_call.dart';
-import 'package:client/api/controllers/audio_controller.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';

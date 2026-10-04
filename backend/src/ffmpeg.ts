@@ -102,7 +102,7 @@ export function probeFile(filePath: string): Promise<{ streams: ProbeInfo[]; for
  */
 export function runFfmpeg(args: string[]): Promise<void> {
     return new Promise((resolve, reject) => {
-        const proc = spawn(FFMPEG_PATH, args);
+        const proc = spawn(FFMPEG_PATH, ['-hide_banner', '-loglevel', 'error', '-nostdin', ...args]);
 
         let stderr = '';
         let settled = false;

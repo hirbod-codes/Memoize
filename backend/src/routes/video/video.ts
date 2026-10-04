@@ -45,13 +45,13 @@ router.post('/', auth, subscriptionGate, async (req, res) => {
         log.debug({ fileName, title });
 
         const userId = req.user!.userId;
-        log.debug({ userId });
+        log = log.child({ userId });
 
         const videoRepository = new VideoRepository();
         const usageRepository = new UsageRepository();
 
-        // ------------------------------------------------------------------------- Checking whether title already exists...
-        log.info('Checking whether title already exists...')
+        // ------------------------------------------------------------------------- Checking whether title already exists
+        log.info('Checking whether title already exists')
 
         const existing = await runWithLogger(log, () => videoRepository.getForUserByTitle(title, userId))
         log.debug({ titleTaken: existing });
@@ -61,8 +61,8 @@ router.post('/', auth, subscriptionGate, async (req, res) => {
         }
         log.info('Checked title uniqueness')
 
-        // ------------------------------------------------------------------------- Inserting video...
-        log.info('Inserting video...')
+        // ------------------------------------------------------------------------- Inserting video
+        log.info('Inserting video')
 
         const videoInsertResult = await runWithLogger(log, () => videoRepository.insert({ title: `${randomUUID()}__UNIQUE_SEPARATOR__${title}`, fileName, userId, temporary: true }))
         log.debug({ insertResult: videoInsertResult });
@@ -73,7 +73,7 @@ router.post('/', auth, subscriptionGate, async (req, res) => {
         log.info('Inserted temporary video record')
 
         const videoId = videoInsertResult.insertedId.toString();
-        log.debug({ videoId });
+        log = log.child({ videoId });
 
         // ------------------------------------------------------------------------- Set bucket keys
         log.info('Set bucket keys')
@@ -105,7 +105,7 @@ router.post('/', auth, subscriptionGate, async (req, res) => {
 
         let rollbackPromises: undefined | Promise<any> = undefined
         try {
-            // ------------------------------------------------------------------------- fetch available storage bytes for user from user subscription and usage
+            // ------------------------------------------------------------------------- Available storage
             log.info('fetch available storage bytes for user from user subscription and usage')
             const maxTotalStorageBytes = req.user!.privileges!.storageBytes;
             log.debug({ maxTotalStorageBytes }, 'Resolved plan storage limit');
@@ -119,19 +119,21 @@ router.post('/', auth, subscriptionGate, async (req, res) => {
             const allowedStorageBytes = maxTotalStorageBytes - usage.storageBytes
             log.debug({ availableStorageBytes: allowedStorageBytes })
 
-            // ------------------------------------------------------------------------- Store upload stream on disk
+            // ------------------------------------------------------------------------- Store upload on disk
             log.info('Store upload stream on disk')
             const { path: inputPath, size: inputSize } = await runWithLogger(log, () => receiveUpload(req, allowedStorageBytes, jobDir))
+            cleanupPaths.push(inputPath);
             log.debug({ inputSize, inputPath })
             log.info('Upload received and stored to disk')
-            cleanupPaths.push(inputPath);
 
-            // ------------------------------------------------------------------------- Probe received file, get info and Validate it
-            log.info('Probe received file, get info and Validate it')
+            // ------------------------------------------------------------------------- Probe and validate
+            log.info('Probe received file, get info and validate it')
 
             const info = await runWithLogger(log, () => probeFile(inputPath))
             log.debug({ info })
-            const videoStream = info.streams.find((s) => s.codec_type === 'video');
+
+            // Ignore attached pictures (cover art) when looking for the real video stream
+            const videoStream = info.streams.find((s) => s.codec_type === 'video' && s.disposition?.attached_pic !== 1);
             const audioStream = info.streams.find((s) => s.codec_type === 'audio');
             if (!videoStream || !ALLOWED_VIDEO_CODECS.has(videoStream.codec_name)) {
                 log.warn({ codec: videoStream?.codec_name }, 'Rejected video upload: unsupported codec');
@@ -143,20 +145,22 @@ router.post('/', auth, subscriptionGate, async (req, res) => {
             log.debug({ durationSeconds })
 
             // ------------------------------------------------------------------------- Set file paths
-            log.info('Set file paths')
-
             const webCopyPath = join(jobDir, `${videoId}-web.mp4`);
+            // ffmpeg writes to <videoId>-web-gen.mp4 (deleted by readAndCleanup once consumed);
+            // its stream is then copied to webCopyPath. The two paths MUST differ.
+            const webCopyGenName = `${videoId}-web-gen`;
             const thumbnailPath = join(jobDir, `${videoId}-thumb.jpg`);
             cleanupPaths.push(webCopyPath, thumbnailPath);
-            log.debug({ webCopyPath, thumbnailPath })
+            log.debug({ webCopyPath, webCopyGenName, thumbnailPath })
             log.info('Resolved output paths')
 
-            // ------------------------------------------------------------------------- Wait for web compatible file and thumbnail to be generated and content type to be collected
-            log.info('Waiting for web compatible file and thumbnail to be generated and content type to be collected...')
+            // ------------------------------------------------------------------------- Generate web copy, thumbnail, detect content type
+            log.info('Waiting for web compatible file and thumbnail to be generated and content type to be collected')
 
             const [, contentType] = await Promise.all([
-                runWithLogger(log, () => generateWebCompatibleCopy(inputPath, jobDir, basename(webCopyPath).split('.')[0], videoStream, audioStream))
-                    .then((result) => pipeline(result.outputStream, createWriteStream(webCopyPath!))),
+                runWithLogger(log, () => generateWebCompatibleCopy(inputPath, jobDir, webCopyGenName, videoStream, audioStream))
+                    .then((result) => pipeline(result.outputStream, createWriteStream(webCopyPath)))
+                    .then(() => log.debug('Web-compatible copy written to disk')),
                 runWithLogger(log, () => detectContentType(inputPath))
                     .then((ct) => {
                         log.debug({ contentType: ct }, 'Detected content type');
@@ -165,19 +169,19 @@ router.post('/', auth, subscriptionGate, async (req, res) => {
                 runWithLogger(log, () => generateThumbnail(inputPath, thumbnailPath, durationSeconds))
                     .then(() => log.debug('Thumbnail generated')),
             ]);
-            log.info('done');
+            log.info('Generated web copy and thumbnail');
 
-            // ------------------------------------------------------------------------- authorize generated file sizes
+            // ------------------------------------------------------------------------- Authorize generated file sizes
             log.info('authorize generated file sizes')
 
             const [webCopyStat, thumbnailStat] = await Promise.all([
                 stat(webCopyPath),
                 stat(thumbnailPath),
             ]);
-            log.debug({ webCopyStat, thumbnailStat });
+            log.debug({ webCopySize: webCopyStat.size, thumbnailSize: thumbnailStat.size });
 
             const totalStorageBytes = inputSize + webCopyStat.size + thumbnailStat.size;
-            log.debug({ inputSize, webCopySize: webCopyStat.size, thumbnailSize: thumbnailStat.size, totalStorageBytes });
+            log.debug({ inputSize, totalStorageBytes });
             log.info('Computed total storage footprint')
 
             if ((await authorizeStorageQuota(req, totalStorageBytes, undefined, res)) !== true) {
@@ -187,10 +191,8 @@ router.post('/', auth, subscriptionGate, async (req, res) => {
             log.info('Storage quota authorized')
 
             try {
-                // ------------------------------------------------------------------------- Upload files to the S3 compatible object storage
-                log.info('Upload files to the S3 compatible object storage')
-
-                log.debug('Uploading files to object storage');
+                // ------------------------------------------------------------------------- Upload to object storage
+                log.info('Uploading files to object storage');
                 await Promise.all([
                     runWithLogger(log, () => uploadToS3(createReadStream(inputPath), videoFileBucketKey, contentType.mimeType)),
                     runWithLogger(log, () => uploadToS3(createReadStream(webCopyPath), webCompatibleVideoFileBucketKey, 'video/mp4')),
@@ -198,8 +200,8 @@ router.post('/', auth, subscriptionGate, async (req, res) => {
                 ]);
                 log.info('Uploaded files to object storage');
 
-                // ------------------------------------------------------------------------- Update video info in DB, Make it permanent and set content type
-                log.info('Update video info in DB, Make it permanent and set content type')
+                // ------------------------------------------------------------------------- Update DB record
+                log.info('Update video info in DB, make it permanent and set content type')
 
                 const updateResult = await runWithLogger(log, () => videoRepository.unsafeUpdate(
                     videoId,
@@ -211,12 +213,13 @@ router.post('/', auth, subscriptionGate, async (req, res) => {
                         bucketKey: videoFileBucketKey,
                         webBucketKey: webCompatibleVideoFileBucketKey,
                         thumbnailKey: thumbnailBucketKey,
-                        thumbnailFileName: basename(thumbnailPath)
+                        thumbnailFileName: basename(thumbnailPath),
+                        totalFilesBytes: totalStorageBytes, // remove if your video model has no such field
                     }
                 ))
                 log.debug({ updateResult });
                 if (!updateResult.acknowledged || updateResult.matchedCount !== 1) {
-                    log.error({ updateResult }, 'Updating video record, failed');
+                    log.error({ updateResult }, 'Updating video record failed');
                     throw new Error('failed to upload video')
                 }
                 log.info('Updated video record');
@@ -235,14 +238,16 @@ router.post('/', auth, subscriptionGate, async (req, res) => {
                 throw error
             }
         } catch (err) {
+            // authorizeStorageQuota(..., res) may already have responded
             if (err instanceof UploadTooLargeError) {
-                return res.status(402).json({ status: 'error', message: err.message });
+                if (!res.headersSent) res.status(402).json({ status: 'error', message: err.message });
             } else if (err instanceof InvalidMediaError) {
-                return res.status(400).json({ status: 'error', message: err.message });
+                if (!res.headersSent) res.status(400).json({ status: 'error', message: err.message });
             } else {
                 log.error({ err }, 'Video upload failed');
-                return res.status(500).json({ status: 'error', message: 'Upload failed' });
+                if (!res.headersSent) res.status(500).json({ status: 'error', message: 'Upload failed' });
             }
+            return;
         } finally {
             await cleanup();
             if (rollbackPromises !== undefined) {
@@ -374,7 +379,7 @@ router.get('/file/:videoId', auth, subscriptionGate, async (req, res) => {
     try {
         log.info('Video download/stream for non web clients request received');
 
-        log.debug({ query: req.query, range: req.headers.range });
+        log.debug({ params: req.params, range: req.headers.range });
         const { videoId } = await runWithLogger(log, () => validate(videoStreamSchema, req.params))
         log.debug({ videoId });
         log.info('input validated');
@@ -386,13 +391,13 @@ router.get('/file/:videoId', auth, subscriptionGate, async (req, res) => {
 });
 
 // For web clients
-router.get('/file/:token/:videoId', async (req, res) => {
+router.get('/file/web/:videoId/:token', async (req, res) => {
     let log = getLogger().child({ module: 'video', route: 'GET /api/video/file/:token/:videoId' });
 
     try {
         log.info('Video download/stream for web clients request received');
 
-        log.debug({ query: req.query, range: req.headers.range });
+        log.debug({ params: req.params, range: req.headers.range });
         const { videoId, token } = await runWithLogger(log, () => validate(videoStreamForWebClientsSchema, req.params))
         log.debug({ videoId, token });
         log.info('input validated');

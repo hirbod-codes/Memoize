@@ -1,12 +1,10 @@
 import 'dart:async';
 
 import 'package:client/app_config.dart';
-import 'package:client/components/contents/players/hlsjs/web_video_player.dart';
 import 'package:client/components/contents/players/media_kit_player.dart';
 import 'package:client/components/contents/players/player_control_widgets.dart';
 import 'package:client/components/contents/players/player_factory.dart';
 import 'package:client/components/contents/players/player_interface.dart';
-import 'package:client/components/contents/players/video_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +25,7 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
 
 class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   bool _controlsVisible = true;
-  DateTime _lastInteraction = DateTime.now();
+  Timer? _hideTimer;
 
   static const _controlsTimeout = Duration(seconds: 5);
 
@@ -36,13 +34,15 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   bool _showVideoSurface = false;
   bool _loading = false;
 
+  StreamSubscription<PlayerState>? _stateSub;
+
   @override
   void initState() {
     super.initState();
     // Each VideoPlayerScreen instance gets its own player, not a shared app-wide one
     _player = createPlayer();
     _videoController = _player is MediaKitVideoPlayer ? VideoController(_player.nativePlayer as dynamic) : null;
-    _player.stateStream.listen((state) {
+    _stateSub = _player.stateStream.listen((state) {
       if (mounted) {
         setState(() {
           _showVideoSurface = state.status != PlayerStatus.idle && state.status != PlayerStatus.loading && state.status != PlayerStatus.error;
@@ -65,34 +65,27 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
 
   @override
   void dispose() {
+    _hideTimer?.cancel();
+    _stateSub?.cancel();
+    _player.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
 
   void _scheduleHide() {
-    Future.delayed(_controlsTimeout, () {
-      if (!mounted) return;
-      final elapsed = DateTime.now().difference(_lastInteraction);
-      if (elapsed >= _controlsTimeout && _controlsVisible) {
-        setState(() => _controlsVisible = false);
-      } else {
-        _scheduleHide();
-      }
+    _hideTimer?.cancel();
+    _hideTimer = Timer(_controlsTimeout, () {
+      if (mounted && _controlsVisible) setState(() => _controlsVisible = false);
     });
   }
 
   void _resetSchedule() {
-    setState(() {
-      _controlsVisible = true;
-      _lastInteraction = DateTime.now();
-    });
+    setState(() => _controlsVisible = true);
+    _scheduleHide();
   }
 
   void _onTap() {
-    setState(() {
-      _controlsVisible = !_controlsVisible;
-      _lastInteraction = DateTime.now();
-    });
+    setState(() => _controlsVisible = !_controlsVisible);
     if (_controlsVisible) _scheduleHide();
   }
 
@@ -108,7 +101,12 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         // ── Video frame fills the whole screen ──────────────────────────
         if (_showVideoSurface)
           Positioned.fill(
-            child: VideoSurface(controller: _videoController, player: _player is HlsWebVideoPlayer ? _player : null),
+            child: Video(
+              controller: _videoController!,
+              fit: BoxFit.contain,
+              // We own the controls — turn off the built-in overlay.
+              controls: NoVideoControls,
+            ),
           ),
 
         Positioned.fill(
@@ -150,7 +148,9 @@ class _AlbumArt extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
-      child: videoId != null && accessToken != null ? Image.network('${AppConfig.apiUrl}/api/video/thumbnail/$videoId', fit: BoxFit.contain, headers: {'Authorization': 'Bearer $accessToken'}) : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      child: videoId != null && accessToken != null
+          ? Image.network('${AppConfig.apiUrl}/api/video/thumbnail/$videoId', fit: BoxFit.contain, headers: {'Authorization': 'Bearer $accessToken'})
+          : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
   }
 }

@@ -1,58 +1,57 @@
 import { Request, Response } from "express";
+import { pipeline } from "stream/promises";
+import { Readable } from "stream";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 import VideoRepository from "../../DB/repositories/VideoRepository";
 import { getLogger } from "../../observability/requestLoggerContext";
 import { s3 } from "../..";
 import { BUCKET_NAME } from "../../configs";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { Readable } from "stream";
 
 export async function streamVideoFile(videoId: string, userId: string, req: Request, res: Response, isWeb: boolean) {
     const log = getLogger().child({ step: 'streamVideoFile' });
+    let body: Readable | undefined;
+    let key: string | undefined;
 
-    const videoRepository = new VideoRepository()
+    try {
+        const video = await new VideoRepository().getForUser(videoId, userId);
+        if (!video || (isWeb && !video.webBucketKey) || (!isWeb && !video.bucketKey)) {
+            return res.status(404).json({ status: 'error', message: 'Video not found' });
+        }
 
-    const video = await videoRepository.getForUser(videoId, userId!)
-    log.debug({ video })
-    if (!video || (isWeb && !video.webBucketKey) || (!isWeb && !video.bucketKey)) {
-        log.info('Video not found or missing expected bucket key');
-        return res.status(404).json({ status: 'error', message: 'Video not found' });
+        const range = req.headers.range;
+        key = (isWeb ? video.webBucketKey : video.bucketKey)!;
+        log.info({ key, range }, 'Fetching object from storage');
+
+        const result = await s3.send(new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key, Range: range }));
+        log.info({ contentLength: result.ContentLength, contentRange: result.ContentRange }, 'Fetched object from storage');
+
+        if (!result.Body) return res.status(404).json({ status: 'error', message: 'Video not found' });
+        body = result.Body as Readable;
+
+        res.status(result.ContentRange ? 206 : 200);
+        res.setHeader('Content-Type', isWeb ? 'video/mp4' : (video.contentType?.mimeType ?? 'video/mp4'));
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Cache-Control', 'private, max-age=3600');
+        if (result.ContentRange) res.setHeader('Content-Range', result.ContentRange);
+        if (result.ContentLength != null) res.setHeader('Content-Length', String(result.ContentLength));
+
+        res.on('close', () => body?.destroy());
+
+        log.info({ statusCode: res.statusCode }, 'Streaming video file to client');
+        await pipeline(body, res);
+        log.info('Finished streaming');
+    } catch (err: any) {
+        if (err?.code === 'ERR_STREAM_PREMATURE_CLOSE') throw err;
+        if (err?.name === 'NoSuchKey') {
+            if (!res.headersSent) res.status(404).json({ status: 'error', message: 'Video not found' });
+            return;
+        }
+        if (err?.name === 'InvalidRange' || err?.$metadata?.httpStatusCode === 416) {
+            if (!res.headersSent) res.status(416).end();
+            return;
+        }
+        log.error({ err, key }, 'Failed to serve video file');
+        if (!res.headersSent) res.status(500).json({ status: 'error', message: 'Streaming failed' });
+        else res.destroy();
     }
-
-    const range = req.headers.range;
-    const key = isWeb ? video.webBucketKey : video.bucketKey;
-    log.debug({ key, range });
-
-    log.info('Fetching object from storage')
-    const result = await s3.send(new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: key,
-        Range: range
-    }));
-    log.debug({ contentLength: result.ContentLength, contentRange: result.ContentRange });
-    log.info('Fetched object from storage')
-
-    if (result.Body === undefined || result.Body === null) {
-        log.warn('Storage object has no body');
-        return res.status(404).json({ status: 'error' });
-    }
-
-    const body = result.Body as Readable;
-    body.on('error', (err) => {
-        log.error({ err, key }, 'S3 stream error while serving video file');
-        if (!res.headersSent)
-            res.status(500).end();
-        else
-            res.destroy();
-    });
-
-    res.status(range ? 206 : 200);
-    res.setHeader('Content-Type', isWeb ? 'video/mp4' : (video.contentType?.mimeType ?? 'video/mp4'));
-    res.setHeader('Accept-Ranges', 'bytes');
-    if (result.ContentRange) res.setHeader('Content-Range', result.ContentRange);
-    if (result.ContentLength) res.setHeader('Content-Length', result.ContentLength);
-
-    log.info('response headers has been set')
-
-    log.info({ statusCode: range ? 206 : 200 }, 'Streaming video file to client');
-    body.pipe(res)
 }

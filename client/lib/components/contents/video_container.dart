@@ -56,7 +56,7 @@ class _VideosState extends ConsumerState<VideoContainer> {
           _token = accessToken;
         }
         _video = video;
-        _url = '${AppConfig.apiUrl}/api/video/file${signedToken == null ? '' : '/$signedToken'}/${_video!.id}/index.m3u8';
+        _url = '${AppConfig.apiUrl}/api/video/file${kIsWeb ? '/web' : ''}/${_video!.id}${signedToken == null ? '' : '/$signedToken'}';
         _loading = false;
       });
     } catch (e) {

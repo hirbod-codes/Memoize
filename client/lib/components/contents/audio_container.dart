@@ -56,7 +56,7 @@ class _AudioContainerState extends ConsumerState<AudioContainer> {
           _token = token;
         }
         _audio = audio;
-        _url = '${AppConfig.apiUrl}/api/audio/file/${_audio!.id}${signedToken == null ? '' : '/$signedToken'}';
+        _url = '${AppConfig.apiUrl}/api/audio/file${kIsWeb ? '/web' : ''}/${_audio!.id}${signedToken == null ? '' : '/$signedToken'}';
         _loading = false;
       });
     } catch (e) {

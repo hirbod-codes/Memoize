@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/components/button.dart';
@@ -83,7 +85,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
 
       _additionalStorageGb = widget.subscription == null
           ? _defaultAdditionalStorageGb
-          : ((widget.subscription!.privileges.storageBytes - widget.plan.privileges.storageBytes) / (1024 * 1024 * 1024));
+          : ((max(widget.subscription!.privileges.storageBytes - widget.plan.privileges.storageBytes, widget.plan.privileges.storageBytes)) / (1024 * 1024 * 1024));
       _additionalStorageController = TextEditingController(text: _additionalStorageGb.toStringAsFixed(2));
     });
   }

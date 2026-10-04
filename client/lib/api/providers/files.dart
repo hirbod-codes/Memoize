@@ -706,7 +706,6 @@ class Files extends Notifier<FilesState> {
       }
 
       final content = contents[contentIndex];
-      String type = content.type.name;
 
       if (toIndex > content.value.length || fromIndex >= content.value.length) {
         log.warning("moveContentValue rejected: content value not found (fromIndex=$fromIndex, toIndex=$toIndex, length=${content.value.length})");

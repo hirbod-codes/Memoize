@@ -1,12 +1,9 @@
-import 'dart:io';
 import 'package:client/api/api_call.dart';
-import 'package:client/api/controllers/video_controller.dart' hide VideoController;
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -33,7 +30,6 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
 
   bool _picking = false;
   bool _loading = false;
-  String? _fileName;
 
   double? _uploadProgress;
 
@@ -77,9 +73,11 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
 
       setState(() {
         _videoFile = picked;
-        _fileName = picked.name;
         _player = player;
         _controller = controller;
+        List<String> split = picked.name.split('.');
+        split.removeLast();
+        titleController.text = split.join(' ');
       });
 
       await oldPlayer?.dispose();

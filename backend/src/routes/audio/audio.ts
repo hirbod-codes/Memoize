@@ -457,7 +457,7 @@ router.get('/file/:audioId', auth, subscriptionGate, async (req, res) => {
 });
 
 // For web applications
-router.get('/file/:audioId/:token', async (req, res) => {
+router.get('/file/web/:audioId/:token', async (req, res) => {
     let log = getLogger().child({ module: 'audio', route: 'GET /api/audio/file/:audioId/:token' });
 
     try {
