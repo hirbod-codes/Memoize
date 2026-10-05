@@ -5,7 +5,7 @@ import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/app_colors.dart';
 import 'package:client/theme/app_theme.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
+import 'package:client/theme/tmp/theme_mode_notifier.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,8 +26,8 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
     return AppBar(
-      backgroundColor: theme.colorScheme.secondaryContainer,
-      foregroundColor: theme.appBarTheme.foregroundColor,
+      backgroundColor: theme.colorScheme.primaryContainer,
+      foregroundColor: theme.colorScheme.onPrimaryContainer,
       surfaceTintColor: theme.appBarTheme.surfaceTintColor,
       title: title ?? _buildDefaultTitle(context, l10n),
       centerTitle: false,
@@ -38,7 +38,6 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
           type: ButtonType.text,
           onPressed: () {
             themeModeNotifier.value = themeModeNotifier.value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-            ref.read(themeModeProvider.notifier).toggle();
           },
         ),
         if (!isAuthenticated)

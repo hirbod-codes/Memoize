@@ -1,9 +1,14 @@
 import 'package:client/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
+const persianBlue = Color(0xFF1C39BB);
+
 final lightTheme = ThemeData(
   useMaterial3: true,
-  colorScheme: ColorScheme.fromSeed(seedColor: Colors.green.shade800),
+  colorScheme: ColorScheme.fromSeed(seedColor: persianBlue).copyWith(
+    primary: persianBlue,
+    onPrimary: const Color(0xFFF0F2FF), // soft off-white
+  ),
   extensions: const [
     AppColors(
       success: Color(0xFF2E7D32),
@@ -16,7 +21,7 @@ final lightTheme = ThemeData(
 
 final darkTheme = ThemeData(
   useMaterial3: true,
-  colorScheme: ColorScheme.fromSeed(seedColor: Colors.green.shade800, brightness: Brightness.dark),
+  colorScheme: ColorScheme.fromSeed(seedColor: persianBlue, brightness: Brightness.dark),
   extensions: const [
     AppColors(
       success: Color(0xFF81C784),
@@ -27,4 +32,4 @@ final darkTheme = ThemeData(
   ],
 );
 
-final themeModeNotifier = ValueNotifier(ThemeMode.system);
+final themeModeNotifier = ValueNotifier(ThemeMode.dark);

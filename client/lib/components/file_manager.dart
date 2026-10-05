@@ -10,8 +10,8 @@ import 'package:client/components/dialogs/upload/video_upload_dialog.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/lib/talker.dart';
 import 'package:client/theme/app_colors.dart';
-import 'package:client/theme/theme_radius.dart';
-import 'package:client/theme/theme_spacing.dart';
+import 'package:client/theme/tmp/theme_radius.dart';
+import 'package:client/theme/tmp/theme_spacing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 

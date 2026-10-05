@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/app_colors.dart';
-import 'package:client/theme/theme_radius.dart';
+import 'package:client/theme/tmp/theme_radius.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -49,15 +49,15 @@ class _TextEditorState extends ConsumerState<TextEditor> {
       talker.error('Failure while trying to parse input json for the rich text editor, falling back to empty content for the editor.', e);
     }
 
-    _controller.addListener(() {
-      setState(() {
-        _hasChanged = true;
-      });
-      _timer?.cancel();
-      _timer = Timer(Duration(seconds: 2), () {
-        _onSave();
-      });
-    });
+    // _controller.addListener(() {
+    //   setState(() {
+    //     _hasChanged = true;
+    //   });
+    //   _timer?.cancel();
+    //   _timer = Timer(Duration(seconds: 2), () {
+    //     _onSave();
+    //   });
+    // });
   }
 
   @override

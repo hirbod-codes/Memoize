@@ -7,7 +7,7 @@ import 'package:client/auth/token_storage.dart';
 import 'package:client/components/contents/players/video_player_screen.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/theme_radius.dart';
+import 'package:client/theme/tmp/theme_radius.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

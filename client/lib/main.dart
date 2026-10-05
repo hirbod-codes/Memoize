@@ -5,6 +5,7 @@ import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/locale_controller.dart';
 import 'package:client/localization/timezone/timezone_service.dart';
 import 'package:client/theme/app_theme.dart';
+import 'package:client/theme/theme_mode_store.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,13 +16,16 @@ import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 
 final container = ProviderContainer();
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (!kIsWeb) {
     MediaKit.ensureInitialized();
     JustAudioMediaKit.ensureInitialized();
   }
+
+  themeModeNotifier.value = await loadThemeMode();
+  themeModeNotifier.addListener(() => saveThemeMode(themeModeNotifier.value));
 
   runApp(UncontrolledProviderScope(container: container, child: const MyApp()));
 }
