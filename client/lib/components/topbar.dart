@@ -5,7 +5,6 @@ import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/app_colors.dart';
 import 'package:client/theme/app_theme.dart';
-import 'package:client/theme/tmp/theme_mode_notifier.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,7 +32,7 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
       centerTitle: false,
       actions: [
         Button(
-          icon: ref.watch(themeModeProvider) == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+          icon: themeModeNotifier.value == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
           color: theme.colorScheme.primary,
           type: ButtonType.text,
           onPressed: () {

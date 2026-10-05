@@ -114,58 +114,54 @@ class _PricingContentState extends State<_PricingContent> {
   Widget build(BuildContext context) {
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
-    return ListView(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 16),
-              Text(l10n.pricing_page_choose_plan, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
-              const SizedBox(height: 8),
-              Text(l10n.pricing_page_choose_plan_description, style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center),
-              const SizedBox(height: 24),
-              Center(
-                child: SegmentedButton<Currency>(
-                  segments: Currency.values.map((c) => ButtonSegment(value: c, label: Text(c.label))).toList(),
-                  selected: {_currency},
-                  onSelectionChanged: (selection) => setState(() => _currency = selection.first),
-                  showSelectedIcon: false,
-                ),
-              ),
-              const SizedBox(height: 32),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth > 900;
-                  if (isWide) {
-                    return IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          for (final plan in widget.plans) ...[
-                            Expanded(
-                              child: _PlanCard(plan: plan, currency: _currency, subscription: widget.subscription, onSelect: widget.onSelectPlan),
-                            ),
-                            if (plan != widget.plans.last) const SizedBox(width: 16),
-                          ],
-                        ],
-                      ),
-                    );
-                  }
-                  return Column(
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 16),
+          Text(l10n.pricing_page_choose_plan, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          Text(l10n.pricing_page_choose_plan_description, style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center),
+          const SizedBox(height: 24),
+          Center(
+            child: SegmentedButton<Currency>(
+              segments: Currency.values.map((c) => ButtonSegment(value: c, label: Text(c.label))).toList(),
+              selected: {_currency},
+              onSelectionChanged: (selection) => setState(() => _currency = selection.first),
+              showSelectedIcon: false,
+            ),
+          ),
+          const SizedBox(height: 32),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 900;
+              if (isWide) {
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       for (final plan in widget.plans) ...[
-                        _PlanCard(plan: plan, currency: _currency, subscription: widget.subscription, onSelect: widget.onSelectPlan),
-                        if (plan != widget.plans.last) const SizedBox(height: 16),
+                        Expanded(
+                          child: _PlanCard(plan: plan, currency: _currency, subscription: widget.subscription, onSelect: widget.onSelectPlan),
+                        ),
+                        if (plan != widget.plans.last) const SizedBox(width: 16),
                       ],
                     ],
-                  );
-                },
-              ),
-            ],
+                  ),
+                );
+              }
+              return Column(
+                children: [
+                  for (final plan in widget.plans) ...[
+                    _PlanCard(plan: plan, currency: _currency, subscription: widget.subscription, onSelect: widget.onSelectPlan),
+                    if (plan != widget.plans.last) const SizedBox(height: 16),
+                  ],
+                ],
+              );
+            },
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

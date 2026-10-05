@@ -92,165 +92,167 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
-    return ListView(
-      children: [
-        _SectionHeader(title: l10n.account),
-        _InfoTile(label: l10n.plan, value: widget.subscription?.planTitle ?? 'free'),
-        if (widget.userInfo.username != null) _InfoTile(label: l10n.username, value: widget.userInfo.username!),
-        if (widget.subscription != null)
-          Button(
-            type: ButtonType.outlined,
-            label: l10n.remove_subscription,
-            color: theme.colorScheme.error,
-            isLoading: _isCancelingPlan,
-            onPressed: () async {
-              setState(() {
-                _isCancelingPlan = true;
-              });
-              await apiCall(() => ref.read(authDioProvider).delete('/api/subscription').notifyOnSuccess(l10n.subscription_delete_success));
-              setState(() {
-                _isCancelingPlan = false;
-              });
-            },
-          ),
-        const SizedBox(height: 8),
-
-        if (isEmailAccount) ...[
-          _SectionHeader(title: l10n.email_password),
-          _SettingsTile(
-            icon: Icons.email_outlined,
-            title: l10n.email,
-            subtitle: widget.userInfo.email ?? '—',
-            actionLabel: l10n.change,
-            onTap: () => showChangeEmailSheet(context),
-          ),
-          _SettingsTile(
-            icon: Icons.lock_outline,
-            title: l10n.password,
-            subtitle: '••••••••',
-            actionLabel: l10n.change,
-            onTap: () => showChangePasswordSheet(context),
-          ),
-        ] else ...[
-          _SectionHeader(title: l10n.phoneNumber),
-          _SettingsTile(
-            icon: Icons.phone_outlined,
-            title: l10n.phoneNumber,
-            subtitle: widget.userInfo.phoneNumber ?? '—',
-            actionLabel: l10n.change,
-            onTap: () => showChangePhoneSheet(context),
-          ),
-        ],
-
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          spacing: 10,
-          children: [
-            _SectionHeader(title: l10n.language),
-            const LocaleSwitcher(),
-          ],
-        ),
-
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          spacing: 10,
-          children: [
-            _SectionHeader(title: l10n.calendar),
-            const CalendarSwitcher(),
-          ],
-        ),
-
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          spacing: 10,
-          children: [
-            _SectionHeader(title: l10n.timeZone),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [Expanded(child: const TimezoneSwitcher())],
-              ),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _SectionHeader(title: l10n.account),
+          _InfoTile(label: l10n.plan, value: widget.subscription?.planTitle ?? 'free'),
+          if (widget.userInfo.username != null) _InfoTile(label: l10n.username, value: widget.userInfo.username!),
+          if (widget.subscription != null)
+            Button(
+              type: ButtonType.outlined,
+              label: l10n.remove_subscription,
+              color: theme.colorScheme.error,
+              isLoading: _isCancelingPlan,
+              onPressed: () async {
+                setState(() {
+                  _isCancelingPlan = true;
+                });
+                await apiCall(() => ref.read(authDioProvider).delete('/api/subscription').notifyOnSuccess(l10n.subscription_delete_success));
+                setState(() {
+                  _isCancelingPlan = false;
+                });
+              },
+            ),
+          const SizedBox(height: 8),
+                  
+          if (isEmailAccount) ...[
+            _SectionHeader(title: l10n.email_password),
+            _SettingsTile(
+              icon: Icons.email_outlined,
+              title: l10n.email,
+              subtitle: widget.userInfo.email ?? '—',
+              actionLabel: l10n.change,
+              onTap: () => showChangeEmailSheet(context),
+            ),
+            _SettingsTile(
+              icon: Icons.lock_outline,
+              title: l10n.password,
+              subtitle: '••••••••',
+              actionLabel: l10n.change,
+              onTap: () => showChangePasswordSheet(context),
+            ),
+          ] else ...[
+            _SectionHeader(title: l10n.phoneNumber),
+            _SettingsTile(
+              icon: Icons.phone_outlined,
+              title: l10n.phoneNumber,
+              subtitle: widget.userInfo.phoneNumber ?? '—',
+              actionLabel: l10n.change,
+              onTap: () => showChangePhoneSheet(context),
             ),
           ],
-        ),
-
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          spacing: 10,
-          children: [
-            _SectionHeader(title: l10n.avatar),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              spacing: 10,
-              children: [
-                Button(
-                  type: ButtonType.outlined,
-                  label: l10n.remove,
-                  color: theme.colorScheme.error,
-                  isLoading: _isRemovingAvatar,
-                  onPressed: () async {
-                    setState(() {
-                      _isRemovingAvatar = true;
-                    });
-                    await apiCall(() => ref.read(authDioProvider).delete('/api/user/avatar').notifyOnSuccess(l10n.avatar_delete_success));
-                    setState(() {
-                      _isRemovingAvatar = false;
-                    });
-                  },
+                  
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 10,
+            children: [
+              _SectionHeader(title: l10n.language),
+              const LocaleSwitcher(),
+            ],
+          ),
+                  
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 10,
+            children: [
+              _SectionHeader(title: l10n.calendar),
+              const CalendarSwitcher(),
+            ],
+          ),
+                  
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 10,
+            children: [
+              _SectionHeader(title: l10n.timeZone),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [Expanded(child: const TimezoneSwitcher())],
                 ),
+              ),
+            ],
+          ),
+                  
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 10,
+            children: [
+              _SectionHeader(title: l10n.avatar),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 10,
+                children: [
+                  Button(
+                    type: ButtonType.outlined,
+                    label: l10n.remove,
+                    color: theme.colorScheme.error,
+                    isLoading: _isRemovingAvatar,
+                    onPressed: () async {
+                      setState(() {
+                        _isRemovingAvatar = true;
+                      });
+                      await apiCall(() => ref.read(authDioProvider).delete('/api/user/avatar').notifyOnSuccess(l10n.avatar_delete_success));
+                      setState(() {
+                        _isRemovingAvatar = false;
+                      });
+                    },
+                  ),
+                  Button(
+                    type: ButtonType.outlined,
+                    label: l10n.update,
+                    isLoading: _isUploadingAvatar,
+                    onPressed: () async {
+                      setState(() {
+                        _isUploadingAvatar = true;
+                      });
+                      await showDialog<String?>(context: context, builder: (_) => AvatarUpdateSetting());
+                      setState(() {
+                        _isUploadingAvatar = false;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+                  
+          if (widget.plan != null && widget.subscription != null && widget.subscription!.planTitle != 'free') ...[
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _SectionHeader(title: l10n.storage_usage),
                 Button(
                   type: ButtonType.outlined,
-                  label: l10n.update,
-                  isLoading: _isUploadingAvatar,
+                  label: l10n.add_storage,
+                  isLoading: _isAddingStorage,
                   onPressed: () async {
                     setState(() {
-                      _isUploadingAvatar = true;
+                      _isAddingStorage = true;
                     });
-                    await showDialog<String?>(context: context, builder: (_) => AvatarUpdateSetting());
+                    await showCheckoutDialog(context, plan: widget.plan!, subscription: widget.subscription!);
                     setState(() {
-                      _isUploadingAvatar = false;
+                      _isAddingStorage = false;
                     });
                   },
                 ),
               ],
             ),
+            const StorageUsage(),
           ],
-        ),
-
-        if (widget.plan != null && widget.subscription != null && widget.subscription!.planTitle != 'free') ...[
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _SectionHeader(title: l10n.storage_usage),
-              Button(
-                type: ButtonType.outlined,
-                label: l10n.add_storage,
-                isLoading: _isAddingStorage,
-                onPressed: () async {
-                  setState(() {
-                    _isAddingStorage = true;
-                  });
-                  await showCheckoutDialog(context, plan: widget.plan!, subscription: widget.subscription!);
-                  setState(() {
-                    _isAddingStorage = false;
-                  });
-                },
-              ),
-            ],
-          ),
-          Expanded(child: const StorageUsage()),
         ],
-      ],
+      ),
     );
   }
 }
