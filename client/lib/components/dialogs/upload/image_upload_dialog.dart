@@ -3,13 +3,11 @@ import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
 
 class ImageUploadDialog extends ConsumerStatefulWidget {
   const ImageUploadDialog({super.key});
@@ -67,7 +65,7 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+    final theme = Theme.of(context);
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
@@ -97,7 +95,7 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
                 height: 200,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  border: Border.all(color: theme.outline),
+                  border: Border.all(color: theme.colorScheme.outline),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: _image == null
@@ -132,7 +130,7 @@ class _ImageUploadDialogState extends ConsumerState<ImageUploadDialog> {
 
                   Button(
                     type: ButtonType.elevated,
-                    color: ThemeColorName.secondary,
+                    color: theme.colorScheme.secondary,
                     onPressed: isButtonDisabled() ? null : _upload,
                     isLoading: _loading,
                     label: l10n.upload,

@@ -1,7 +1,5 @@
 import 'dart:math';
 
-import 'package:client/theme/theme_colors.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,8 +14,8 @@ class Button extends ConsumerWidget {
 
   final ButtonType type;
   final bool isTransparent;
-  final ThemeColorName color;
-  final ThemeColorName? onColor;
+  Color? color;
+  Color? onColor;
 
   final bool isLoading;
   final IconData? icon;
@@ -30,14 +28,33 @@ class Button extends ConsumerWidget {
 
   final double iconSize;
 
-  const Button({super.key, this.label, this.onPressed, this.type = ButtonType.elevated, this.isTransparent = false, this.color = ThemeColorName.primary, this.onColor = ThemeColorName.onPrimary, this.isLoading = false, this.icon, this.iconSize = 18, this.width, this.height, this.radius = AppRadius.md, this.shape});
+  // ignore: prefer_const_constructors_in_immutables
+  Button({
+    super.key,
+    this.label,
+    this.onPressed,
+    this.type = ButtonType.elevated,
+    this.isTransparent = false,
+    this.isLoading = false,
+    this.icon,
+    this.iconSize = 18,
+    this.width,
+    this.height,
+    this.radius = AppRadius.md,
+    this.shape,
+    this.color,
+    this.onColor,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+    final theme = Theme.of(context);
 
-    final baseColor = isTransparent ? Colors.transparent : theme.getThemeColor(color);
-    final fg = onColor != null ? theme.getThemeColor(onColor!) : (isTransparent ? theme.onSurface : theme.getThemeOnColor(color));
+    color = theme.colorScheme.primary;
+    onColor = theme.colorScheme.onPrimary;
+
+    final baseColor = isTransparent ? Colors.transparent : color!;
+    final fg = onColor ?? (isTransparent ? theme.colorScheme.onSurface : color!);
 
     switch (type) {
       case ButtonType.elevated:
@@ -103,7 +120,9 @@ class Button extends ConsumerWidget {
               height: height ?? 18,
               child: CircularProgressIndicator(strokeWidth: 2, color: fg),
             )
-          : (icon != null ? Icon(icon, size: min(width ?? double.infinity, iconSize), color: fg) : Icon(Icons.add, size: min(width ?? double.infinity, iconSize), color: fg)),
+          : (icon != null
+                ? Icon(icon, size: min(width ?? double.infinity, iconSize), color: fg)
+                : Icon(Icons.add, size: min(width ?? double.infinity, iconSize), color: fg)),
     );
   }
 

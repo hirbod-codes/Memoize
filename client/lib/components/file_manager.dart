@@ -9,8 +9,7 @@ import 'package:client/components/dialogs/upload/image_upload_dialog.dart';
 import 'package:client/components/dialogs/upload/video_upload_dialog.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/lib/talker.dart';
-import 'package:client/theme/theme_colors.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
+import 'package:client/theme/app_colors.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:client/theme/theme_spacing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -127,6 +126,7 @@ class _FileManager extends ConsumerState<FileManager> {
     showDialog(
       context: context,
       builder: (context) {
+        final theme = Theme.of(context);
         AppLocalizations l10n = AppLocalizations.of(context)!;
 
         return Dialog(
@@ -148,7 +148,7 @@ class _FileManager extends ConsumerState<FileManager> {
                     children: [
                       Button(
                         type: ButtonType.text,
-                        color: ThemeColorName.error,
+                        color: theme.colorScheme.error,
                         onPressed: () {
                           if (mounted) Navigator.pop(context);
                         },
@@ -159,11 +159,11 @@ class _FileManager extends ConsumerState<FileManager> {
 
                       Button(
                         type: ButtonType.elevated,
-                        color: ThemeColorName.success,
+                        color: theme.extension<AppColors>()!.success,
                         onPressed: () async {
                           final result = await _contentDelete(index);
                           // ignore: use_build_context_synchronously
-                          if ( mounted && result) Navigator.pop(context);
+                          if (mounted && result) Navigator.pop(context);
                         },
                         label: l10n.yes,
                       ),
@@ -180,7 +180,7 @@ class _FileManager extends ConsumerState<FileManager> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+    final theme = Theme.of(context);
 
     final p = ref.watch(filesProvider);
     final file = p.files![p.fileIndex];
@@ -205,7 +205,7 @@ class _FileManager extends ConsumerState<FileManager> {
                   delegate: HeaderDelegate(
                     height: _editing ? 200 : 150,
                     child: Container(
-                      decoration: BoxDecoration(color: theme.surface),
+                      decoration: BoxDecoration(color: theme.colorScheme.surface),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -216,7 +216,7 @@ class _FileManager extends ConsumerState<FileManager> {
                             children: [
                               Button(
                                 type: ButtonType.text,
-                                color: ThemeColorName.onSurface,
+                                color: theme.colorScheme.onSurface,
                                 icon: Icons.close,
                                 onPressed: () {
                                   if (widget.onClose != null) widget.onClose!();
@@ -233,7 +233,7 @@ class _FileManager extends ConsumerState<FileManager> {
                             children: [
                               Button(
                                 type: ButtonType.text,
-                                color: ThemeColorName.primary,
+                                color: theme.colorScheme.primary,
                                 icon: Icons.flip,
                                 label: l10n.flip,
                                 onPressed: () {
@@ -242,7 +242,7 @@ class _FileManager extends ConsumerState<FileManager> {
                               ),
                               Button(
                                 type: ButtonType.text,
-                                color: ThemeColorName.primary,
+                                color: theme.colorScheme.primary,
                                 icon: _editing ? Icons.remove_red_eye_outlined : Icons.edit_square,
                                 onPressed: () {
                                   setState(() {
@@ -258,7 +258,7 @@ class _FileManager extends ConsumerState<FileManager> {
                           // Title
                           Text(widget.file.title, style: TextStyle(fontSize: 30)),
 
-                          Divider(color: theme.outlineVariant, height: 1),
+                          Divider(color: theme.colorScheme.outlineVariant, height: 1),
 
                           if (_editing) SizedBox(height: spacing.listItemSpacing),
 
@@ -266,7 +266,7 @@ class _FileManager extends ConsumerState<FileManager> {
                             Button(
                               isLoading: _isAdding == -1,
                               type: ButtonType.outlined,
-                              color: ThemeColorName.success,
+                              color: theme.extension<AppColors>()!.success,
                               onPressed: () {
                                 _onContentAdd();
                               },
@@ -328,7 +328,7 @@ class _FileManager extends ConsumerState<FileManager> {
                           margin: EdgeInsetsGeometry.fromSTEB(0, 0, 0, spacing.listItemSpacing),
                           clipBehavior: Clip.antiAlias,
                           decoration: BoxDecoration(
-                            border: BoxBorder.all(color: theme.outlineVariant, width: 1),
+                            border: BoxBorder.all(color: theme.colorScheme.outlineVariant, width: 1),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: Padding(
@@ -363,7 +363,7 @@ class _FileManager extends ConsumerState<FileManager> {
                                     children: [
                                       Button(
                                         type: ButtonType.text,
-                                        color: ThemeColorName.success,
+                                        color: theme.extension<AppColors>()!.success,
                                         icon: Icons.add_circle_outline,
                                         iconSize: 24,
                                         isLoading: _isAdding == contentIndex,
@@ -371,7 +371,7 @@ class _FileManager extends ConsumerState<FileManager> {
                                       ),
                                       Button(
                                         type: ButtonType.text,
-                                        color: ThemeColorName.error,
+                                        color: theme.colorScheme.error,
                                         icon: Icons.highlight_remove,
                                         isLoading: _isDeleting == contentIndex,
                                         iconSize: 24,

@@ -4,7 +4,6 @@ import 'package:client/auth/auth_state.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/locale_controller.dart';
 import 'package:client/localization/timezone/timezone_service.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/app_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -41,30 +40,38 @@ class MyApp extends ConsumerWidget {
     final auth = ref.watch(authControllerProvider);
     final locale = ref.watch(localeControllerProvider);
 
-    return MaterialApp.router(
-      locale: locale,
-      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        FlutterQuillLocalizations.delegate,
-      ],
-      supportedLocales: supportedLocales,
-      routerConfig: router,
-      title: 'Memoize',
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: ref.watch(themeModeProvider),
-      debugShowCheckedModeBanner: false,
-      builder: (context, child) {
-        if (auth.status == AuthStatus.loading) {
-          return const MaterialApp(
-            home: Scaffold(body: Center(child: CircularProgressIndicator())),
-          );
-        }
-        return child!;
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeModeNotifier,
+      builder: (context, mode, _) {
+        return MaterialApp.router(
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: mode,
+          locale: locale,
+          onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            FlutterQuillLocalizations.delegate,
+          ],
+          supportedLocales: supportedLocales,
+          routerConfig: router,
+          title: 'Memoize',
+          // theme: AppTheme.light(),
+          // darkTheme: AppTheme.dark(),
+          // themeMode: ref.watch(themeModeProvider),
+          debugShowCheckedModeBanner: false,
+          builder: (context, child) {
+            if (auth.status == AuthStatus.loading) {
+              return const MaterialApp(
+                home: Scaffold(body: Center(child: CircularProgressIndicator())),
+              );
+            }
+            return child!;
+          },
+        );
       },
     );
   }

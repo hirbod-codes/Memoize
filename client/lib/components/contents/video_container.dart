@@ -7,7 +7,6 @@ import 'package:client/auth/token_storage.dart';
 import 'package:client/components/contents/players/video_player_screen.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -79,12 +78,12 @@ class _VideosState extends ConsumerState<VideoContainer> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+    final theme = Theme.of(context);
 
     if (_loading) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
+        children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary))],
       );
     }
 

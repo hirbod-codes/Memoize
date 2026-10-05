@@ -6,7 +6,6 @@ import 'package:client/components/nav_destinations.dart';
 import 'package:client/components/topbar.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/components/locale_switcher.dart';
-import 'package:client/theme/theme_colors.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_spacing.dart';
 import 'package:flutter/material.dart';
@@ -28,14 +27,13 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final iTheme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
 
     bool unauthenticated = ref.read(authControllerProvider).status == AuthStatus.unauthenticated;
     if (unauthenticated) {
       AppLocalizations l10n = AppLocalizations.of(context)!;
 
       return Scaffold(
-        backgroundColor: iTheme.surface,
+        backgroundColor: theme.colorScheme.surface,
         body: Column(
           children: [
             Padding(
@@ -48,7 +46,7 @@ class AppShell extends ConsumerWidget {
                   const SizedBox(width: 4),
                   Button(
                     icon: ref.watch(themeModeProvider) == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
-                    color: ThemeColorName.primary,
+                    color: theme.colorScheme.primary,
                     type: ButtonType.text,
                     onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
                   ),
@@ -98,7 +96,7 @@ class AppShell extends ConsumerWidget {
               : content;
 
           return Scaffold(
-            backgroundColor: iTheme.surface,
+            backgroundColor: theme.colorScheme.surface,
             appBar: TopBar(title: title),
             body: body,
             // SingleChildScrollView(child: body),

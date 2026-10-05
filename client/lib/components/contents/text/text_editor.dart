@@ -3,8 +3,7 @@ import 'dart:convert';
 
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/theme_colors.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
+import 'package:client/theme/app_colors.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -103,7 +102,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
   Widget build(BuildContext context) {
     _controller.readOnly = !widget.editing;
 
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+    final theme = Theme.of(context);
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
@@ -115,7 +114,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
         children: [
           if (widget.editing)
             Container(
-              decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.circular(AppRadius.md), color: theme.surface),
+              decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.circular(AppRadius.md), color: theme.colorScheme.surface),
               child: QuillSimpleToolbar(
                 controller: _controller,
                 config: QuillSimpleToolbarConfig(
@@ -136,7 +135,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
             ),
 
           Container(
-            decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.circular(10), color: theme.surface),
+            decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.circular(10), color: theme.colorScheme.surface),
             child: Padding(
               padding: const EdgeInsets.all(4),
               child: QuillEditor.basic(
@@ -158,7 +157,7 @@ class _TextEditorState extends ConsumerState<TextEditor> {
               children: [
                 Button(
                   type: ButtonType.text,
-                  color: _hasChanged ? ThemeColorName.warning : ThemeColorName.primary,
+                  color: _hasChanged ? theme.extension<AppColors>()!.warning : theme.colorScheme.primary,
                   icon: Icons.save,
                   isLoading: _saving,
                   onPressed: _onSave,

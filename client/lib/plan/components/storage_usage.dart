@@ -1,7 +1,6 @@
 import 'package:client/account/user_usage_notifier.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/subscription/subscription_notifier.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,7 +33,7 @@ class StorageUsageWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final ratio = _ratio;
     final isNearLimit = ratio >= 0.9;
@@ -50,7 +49,7 @@ class StorageUsageWidget extends ConsumerWidget {
               Text(l10n.storage, style: Theme.of(context).textTheme.titleSmall),
               Text(
                 '${formatBytes(usedBytes)} / ${formatBytes(totalBytes)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: isNearLimit ? theme.error : theme.onSurfaceVariant),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: isNearLimit ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -60,8 +59,8 @@ class StorageUsageWidget extends ConsumerWidget {
             child: LinearProgressIndicator(
               value: ratio,
               minHeight: 8,
-              backgroundColor: theme.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation<Color>(isNearLimit ? theme.error : theme.primary),
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation<Color>(isNearLimit ? theme.colorScheme.error : theme.colorScheme.primary),
             ),
           ),
           const SizedBox(height: 4),

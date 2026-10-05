@@ -2,7 +2,6 @@ import 'package:client/api/api_call.dart';
 import 'package:client/api/dio/dio_providers.dart';
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/theme_colors.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -117,6 +116,7 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
     return Dialog(
@@ -206,7 +206,7 @@ class _VideoUploadDialogState extends ConsumerState<VideoUploadDialog> {
                     builder: (context, hasText, _) {
                       return Button(
                         type: ButtonType.elevated,
-                        color: ThemeColorName.secondary,
+                        color: theme.colorScheme.secondary,
                         onPressed: isButtonDisabled() ? null : _upload,
                         isLoading: _loading,
                         label: l10n.upload,

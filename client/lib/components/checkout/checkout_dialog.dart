@@ -10,7 +10,6 @@ import 'package:client/components/global/notification_service.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/pages/plan/currency_formatter.dart';
 import 'package:client/subscription/models/subscription.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -263,7 +262,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+    final theme = Theme.of(context);
 
     final l10n = AppLocalizations.of(context)!;
 
@@ -287,13 +286,13 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
                   if (widget.subscription != null && !_isPayable())
                     Container(
                       padding: EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(color: theme.error, borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(color: theme.colorScheme.error, borderRadius: BorderRadius.circular(12)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(l10n.checkout_upgrade_requirement_title, style: TextStyle(color: theme.onError)),
-                          Text(l10n.checkout_upgrade_duration_requirement, style: TextStyle(color: theme.onError)),
-                          Text(l10n.checkout_upgrade_storage_requirement, style: TextStyle(color: theme.onError)),
+                          Text(l10n.checkout_upgrade_requirement_title, style: TextStyle(color: theme.colorScheme.onError)),
+                          Text(l10n.checkout_upgrade_duration_requirement, style: TextStyle(color: theme.colorScheme.onError)),
+                          Text(l10n.checkout_upgrade_storage_requirement, style: TextStyle(color: theme.colorScheme.onError)),
                         ],
                       ),
                     ),

@@ -3,7 +3,8 @@ import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/theme_colors.dart';
+import 'package:client/theme/app_colors.dart';
+import 'package:client/theme/app_theme.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -17,27 +18,33 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     final isAuthenticated = ref.watch(authControllerProvider).status == AuthStatus.authenticated;
     final avatarBytes = ref.watch(avatarBytesProvider);
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
     return AppBar(
+      backgroundColor: theme.colorScheme.secondaryContainer,
+      foregroundColor: theme.appBarTheme.foregroundColor,
+      surfaceTintColor: theme.appBarTheme.surfaceTintColor,
       title: title ?? _buildDefaultTitle(context, l10n),
       centerTitle: false,
       actions: [
         Button(
           icon: ref.watch(themeModeProvider) == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
-          color: ThemeColorName.primary,
+          color: theme.colorScheme.primary,
           type: ButtonType.text,
           onPressed: () {
+            themeModeNotifier.value = themeModeNotifier.value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
             ref.read(themeModeProvider.notifier).toggle();
           },
         ),
         if (!isAuthenticated)
           Button(
             icon: Icons.login,
-            color: ThemeColorName.success,
+            color: theme.extension<AppColors>()!.success,
             type: ButtonType.text,
             onPressed: () {
               context.go('/login');
@@ -57,7 +64,7 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           Button(
             icon: Icons.logout,
-            color: ThemeColorName.error,
+            color: theme.colorScheme.error,
             type: ButtonType.text,
             onPressed: () async {
               await ref.read(authControllerProvider.notifier).logout();

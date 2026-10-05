@@ -2,9 +2,7 @@ import 'dart:async';
 
 import 'package:client/api/root_navigator_key.dart';
 import 'package:client/components/button.dart';
-import 'package:client/main.dart';
-import 'package:client/theme/theme_colors.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
+import 'package:client/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 enum _NotificationType { error, success }
@@ -55,11 +53,12 @@ class _NotificationOverlayState extends State<_NotificationOverlay> {
   }
 
   Widget _buildItem(BuildContext context, _NotificationItem item, Animation<double> animation) {
-    final theme = ThemeModeNotifier.getTheme(container.read(themeModeProvider));
+    final theme = Theme.of(context);
+
     final isError = item.type == _NotificationType.error;
-    final background = isError ? theme.error : theme.success;
-    final foreground = isError ? theme.onError : theme.onSuccess;
-    final colorName = isError ? ThemeColorName.onError : ThemeColorName.onSuccess;
+    final background = isError ? theme.colorScheme.error : theme.extension<AppColors>()!.success;
+    final foreground = isError ? theme.colorScheme.onError : theme.extension<AppColors>()!.onSuccess;
+    final colorName = isError ? theme.colorScheme.onError : theme.extension<AppColors>()!.onSuccess;
 
     return SizeTransition(
       sizeFactor: animation,

@@ -1,6 +1,5 @@
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/theme_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,6 +29,7 @@ class _FolderFileCreateDialogState extends ConsumerState<FolderFileCreateDialog>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
     return Dialog(
@@ -57,7 +57,7 @@ class _FolderFileCreateDialogState extends ConsumerState<FolderFileCreateDialog>
 
                   const SizedBox(width: 8),
 
-                  Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: isButtonDisabled() ? null : _upload, label: l10n.upload),
+                  Button(type: ButtonType.elevated, color: theme.colorScheme.secondary, onPressed: isButtonDisabled() ? null : _upload, label: l10n.upload),
                 ],
               ),
             ],

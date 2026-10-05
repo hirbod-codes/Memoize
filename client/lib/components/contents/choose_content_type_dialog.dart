@@ -3,7 +3,6 @@ import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/plan/components/plan_locked_widgets.dart';
 import 'package:client/plan/plan_capabilities.dart';
-import 'package:client/theme/theme_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,6 +22,7 @@ class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
     return Dialog(
@@ -93,7 +93,7 @@ class _ChooseContentTypeDialog extends ConsumerState<ChooseContentTypeDialog> {
 
                   const SizedBox(width: 8),
 
-                  Button(type: ButtonType.elevated, color: ThemeColorName.secondary, onPressed: _done, label: l10n.choose),
+                  Button(type: ButtonType.elevated, color: theme.colorScheme.secondary, onPressed: _done, label: l10n.choose),
                 ],
               ),
             ],

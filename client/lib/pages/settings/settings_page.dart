@@ -21,8 +21,6 @@ import 'package:client/plan/components/storage_usage.dart';
 import 'package:client/plan/models/plan.dart';
 import 'package:client/subscription/models/subscription.dart';
 import 'package:client/subscription/subscription_notifier.dart';
-import 'package:client/theme/theme_colors.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -89,6 +87,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isEmailAccount = widget.userInfo.authMethod == AuthMethod.email;
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
@@ -102,7 +101,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
           Button(
             type: ButtonType.outlined,
             label: l10n.remove_subscription,
-            color: ThemeColorName.error,
+            color: theme.colorScheme.error,
             isLoading: _isCancelingPlan,
             onPressed: () async {
               setState(() {
@@ -195,7 +194,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
                 Button(
                   type: ButtonType.outlined,
                   label: l10n.remove,
-                  color: ThemeColorName.error,
+                  color: theme.colorScheme.error,
                   isLoading: _isRemovingAvatar,
                   onPressed: () async {
                     setState(() {
@@ -386,7 +385,7 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+    final theme = Theme.of(context);
 
     AppLocalizations l10n = AppLocalizations.of(context)!;
 
@@ -408,7 +407,7 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
                 height: 200,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  border: Border.all(color: theme.outline),
+                  border: Border.all(color: theme.colorScheme.outline),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: _image == null
@@ -443,7 +442,7 @@ class _AvatarUpdateSettingState extends ConsumerState<AvatarUpdateSetting> {
 
                   Button(
                     type: ButtonType.elevated,
-                    color: ThemeColorName.secondary,
+                    color: theme.colorScheme.secondary,
                     onPressed: isButtonDisabled() ? null : _upload,
                     isLoading: _loading,
                     label: l10n.upload,

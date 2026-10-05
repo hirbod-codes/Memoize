@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:client/api/providers/files.dart';
 import 'package:client/components/button.dart';
 import 'package:client/l10n/app_localizations.dart';
+import 'package:client/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:client/api/models/leaf.dart';
@@ -10,7 +11,6 @@ import 'package:client/components/contents/audio_container.dart';
 import 'package:client/components/contents/image_container.dart';
 import 'package:client/components/contents/text/text_editor.dart';
 import 'package:client/components/contents/video_container.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
 import 'package:client/components/contents/tts_button.dart';
 
@@ -59,7 +59,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+    final theme = Theme.of(context);
 
     final p = ref.watch(filesProvider);
     if (p.files == null || p.files!.isEmpty) return SizedBox.shrink();
@@ -72,7 +72,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
 
     Widget removeIcon(String value, int index) {
       return _isRemoving.contains(index)
-          ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.error))
+          ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.error))
           : IconButton(
               icon: Icon(Icons.remove),
               onPressed: () async {
@@ -89,14 +89,14 @@ class _ContentState extends ConsumerState<ContentContainer> {
                   _isRemoving.remove(index);
                 });
               },
-              color: theme.error,
+              color: theme.colorScheme.error,
               padding: EdgeInsetsGeometry.all(3),
               constraints: BoxConstraints(minWidth: 10, minHeight: 10),
               iconSize: 18,
               style: IconButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  side: BorderSide(color: theme.error),
+                  side: BorderSide(color: theme.colorScheme.error),
                 ),
               ),
             );
@@ -263,7 +263,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                                     },
                             ),
                             if (_isUpdatingString.contains(contentValueIndex))
-                              SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.success)),
+                              SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.extension<AppColors>()!.success)),
                             if (!_isUpdatingString.contains(contentValueIndex))
                               IconButton(
                                 icon: Icon(Icons.done),
@@ -283,14 +283,14 @@ class _ContentState extends ConsumerState<ContentContainer> {
                                     _isUpdatingString.remove(contentValueIndex);
                                   });
                                 },
-                                color: theme.success,
+                                color: theme.extension<AppColors>()!.success,
                                 padding: EdgeInsetsGeometry.all(2.5),
                                 constraints: BoxConstraints(minWidth: 10, minHeight: 10),
                                 iconSize: 18,
                                 style: IconButton.styleFrom(
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                                    side: BorderSide(color: theme.success),
+                                    side: BorderSide(color: theme.extension<AppColors>()!.success),
                                   ),
                                 ),
                               ),
@@ -309,9 +309,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref
-                            .watch(filesProvider.notifier)
-                            .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
+                        await ref.watch(filesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 
                         setState(() {
@@ -418,9 +416,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref
-                            .watch(filesProvider.notifier)
-                            .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
+                        await ref.watch(filesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 
                         setState(() {
@@ -514,9 +510,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref
-                            .watch(filesProvider.notifier)
-                            .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
+                        await ref.watch(filesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 
                         setState(() {
@@ -583,9 +577,7 @@ class _ContentState extends ConsumerState<ContentContainer> {
                           _isMovingContentValue = true;
                         });
 
-                        await ref
-                            .watch(filesProvider.notifier)
-                            .moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
+                        await ref.watch(filesProvider.notifier).moveContentValue(widget.contentIndex, _movingContentValueIndex!, contentValueIndex + 1);
                         if (!mounted) return;
 
                         setState(() {

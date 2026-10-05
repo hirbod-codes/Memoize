@@ -147,7 +147,7 @@ class _PlanCheckDialog extends ConsumerWidget {
         child: Container(
           width: 280,
           padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
-          decoration: BoxDecoration(color: Theme.of(context).dialogBackgroundColor, borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
           child: state.error == null
               ? Column(mainAxisSize: MainAxisSize.min, children: [CircularProgressIndicator(), SizedBox(height: 16), Text(l10n.checking_plan)])
               : Column(

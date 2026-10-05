@@ -11,8 +11,7 @@ import 'package:client/components/dialogs/folder_file_create_dialog.dart';
 import 'package:client/components/file_manager.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/theme_colors.dart';
-import 'package:client/theme/theme_mode_notifier.dart';
+import 'package:client/theme/app_colors.dart';
 import 'package:client/theme/theme_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -384,7 +383,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeModeNotifier.getTheme(ref.watch(themeModeProvider));
+    final theme = Theme.of(context);
 
     final foldersState = ref.watch(foldersProvider);
     final folders = foldersState.folders ?? [];
@@ -402,7 +401,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
 
         return Card(
           elevation: 10,
-          color: theme.surfaceContainer,
+          color: theme.colorScheme.surfaceContainer,
           child: Padding(
             padding: EdgeInsets.all(spacing.padding),
             child: Column(
@@ -433,7 +432,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
 
                 // Title
                 SizedBox(height: spacing.listItemSpacing),
-                if (_title != null) ...[Text(_title!, style: TextStyle(fontSize: 30)), Divider(height: 1, color: theme.outlineVariant)],
+                if (_title != null) ...[Text(_title!, style: TextStyle(fontSize: 30)), Divider(height: 1, color: theme.colorScheme.outlineVariant)],
 
                 // Search
                 SizedBox(height: spacing.listItemSpacing),
@@ -446,7 +445,14 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                 // Add new Button
                 if (_editing) SizedBox(height: spacing.listItemSpacing),
                 if (_editing)
-                  Button(type: ButtonType.elevated, color: ThemeColorName.success, icon: Icons.add, label: l10n.addNew, onPressed: _addNew, isLoading: _adding),
+                  Button(
+                    type: ButtonType.elevated,
+                    color: theme.extension<AppColors>()!.success,
+                    icon: Icons.add,
+                    label: l10n.addNew,
+                    onPressed: _addNew,
+                    isLoading: _adding,
+                  ),
 
                 // Move buttons
                 if (_movingFolder != null || _movingFile != null) SizedBox(height: spacing.listItemSpacing),
@@ -455,7 +461,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                     children: [
                       Button(
                         type: ButtonType.elevated,
-                        color: ThemeColorName.success,
+                        color: theme.extension<AppColors>()!.success,
                         label: l10n.moveHere,
                         onPressed:
                             ((_movingFolder != null && _location.last == _movingFolder!.parentId) ||
@@ -464,7 +470,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                             : (_movingFolder != null ? _moveFolder : _moveFile),
                         isLoading: _isMovingFolder || _isMovingFile,
                       ),
-                      Button(type: ButtonType.elevated, color: ThemeColorName.error, label: l10n.cancelMove, onPressed: _cancelMove),
+                      Button(type: ButtonType.elevated, color: theme.colorScheme.error, label: l10n.cancelMove, onPressed: _cancelMove),
                     ],
                   ),
 
@@ -474,7 +480,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                 if (_location.length > 1) ...[
                   Container(
                     decoration: BoxDecoration(
-                      border: BoxBorder.fromLTRB(bottom: BorderSide(width: 1, color: theme.outlineVariant)),
+                      border: BoxBorder.fromLTRB(bottom: BorderSide(width: 1, color: theme.colorScheme.outlineVariant)),
                     ),
                     child: Row(
                       spacing: spacing.listItemSpacing,
@@ -482,7 +488,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                         Container(
                           decoration: BoxDecoration(
                             border: _filter == Filter.folder
-                                ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary))
+                                ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.colorScheme.primary))
                                 : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
                           ),
                           child: Button(
@@ -491,7 +497,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                             height: 40,
                             radius: 0,
                             type: ButtonType.text,
-                            color: _filter == Filter.folder ? ThemeColorName.primary : ThemeColorName.onSurface,
+                            color: _filter == Filter.folder ? theme.colorScheme.primary : theme.colorScheme.onSurface,
                             onPressed: () {
                               _onFilterChange(Filter.folder);
                             },
@@ -501,7 +507,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                         Container(
                           decoration: BoxDecoration(
                             border: _filter == Filter.file
-                                ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.primary))
+                                ? BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: theme.colorScheme.primary))
                                 : BoxBorder.fromLTRB(bottom: BorderSide(width: 5, color: Colors.transparent)),
                           ),
                           child: Button(
@@ -510,7 +516,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                             height: 40,
                             radius: 0,
                             type: ButtonType.text,
-                            color: _filter == Filter.file ? ThemeColorName.primary : ThemeColorName.onSurface,
+                            color: _filter == Filter.file ? theme.colorScheme.primary : theme.colorScheme.onSurface,
                             onPressed: _movingFolder != null
                                 ? null
                                 : () {
@@ -533,7 +539,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                       if (_fetching)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.primary))],
+                          children: [SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary))],
                         ),
 
                       // Folders list
@@ -560,7 +566,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                                         if (_editing) ...[
                                           Button(
                                             type: ButtonType.text,
-                                            color: ThemeColorName.error,
+                                            color: theme.colorScheme.error,
                                             icon: Icons.remove_circle_outline,
                                             isLoading: _deletingFolder == index,
                                             onPressed: () {
@@ -648,7 +654,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                                             Button(
                                               isLoading: _deletingFile == index,
                                               type: ButtonType.text,
-                                              color: ThemeColorName.error,
+                                              color: theme.colorScheme.error,
                                               icon: Icons.remove_circle_outline,
                                               onPressed: () {
                                                 _removeFile(file, index);
@@ -696,7 +702,7 @@ class _MobileAppPage extends ConsumerState<MobileAppPage> {
                   Button(
                     label: l10n.loadMore,
                     type: ButtonType.outlined,
-                    color: ThemeColorName.secondary,
+                    color: theme.colorScheme.secondary,
                     onPressed: () {
                       _paginateMore();
                     },
