@@ -63,6 +63,7 @@ class _NotificationOverlayState extends State<_NotificationOverlay> {
 
     return SizeTransition(
       sizeFactor: animation,
+      // ignore: deprecated_member_use
       axisAlignment: -1,
       child: SlideTransition(
         // New items slide down from above into their slot.

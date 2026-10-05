@@ -211,7 +211,7 @@ class Files extends Notifier<FilesState> {
 
       ApiCallResult<dynamic> result = await apiCall(
         () => _authDio
-            .patch(
+            .put(
               '/api/leaf',
               data: {'leafId': file.id, 'treeNodeId': destId},
               options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: true}),

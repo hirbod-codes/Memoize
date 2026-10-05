@@ -28,7 +28,7 @@ class AllPlansState {
 
   AllPlansState copyWith({List<Plan>? info, bool clearInfo = false, bool? isLoading, String? error, bool clearError = false}) {
     return AllPlansState(
-      plans: clearInfo ? null : (info ?? this.plans),
+      plans: clearInfo ? null : (info ?? plans),
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
     );

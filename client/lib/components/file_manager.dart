@@ -162,7 +162,8 @@ class _FileManager extends ConsumerState<FileManager> {
                         color: ThemeColorName.success,
                         onPressed: () async {
                           final result = await _contentDelete(index);
-                          if (mounted && result) Navigator.pop(context);
+                          // ignore: use_build_context_synchronously
+                          if ( mounted && result) Navigator.pop(context);
                         },
                         label: l10n.yes,
                       ),

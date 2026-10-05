@@ -440,11 +440,6 @@ router.put('/', async (req, res) => {
         const { title: newTitle, leafId, treeNodeId, termContents, definitionContents } = await runWithLogger(log, () => validate(leafUpdateSchema, req.body))
         log.debug({ newTitle, leafId, treeNodeId, termContents, definitionContents });
 
-        if (!newTitle && !treeNodeId) {
-            log.info('At least one parameter must be provided by the client');
-            return res.status(400).json({ status: 'error', error_code: 'AT_LEAST_ONE_PARAMETER_MUST_BE_PROVIDED' })
-        }
-
         log.info('input validated');
 
         const userId = req.user!.userId;

@@ -64,7 +64,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     Plan? plan;
     try {
       plan = allPlans.plans?.singleWhere((element) => element.title == subscriptionState.subscription?.planTitle);
-    } catch (e) {}
+    } catch (_) {}
 
     return SettingsContent(userInfo: userInfoState.info!, subscription: subscriptionState.subscription, plan: plan);
   }

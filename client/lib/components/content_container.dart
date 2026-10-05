@@ -12,7 +12,7 @@ import 'package:client/components/contents/text/text_editor.dart';
 import 'package:client/components/contents/video_container.dart';
 import 'package:client/theme/theme_mode_notifier.dart';
 import 'package:client/theme/theme_radius.dart';
-import 'package:client/components/contents/TTSButton.dart';
+import 'package:client/components/contents/tts_button.dart';
 
 class ContentContainer extends ConsumerStatefulWidget {
   final bool editing;

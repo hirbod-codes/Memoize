@@ -100,7 +100,7 @@ class _AppResumePlanGateState extends ConsumerState<AppResumePlanGate> with Widg
         opaque: false,
         barrierDismissible: false,
         barrierColor: Colors.black54,
-        pageBuilder: (context, _, __) => _PlanCheckDialog(
+        pageBuilder: (context, _, _) => _PlanCheckDialog(
           onDone: () {
             _dialogShowing = false;
             navState.maybePop();
@@ -116,7 +116,7 @@ class _AppResumePlanGateState extends ConsumerState<AppResumePlanGate> with Widg
   Widget build(BuildContext context) {
     return Navigator(
       key: _dialogNavigatorKey,
-      onGenerateRoute: (settings) => PageRouteBuilder(pageBuilder: (context, _, __) => widget.child),
+      onGenerateRoute: (settings) => PageRouteBuilder(pageBuilder: (context, _, _) => widget.child),
     );
   }
 }

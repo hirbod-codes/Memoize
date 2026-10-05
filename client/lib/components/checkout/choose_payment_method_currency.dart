@@ -173,7 +173,9 @@ class _ChoosePaymentCurrencyState extends ConsumerState<ChoosePaymentCurrency> {
             dense: true,
             title: Text(method), // swap for a display-name lookup if you want nicer labels than the raw identifier
             value: method,
+            // ignore: deprecated_member_use
             groupValue: _selectedMethod!,
+            // ignore: deprecated_member_use
             onChanged: (value) {
               final selectedMethod = value;
 

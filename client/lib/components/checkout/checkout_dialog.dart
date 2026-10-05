@@ -85,7 +85,8 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
 
       _additionalStorageGb = widget.subscription == null
           ? _defaultAdditionalStorageGb
-          : ((max(widget.subscription!.privileges.storageBytes - widget.plan.privileges.storageBytes, widget.plan.privileges.storageBytes)) / (1024 * 1024 * 1024));
+          : ((max(widget.subscription!.privileges.storageBytes - widget.plan.privileges.storageBytes, widget.plan.privileges.storageBytes)) /
+                (1024 * 1024 * 1024));
       _additionalStorageController = TextEditingController(text: _additionalStorageGb.toStringAsFixed(2));
     });
   }
@@ -198,7 +199,7 @@ class _CheckoutDialogState extends ConsumerState<CheckoutDialog> {
       }
 
       if (!launched) {
-        NotificationService.showError(context: context, message: l10n.checkout_pay_failed);
+        NotificationService.showError(message: l10n.checkout_pay_failed);
         return;
       }
 

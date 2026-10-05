@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:client/components/contents/players/player_interface.dart';
+import 'package:client/lib/talker.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
 
 class MediaKitVideoPlayer implements AppVideoPlayer {
@@ -30,15 +31,15 @@ class MediaKitVideoPlayer implements AppVideoPlayer {
   void _bindStreams() {
     // Playing / paused
     _player.stream.playing.listen((playing) {
-      print('_player.stream.playing.listen');
-      print(playing);
+      talker.info('_player.stream.playing.listen');
+      talker.info(playing);
       _emit(_state.copyWith(status: playing ? PlayerStatus.playing : PlayerStatus.paused));
     });
 
     // Buffering
     _player.stream.buffering.listen((buffering) {
-      print('_player.stream.buffering.listen');
-      print(buffering);
+      talker.info('_player.stream.buffering.listen');
+      talker.info(buffering);
       if (buffering) _emit(_state.copyWith(status: PlayerStatus.buffering));
     });
 
@@ -64,21 +65,21 @@ class MediaKitVideoPlayer implements AppVideoPlayer {
 
     // End of media
     _player.stream.completed.listen((completed) {
-      print('_player.stream.completed.listen');
-      print(completed);
+      talker.info('_player.stream.completed.listen');
+      talker.info(completed);
       if (completed) _emit(_state.copyWith(status: PlayerStatus.ended));
     });
 
     // Errors
     _player.stream.error.listen((err) {
-      print('[MediaKitVideoPlayer] error: $err');
+      talker.info('[MediaKitVideoPlayer] error: $err');
       _emit(_state.copyWith(status: PlayerStatus.error, error: err));
     });
   }
 
   @override
   Future<void> open(String url, {Map<String, String>? headers}) async {
-    print('_player.open');
+    talker.info('_player.open');
     final s = _state.copyWith(status: PlayerStatus.loading, position: Duration.zero, duration: Duration.zero, error: null);
     _emit(s);
 
@@ -86,9 +87,9 @@ class MediaKitVideoPlayer implements AppVideoPlayer {
     await _player.open(media, play: false);
     _emit(_state.copyWith(status: PlayerStatus.paused));
 
-    print('_player.open done');
-    print(s.toJson());
-    print(_state.toJson());
+    talker.info('_player.open done');
+    talker.info(s.toJson());
+    talker.info(_state.toJson());
   }
 
   @override
