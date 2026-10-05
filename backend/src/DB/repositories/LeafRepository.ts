@@ -4,6 +4,7 @@ import { IRepository } from '../IRepository';
 import { ISeedable } from '../ISeedable';
 import { MongoDB } from '../mongodb';
 import { collectionName, Content, ContentTypes, Leaf, LeafCreate, LeafUpdate, schemaVersion } from '../models/Leaf';
+import { error } from 'node:console';
 
 class LeafRepository implements IRepository, ISeedable, IDropable {
     IRepository: 'IRepository' = 'IRepository';
@@ -145,7 +146,9 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
         )
     }
 
-    async addContentValueForUser(userId: string, leafId: string, isTerm: boolean, type: ContentTypes, atContentIndex: number, value: string, atContentValueIndex?: number) {
+    async addContentValueForUser(userId: string, leafId: string, isTerm: boolean, type: ContentTypes, atContentIndex: number, value: string = '', atContentValueIndex?: number) {
+        if (type !== 'string' && type !== 'richText' && !value) throw new Error('value must be provided when type is not either string or richText')
+
         const valuePath = `${isTerm ? 'termContents' : 'definitionContents'}.${atContentIndex}.value`;
         return await LeafRepository.collection!.updateOne(
             {
@@ -166,6 +169,14 @@ class LeafRepository implements IRepository, ISeedable, IDropable {
     async update(leafArg: LeafUpdate) {
         const { _id, ...leaf } = leafArg
         return await LeafRepository.collection!.updateOne({ _id: ObjectId.createFromHexString(_id!.toString()) }, { $set: { ...leaf, updatedAt: Date.now() } })
+    }
+
+    async updateContentValueForUser(userId: string, leafId: string, isTerm: boolean, type: string, atContentIndex: number, atContentValueIndex: number, value?: string) {
+        const contentKey = `${isTerm ? 'termContents' : 'definitionContents'}.${atContentIndex}`
+        const contentTypeKey = `${contentKey}.type`
+        const contentValueKey = `${contentKey}.value.${atContentValueIndex}`
+
+        return await LeafRepository.collection!.updateOne({ [contentTypeKey]: type, userId, _id: ObjectId.createFromHexString(leafId.toString()) }, { $set: { [contentValueKey]: value, updatedAt: Date.now() } })
     }
 
     async updateForUser(leafArg: LeafUpdate, userId: string) {

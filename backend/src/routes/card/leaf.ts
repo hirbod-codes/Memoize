@@ -10,7 +10,7 @@ import { meili } from '../..';
 import { handleError, validate } from '../../lib';
 import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
 import { authorizeAllowedContentTypes, authorizeCardsPerCategory, authorizeContentsPerCardSide, authorizeValuePerContent } from '../../middlewares/authorization';
-import { leafContentAddSchema, leafContentPutSchema, leafContentValueAddSchema, leafContentValueDeleteSchema, leafGetSchema, leafListSchema, leafPostSchema, leafUpdateSchema } from './schemas';
+import { leafContentAddSchema, leafContentPutSchema, leafContentValueAddSchema, leafContentValueDeleteSchema, leafContentValueUpdateSchema, leafGetSchema, leafListSchema, leafPostSchema, leafUpdateSchema } from './schemas';
 import { convertToPlanContentType } from '../../DB/models/Plan';
 import { valueExists } from './lib';
 import { subscriptionGate } from '../../middlewares/planGate';
@@ -343,6 +343,62 @@ router.post('/content/value', async (req, res) => {
         }
 
         const updateResult = await runWithLogger(log, () => leafRepository.addContentValueForUser(userId, leafId, isTerm, type, atContentIndex, value, atContentValueIndex))
+        log.debug({ updateResult })
+        if (!updateResult.acknowledged) {
+            log.info('failed to add content')
+            return res.status(500).json({ status: 'error', status_code: 'INTERNAL_ERROR' })
+        }
+        if (updateResult.acknowledged && updateResult.matchedCount === 0) {
+            log.info("leaf doesn't belong to user or it doesn't exist")
+            return res.status(403).json({ status: 'error', status_code: 'FORBIDDEN' })
+        }
+
+        log.info('content value created successfully')
+        return res.status(204).json({ status: 'success' })
+    } catch (err) {
+        runWithLogger(log, () => handleError(res, err))
+    }
+})
+
+router.put('/content/value', async (req, res) => {
+    let log = getLogger().child({ module: 'leaf', route: 'PUT /api/leaf/content/value' });
+
+    try {
+        log.info('leaf replace content value request received');
+
+        log.debug({ body: req.body });
+        const { type, isTerm, leafId, value, atContentIndex, atContentValueIndex } = await runWithLogger(log, () => validate(leafContentValueUpdateSchema, req.body))
+        log.info('input validated');
+        log.debug({ type, isTerm, leafId, value, atContentIndex, atContentValueIndex });
+
+        const userId = req.user!.userId;
+        log.debug({ userId });
+
+        if (!(await runWithLogger(log, () => valueExists(userId, type, value)))) {
+            log.info('content value not found')
+            return res.status(404).json({ status: 'error', status_code: 'CONTENT_VALUE_NOT_FOUND' })
+        }
+
+        const leafRepository = new LeafRepository()
+        const leaf = await runWithLogger(log, () => leafRepository.getForUser(leafId, userId))
+        log.debug({ leaf })
+        if (!leaf) {
+            log.info('leaf not found')
+            return res.status(404).json({ status: 'error', status_code: 'LEAF_NOT_FOUND' })
+        }
+
+        const contentsKey = isTerm ? 'termContents' : 'definitionContents';
+        if (leaf[contentsKey].length <= atContentIndex) {
+            log.info('content not found')
+            return res.status(404).json({ status: 'error', status_code: 'CONTENT_NOT_FOUND' })
+        }
+
+        if ((await authorizeContentsPerCardSide(req, leafId, isTerm, 1, res)) !== true || (await authorizeValuePerContent(req, leafId, isTerm, convertToPlanContentType(type), leaf[contentsKey][atContentIndex].value.length, res, 1)) !== true) {
+            log.info("user exceeded plan limit for content creation")
+            return
+        }
+
+        const updateResult = await runWithLogger(log, () => leafRepository.updateContentValueForUser(userId, leafId, isTerm, type, atContentIndex, atContentValueIndex, value))
         log.debug({ updateResult })
         if (!updateResult.acknowledged) {
             log.info('failed to add content')

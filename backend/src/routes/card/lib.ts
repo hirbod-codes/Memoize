@@ -4,7 +4,7 @@ import ImageRepository from "../../DB/repositories/ImageRepository";
 import VideoRepository from "../../DB/repositories/VideoRepository";
 import { getLogger, runWithLogger } from "../../observability/requestLoggerContext";
 
-export async function valueExists(userId: string, type: ContentTypes, value: string): Promise<boolean> {
+export async function valueExists(userId: string, type: ContentTypes, value?: string): Promise<boolean> {
     let log = getLogger().child({ step: 'valueExists' });
 
     log.debug({ userId, type, value })
@@ -12,6 +12,11 @@ export async function valueExists(userId: string, type: ContentTypes, value: str
     if (type === 'string' || type === 'richText') {
         log.info('type is either string or richText')
         return true
+    }
+
+    if (!value) {
+        log.info('value is not provided')
+        return false
     }
 
     if (type === 'imageId') {

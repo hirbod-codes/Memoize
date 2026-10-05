@@ -405,11 +405,11 @@ class Files extends Notifier<FilesState> {
       // Update
       String type = contents[contentIndex].type.name;
       contents[contentIndex].value[contentValueIndex] = value;
-      log.debug("setContentValue updated value at contentIndex=$contentIndex, contentValueIndex=$contentValueIndex");
+      log.debug("setContentValue updated value of type=$type at contentIndex=$contentIndex, contentValueIndex=$contentValueIndex");
 
       ApiCallResult<dynamic> addResult = await apiCall(
         () => _authDio
-            .post(
+            .put(
               '/api/leaf/content/value',
               data: {
                 'leafId': tempFile.id,
@@ -424,28 +424,6 @@ class Files extends Notifier<FilesState> {
             .notifyOnSuccess(l10n.content_value_set_success),
       );
       if (addResult.isFailure) {
-        log.warning("setContentValue rejected: request failed for fileId=${tempFile.id}");
-        NotificationService.showError(context: rootContext!, message: l10n.content_value_set_failed);
-        return false;
-      }
-
-      ApiCallResult<dynamic> deleteResult = await apiCall(
-        () => _authDio
-            .post(
-              '/api/leaf/content/value',
-              data: {
-                'leafId': tempFile.id,
-                'type': 'imageId',
-                'isTerm': state.isTerm,
-                'atContentIndex': contentIndex,
-                'value': value,
-                'atContentValueIndex': contentValueIndex + 1,
-              },
-              options: Options(extra: {GlobalErrorInterceptor.silentErrorsKey: true}),
-            )
-            .notifyOnSuccess(l10n.content_value_set_success),
-      );
-      if (deleteResult.isFailure) {
         log.warning("setContentValue rejected: request failed for fileId=${tempFile.id}");
         NotificationService.showError(context: rootContext!, message: l10n.content_value_set_failed);
         return false;

@@ -53,8 +53,33 @@ export const leafContentValueAddSchema = object().required().shape({
     type: contentTypesSchema.required().label('Type'),
     isTerm: bool().required(),
     atContentIndex: number().required().integer().min(0),
-    value: string().required(),
+    value: string().when('type', {
+        is: (t: string) => t === 'string' || t === 'richText',
+        then(schema) {
+            return schema.optional()
+        },
+        otherwise(schema) {
+            return schema.required()
+        },
+    }),
     atContentValueIndex: number().optional().integer().min(0),
+})
+
+export const leafContentValueUpdateSchema = object().required().shape({
+    leafId: string().objectIdString().required().label('Leaf id'),
+    type: contentTypesSchema.required().label('Type'),
+    isTerm: bool().required(),
+    atContentIndex: number().required().integer().min(0),
+    atContentValueIndex: number().required().integer().min(0),
+    value: string().when('type', {
+        is: (t: string) => t === 'string' || t === 'richText',
+        then(schema) {
+            return schema.optional()
+        },
+        otherwise(schema) {
+            return schema.required()
+        },
+    }),
 })
 
 export const leafContentValueDeleteSchema = object().required().shape({
