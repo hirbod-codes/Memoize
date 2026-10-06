@@ -6,7 +6,7 @@ import 'package:client/app_config.dart';
 import 'package:client/auth/token_storage.dart';
 import 'package:client/components/global/notification_service.dart';
 import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/tmp/theme_radius.dart';
+import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart' hide ImageInfo;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:client/lib/talker.dart';

@@ -1,13 +1,12 @@
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
-import 'package:client/components/button.dart';
 import 'package:client/components/nav_bar.dart';
 import 'package:client/components/nav_destinations.dart';
+import 'package:client/components/theme_swtich_button.dart';
 import 'package:client/components/topbar.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/localization/components/locale_switcher.dart';
-import 'package:client/theme/tmp/theme_mode_notifier.dart';
-import 'package:client/theme/tmp/theme_spacing.dart';
+import 'package:client/theme/theme_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -44,12 +43,7 @@ class AppShell extends ConsumerWidget {
                   const Spacer(),
                   const LocaleSwitcher(),
                   const SizedBox(width: 4),
-                  Button(
-                    icon: ref.watch(themeModeProvider) == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
-                    color: theme.colorScheme.primary,
-                    type: ButtonType.text,
-                    onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
-                  ),
+                  const ThemeSwitchButton(),
                   const SizedBox(width: 8),
                   FilledButton(onPressed: () => context.go('/login'), child: Text(l10n.login)),
                 ],

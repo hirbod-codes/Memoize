@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:client/theme/tmp/theme_radius.dart';
+import 'package:client/theme/theme_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

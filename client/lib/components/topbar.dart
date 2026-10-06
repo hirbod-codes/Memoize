@@ -2,9 +2,9 @@ import 'package:client/account/avatar/avatar_bytes_notifier.dart';
 import 'package:client/auth/auth_controller.dart';
 import 'package:client/auth/auth_state.dart';
 import 'package:client/components/button.dart';
+import 'package:client/components/theme_swtich_button.dart';
 import 'package:client/l10n/app_localizations.dart';
 import 'package:client/theme/app_colors.dart';
-import 'package:client/theme/app_theme.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,14 +31,7 @@ class TopBar extends ConsumerWidget implements PreferredSizeWidget {
       title: title ?? _buildDefaultTitle(context, l10n),
       centerTitle: false,
       actions: [
-        Button(
-          icon: themeModeNotifier.value == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
-          color: theme.colorScheme.primary,
-          type: ButtonType.text,
-          onPressed: () {
-            themeModeNotifier.value = themeModeNotifier.value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-          },
-        ),
+        const ThemeSwitchButton(),
         if (!isAuthenticated)
           Button(
             icon: Icons.login,
