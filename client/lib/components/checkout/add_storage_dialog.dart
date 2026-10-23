@@ -1,12 +1,12 @@
-import 'package:client/api/api_call.dart';
-import 'package:client/api/dio/dio_providers.dart';
-import 'package:client/components/button.dart';
-import 'package:client/components/checkout/choose_payment_method_currency.dart';
-import 'package:client/plan/models/currency_label.dart';
-import 'package:client/plan/models/plan.dart'; // for Currency and Plan
-import 'package:client/l10n/app_localizations.dart';
-import 'package:client/pages/plan/currency_formatter.dart';
-import 'package:client/plan/models/price.dart';
+import 'package:memoize/api/api_call.dart';
+import 'package:memoize/api/dio/dio_providers.dart';
+import 'package:memoize/components/button.dart';
+import 'package:memoize/components/checkout/choose_payment_method_currency.dart';
+import 'package:memoize/plan/models/currency_label.dart';
+import 'package:memoize/plan/models/plan.dart'; // for Currency and Plan
+import 'package:memoize/l10n/app_localizations.dart';
+import 'package:memoize/pages/plan/currency_formatter.dart';
+import 'package:memoize/plan/models/price.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

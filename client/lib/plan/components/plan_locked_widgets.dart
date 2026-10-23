@@ -15,9 +15,9 @@
 // there's no way to intercept it to show an upsell message. Here every
 // item's tap always fires; what it does depends on `isLocked`.
 
-import 'package:client/account/models/user_info.dart';
-import 'package:client/account/user_info_notifier.dart';
-import 'package:client/plan/components/upgrade_dialog.dart';
+import 'package:memoize/account/models/user_info.dart';
+import 'package:memoize/account/user_info_notifier.dart';
+import 'package:memoize/plan/components/upgrade_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

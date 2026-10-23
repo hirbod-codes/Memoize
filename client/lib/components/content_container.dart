@@ -1,18 +1,18 @@
 import 'dart:convert';
 
-import 'package:client/api/providers/files.dart';
-import 'package:client/components/button.dart';
-import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/app_colors.dart';
+import 'package:memoize/api/providers/files.dart';
+import 'package:memoize/components/button.dart';
+import 'package:memoize/l10n/app_localizations.dart';
+import 'package:memoize/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:client/api/models/leaf.dart';
-import 'package:client/components/contents/audio_container.dart';
-import 'package:client/components/contents/image_container.dart';
-import 'package:client/components/contents/text/text_editor.dart';
-import 'package:client/components/contents/video_container.dart';
-import 'package:client/theme/theme_radius.dart';
-import 'package:client/components/contents/tts_button.dart';
+import 'package:memoize/api/models/leaf.dart';
+import 'package:memoize/components/contents/audio_container.dart';
+import 'package:memoize/components/contents/image_container.dart';
+import 'package:memoize/components/contents/text/text_editor.dart';
+import 'package:memoize/components/contents/video_container.dart';
+import 'package:memoize/theme/theme_radius.dart';
+import 'package:memoize/components/contents/tts_button.dart';
 
 class ContentContainer extends ConsumerStatefulWidget {
   final bool editing;

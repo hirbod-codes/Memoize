@@ -1,10 +1,10 @@
-import 'package:client/components/global/notification_service.dart';
-import 'package:client/l10n/app_localizations.dart';
+import 'package:memoize/components/global/notification_service.dart';
+import 'package:memoize/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:client/auth/token_storage.dart';
-import 'package:client/app_config.dart';
+import 'package:memoize/auth/token_storage.dart';
+import 'package:memoize/app_config.dart';
 
 class TTSButton extends ConsumerStatefulWidget {
   final String word;

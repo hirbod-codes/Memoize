@@ -1,12 +1,14 @@
-import 'package:client/auth/auth_controller.dart';
-import 'package:client/auth/auth_state.dart';
-import 'package:client/components/nav_bar.dart';
-import 'package:client/components/nav_destinations.dart';
-import 'package:client/components/theme_swtich_button.dart';
-import 'package:client/components/topbar.dart';
-import 'package:client/l10n/app_localizations.dart';
-import 'package:client/localization/components/locale_switcher.dart';
-import 'package:client/theme/theme_spacing.dart';
+import 'package:memoize/auth/auth_controller.dart';
+import 'package:memoize/auth/auth_state.dart';
+import 'package:memoize/components/button.dart';
+import 'package:memoize/components/nav_bar.dart';
+import 'package:memoize/components/nav_destinations.dart';
+import 'package:memoize/components/theme_swtich_button.dart';
+import 'package:memoize/components/topbar.dart';
+import 'package:memoize/l10n/app_localizations.dart';
+import 'package:memoize/localization/components/locale_switcher.dart';
+import 'package:memoize/theme/app_theme.dart';
+import 'package:memoize/theme/theme_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -43,7 +45,15 @@ class AppShell extends ConsumerWidget {
                   const Spacer(),
                   const LocaleSwitcher(),
                   const SizedBox(width: 4),
-                  const ThemeSwitchButton(),
+                  Button(
+                    icon: themeModeNotifier.value == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+                    color: theme.colorScheme.onPrimary,
+                    onColor: theme.colorScheme.primary,
+                    type: ButtonType.text,
+                    onPressed: () {
+                      themeModeNotifier.value = themeModeNotifier.value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+                    },
+                  ),
                   const SizedBox(width: 8),
                   FilledButton(onPressed: () => context.go('/login'), child: Text(l10n.login)),
                 ],

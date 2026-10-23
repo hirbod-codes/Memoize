@@ -1,5 +1,5 @@
-import 'package:client/plan/models/content_type_flags.dart';
-import 'package:client/plan/models/max_value_per_content.dart';
+import 'package:memoize/plan/models/content_type_flags.dart';
+import 'package:memoize/plan/models/max_value_per_content.dart';
 
 /// Mirrors `privilegesSchema`.
 class Privileges {

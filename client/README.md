@@ -32,15 +32,16 @@ reg delete "HKCU\Environment" /F /V FLUTTER_STORAGE_BASE_URL
 
 ```cmd
 flutter run -d windows --dart-define=API_URL=https://api.example.com --dart-define=ENV=prod
-flutter run -d windows --dart-define=API_URL=https://localhost:3000 --dart-define=ENV=dev
+flutter run -d windows --dart-define=API_URL=https://localhost:8081 --dart-define=ENV=dev
 flutter run -d web-server --web-port=5000 --dart-define=API_URL=http://localhost:8081 --dart-define=ENV=dev
 ```
 
-### For web-server build
-
-Use nginx to redirect requests to backend(because of browsers CORS)
+### Use nginx to redirect requests to backend(because of browsers CORS)
 
 #### On windows
+
+1. backend must first run mkcert.exe to generate `localhost+2.pem` and `localhost+2-key.pem`
+2. nginx serves backend and https
 
 download nginx and run:
 

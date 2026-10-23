@@ -1,5 +1,5 @@
-import 'package:client/auth/models/auth_models.dart';
-import 'package:client/localization/calendars/calendar_system.dart';
+import 'package:memoize/auth/models/auth_models.dart';
+import 'package:memoize/localization/calendars/calendar_system.dart';
 
 /// Mirrors /api/auth/info's response shape. Deliberately has no
 /// `password` field — even though the backend's validation schema

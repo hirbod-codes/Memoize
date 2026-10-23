@@ -1,5 +1,5 @@
-import 'package:client/components/button.dart';
-import 'package:client/theme/app_theme.dart';
+import 'package:memoize/components/button.dart';
+import 'package:memoize/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class ThemeSwitchButton extends StatelessWidget {

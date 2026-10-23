@@ -10,10 +10,10 @@
 //   to *display* the user's info don't flicker to nothing while a
 //   background refresh (e.g. the resume plan-check) is in flight.
 
-import 'package:client/api/api_call.dart';
-import 'package:client/api/dio/dio_providers.dart';
+import 'package:memoize/api/api_call.dart';
+import 'package:memoize/api/dio/dio_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:client/account/models/user_info.dart';
+import 'package:memoize/account/models/user_info.dart';
 import 'user_info_storage.dart';
 
 class UserInfoState {

@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:client/components/button.dart';
-import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/app_colors.dart';
-import 'package:client/theme/theme_radius.dart';
+import 'package:memoize/components/button.dart';
+import 'package:memoize/l10n/app_localizations.dart';
+import 'package:memoize/theme/app_colors.dart';
+import 'package:memoize/theme/theme_radius.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:client/lib/talker.dart';
+import 'package:memoize/lib/talker.dart';
 
 class TextEditor extends ConsumerStatefulWidget {
   final bool editing;

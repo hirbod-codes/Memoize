@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:client/api/controllers/audio_controller.dart';
-import 'package:client/api/models/audio.dart';
-import 'package:client/app_config.dart';
-import 'package:client/auth/token_storage.dart';
-import 'package:client/components/contents/players/audio/audio_player_provider.dart';
-import 'package:client/components/contents/players/audio/audio_player_screen.dart';
-import 'package:client/components/global/notification_service.dart';
-import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/theme_radius.dart';
+import 'package:memoize/api/controllers/audio_controller.dart';
+import 'package:memoize/api/models/audio.dart';
+import 'package:memoize/app_config.dart';
+import 'package:memoize/auth/token_storage.dart';
+import 'package:memoize/components/contents/players/audio/audio_player_provider.dart';
+import 'package:memoize/components/contents/players/audio/audio_player_screen.dart';
+import 'package:memoize/components/global/notification_service.dart';
+import 'package:memoize/l10n/app_localizations.dart';
+import 'package:memoize/theme/theme_radius.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

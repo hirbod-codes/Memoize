@@ -1,5 +1,5 @@
-import 'package:client/components/footer/enamad/badge.dart';
-import 'package:client/components/footer/zibal/badge.dart';
+import 'package:memoize/components/footer/enamad/badge.dart';
+import 'package:memoize/components/footer/zibal/badge.dart';
 import 'package:flutter/material.dart';
 
 /// Renders nothing on mobile/desktop — a footer bar makes sense on a

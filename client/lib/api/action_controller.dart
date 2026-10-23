@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:client/api/root_navigator_key.dart';
-import 'package:client/components/global/notification_service.dart';
-import 'package:client/l10n/app_localizations.dart';
+import 'package:memoize/api/root_navigator_key.dart';
+import 'package:memoize/components/global/notification_service.dart';
+import 'package:memoize/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:client/lib/talker.dart';
+import 'package:memoize/lib/talker.dart';
 
 /// Generic loading/error wrapper for a single in-flight auth action
 /// (login, signup, send-otp, verify-otp, reset-password — whichever

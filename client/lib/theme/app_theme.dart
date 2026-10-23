@@ -1,11 +1,15 @@
-import 'package:client/theme/app_colors.dart';
+import 'package:memoize/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 const persianBlue = Color(0xFF1C39BB);
+const persianLapis = Color(0xFF0F2A4A);
+const persianTurquoise = Color(0xFF008695);
+const persianGold = Color(0xFFC59B27);
+const persianIvory = Color(0xFFF7F4EF);
 
 final lightTheme = ThemeData(
   useMaterial3: true,
-  colorScheme: ColorScheme.fromSeed(seedColor: persianBlue).copyWith(
+  colorScheme: ColorScheme.fromSeed(seedColor: persianBlue, dynamicSchemeVariant: DynamicSchemeVariant.fidelity).copyWith(
     primary: persianBlue,
     onPrimary: const Color(0xFFF0F2FF), // soft off-white
   ),

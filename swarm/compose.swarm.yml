@@ -73,7 +73,8 @@ services:
   nginx:
     image: ghcr.io/hirbod-codes/nginx:${MEMOIZE_NGINX_VERSION}
     ports:
-      - "1404:443"
+      - "1410:443"
+      - "1411:80"
       - "443:443"
       - "80:80"
     networks:

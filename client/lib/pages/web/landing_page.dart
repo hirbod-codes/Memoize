@@ -1,8 +1,8 @@
-import 'package:client/components/footer/app_footer.dart';
-import 'package:client/l10n/app_localizations.dart';
-import 'package:client/localization/components/locale_switcher.dart';
-import 'package:client/localization/locale_controller.dart';
-import 'package:client/localization/on_boarding_status.dart';
+import 'package:memoize/components/footer/app_footer.dart';
+import 'package:memoize/l10n/app_localizations.dart';
+import 'package:memoize/localization/components/locale_switcher.dart';
+import 'package:memoize/localization/locale_controller.dart';
+import 'package:memoize/localization/on_boarding_status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

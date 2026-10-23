@@ -1,6 +1,6 @@
-import 'package:client/api/api_response.dart';
-import 'package:client/api/root_navigator_key.dart';
-import 'package:client/components/global/notification_service.dart';
+import 'package:memoize/api/api_response.dart';
+import 'package:memoize/api/root_navigator_key.dart';
+import 'package:memoize/components/global/notification_service.dart';
 import 'package:dio/dio.dart';
 
 /// Call-site helpers for the two things that aren't the global

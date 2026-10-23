@@ -1,4 +1,4 @@
-import 'package:client/components/contents/players/player_interface.dart';
+import 'package:memoize/components/contents/players/player_interface.dart';
 import 'package:flutter/material.dart';
 
 class PlayerControls extends StatelessWidget {
@@ -158,7 +158,16 @@ class _SeekBarState extends State<_SeekBar> {
     final bufferedProgress = widget.state.duration.inMilliseconds > 0 ? widget.state.buffered.inMilliseconds / widget.state.duration.inMilliseconds : 0.0;
 
     return SliderTheme(
-      data: SliderTheme.of(context).copyWith(trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7), overlayShape: const RoundSliderOverlayShape(overlayRadius: 14), activeTrackColor: Colors.white, inactiveTrackColor: Colors.white24, thumbColor: Colors.white, overlayColor: Colors.white24, secondaryActiveTrackColor: Colors.white38),
+      data: SliderTheme.of(context).copyWith(
+        trackHeight: 3,
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+        activeTrackColor: Colors.white,
+        inactiveTrackColor: Colors.white24,
+        thumbColor: Colors.white,
+        overlayColor: Colors.white24,
+        secondaryActiveTrackColor: Colors.white38,
+      ),
       child: Slider(
         value: progress.clamp(0.0, 1.0),
         secondaryTrackValue: bufferedProgress.clamp(0.0, 1.0),
@@ -195,7 +204,15 @@ class _VolumeControlState extends State<_VolumeControl> {
           SizedBox(
             width: 80,
             child: SliderTheme(
-              data: SliderTheme.of(context).copyWith(trackHeight: 2, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5), overlayShape: const RoundSliderOverlayShape(overlayRadius: 10), activeTrackColor: Colors.white, inactiveTrackColor: Colors.white24, thumbColor: Colors.white, overlayColor: Colors.white24),
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 2,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
+                activeTrackColor: Colors.white,
+                inactiveTrackColor: Colors.white24,
+                thumbColor: Colors.white,
+                overlayColor: Colors.white24,
+              ),
               child: Slider(value: widget.volume.clamp(0.0, 1.0), onChanged: widget.onChanged),
             ),
           ),

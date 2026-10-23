@@ -1,4 +1,4 @@
-import 'package:client/plan/models/currency_label.dart';
+import 'package:memoize/plan/models/currency_label.dart';
 
 /// Mirrors the backend's `priceSchema` — six currencies, each a
 /// non-negative integer. The schema itself doesn't say what unit each

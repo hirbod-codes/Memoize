@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:client/lib/talker.dart';
+import 'package:memoize/lib/talker.dart';
 
 /// Mirrors the backend's response envelope:
 ///

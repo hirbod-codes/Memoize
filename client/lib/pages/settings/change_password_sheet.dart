@@ -1,6 +1,6 @@
-import 'package:client/account/account_controller.dart';
-import 'package:client/api/action_controller.dart';
-import 'package:client/l10n/app_localizations.dart';
+import 'package:memoize/account/account_controller.dart';
+import 'package:memoize/api/action_controller.dart';
+import 'package:memoize/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

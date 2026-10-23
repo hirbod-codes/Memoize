@@ -127,3 +127,4 @@ Ctrl + C DOES NOT work to terminate the app, run `taskkill /IM node.exe /F` on w
 22. fix price calculations
 23. clients specify plan end due
 24. decrease users storage usage when a content is removed
+25. update meilisearch too after a leaf or tree node `title` field update

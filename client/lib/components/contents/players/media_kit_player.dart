@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:client/components/contents/players/player_interface.dart';
-import 'package:client/lib/talker.dart';
+import 'package:memoize/components/contents/players/player_interface.dart';
+import 'package:memoize/lib/talker.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
 
 class MediaKitVideoPlayer implements AppVideoPlayer {

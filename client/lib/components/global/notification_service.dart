@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:client/api/root_navigator_key.dart';
-import 'package:client/components/button.dart';
-import 'package:client/theme/app_colors.dart';
+import 'package:memoize/api/root_navigator_key.dart';
+import 'package:memoize/components/button.dart';
+import 'package:memoize/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 enum _NotificationType { error, success }

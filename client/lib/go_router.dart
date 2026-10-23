@@ -1,20 +1,21 @@
-import 'package:client/api/root_navigator_key.dart';
-import 'package:client/app_shell.dart';
-import 'package:client/auth/auth_controller.dart';
-import 'package:client/auth/auth_state.dart';
-import 'package:client/go_router_refresh_notifier.dart';
-import 'package:client/localization/on_boarding_status.dart';
-import 'package:client/pages/about_page.dart';
-import 'package:client/pages/app_page.dart';
-import 'package:client/pages/auth/auth_page.dart';
-import 'package:client/pages/contact_page.dart';
-import 'package:client/pages/on_boarding_page.dart';
-import 'package:client/pages/payment_result_page.dart';
-import 'package:client/pages/plan/pricing_page.dart';
-import 'package:client/pages/settings/settings_page.dart';
-import 'package:client/pages/web/landing_page.dart';
-import 'package:client/private_gate.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:memoize/api/root_navigator_key.dart';
+import 'package:memoize/app_shell.dart';
+import 'package:memoize/auth/auth_controller.dart';
+import 'package:memoize/auth/auth_state.dart';
+import 'package:memoize/go_router_refresh_notifier.dart';
+import 'package:memoize/localization/on_boarding_status.dart';
+import 'package:memoize/pages/about_page.dart';
+import 'package:memoize/pages/app_page.dart';
+import 'package:memoize/pages/auth/auth_page.dart';
+import 'package:memoize/pages/contact_page.dart';
+import 'package:memoize/pages/on_boarding_page.dart';
+import 'package:memoize/pages/payment_result_page.dart';
+import 'package:memoize/pages/plan/pricing_page.dart';
+import 'package:memoize/pages/settings/settings_page.dart';
+import 'package:memoize/pages/test/test_page.dart';
+import 'package:memoize/pages/web/landing_page.dart';
+import 'package:memoize/private_gate.dart';
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -136,6 +137,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/settings',
         builder: (context, state) => const PrivateWidget(child: AppShell(child: SettingsPage())),
       ),
+      if (kDebugMode)
+        GoRoute(
+          path: '/test',
+          builder: (context, state) => const PrivateWidget(child: AppShell(child: TestPage())),
+        ),
     ],
   );
 });

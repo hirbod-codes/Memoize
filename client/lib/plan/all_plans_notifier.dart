@@ -10,13 +10,13 @@
 //   to *display* the user's info don't flicker to nothing while a
 //   background refresh (e.g. the resume plan-check) is in flight.
 
-import 'package:client/api/api_call.dart';
-import 'package:client/api/dio/dio_providers.dart';
-import 'package:client/api/dio/global_error_interceptor.dart';
-import 'package:client/plan/models/plan.dart';
+import 'package:memoize/api/api_call.dart';
+import 'package:memoize/api/dio/dio_providers.dart';
+import 'package:memoize/api/dio/global_error_interceptor.dart';
+import 'package:memoize/plan/models/plan.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:client/lib/talker.dart';
+import 'package:memoize/lib/talker.dart';
 import 'all_plans_storage.dart';
 
 class AllPlansState {
@@ -27,11 +27,7 @@ class AllPlansState {
   const AllPlansState({this.plans, this.isLoading = false, this.error});
 
   AllPlansState copyWith({List<Plan>? info, bool clearInfo = false, bool? isLoading, String? error, bool clearError = false}) {
-    return AllPlansState(
-      plans: clearInfo ? null : (info ?? plans),
-      isLoading: isLoading ?? this.isLoading,
-      error: clearError ? null : (error ?? this.error),
-    );
+    return AllPlansState(plans: clearInfo ? null : (info ?? plans), isLoading: isLoading ?? this.isLoading, error: clearError ? null : (error ?? this.error));
   }
 }
 

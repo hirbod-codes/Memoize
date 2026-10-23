@@ -1,4 +1,4 @@
-import 'package:client/auth/token_storage.dart';
+import 'package:memoize/auth/token_storage.dart';
 import 'package:dio/dio.dart';
 
 class AuthInterceptor extends Interceptor {

@@ -1,6 +1,6 @@
-import 'package:client/l10n/app_localizations.dart';
-import 'package:client/localization/timezone/timezone_controller.dart';
-import 'package:client/localization/timezone/timezone_service.dart';
+import 'package:memoize/l10n/app_localizations.dart';
+import 'package:memoize/localization/timezone/timezone_controller.dart';
+import 'package:memoize/localization/timezone/timezone_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

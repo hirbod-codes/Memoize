@@ -1,4 +1,4 @@
-import 'package:client/localization/locale_controller.dart';
+import 'package:memoize/localization/locale_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

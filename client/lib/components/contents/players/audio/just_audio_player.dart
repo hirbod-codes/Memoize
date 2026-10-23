@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:client/components/contents/players/audio/audio_player_interface.dart';
+import 'package:memoize/components/contents/players/audio/audio_player_interface.dart';
 import 'package:just_audio/just_audio.dart';
 
 class JustAudioPlayer implements AppAudioPlayer {
@@ -70,7 +70,17 @@ class JustAudioPlayer implements AppAudioPlayer {
 
   @override
   Future<void> open(String url, {Map<String, String>? headers, String? title, String? artist, String? albumArtUrl}) async {
-    _emit(_state.copyWith(status: AudioPlayerStatus.loading, position: Duration.zero, duration: Duration.zero, error: null, title: title, artist: artist, albumArtUrl: albumArtUrl));
+    _emit(
+      _state.copyWith(
+        status: AudioPlayerStatus.loading,
+        position: Duration.zero,
+        duration: Duration.zero,
+        error: null,
+        title: title,
+        artist: artist,
+        albumArtUrl: albumArtUrl,
+      ),
+    );
 
     try {
       final source = AudioSource.uri(

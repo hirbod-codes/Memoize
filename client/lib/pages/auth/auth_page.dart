@@ -1,7 +1,7 @@
-import "package:client/auth/components/email_password_form.dart";
-import "package:client/auth/components/phone_otp_form.dart";
-import "package:client/auth/models/auth_models.dart";
-import "package:client/l10n/app_localizations.dart";
+import "package:memoize/auth/components/email_password_form.dart";
+import "package:memoize/auth/components/phone_otp_form.dart";
+import "package:memoize/auth/models/auth_models.dart";
+import "package:memoize/l10n/app_localizations.dart";
 import "package:flutter/foundation.dart" show kIsWeb;
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";

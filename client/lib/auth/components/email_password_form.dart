@@ -1,5 +1,5 @@
-import 'package:client/auth/auth_controller.dart';
-import 'package:client/l10n/app_localizations.dart';
+import 'package:memoize/auth/auth_controller.dart';
+import 'package:memoize/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

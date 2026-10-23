@@ -1,10 +1,10 @@
-import 'package:client/api/api_response.dart';
-import 'package:client/api/error_codes.dart';
-import 'package:client/api/root_navigator_key.dart';
-import 'package:client/components/global/notification_service.dart';
-import 'package:client/l10n/app_localizations.dart';
+import 'package:memoize/api/api_response.dart';
+import 'package:memoize/api/error_codes.dart';
+import 'package:memoize/api/root_navigator_key.dart';
+import 'package:memoize/components/global/notification_service.dart';
+import 'package:memoize/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
-import 'package:client/lib/talker.dart';
+import 'package:memoize/lib/talker.dart';
 
 /// Distinguishes "the call failed" from "the call succeeded and the
 /// data happened to be null" (e.g. a 204 No Content response) — a

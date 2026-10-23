@@ -1,10 +1,10 @@
-import 'package:client/api/dio/global_error_interceptor.dart';
-import 'package:client/auth/responses/refresh_response.dart';
-import 'package:client/auth/token_storage.dart';
+import 'package:memoize/api/dio/global_error_interceptor.dart';
+import 'package:memoize/auth/responses/refresh_response.dart';
+import 'package:memoize/auth/token_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:client/lib/talker.dart';
+import 'package:memoize/lib/talker.dart';
 
 class RefreshInterceptor extends Interceptor {
   final Dio dio;

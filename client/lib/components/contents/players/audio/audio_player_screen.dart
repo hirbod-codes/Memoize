@@ -1,9 +1,9 @@
-import 'package:client/app_config.dart';
-import 'package:client/components/contents/players/audio/audio_player_provider.dart';
+import 'package:memoize/app_config.dart';
+import 'package:memoize/components/contents/players/audio/audio_player_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:client/components/contents/players/audio/audio_player_interface.dart';
+import 'package:memoize/components/contents/players/audio/audio_player_interface.dart';
 
 class AudioPlayerScreen extends ConsumerStatefulWidget {
   const AudioPlayerScreen({super.key, required this.audioId, required this.url, this.accessToken, this.headers, this.title, this.artist, this.albumArtUrl});
@@ -26,7 +26,9 @@ class _AudioPlayerScreenState extends ConsumerState<AudioPlayerScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(audioPlayerCommandsProvider.notifier).open(widget.url, headers: widget.headers, title: widget.title, artist: widget.artist, albumArtUrl: widget.albumArtUrl);
+      ref
+          .read(audioPlayerCommandsProvider.notifier)
+          .open(widget.url, headers: widget.headers, title: widget.title, artist: widget.artist, albumArtUrl: widget.albumArtUrl);
     });
   }
 
@@ -97,7 +99,9 @@ class _AlbumArt extends StatelessWidget {
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 32, offset: const Offset(0, 16))],
         ),
         clipBehavior: Clip.antiAlias,
-        child: audioId != null && accessToken != null ? Image.network('${AppConfig.apiUrl}/api/audio/coverArt/$audioId', fit: BoxFit.cover, headers: {'Authorization': 'Bearer $accessToken'}) : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        child: audioId != null && accessToken != null
+            ? Image.network('${AppConfig.apiUrl}/api/audio/coverArt/$audioId', fit: BoxFit.cover, headers: {'Authorization': 'Bearer $accessToken'})
+            : Icon(Icons.music_note_rounded, size: 80, color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }
@@ -164,7 +168,12 @@ class _SeekBarState extends ConsumerState<_SeekBar> {
     return Column(
       children: [
         SliderTheme(
-          data: SliderTheme.of(context).copyWith(trackHeight: 4, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8), overlayShape: const RoundSliderOverlayShape(overlayRadius: 16), secondaryActiveTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 4,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+            secondaryActiveTrackColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+          ),
           child: Slider(
             value: progress.clamp(0.0, 1.0),
             secondaryTrackValue: widget.state.bufferedProgress,

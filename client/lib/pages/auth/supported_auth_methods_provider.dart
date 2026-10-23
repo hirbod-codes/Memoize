@@ -1,5 +1,5 @@
-import 'package:client/api/api_call_extensions.dart';
-import 'package:client/api/dio/dio_providers.dart';
+import 'package:memoize/api/api_call_extensions.dart';
+import 'package:memoize/api/dio/dio_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/models/auth_models.dart';

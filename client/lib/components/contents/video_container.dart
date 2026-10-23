@@ -1,17 +1,17 @@
 import 'dart:async';
 
-import 'package:client/api/models/video.dart';
-import 'package:client/api/controllers/video_controller.dart';
-import 'package:client/app_config.dart';
-import 'package:client/auth/token_storage.dart';
-import 'package:client/components/contents/players/video_player_screen.dart';
-import 'package:client/components/global/notification_service.dart';
-import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/theme_radius.dart';
+import 'package:memoize/api/models/video.dart';
+import 'package:memoize/api/controllers/video_controller.dart';
+import 'package:memoize/app_config.dart';
+import 'package:memoize/auth/token_storage.dart';
+import 'package:memoize/components/contents/players/video_player_screen.dart';
+import 'package:memoize/components/global/notification_service.dart';
+import 'package:memoize/l10n/app_localizations.dart';
+import 'package:memoize/theme/theme_radius.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:client/lib/talker.dart';
+import 'package:memoize/lib/talker.dart';
 
 class VideoContainer extends ConsumerStatefulWidget {
   final String videoId;

@@ -1,6 +1,6 @@
 import 'dart:ui' show PlatformDispatcher;
 
-import 'package:client/localization/calendars/calendar_system.dart';
+import 'package:memoize/localization/calendars/calendar_system.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Country → (default language, default calendar), used ONLY for a

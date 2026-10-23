@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:client/account/models/user_info.dart';
+import 'package:memoize/account/models/user_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Local cache of the last-fetched UserInfo. Two uses: lets the app

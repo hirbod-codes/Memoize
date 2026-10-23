@@ -1,5 +1,5 @@
-import 'package:client/api/root_navigator_key.dart';
-import 'package:client/l10n/app_localizations.dart';
+import 'package:memoize/api/root_navigator_key.dart';
+import 'package:memoize/l10n/app_localizations.dart';
 
 /// Maps backend `error_code` values to user-facing text.
 ///
@@ -58,7 +58,7 @@ Map<String, String Function(AppLocalizations? l10n)> errorCodeMessages = {
   'INVALID_PARAMETERS': (l10n) => l10n?.error_code_invalid_parameters ?? 'Some of the provided parameters are invalid.',
   'PLAN_NOT_FOUND': (l10n) => l10n?.error_code_plan_not_found ?? 'Plan not found',
   'PLAN_PAYMENT_METHOD': (l10n) => l10n?.error_code_plan_payment_method ?? 'This payment method is not available for this plan',
-  'NO_UPGRADE_OPTIONS': (l10n) => l10n?.error_code_no_upgrade_options ?? 'Each plan renewal must add 3 days to due date or at least one GB to storage'
+  'NO_UPGRADE_OPTIONS': (l10n) => l10n?.error_code_no_upgrade_options ?? 'Each plan renewal must add 3 days to due date or at least one GB to storage',
 };
 
 String messageForErrorCode(String code) {

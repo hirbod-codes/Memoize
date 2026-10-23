@@ -10,10 +10,10 @@
 //   to *display* the user's info don't flicker to nothing while a
 //   background refresh (e.g. the resume plan-check) is in flight.
 
-import 'package:client/api/api_call.dart';
-import 'package:client/api/dio/dio_providers.dart';
-import 'package:client/api/dio/global_error_interceptor.dart';
-import 'package:client/subscription/models/subscription.dart';
+import 'package:memoize/api/api_call.dart';
+import 'package:memoize/api/dio/dio_providers.dart';
+import 'package:memoize/api/dio/global_error_interceptor.dart';
+import 'package:memoize/subscription/models/subscription.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'subscription_storage.dart';

@@ -1,33 +1,66 @@
-import 'package:client/go_router.dart';
-import 'package:client/auth/auth_controller.dart';
-import 'package:client/auth/auth_state.dart';
-import 'package:client/l10n/app_localizations.dart';
-import 'package:client/localization/locale_controller.dart';
-import 'package:client/localization/timezone/timezone_service.dart';
-import 'package:client/theme/app_theme.dart';
-import 'package:client/theme/theme_mode_store.dart';
+import 'dart:async';
+import 'dart:io';
+
+import 'package:memoize/go_router.dart';
+import 'package:memoize/auth/auth_controller.dart';
+import 'package:memoize/auth/auth_state.dart';
+import 'package:memoize/l10n/app_localizations.dart';
+import 'package:memoize/localization/locale_controller.dart';
+import 'package:memoize/localization/timezone/timezone_service.dart';
+import 'package:memoize/theme/app_theme.dart';
+import 'package:memoize/theme/theme_mode_store.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 
-final container = ProviderContainer();
+ProviderContainer container = ProviderContainer();
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+final rootPemBytesProvider = Provider<Uint8List>((_) => throw UnimplementedError());
 
-  if (!kIsWeb) {
-    MediaKit.ensureInitialized();
-    JustAudioMediaKit.ensureInitialized();
-  }
+Future<void> main() async {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  themeModeNotifier.value = await loadThemeMode();
-  themeModeNotifier.addListener(() => saveThemeMode(themeModeNotifier.value));
+    if (!kDebugMode) {
+      final data = await rootBundle.load('assets/certs/fullchain.pem');
+      final pem = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
 
-  runApp(UncontrolledProviderScope(container: container, child: const MyApp()));
+      container = ProviderContainer(overrides: [rootPemBytesProvider.overrideWithValue(pem)]);
+    }
+
+    FlutterError.onError = (d) {
+      FlutterError.presentError(d);
+      _log('FlutterError: ${d.exception}\n${d.stack}');
+    };
+    PlatformDispatcher.instance.onError = (e, s) {
+      _log('Platform: $e\n$s');
+      return true;
+    };
+
+    if (!kIsWeb) {
+      MediaKit.ensureInitialized();
+      JustAudioMediaKit.ensureInitialized();
+    }
+
+    TimezoneService.initialize();
+    themeModeNotifier.value = await loadThemeMode();
+    themeModeNotifier.addListener(() => saveThemeMode(themeModeNotifier.value));
+
+    runApp(UncontrolledProviderScope(container: container, child: const MyApp()));
+  }, (e, s) => _log('Zone: $e\n$s'));
+}
+
+void _log(String message) {
+  debugPrint(message);
+  if (kIsWeb) return;
+  try {
+    File('${Directory.systemTemp.path}${Platform.pathSeparator}memoize_crash.log').writeAsStringSync('$message\n', mode: FileMode.append);
+  } catch (_) {}
 }
 
 class MyApp extends ConsumerWidget {
@@ -35,8 +68,6 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    TimezoneService.initialize();
-
     // Read (not built until now) since the loading branch above already
     // guarantees the initial session check has resolved by this point —
     // goRouterProvider's redirect logic depends on that being settled.

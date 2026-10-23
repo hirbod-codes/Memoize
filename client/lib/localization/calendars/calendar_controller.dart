@@ -1,10 +1,10 @@
-import 'package:client/api/api_call.dart';
-import 'package:client/api/dio/dio_providers.dart';
-import 'package:client/auth/auth_controller.dart';
-import 'package:client/auth/auth_state.dart';
-import 'package:client/localization/device_defaults.dart';
-import 'package:client/localization/locale_controller.dart';
-import 'package:client/localization/timezone/timezone_controller.dart';
+import 'package:memoize/api/api_call.dart';
+import 'package:memoize/api/dio/dio_providers.dart';
+import 'package:memoize/auth/auth_controller.dart';
+import 'package:memoize/auth/auth_state.dart';
+import 'package:memoize/localization/device_defaults.dart';
+import 'package:memoize/localization/locale_controller.dart';
+import 'package:memoize/localization/timezone/timezone_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

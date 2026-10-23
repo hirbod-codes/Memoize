@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:client/plan/models/plan.dart';
+import 'package:memoize/plan/models/plan.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Local cache of the last-fetched Plan. Two uses: lets the app

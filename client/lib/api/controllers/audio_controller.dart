@@ -1,9 +1,9 @@
-import 'package:client/api/api_call.dart';
-import 'package:client/api/models/audio.dart';
-import 'package:client/api/dio/dio_providers.dart';
+import 'package:memoize/api/api_call.dart';
+import 'package:memoize/api/models/audio.dart';
+import 'package:memoize/api/dio/dio_providers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:client/lib/talker.dart';
+import 'package:memoize/lib/talker.dart';
 
 class AudioController {
   final Ref ref;

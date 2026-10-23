@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:client/theme/theme_radius.dart';
+import 'package:memoize/theme/theme_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -50,21 +50,23 @@ class Button extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
-    color = theme.colorScheme.primary;
-    onColor = theme.colorScheme.onPrimary;
-
-    final baseColor = isTransparent ? Colors.transparent : color!;
-    final fg = onColor ?? (isTransparent ? theme.colorScheme.onSurface : color!);
+    color ??= theme.colorScheme.primary;
 
     switch (type) {
       case ButtonType.elevated:
-        return _elevated(baseColor, fg);
+        final baseColor = isTransparent ? Colors.transparent : (color!);
+        onColor ??= _getColor(theme, color!);
+        return _elevated(baseColor, onColor!);
+      case ButtonType.floatingAction:
+        final baseColor = isTransparent ? Colors.transparent : (color!);
+        onColor ??= _getColor(theme, color!);
+        return _fab(baseColor, onColor!);
       case ButtonType.text:
+        final baseColor = isTransparent ? Colors.transparent : (color!);
         return _text(baseColor);
       case ButtonType.outlined:
+        final baseColor = isTransparent ? Colors.transparent : (color!);
         return _outlined(baseColor);
-      case ButtonType.floatingAction:
-        return _fab(baseColor, fg);
     }
   }
 
@@ -150,5 +152,21 @@ class Button extends ConsumerWidget {
 
   RoundedRectangleBorder _shape() {
     return RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius));
+  }
+
+  Color _getColor(ThemeData theme, Color color) {
+    if (theme.colorScheme.primary == color) return theme.colorScheme.onPrimary;
+    if (theme.colorScheme.primaryContainer == color) return theme.colorScheme.onPrimaryContainer;
+
+    if (theme.colorScheme.secondary == color) return theme.colorScheme.onSecondary;
+    if (theme.colorScheme.secondaryContainer == color) return theme.colorScheme.onSecondaryContainer;
+
+    if (theme.colorScheme.tertiary == color) return theme.colorScheme.onTertiary;
+    if (theme.colorScheme.tertiaryContainer == color) return theme.colorScheme.onTertiaryContainer;
+
+    if (theme.colorScheme.error == color) return theme.colorScheme.onError;
+    if (theme.colorScheme.errorContainer == color) return theme.colorScheme.onErrorContainer;
+
+    return theme.colorScheme.onSurface;
   }
 }

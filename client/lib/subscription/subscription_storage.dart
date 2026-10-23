@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:client/subscription/models/subscription.dart';
+import 'package:memoize/subscription/models/subscription.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:client/lib/talker.dart';
+import 'package:memoize/lib/talker.dart';
 
 /// Local cache of the last-fetched Plan. Two uses: lets the app
 /// show something (name, plan, avatar key) instantly on next launch

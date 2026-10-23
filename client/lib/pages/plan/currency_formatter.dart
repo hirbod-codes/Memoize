@@ -1,4 +1,4 @@
-import 'package:client/plan/models/currency_label.dart';
+import 'package:memoize/plan/models/currency_label.dart';
 import 'package:intl/intl.dart';
 
 /// Formats a raw integer price for display, using the digit set and

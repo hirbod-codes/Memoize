@@ -1,7 +1,7 @@
-import 'package:client/account/models/user_info.dart';
-import 'package:client/plan/models/plan.dart';
-import 'package:client/plan/all_plans_notifier.dart';
-import 'package:client/subscription/subscription_notifier.dart';
+import 'package:memoize/account/models/user_info.dart';
+import 'package:memoize/plan/models/plan.dart';
+import 'package:memoize/plan/all_plans_notifier.dart';
+import 'package:memoize/subscription/subscription_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 extension PlanCapabilities on UserInfo {

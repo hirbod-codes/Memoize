@@ -1,26 +1,26 @@
 import 'dart:io';
 
-import 'package:client/account/avatar/avatar_bytes_notifier.dart';
-import 'package:client/account/models/user_info.dart';
-import 'package:client/account/user_info_notifier.dart';
-import 'package:client/api/api_call.dart';
-import 'package:client/api/api_call_extensions.dart';
-import 'package:client/api/dio/dio_providers.dart';
-import 'package:client/auth/models/auth_models.dart';
-import 'package:client/components/button.dart';
-import 'package:client/components/checkout/checkout_dialog.dart';
-import 'package:client/l10n/app_localizations.dart';
-import 'package:client/localization/components/calendar_switcher.dart';
-import 'package:client/localization/components/locale_switcher.dart';
-import 'package:client/localization/components/timezone_switcher.dart';
-import 'package:client/pages/settings/change_email_sheet.dart';
-import 'package:client/pages/settings/change_password_sheet.dart';
-import 'package:client/pages/settings/change_phone_sheet.dart';
-import 'package:client/plan/all_plans_notifier.dart';
-import 'package:client/plan/components/storage_usage.dart';
-import 'package:client/plan/models/plan.dart';
-import 'package:client/subscription/models/subscription.dart';
-import 'package:client/subscription/subscription_notifier.dart';
+import 'package:memoize/account/avatar/avatar_bytes_notifier.dart';
+import 'package:memoize/account/models/user_info.dart';
+import 'package:memoize/account/user_info_notifier.dart';
+import 'package:memoize/api/api_call.dart';
+import 'package:memoize/api/api_call_extensions.dart';
+import 'package:memoize/api/dio/dio_providers.dart';
+import 'package:memoize/auth/models/auth_models.dart';
+import 'package:memoize/components/button.dart';
+import 'package:memoize/components/checkout/checkout_dialog.dart';
+import 'package:memoize/l10n/app_localizations.dart';
+import 'package:memoize/localization/components/calendar_switcher.dart';
+import 'package:memoize/localization/components/locale_switcher.dart';
+import 'package:memoize/localization/components/timezone_switcher.dart';
+import 'package:memoize/pages/settings/change_email_sheet.dart';
+import 'package:memoize/pages/settings/change_password_sheet.dart';
+import 'package:memoize/pages/settings/change_phone_sheet.dart';
+import 'package:memoize/plan/all_plans_notifier.dart';
+import 'package:memoize/plan/components/storage_usage.dart';
+import 'package:memoize/plan/models/plan.dart';
+import 'package:memoize/subscription/models/subscription.dart';
+import 'package:memoize/subscription/subscription_notifier.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -115,7 +115,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
               },
             ),
           const SizedBox(height: 8),
-                  
+
           if (isEmailAccount) ...[
             _SectionHeader(title: l10n.email_password),
             _SettingsTile(
@@ -142,7 +142,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
               onTap: () => showChangePhoneSheet(context),
             ),
           ],
-                  
+
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -153,7 +153,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
               const LocaleSwitcher(),
             ],
           ),
-                  
+
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -164,7 +164,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
               const CalendarSwitcher(),
             ],
           ),
-                  
+
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -180,7 +180,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
               ),
             ],
           ),
-                  
+
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -225,7 +225,7 @@ class _SettingsContent extends ConsumerState<SettingsContent> {
               ),
             ],
           ),
-                  
+
           if (widget.plan != null && widget.subscription != null && widget.subscription!.planTitle != 'free') ...[
             const SizedBox(height: 24),
             Row(

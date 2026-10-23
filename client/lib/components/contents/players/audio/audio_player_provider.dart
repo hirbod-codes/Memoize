@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:client/components/contents/players/audio/audio_player_interface.dart';
-import 'package:client/components/contents/players/audio/just_audio_player.dart';
+import 'package:memoize/components/contents/players/audio/audio_player_interface.dart';
+import 'package:memoize/components/contents/players/audio/just_audio_player.dart';
 
 part 'audio_player_provider.g.dart';
 

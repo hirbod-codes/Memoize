@@ -1,4 +1,4 @@
-import 'package:client/plan/models/privileges.dart';
+import 'package:memoize/plan/models/privileges.dart';
 
 import 'payment.dart';
 import 'status.dart';

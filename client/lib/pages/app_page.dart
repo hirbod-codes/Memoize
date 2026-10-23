@@ -1,21 +1,21 @@
 import 'dart:async';
 
-import 'package:client/api/api_call.dart';
-import 'package:client/api/dio/dio_providers.dart';
-import 'package:client/api/models/folder.dart';
-import 'package:client/api/models/leaf.dart';
-import 'package:client/api/providers/files.dart';
-import 'package:client/api/providers/folders.dart';
-import 'package:client/components/button.dart';
-import 'package:client/components/dialogs/folder_file_create_dialog.dart';
-import 'package:client/components/file_manager.dart';
-import 'package:client/components/global/notification_service.dart';
-import 'package:client/l10n/app_localizations.dart';
-import 'package:client/theme/app_colors.dart';
-import 'package:client/theme/theme_spacing.dart';
+import 'package:memoize/api/api_call.dart';
+import 'package:memoize/api/dio/dio_providers.dart';
+import 'package:memoize/api/models/folder.dart';
+import 'package:memoize/api/models/leaf.dart';
+import 'package:memoize/api/providers/files.dart';
+import 'package:memoize/api/providers/folders.dart';
+import 'package:memoize/components/button.dart';
+import 'package:memoize/components/dialogs/folder_file_create_dialog.dart';
+import 'package:memoize/components/file_manager.dart';
+import 'package:memoize/components/global/notification_service.dart';
+import 'package:memoize/l10n/app_localizations.dart';
+import 'package:memoize/theme/app_colors.dart';
+import 'package:memoize/theme/theme_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:client/lib/talker.dart';
+import 'package:memoize/lib/talker.dart';
 
 class AppPage extends StatelessWidget {
   const AppPage({super.key});

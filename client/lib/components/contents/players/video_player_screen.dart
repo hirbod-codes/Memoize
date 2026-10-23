@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:client/app_config.dart';
-import 'package:client/components/contents/players/media_kit_player.dart';
-import 'package:client/components/contents/players/player_control_widgets.dart';
-import 'package:client/components/contents/players/player_factory.dart';
-import 'package:client/components/contents/players/player_interface.dart';
+import 'package:memoize/app_config.dart';
+import 'package:memoize/components/contents/players/media_kit_player.dart';
+import 'package:memoize/components/contents/players/player_control_widgets.dart';
+import 'package:memoize/components/contents/players/player_factory.dart';
+import 'package:memoize/components/contents/players/player_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

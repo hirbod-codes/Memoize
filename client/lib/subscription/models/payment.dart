@@ -1,5 +1,5 @@
-import 'package:client/plan/models/currency_label.dart';
-import 'package:client/subscription/models/payment_method.dart';
+import 'package:memoize/plan/models/currency_label.dart';
+import 'package:memoize/subscription/models/payment_method.dart';
 
 class Payment {
   final PaymentMethod method;

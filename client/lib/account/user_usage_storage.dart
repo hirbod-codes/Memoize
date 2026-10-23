@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:client/account/models/user_usage.dart';
+import 'package:memoize/account/models/user_usage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserUsageStorage {

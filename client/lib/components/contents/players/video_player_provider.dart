@@ -1,6 +1,6 @@
-import 'package:client/components/contents/players/media_kit_player.dart';
-import 'package:client/components/contents/players/player_factory.dart';
-import 'package:client/components/contents/players/player_interface.dart';
+import 'package:memoize/components/contents/players/media_kit_player.dart';
+import 'package:memoize/components/contents/players/player_factory.dart';
+import 'package:memoize/components/contents/players/player_interface.dart';
 import 'package:flutter/foundation.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

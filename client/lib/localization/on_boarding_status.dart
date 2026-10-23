@@ -1,5 +1,5 @@
-import 'package:client/localization/calendars/calendar_controller.dart';
-import 'package:client/localization/locale_controller.dart';
+import 'package:memoize/localization/calendars/calendar_controller.dart';
+import 'package:memoize/localization/locale_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Distinguishes "the user explicitly chose this" from "a device-derived
