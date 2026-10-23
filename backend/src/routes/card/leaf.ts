@@ -5,8 +5,7 @@ import { Leaf, LeafUpdate } from '../../DB/models/Leaf';
 import LeafRepository from '../../DB/repositories/LeafRepository';
 import TreeNodeRepository from '../../DB/repositories/TreeNodeRepository';
 import { MongoDB } from '../../DB/mongodb';
-import { MEILI_LEAF } from '../../DB/meilisearch';
-import { meili } from '../..';
+import { MEILI_LEAF, meiliLeaf } from '../../DB/meilisearch';
 import { handleError, validate } from '../../lib';
 import { getLogger, runWithLogger } from '../../observability/requestLoggerContext';
 import { authorizeAllowedContentTypes, authorizeCardsPerCategory, authorizeContentsPerCardSide, authorizeValuePerContent } from '../../middlewares/authorization';
@@ -64,16 +63,14 @@ router.post('/', async (req, res) => {
         }
 
         log.info("add title to meilisearch")
-        const index = meili.index(MEILI_LEAF)
-        const task = await index.addDocuments([{
+        const result = await meiliLeaf.create({
             _id: insertLeafResult.insertedId.toString(),
             userId: req.user!.userId,
             treeNodeId: leaf.treeNodeId,
             title: leaf.title,
             createdAt: Date.now(),
             updatedAt: Date.now()
-        }])
-        const result = await index.tasks.waitForTask(task.taskUid)
+        }, { wait: true })
         log.debug({ meilisearchResult: result })
         if (result.status !== 'succeeded') {
             log.error("failed to add title to meilisearch")
@@ -148,8 +145,7 @@ router.get('/list', async (req, res) => {
         if (search?.trim()) {
             log.info('searching in meilisearch')
 
-            const index = meili.index(MEILI_LEAF)
-            const result = await index.search(search, {
+            const result = await meiliLeaf.search(search, {
                 filter: [
                     `userId = "${userId}"`,
                     `treeNodeId = "${parentId}"`
@@ -549,15 +545,14 @@ router.put('/', async (req, res) => {
 
         if (newTitle) {
             log.info("updating title in meilisearch")
-            const index = meili.index(MEILI_LEAF)
-            const task = await index.updateDocuments([{
+            const result = await meiliLeaf.updateBy({
                 _id: leafId,
+            }, {
                 title: newTitle,
-                updatedAt: new Date().toISOString()
-            }])
-            const result = await index.tasks.waitForTask(task.taskUid)
+                updatedAt: Date.now()
+            }, { wait: true })
             log.debug({ result })
-            if (result.status !== 'succeeded') {
+            if (result.task?.status !== 'succeeded') {
                 console.error(result)
                 await db.abortTransaction()
                 return res.status(500).json({ status: 'error' })
@@ -599,9 +594,7 @@ router.delete('/', async (req, res) => {
         if (!leaf.acknowledged || leaf.deletedCount === 0)
             return res.status(500).send()
 
-        const index = meili.index(MEILI_LEAF)
-        const task = await index.deleteDocument(id)
-        const result = await index.tasks.waitForTask(task.taskUid)
+        const result = await meiliLeaf.delete(id, { wait: true })
         if (result.status !== 'succeeded') {
             console.error(result)
             return res.status(500).send()

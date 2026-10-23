@@ -12,7 +12,7 @@ import { getLogger, runWithLogger } from '../../observability/requestLoggerConte
 import { listQuerySchema, infoQuerySchema, signedTokenQuerySchema, ttsQuerySchema, fileParamsSchema, webFileParamsSchema, coverArtParamsSchema, deleteParamsSchema, postSchema } from './schemas';
 import { handleError, validate } from '../../lib';
 import { authorizeAllowedContentTypes, authorizeStorageQuota, rollbackStorageQuota } from '../../middlewares/authorization';
-import { deleteFromS3, detectContentType, getS3ObjectSize, receiveUpload, uploadToS3 } from '../../lib/file_management';
+import { deleteFromS3, detectContentType, receiveUpload, uploadToS3 } from '../../lib/file_management';
 import { extractCoverArt, generateWebCompatibleCopy, isWebCompatible, probeFile } from '../../ffmpeg';
 import { InvalidMediaError } from '../../errors/InvalidMediaError';
 import { join, basename } from 'path';

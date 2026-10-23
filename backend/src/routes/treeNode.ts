@@ -3,8 +3,7 @@ import { auth } from '../middlewares/auth';
 import { TreeNodePost, treeNodePostSchema, TreeNodeUpdate, treeNodeUpdateSchema } from '../DB/models/TreeNode';
 import TreeNodeRepository from '../DB/repositories/TreeNodeRepository';
 import { number, string, ValidationError } from 'yup';
-import { meili } from '..';
-import { MEILI_TREE_NODE } from '../DB/meilisearch';
+import { MEILI_TREE_NODE, meiliTreeNode } from '../DB/meilisearch';
 import { authorizeCategoriesPerNestedLevel, authorizeNestedLevels } from '../middlewares/authorization';
 import { subscriptionGate } from '../middlewares/planGate';
 
@@ -46,16 +45,14 @@ router.post('/', async (req, res) => {
             return res.status(500).send()
 
         console.log("Inserting new meili treeNode...");
-        const index = meili.index(MEILI_TREE_NODE)
-        const task = await index.addDocuments([{
+        const result = await meiliTreeNode.create({
             _id: insertTreeNodeResult.insertedId.toString(),
             userId: req.user!.userId,
             parentId: treeNode.parentId ?? null,
             title: treeNode.title,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        }])
-        const result = await index.tasks.waitForTask(task.taskUid)
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        }, { wait: true })
         if (result.status !== 'succeeded') {
             console.error(result)
             return res.status(500).send()
@@ -180,9 +177,7 @@ router.get('/list', async (req, res) => {
         if (search?.trim()) {
             console.log('Searching...')
 
-            const index = meili.index(MEILI_TREE_NODE)
-
-            const result = await index.search(search, {
+            const result = await meiliTreeNode.search(search, {
                 filter: [
                     `userId = "${userId}"`,
                     parentId ? `parentId = "${parentId}"` : 'parentId IS NULL'
@@ -249,14 +244,13 @@ router.patch('/', async (req, res) => {
         if (treeNode.title) {
             console.log("Updating title in meilisearch...");
 
-            const index = meili.index(MEILI_TREE_NODE)
-            const task = await index.updateDocuments([{
+            const result = await meiliTreeNode.updateBy({
                 _id: treeNode._id,
+            }, {
                 title: treeNode.title,
-                updatedAt: new Date().toISOString()
-            }])
-            const result = await index.tasks.waitForTask(task.taskUid)
-            if (result.status !== 'succeeded') {
+                updatedAt: Date.now()
+            }, { wait: true })
+            if (result.task?.status !== 'succeeded') {
                 console.error(result)
                 return res.status(500).send()
             }
@@ -291,9 +285,7 @@ router.delete('/', async (req, res) => {
         if (!treeNode.acknowledged || treeNode.deletedCount === 0)
             return res.status(500).send()
 
-        const index = meili.index(MEILI_TREE_NODE)
-        const task = await index.deleteDocument(treeNodeId)
-        const result = await index.tasks.waitForTask(task.taskUid)
+        const result = await meiliTreeNode.delete(treeNodeId, { wait: true })
         if (result.status !== 'succeeded') {
             console.error(result)
             return res.status(500).send()

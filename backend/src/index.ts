@@ -6,7 +6,7 @@ import express from 'express';
 import https from 'https';
 import fs from 'fs';
 
-import { dbConfig, isProduction, allowedOrigins, hostPort, hostName, meilisearchPort, meilisearchHost, meilisearchKey, s3Endpoint, s3AccessKey, s3SecretKey } from './configs';
+import { dbConfig, isProduction, allowedOrigins, hostPort, hostName, s3Endpoint, s3AccessKey, s3SecretKey } from './configs';
 
 import { metricsMiddleware } from './observability/metrics';
 import { metricsRouter } from './observability/metricsRoute';
@@ -16,8 +16,7 @@ import { logger } from './observability/logger';
 
 import { tryAndWait } from './utils';
 
-import { Meilisearch } from 'meilisearch'
-import { setupSearch } from './DB/meilisearch';
+import { MeiliCrud } from './DB/meilisearch';
 
 import { MongoDB } from './DB/mongodb';
 import { UserRepository } from './DB/repositories/UserRepository';
@@ -68,18 +67,12 @@ import { notFoundHandler } from './middlewares/notFoundHandler';
 import { errorHandler } from './middlewares/errorHandler';
 import { requestContextMiddleware } from './middlewares/requestContext';
 import { registerProcessErrorHandlers } from './middlewares/processErrorHandlers';
-import { subscriptionGate } from './middlewares/planGate';
 import { OtpFactory } from './services/OTP/OtpFactory';
 import { authRoutes } from './routes/auth/auth';
 import { planRoutes } from './routes/plan/plan';
 import { PaymentFactory } from './services/Payments/factory';
 import { SmtpFactory } from './services/SMTP/SmtpFactory';
 import { subscriptionRoutes } from './routes/subscription/subscription';
-
-export const meili = new Meilisearch({
-    host: meilisearchHost + ':' + meilisearchPort.toString(),
-    apiKey: meilisearchKey
-})
 
 export const s3 = new S3Client({
     region: 'us-east-1',
@@ -104,8 +97,8 @@ export const payments = {
 };
 
 (async () => {
-    await setupSearch();
-
+    await MeiliCrud.setup();
+    
     if (!await tryAndWait({
         onThrow(e) { console.error('redis tryAndWait throw and error', e); },
         callback: async () => {
