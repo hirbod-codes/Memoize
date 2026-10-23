@@ -3,7 +3,6 @@ import 'package:memoize/auth/auth_state.dart';
 import 'package:memoize/components/button.dart';
 import 'package:memoize/components/nav_bar.dart';
 import 'package:memoize/components/nav_destinations.dart';
-import 'package:memoize/components/theme_swtich_button.dart';
 import 'package:memoize/components/topbar.dart';
 import 'package:memoize/l10n/app_localizations.dart';
 import 'package:memoize/localization/components/locale_switcher.dart';
